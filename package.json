@@ -1,0 +1,19 @@
+{
+  "name": "sight",
+  "version": "1.0.0",
+  "description": "wow",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chan-max/Sight.git"
+  },
+  "author": "chan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chan-max/Sight/issues"
+  },
+  "homepage": "https://github.com/chan-max/Sight#readme"
+}
