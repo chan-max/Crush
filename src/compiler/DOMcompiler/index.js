@@ -1,2 +1,5 @@
 "use strict";
-var test = "assss";
+// template instance
+/*
+    <div {...this.props} ></div>
+*/ 
