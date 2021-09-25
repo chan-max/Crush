@@ -1,30 +1,34 @@
-// options list
-export const App = {
-    renderDOM() {
+const template = `
+    <button onclick={add(66)}>
 
-    },
-    renderCSS() {
+    </button>
+`
 
-    },
-    props: {
+const style = `
+    @#app{
+        color:@mainColor;
+    }
+`
 
-    },
-    source() {
+const App = {
+    template,
+    style,
+    source({computed}){
         let num = 0
-        let count = function () {
-            console.log(this.num);
-            this.num++
-        }
+        let add = () => this.num++
+        let sub = () => this.num--
+
+        const double = computed(({emit}) => this.num * 2)
 
         return {
-            num, count
+            num,
+            add,
+            sub,
+            double
         }
     }
 }
 
-// DOM template
-/*
-    <div ></div>
-
-
-*/
+export {
+    App
+}

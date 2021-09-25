@@ -6,28 +6,97 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sight...</title>
-    <style>
-        div {
-            height: 200px;
-            background-color: #24292f;
-        }
-    </style>
 </head>
 
+<style>
+
+    /* div{
+    width:100px;
+	height:100px;
+	background:red;
+	animation:myfirst 1s infinite;
+    }
+
+    @media only screen and (max-width: 900px) {
+    body {
+        background-color: lightblue;
+    }
+}
+
+
+@keyframes myfirst
+{
+	0%   {background:red;}
+	100% {background:green;}
+} */
+
+.show{
+    color: royalblue;
+}
+
+.show2{
+   background-color: saddlebrown;
+}
+</style>
+
 <body>
-    <div></div>
-    <h1>Sight is coming</h1>
 </body>
 
 </html>
 
 <script>
 
+function ST_Node(tag,props,children){
+    this.tag = tag
+    this.props = props
+    this.children = children
+}
+
+
+
+
 </script>
 
-<script type="module">
-    import { App } from './app.js'
+<!-- <script type="module">
+import {createElement,createText} from './s___/dom/render-tools.js'
+
+let  div = createElement('div',{},[
+    createText('这是一段文本'),
+    createElement('h1',{},[createText('这是h1'),createText('这是第二个h1')])
+])
+
+const mountElement = function(st_element,container){
+    let el = document.createElement(st_element.tag)
+    el._st_node = st_element
+    container.appendChild(el)
+    if(st_element.children){
+        st_element.children.forEach((child)=>{
+            renderDOM(child,el)
+        })
+    }
+}
+
+const mountText = function(st_text,container){
+    let el = document.createTextNode(st_text.text)
+    el._st_node = st_text
+    container.appendChild(el)
+}
 
 
+const renderDOM = function(st_node,container){
+    let prevNode = container._st_node || {}
+    switch(st_node.type){
+        case 'ST_HTMLElement':
+        mountElement(st_node,container);
+        break;
 
-</script>
+        case 'ST_Text':
+        mountText(st_node,container)
+        break
+    }
+}
+
+renderDOM(div,document.body)
+
+
+</script> -->
