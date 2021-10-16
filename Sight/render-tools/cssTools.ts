@@ -1,6 +1,6 @@
 // css render tools and virtual stylesheet , rules
 
-const ST_CSSStyleRule = function (selector: string, declarations: Record<string, any>) {
+const ST_CSSStyleRule:any = function (this:any,selector: string, declarations:any) {
     this.type = 'styleRule'
     this.selector = selector
     this.declarations = declarations
@@ -13,18 +13,21 @@ ST_CSSStyleRule.prototype.getCSSText = function () {
     return `${selector}{${declarationsString}}`
 }
 
-let createRule = function (selector, declarations) {
+let createRule = function (selector:string, declarations:any) {
     return new ST_CSSStyleRule(selector, declarations)
 }
 
+let x = new ST_CSSStyleRule()
+
 // CSSStyleSheet
 
-const ST_CSSStyleSheet = function (st) {
 
+
+
+const styleRenderHelper = {
+    createRule
 }
 
-
-
 export {
-    createRule
+    styleRenderHelper
 }
