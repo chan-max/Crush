@@ -5,24 +5,26 @@ import replace from 'rollup-plugin-replace';
 //console.log(replace(replacements));
 
 export default {
-    input:'Sight/index.ts',
-    output:[{
-        name:'sight-esm',
-        file:'./dist/sight-esm.js',
-        format:'esm'
-      },{
-        name:'sight-cjs',
-        file:'./dist/sight-cjs.js',
-        format:'cjs'
-      },{
-        name:'sight-umd',
-        file:'./dist/sight-umd.js',
-        format:'umd'
-      },{
-        name:'sight-amd',
-        file:'./dist/sight-amd.js',
-        format:'amd'
-      },{
+    input:'Sight/test.ts',
+    output:[
+      // {
+      //   name:'sight-esm',
+      //   file:'./dist/sight-esm.js',
+      //   format:'esm'
+      // },{
+      //   name:'sight-cjs',
+      //   file:'./dist/sight-cjs.js',
+      //   format:'cjs'
+      // },{
+      //   name:'sight-umd',
+      //   file:'./dist/sight-umd.js',
+      //   format:'umd'
+      // },{
+      //   name:'sight-amd',
+      //   file:'./dist/sight-amd.js',
+      //   format:'amd'
+      // },
+      {
         name:'Sight',
         file:'./dist/sight-iife.js',
         format:'iife'

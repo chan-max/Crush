@@ -1,5 +1,10 @@
 import { SightConstructor } from "./SightConstrctor"
 
+import { initSightPrototype } from "./initSightPrototype"
+
+
+initSightPrototype(SightConstructor)
+
 const externalAccessHandler  = {
     get(instance:Record<string,any>,key:string,receiver:WindowProxy){
         const target = instance

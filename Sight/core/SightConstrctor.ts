@@ -1,8 +1,10 @@
-import {createSightInstance} from './createSightInstance'
+
 
 let id = 0
 function SightConstructor(this:any,options:any){
     let st = this
+
+    st._sid = id++
 
     st._options = options
 
@@ -10,9 +12,14 @@ function SightConstructor(this:any,options:any){
 
     st._children = []
 
-    st._sid = id++
+    st.isInited = false
 
-    
+    st.isMounted = false
+
+    st.render = options.render
+
+    st["[[SCOPE]]"] = Object.create(null)
+
 }
 
 

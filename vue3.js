@@ -14827,6 +14827,8 @@ var Vue = (function (exports) {
             }
         }
         const key = template;
+
+        
         const cached = compileCache[key];
         if (cached) {
             return cached;
@@ -14862,6 +14864,7 @@ var Vue = (function (exports) {
         const render = (new Function(code)()
             );
         render._rc = true;
+ 
         return (compileCache[key] = render);
     }
     registerRuntimeCompiler(compileToFunction);
