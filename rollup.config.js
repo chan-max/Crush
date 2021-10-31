@@ -5,7 +5,7 @@ import replace from 'rollup-plugin-replace';
 //console.log(replace(replacements));
 
 export default {
-    input:'Sight/test.ts',
+    input:'./Crush/main.ts',
     output:[
       // {
       //   name:'sight-esm',
@@ -26,9 +26,10 @@ export default {
       // },
       {
         name:'Sight',
-        file:'./dist/sight-iife.js',
+        file:'./dist/iife.js',
         format:'iife'
-      }],
+      }
+    ],
       plugins: [
         typescript(), 
     ]

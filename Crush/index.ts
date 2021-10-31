@@ -1,6 +1,19 @@
 import Sight from "./core/index"
 
-export default Sight
+
+const _App:any = function (this:any) {
+    const app = this
+    app.isMounted = false 
+}
+
+
+function createAppModule():any {
+    return new _App()
+}
+
+export {
+    createAppModule
+}
 
 
 //           _____                    _____                    _____                    _____                _____          

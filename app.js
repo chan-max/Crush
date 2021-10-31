@@ -1,7 +1,0 @@
-
-const componentPropertyList = {
-    template:'',
-    style:'',
-    
-}
-
