@@ -2,31 +2,36 @@
 import typescript from 'rollup-plugin-typescript2';
 import replace from 'rollup-plugin-replace';
 
+
 //console.log(replace(replacements));
 
+const entry = './Crush/main.ts'
+
 export default {
-    input:'./Crush/main.ts',
+    input:entry ,
     output:[
+      {
+        // file:'./dist/Crush-esm.js',
+        format:'esm',
+        dir:'./dist/esm'
+      },
       // {
-      //   name:'sight-esm',
-      //   file:'./dist/sight-esm.js',
-      //   format:'esm'
-      // },{
-      //   name:'sight-cjs',
-      //   file:'./dist/sight-cjs.js',
+      //   name:'Crush-cjs',
+      //   file:'./dist/Crush-cjs.js',
       //   format:'cjs'
       // },{
-      //   name:'sight-umd',
-      //   file:'./dist/sight-umd.js',
+      //   name:'Crush-umd',
+      //   file:'./dist/Crush-umd.js',
       //   format:'umd'
-      // },{
-      //   name:'sight-amd',
-      //   file:'./dist/sight-amd.js',
-      //   format:'amd'
       // },
       {
-        name:'Sight',
-        file:'./dist/iife.js',
+        name:'Crush-amd',
+        format:'amd',
+        dir:'./dist/amd'
+      },
+      {
+        name:'Crush',
+        file:'./dist/iife/iife.js',
         format:'iife'
       }
     ],

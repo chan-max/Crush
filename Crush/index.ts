@@ -1,40 +1,80 @@
-import Sight from "./core/index"
+import { typeOf } from "./shared"
+
+    var  handler = {
+        get(target:any, key:any, receiver:any) {
+
+            console.log('get');
+            
+            var value = target[key]
+
+            switch (typeOf(value)) {
+                case 'string':
+                    return value
+
+                case 'boolean':
+                    return value
+
+                case 'number':
+                    return value
+
+                case 'symbol':
+                    return value
+
+                case 'undefined':
+                    target[key] = undefined
+                    return undefined
+                
+                case 'null':
+                    return null
+
+                case 'object':
+                    return reactive(value)
+
+                case 'array':
+                    console.log('track arr');
+                    return reactive(value)
+                
+                case 'function':
+                    return value
+
+                default:
+                    return new Error('!!!')
+            }
+
+        },
+        set(target:any, key:any, newValue:any, receiver:any) {
+
+            console.log('set');
+            
+
+            return target[key] = newValue
+        }
+    }
 
 
-const _App:any = function (this:any) {
-    const app = this
-    app.isMounted = false 
-}
+
+    function reactive(target:any) :Record<string,any>{
+        return new Proxy(target, handler)
+    }
 
 
-function createAppModule():any {
-    return new _App()
-}
-
-export {
-    createAppModule
-}
 
 
-//           _____                    _____                    _____                    _____                _____          
-//          /\    \                  /\    \                  /\    \                  /\    \              /\    \         
-//         /::\    \                /::\    \                /::\    \                /::\____\            /::\    \        
-//        /::::\    \               \:::\    \              /::::\    \              /:::/    /            \:::\    \       
-//       /::::::\    \               \:::\    \            /::::::\    \            /:::/    /              \:::\    \      
-//      /:::/\:::\    \               \:::\    \          /:::/\:::\    \          /:::/    /                \:::\    \     
-//     /:::/__\:::\    \               \:::\    \        /:::/  \:::\    \        /:::/____/                  \:::\    \    
-//     \:::\   \:::\    \              /::::\    \      /:::/    \:::\    \      /::::\    \                  /::::\    \   
-//   ___\:::\   \:::\    \    ____    /::::::\    \    /:::/    / \:::\    \    /::::::\    \   _____        /::::::\    \  
-//  /\   \:::\   \:::\    \  /\   \  /:::/\:::\    \  /:::/    /   \:::\ ___\  /:::/\:::\    \ /\    \      /:::/\:::\    \ 
-// /::\   \:::\   \:::\____\/::\   \/:::/  \:::\____\/:::/____/  ___\:::|    |/:::/  \:::\    /::\____\    /:::/  \:::\____\
-// \:::\   \:::\   \::/    /\:::\  /:::/    \::/    /\:::\    \ /\  /:::|____|\::/    \:::\  /:::/    /   /:::/    \::/    /
-//  \:::\   \:::\   \/____/  \:::\/:::/    / \/____/  \:::\    /::\ \::/    /  \/____/ \:::\/:::/    /   /:::/    / \/____/ 
-//   \:::\   \:::\    \       \::::::/    /            \:::\   \:::\ \/____/            \::::::/    /   /:::/    /          
-//    \:::\   \:::\____\       \::::/____/              \:::\   \:::\____\               \::::/    /   /:::/    /           
-//     \:::\  /:::/    /        \:::\    \               \:::\  /:::/    /               /:::/    /    \::/    /            
-//      \:::\/:::/    /          \:::\    \               \:::\/:::/    /               /:::/    /      \/____/             
-//       \::::::/    /            \:::\    \               \::::::/    /               /:::/    /                           
-//        \::::/    /              \:::\____\               \::::/    /               /:::/    /                            
-//         \::/    /                \::/    /                \::/____/                \::/    /                             
-//          \/____/                  \/____/                                           \/____/                              
-       
+
+
+
+
+    
+
+    class appModule{
+            
+    }
+
+    function createModule(){
+        return new appModule()
+    }
+
+    export {
+        createModule
+    }
+

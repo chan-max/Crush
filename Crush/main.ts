@@ -1,17 +1,21 @@
-import { createAppModule } from "./index";
+/*-------------------------------------------------------*/
+import { _createStyleRule } from "./core/vnode";
 
 
-const rootComponent:any = {
-    componets:{
 
-    },
-    template:'#app1'
+let list = [
+    _createStyleRule('div',{
+        color:'red',
+        backgroundColor:'blue'
+    })
+]
+
+function updateStyleSheet(style:HTMLStyleElement,ruleList:any){
+
 }
 
-
-var app:any = createAppModule()
-
+var style:any = document.querySelector('#style') 
 
 
 
-console.log(app);
+updateStyleSheet(style,list)

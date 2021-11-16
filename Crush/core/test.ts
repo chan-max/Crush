@@ -1,7 +1,7 @@
 import {_createStyleRule} from './vnode'
 
 const uniqueNode = new Proxy({},{get(){return Symbol()}})
-
+const emptyNode = {}
 
 // mark a sight property for style rules
 

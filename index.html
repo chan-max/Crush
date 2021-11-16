@@ -5,67 +5,72 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sight...</title>
+    <title>Crush</title>
 </head>
 
 
 
-<!-- <style>
+<style>
     /*
         媒体规则中可以有动画规则
     */
-    @media   (min-width: 600px) {
+    /* @media (min-width: 600px) {
 
-            body{
-                background-color: green;
-            }
-
-    }
-
-
-    @keyframes body {
-            0% {
-                background-color: red;
-            }
-
-            100% {
-                background-color: blue;
-            }
-
-            50%{
-                background-color: green;
-            }
+        body {
+            background-color: green;
         }
 
-</style> -->
+    } */
 
-<style type="jss">
+    /* 
+    @keyframes body {
+        0% {
+            background-color: red;
+        }
 
+        100% {
+            *background-color: red;
+        }
+
+        50% {}
+    } */
+</style>
+
+
+<style id="style">
+    div {
+        background-color: aqua;
+    }
 </style>
 
 <body>
+
+
+
+
     <div id="app">
-
-        <h1>
-
-        </h1>
+        <button>123</button>
     </div>
 
 </body>
+
 </html>
+<script src="./vue3.js"></script>
+<script src="./dist/iife/iife.js"></script>
 
-<script src="./dist/iife.js"></script>
-
-<!-- <script src="./vue3.js"></script> -->
-<!-- <script src="./vue.js"></script> -->
-<!-- <script src="./angularjs.js"></script> -->
 <script>
+    let style = document.querySelector('#style')
+
+    const app = {
+        template:``,
+        style:``,
+        init(_) {
+        
+        }
+    }
 
 
-    Crush.createAppleModule()
-
-    Crush.createRouter
-
+    let m = new Map()
 
 
 </script>
