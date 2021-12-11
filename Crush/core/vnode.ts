@@ -1,55 +1,51 @@
 
 enum NODE_TYPE {
-    ELEMENT = 1
+    HTMLELEMENT,
+    TEXT
 }
 
-function _createStyleRule(selector:string,declaration:Record<string,any>) {
+function _createStyleRule(selector: string, declaration: Record<string, any>) {
     return {
         selector,
         declaration,
         type: 1,
-        ref:null
+        ref: null
     }
 }
 
-function _createElement(tag:string,attrs:any,childNodes:Array<any>) {
+function createElement(tag: string, attrs: any, childNodes: Array<any>) {
     return {
-        tag,attrs,childNodes,
-        type:'ELEMENT'
+        tag, attrs, childNodes,
+        type: NODE_TYPE.HTMLELEMENT
     }
 }
 
-function _createSVGElement(tag:string,attrs:Record<string,unknown>,childNodes:Array<any>) {
+function createText(text:string) {
     return {
-        tag,attrs,childNodes,
-        type:'SVGElement'
-    }
-}
-
-function _createCommont(text:string){
-    return {
-        tag:'!',
+        type:NODE_TYPE.TEXT,
         text,
-        type:'COMMENT'
     }
 }
 
-function _createTextNode(text:string){
+function _createSVGElement(tag: string, attrs: Record<string, unknown>, childNodes: Array<any>) {
     return {
-        tag:'',
-        text,
-        type:'TEXT'
+        tag, attrs, childNodes,
+        type: 'SVGElement'
     }
 }
 
-function _createMediaRule(condition:string,ruleList:Array<any>) {
+
+
+
+
+function _createMediaRule(condition: string, ruleList: Array<any>) {
     return {
         condition,
         ruleList
     }
 }
 
-function _createKeyframesRule(name:string,ruleList:Array<any>) {
+function _createKeyframesRule(name: string, ruleList: Array<any>) {
     return {
         name,
         ruleList
@@ -57,9 +53,6 @@ function _createKeyframesRule(name:string,ruleList:Array<any>) {
 }
 
 export {
-    _createStyleRule,
-    _createCommont,
-    _createElement,
-    _createSVGElement,
-    _createTextNode
+    createElement,
+    createText
 }

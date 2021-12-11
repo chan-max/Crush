@@ -1,21 +1,40 @@
-/*-------------------------------------------------------*/
-import { _createStyleRule } from "./core/vnode";
+import { templateExtract } from "./compiler/template/templateExtract";
+
+// Crush Studio
+console.log("%cCrush Studio", "color: #333;  font-size: 10px; font-weight:bold;");
+
+var template = ` 
+
+<body>
+  <div class="app">
+    <button >button</button>
+  </div>
+</body>
+
+<script src="./vue3.js"></script>
+<script src="./dist/iife/iife.js"></script>
+
+<script>
+
+</script>
 
 
+`
 
-let list = [
-    _createStyleRule('div',{
-        color:'red',
-        backgroundColor:'blue'
-    })
-]
+const DIRECTIVE_FLAG = '--'
+const EVENTS_FLAG = '@'
+const DATABIND_FLAG = '$'
+var x = templateExtract(template)
 
-function updateStyleSheet(style:HTMLStyleElement,ruleList:any){
-
+for(var i of x){
+    console.log(i);
 }
 
-var style:any = document.querySelector('#style') 
 
 
+enum tagTypes{
+    HTMLELEMENT = 123,
+    SVGELEMENT,
+}
 
-updateStyleSheet(style,list)
+

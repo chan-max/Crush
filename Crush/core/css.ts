@@ -1,18 +1,10 @@
-import {_createStyleRule} from './vnode'
+
 
 const uniqueNode = new Proxy({},{get(){return Symbol()}})
 const emptyNode = {}
 
 // mark a sight property for style rules
 
-function mark(target:any, name:string, value:any) {
-    return Reflect.defineProperty(target, name, {
-        writable: false,
-        configurable: false,
-        enumerable: false,
-        value
-    })
-}
 
 
     // 转驼峰
@@ -118,16 +110,8 @@ function renderStyle(styleElement:any,ruleList:Array<any>){
 }
 
 
-let r = _createStyleRule('body',{'color':'red','background-color':'blue'})
 
-const cssRender = () => {
-    return [r]
-}
 
-(window as any).s = cssRender()
-
-renderStyle(style,cssRender())
-renderStyle(style,cssRender())
 
 
 

@@ -1,76 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crush</title>
-</head>
-
-
-
-<style>
-    /*
-        媒体规则中可以有动画规则
-    */
-    /* @media (min-width: 600px) {
-
-        body {
-            background-color: green;
-        }
-
-    } */
-
-    /* 
-    @keyframes body {
-        0% {
-            background-color: red;
-        }
-
-        100% {
-            *background-color: red;
-        }
-
-        50% {}
-    } */
-</style>
-
-
-<style id="style">
-    div {
-        background-color: aqua;
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<style></style>
+<style id="com" scoped>
+    #app {
+        width: 100px;
+        height: 100px;
     }
 </style>
 
 <body>
-
-
-
-
-    <div id="app">
-        <button>123</button>
-    </div>
-
+    <div id="root"></div>
 </body>
+<!-- <script src="./dist/iife/iife.js"></script> -->
 
-</html>
-<script src="./vue3.js"></script>
-<script src="./dist/iife/iife.js"></script>
+<!-- <script src="./react.js"></script>
+<script src="./react-dom.js"></script>
+<script src="https://cdn.staticfile.org/babel-standalone/6.26.0/babel.min.js"></script> -->
+<!-- <script type="text/babel">
 
-<script>
-    let style = document.querySelector('#style')
 
-    const app = {
-        template:``,
-        style:``,
-        init(_) {
-        
-        }
+function App(){
+    var [num,setNum] = React.useState(0)
+
+    return <button onClick={() => {setNum(num + 1)}}>{num}</button>
+}
+ReactDOM.render(<App/>,document.querySelector('#root'))
+</script> -->
+
+<script type="module">
+    import { 
+        Fragment, 
+        h, 
+        render, 
+        shouldYield, 
+        useCallback, 
+        useEffect, 
+        useLayout, 
+        useMemo, 
+        useReducer,
+        useRef, 
+        useState } from './fre.js'
+
+    console.log({ 
+        Fragment, 
+        h, 
+        render, 
+        shouldYield, 
+        useCallback, 
+        useEffect, 
+        useLayout, 
+        useMemo, 
+        useReducer,
+        useRef, 
+        useState });
+
+
+    function app(){
+        var [num,setNum] =useState(0)
+
+        useEffect(()=>{
+            return () => {
+                console.log(num);
+            }
+        })
+
+        return h('button',{onClick:()=>{
+            setNum(num+1)
+        }},num)
     }
 
-
-    let m = new Map()
-
+    
+    render(h(app),document.querySelector('#root'))
 
 </script>

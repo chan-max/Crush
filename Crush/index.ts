@@ -58,23 +58,17 @@ import { typeOf } from "./shared"
     }
 
 
+    function createApp() {
+        return 1
+    }
 
+    export {
+        createApp
+    }
 
 
 
 
 
     
-
-    class appModule{
-            
-    }
-
-    function createModule(){
-        return new appModule()
-    }
-
-    export {
-        createModule
-    }
 
