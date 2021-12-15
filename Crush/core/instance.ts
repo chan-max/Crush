@@ -1,36 +1,21 @@
 
 let uid = 0
 
-function getCommonComponentnistanceProperties(){
+function getCommonComponentnistance(){
     return {
         uid:uid++,
-        or:[],
-
+        context:Object.create(null),
+        container:null,
+        styleSheet:null,
+        inited:[],
+        beforeMount:[],
+        mounted:[],
+        beforeDestroy:[],
+        destroyed:[]
     }
 }
-/*
 
-    const app = {
-        props:
-
-        source:
-
-        template:
-
-        style:
-    }
-
-
-*/
-
-interface componentOptions{
-    props?:Object | Array<string>
-    template?:string
-    style?:string
-    inited?:Function
-}
-
-function initComponentOptions(options:componentOptions){
-
+export {
+    getCommonComponentnistance
 }
 

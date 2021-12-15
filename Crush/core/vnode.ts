@@ -56,3 +56,9 @@ export {
     createElement,
     createText
 }
+
+enum CSSRULE_TYPES{
+    STYLE_RULE,
+    MEDIA_RULE,
+    KEYFRAMES_RULE
+}
