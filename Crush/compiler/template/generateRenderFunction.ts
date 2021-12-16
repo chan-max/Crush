@@ -38,9 +38,6 @@ stack.push(item)
 
 console.log(stack);
 
-
-
-
 function transformToRenderFunction(node: any) {
 var str = ``
 switch (node.tagType) {
