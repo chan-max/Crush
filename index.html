@@ -5,12 +5,8 @@
 </style>
 
 <body>
-    <svg></svg>
     <div id="app">
-        <div>
-            <h1>123</h1>
-            <h2>222</h2>
-        </div>
+
     </div>
 </body>
 <script src="./dist/iife/iife.js"></script>
@@ -20,21 +16,10 @@
 
 </script>
 
-<!-- <script src="./react.js"></script>
-<script src="./react-dom.js"></script>
-<script src="https://cdn.staticfile.org/babel-standalone/6.26.0/babel.min.js"></script> -->
-<!-- <script type="text/babel">
-
-
-function App(){
-    var [num,setNum] = React.useState(0)
-
-    return <button onClick={() => {setNum(num + 1)}}>{num}</button>
-}
-ReactDOM.render(<App/>,document.querySelector('#root'))
-</script> -->
-
-<!-- <script type="module">
+<!-- <script src="./lib/react.js"></script>
+<script src="./lib/react-dom.js"></script> -->
+<script src="./lib/babel.js"></script>
+<script type="module">
     import { 
         Fragment, 
         h, 
@@ -48,35 +33,47 @@ ReactDOM.render(<App/>,document.querySelector('#root'))
         useRef, 
         useState } from './lib/fre.js'
 
-    console.log({ 
-        Fragment, 
-        h, 
-        render, 
-        shouldYield, 
-        useCallback, 
-        useEffect, 
-        useLayout, 
-        useMemo, 
-        useReducer,
-        useRef, 
-        useState });
+        window.Fragment = Fragment
+        window.h = h 
+        window.render = render 
+        window.shouldYield = shouldYield
+        window.useCallback = useCallback
+        window.useEffect = useEffect
+        window.useLayout = useLayout
+        window.useMemo = useMemo
+        window.useReducer = useReducer
+        window.useRef = useRef
+        window.useState = useState
+</script>
+<script type="text/babel">
 
-
-    function app(){
-        var [num,setNum] =useState(0)
-
-        useEffect(()=>{
-            return () => {
-                console.log(num);
-            }
-        })
-
-        return h('button',{onClick:()=>{
-            setNum(num+1)
-        }},num)
+    function C(){
+        console.log('3');
+        return <h3>333333333333333</h3>
     }
 
-    
-    render(h(app),document.querySelector('#root'))
+    function B(){
+        console.log('2');
+        var [num,setNum] =useState(0)
+        return <div>
+                <h2>22222222222</h2>
+                <button onClick={()=>setNum(num+1)}>{num}</button>
+                <C/>
+            </div>
+    }
 
-</script> -->
+
+
+    function A(){
+        console.log('1');
+        var [num,setNum] =useState(0)
+        return <div>
+                <h1>111111111111</h1>
+                <button onClick={()=>setNum(num+1)}>{num}</button>
+                <B/>
+            </div>
+    }
+
+    render(<A/>,document.querySelector('#app'))
+
+</script>
