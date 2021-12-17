@@ -3,9 +3,7 @@ import { getTheTagType, camelize } from "../../shared/shared"
 
 var RE_startTag = /^<([\w-]+)/ // 匹配开始标签，获取标签名
 var RE_endTag = /^<\/([\w-]+)\s*>/
-
 var RE_xml_comment = /^<!--(.*?)-->/
-
 var RE_attributeValue = /=\s*(["'])([^\1]*?)(\1)/ // 获取属性值，用单引号或双引号包起来的非单引号或双引号的内容
 var RE_attributeName = /([^=>\s]+)/ // 获取属性名 
 var RE_text = /([^<]+)/
@@ -61,8 +59,6 @@ function* templateExtract(template: string): any {
                 attributeSet.push(currentAttribute)
             }
 
-             
-
             yield {
                 type: XML_CONTENT_TYPE.OPEN_TAG,
                 tagName: camelize(currentTag),
@@ -70,6 +66,9 @@ function* templateExtract(template: string): any {
                 attrubuteMap,
                 attributeSet
             }
+
+            
+
             // 匹配一个开放标签后重置所有状态
             attrubuteMap = {}
             attributeSet = []
