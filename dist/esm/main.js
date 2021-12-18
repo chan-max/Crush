@@ -3,31 +3,33 @@ console.log("%cCrush Studio", "color: #333;  font-size: 10px; font-weight:bold;"
 var template = document.querySelector('#style').innerHTML;
 var RE_selector = /([^{};]*)\s*{/;
 var RE_propertyAndValue = /^([^;{}]+)\s*:\s*([^;]+);/;
-console.log(RE_propertyAndValue.exec(template));
 var $ = null;
-var res = [];
-var selectorStack = [];
-var currentRule = null;
+var selectorStack = []; // 维护选择器结构
+var currentDeclaration = null;
+var map = {};
 /* try to get the property and value */
-while (template.trimLeft()) {
+while (template = template.trimLeft()) {
     if ($ = RE_propertyAndValue.exec(template)) {
-        var [{ length: any }, property, value] = $;
-        currentRule.declarations[property] = value;
-        template = template.substring(length).trimLeft();
+        var [{ length }, property, value] = $;
+        currentDeclaration[property] = value;
+        template = template.substring(length);
     }
     else {
         if (template[0] === '}') {
-            res.push(selectorStack.pop());
+            selectorStack.pop();
+            template = template.substring(1);
         }
         else {
             // 处理选择器
-            var [{ length: any }, selector] = RE_selector.exec(template);
-            currentRule = selectorStack.push({
-                selector,
-                declarations: {}
-            });
-            template = template.substring(length).trimLeft();
+            var [{ length }, selector] = RE_selector.exec(template);
+            selectorStack.push(selector);
+            var realSelector = selectorStack.join(' ');
+            currentDeclaration = map[realSelector] = {};
+            template = template.substring(length);
         }
     }
 }
-console.log(res);
+console.log(map);
+var legal = /(?<!.)([$_a-zA-Z][$_a-zA-Z0-9]*)/g;
+var expression = 'num.a>0';
+console.log('=>', expression.replace(legal, '$'));

@@ -7,44 +7,53 @@ var RE_selector: RegExp = /([^{};]*)\s*{/
 
 var RE_propertyAndValue: RegExp = /^([^;{}]+)\s*:\s*([^;]+);/
 
-console.log(RE_propertyAndValue.exec(template));
 
 var $ = null
 
-var res = []
+var selectorStack: any = [] // 维护选择器结构
 
-var selectorStack: any = []
+var currentDeclaration:any = null
 
-var currentRule:any = null
+var map = {}
 
 /* try to get the property and value */
-while(template.trimLeft()){
+while (template = template.trimLeft()) {
     if ($ = RE_propertyAndValue.exec(template)) {
-        var [{ length: any }, property, value]: any = $
-        currentRule.declarations[property] = value
-    
-        template = template.substring(length).trimLeft()
+        var [{ length }, property, value] = $
+        currentDeclaration[property] = value
+        template = template.substring(length)
     } else {
         if (template[0] === '}') {
-            res.push(selectorStack.pop())
+            selectorStack.pop()
+            template = template.substring(1)
         } else {
             // 处理选择器
-            var [{ length: any }, selector]: any = RE_selector.exec(template)
-    
-            currentRule = selectorStack.push(
-                {
-                    selector,
-                    declarations: {}
-                }
-            )
-    
-            template = template.substring(length).trimLeft()
+            var [{ length }, selector] = RE_selector.exec(template)!
+            selectorStack.push(selector)
+            var rule = {
+                selector,
+                declarations: {}
+            }
+
+            var realSelector = selectorStack.join(' ')
+            currentDeclaration = map[realSelector] = {}
+            template = template.substring(length)
         }
     }
 }
 
-console.log(res);
+console.log(map);
 
+var legal = /(?<!.)([$_a-zA-Z][$_a-zA-Z0-9]*)/g
+
+var expression = 'num.a>0'
+
+console.log('=>',expression.replace(legal,'$'));
+
+
+function scopedExpression(expression:string,) {
+    
+}
 
 
 
