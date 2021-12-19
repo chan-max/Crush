@@ -1,5 +1,5 @@
 import { XML_CONTENT_TYPE } from "./declare"
-import { getTheTagType, camelize } from "../../shared/shared"
+import { getTheTagType, camelize } from "../shared/shared"
 
 var RE_startTag = /^<([\w-]+)/ // 匹配开始标签，获取标签名
 var RE_endTag = /^<\/([\w-]+)\s*>/

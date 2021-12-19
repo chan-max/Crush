@@ -1,7 +1,7 @@
 
 import { templateExtract } from "./templateExtract";
 import { XML_CONTENT_TYPE } from "./declare"
-import { TAG_TYPE } from '../../shared/types'
+import { TAG_TYPE } from '../shared/types'
  
 var template = `
 <header-row disabled  @CLICK="132456"  dada >
