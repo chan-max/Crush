@@ -6,11 +6,11 @@ function mark(target, name, value) {
         value
     });
 } // 打上标记
-function createStyle(selector, declarations) {
+function createStyle(selector, declaration) {
     return {
         type: 'CSSStyleRule',
         selector,
-        declarations,
+        declaration,
     };
 }
 function createMedia(condition, rules) {
@@ -27,11 +27,11 @@ function createKeyframes(name, rules) {
         rules
     };
 }
-function createKeyframe(selector, declarations) {
+function createKeyframe(selector, declaration) {
     return {
         type: 'CSSKeyframeRule',
         selector,
-        declarations
+        declaration
     };
 }
 var nextStyle = [
@@ -46,9 +46,9 @@ var nextStyle = [
 ];
 // 获取styleRule的字符串形式
 function getStyleRuleString(styleRule) {
-    var { selector, declarations } = styleRule;
-    var ruleContent = Object.keys(declarations).reduce((res, property) => {
-        return res + property + ':' + declarations[property] + ';';
+    var { selector, declaration } = styleRule;
+    var ruleContent = Object.keys(declaration).reduce((res, property) => {
+        return res + property + ':' + declaration[property] + ';';
     }, '');
     return selector + '{' + ruleContent + '}';
 }
@@ -66,9 +66,9 @@ function getEmptyKeyframesRule(name) {
     return '@keyframes' + ' ' + name + '{' + '' + '}';
 }
 function getKeyframeRuleString(keyframeRule) {
-    var { selector, declarations } = keyframeRule;
-    var ruleContent = Object.keys(declarations).reduce((res, property) => {
-        return res + property + ':' + declarations[property] + ';';
+    var { selector, declaration } = keyframeRule;
+    var ruleContent = Object.keys(declaration).reduce((res, property) => {
+        return res + property + ':' + declaration[property] + ';';
     }, '');
     return selector + '{' + ruleContent + '}';
 }

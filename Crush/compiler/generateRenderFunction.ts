@@ -13,7 +13,6 @@ var template = `
 var e = templateExtract(template)
 
 var stack = []
-
 for (var item of e) {
 if (item.type === XML_CONTENT_TYPE.OPEN_TAG) {
 item.children = []

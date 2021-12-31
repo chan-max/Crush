@@ -7,23 +7,14 @@ var RE_xml_comment = /^<!--(.*?)-->/
 var RE_attributeValue = /=\s*(["'])([^\1]*?)(\1)/ // 获取属性值，用单引号或双引号包起来的非单引号或双引号的内容
 var RE_attributeName = /([^=>\s]+)/ // 获取属性名 
 var RE_text = /([^<]+)/
-
 var inStartTag = false // 判断当前是否处于开始标签中，用于区分属性和文本
-
 var currentTag = '' // 保存当前标签名
-
 var attrubuteMap = {} // 保存
-
 var attributeSet: any = []
-
 var currentAttribute = ''
-
 var willbeAttribueName = true
-
 var expectAttributeValue = false
-
 var $ = null
-
 function cutString(str: string, length: number) {
     return str.substring(length).trimLeft()
 } // 根据长度截取字符串，并且清空左空格
@@ -66,9 +57,6 @@ function* templateExtract(template: string): any {
                 attrubuteMap,
                 attributeSet
             }
-
-            
-
             // 匹配一个开放标签后重置所有状态
             attrubuteMap = {}
             attributeSet = []
@@ -94,7 +82,7 @@ function* templateExtract(template: string): any {
             willbeAttribueName = true
             yield* templateExtract(cutString(template, length))
         }
-    } else if($ = RE_xml_comment.exec(template)){
+    } else if ($ = RE_xml_comment.exec(template)) {
         var [{ length }, value]: any = $
         yield {
             type: XML_CONTENT_TYPE.COMMENT,

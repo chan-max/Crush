@@ -1,10 +1,15 @@
-"use strict";
 let uid = 0;
-function getCommonComponentnistanceProperties() {
+function getCommonComponentnistance() {
     return {
         uid: uid++,
-        or: [],
+        context: Object.create(null),
+        container: null,
+        styleSheet: null,
+        inited: [],
+        beforeMount: [],
+        mounted: [],
+        beforeDestroy: [],
+        destroyed: []
     };
 }
-function initComponentOptions(options) {
-}
+export { getCommonComponentnistance };

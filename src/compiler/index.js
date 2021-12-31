@@ -1,6 +1,3 @@
-"use strict";
-// template and style compiler
-/*
-
-
-*/ 
+function compiler(template) {
+}
+export { compiler };

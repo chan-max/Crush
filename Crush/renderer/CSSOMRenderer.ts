@@ -7,12 +7,11 @@ function mark(target: Record<string, any>, name: string, value: any) {
     })
 } // 打上标记
 
-function createStyle(selector: string, declarations: Record<string, any>) {
+function createStyle(selector: string, declaration: Record<string, any>) {
     return {
         type: 'CSSStyleRule',
         selector,
-        declarations,
-
+        declaration,
     }
 }
 
@@ -34,11 +33,11 @@ function createKeyframes(name: string, rules: Array<any>) {
     }
 }
 
-function createKeyframe(selector: string, declarations: Record<string, any>) {
+function createKeyframe(selector: string, declaration: Record<string, any>) {
     return {
         type: 'CSSKeyframeRule',
         selector,
-        declarations
+        declaration
     }
 }
 
@@ -53,22 +52,18 @@ var nextStyle = [
     ])
 ]
 
-interface styleRule {
-    type: 'CSSMediaRule',
-    selector: string,
-    declarations: Record<string, any>
-}
+
 
 
 // 获取styleRule的字符串形式
-function getStyleRuleString(styleRule: styleRule) {
+function baseStyleRuleToString(styleRule: any) {
     var {
         selector,
-        declarations
+        declaration
     } = styleRule
 
-    var ruleContent = Object.keys(declarations).reduce((res, property) => {
-        return res + property + ':' + declarations[property] + ';'
+    var ruleContent = Object.keys(declaration).reduce((res, property) => {
+        return res + property + ':' + declaration[property] + ';'
     }, '')
 
     return selector + '{' + ruleContent + '}'
@@ -82,7 +77,7 @@ function getMediaRuleString(mediaRule: any) {
     } = mediaRule
 
     var ruleContent = rules.reduce((res: string, rule: any) => {
-        return res + getStyleRuleString(rule)
+        return res + baseStyleRuleToString(rule)
     }, '')
 
     return '@media' + ' ' + condition + '{' + ruleContent + '}'
@@ -100,11 +95,11 @@ function getEmptyKeyframesRule(name: string) {
 function getKeyframeRuleString(keyframeRule: any) {
     var {
         selector,
-        declarations
+        declaration
     } = keyframeRule
 
-    var ruleContent = Object.keys(declarations).reduce((res, property) => {
-        return res + property + ':' + declarations[property] + ';'
+    var ruleContent = Object.keys(declaration).reduce((res, property) => {
+        return res + property + ':' + declaration[property] + ';'
     }, '')
 
     return selector + '{' + ruleContent + '}'
@@ -114,15 +109,13 @@ function getKeyframeRuleString(keyframeRule: any) {
 
 
 function updateSheet(sheet: any, nextRules: any) {
-
     const prevRules = sheet.__Cr_rules
-
     if (!prevRules) {
         // 直接渲染全新的样式表
         nextRules.forEach((rule: any, index: number) => {
             if (rule.type === 'CSSStyleRule') {
                 // 生成普通样式规则
-                sheet.insertRule(getStyleRuleString(rule), index)
+                sheet.insertRule(baseStyleRuleToString(rule), index)
                 mark(sheet.cssRules[index], '__Cr_styleRule', rule)
             } else if (rule.type === 'CSSMediaRule') {
                 // 生成媒体样式
@@ -147,25 +140,13 @@ function updateSheet(sheet: any, nextRules: any) {
         // 更新样式表
         console.log('更新样式表');
         // 对比 prevRules 和  nextRules
-        console.log(prevRules,nextRules);
-        
+        console.log(prevRules, nextRules);
+
     }
 }
 
-var ss: any = (document as any).querySelector('style').sheet
 
 
-function test() {
-    // first render
-    updateSheet(ss, nextStyle)
-    console.log(ss);
-    // first update
-    updateSheet(ss, nextStyle)
-}
-
-export {
-    test
-}
 
 
 
