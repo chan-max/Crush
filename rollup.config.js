@@ -1,7 +1,7 @@
 
 import typescript from 'rollup-plugin-typescript2';
 
-
+console.log(typescript);
 
 //console.log(replace(replacements));
 

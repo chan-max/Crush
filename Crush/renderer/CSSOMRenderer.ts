@@ -1,150 +1,93 @@
-function mark(target: Record<string, any>, name: string, value: any) {
-    return Reflect.defineProperty(target, name, {
-        writable: false,
-        configurable: false,
-        enumerable: false,
-        value
-    })
-} // 打上标记
+import { isString, isArray, isNumber, isObject } from "../shared/dataType";
+import { mark } from "../shared/mark";
+const enum CSSRULE_TYPE {
+    STYLERULE,
+    KEYFRAMESRULE,
+    MEDIARULE,
+    KEYFRAMERULE
+}
 
-function createStyle(selector: string, declaration: Record<string, any>) {
-    return {
-        type: 'CSSStyleRule',
-        selector,
-        declaration,
+const createStyleRuleNode = (selector: string, declaration: any, config: any) => ({ type: CSSRULE_TYPE.STYLERULE, selector, declaration, config })
+const createMediaRuleNode = (condition: string, rules: any) => ({ type: CSSRULE_TYPE.MEDIARULE, condition, rules })
+const createKeyframesRuleNode = (name: string, rules: any) => ({ type: CSSRULE_TYPE.KEYFRAMESRULE, name, rules })
+const createKeyframeRuleNode = (key: string, declaration: any,config:any) => ({ type: CSSRULE_TYPE.KEYFRAMERULE, key, declaration,config })
+
+// background-color:red; => ....
+function toStyleMapString(property: string, value: any, important: boolean, config: any): any {
+    return isObject(value) ? Object.entries(value).map(([v1, v2]) => {
+        return toStyleMapString(property + '-' + v1, v2, important, config)
+    }).join('') : `${property}:${isArray(value) ?
+        value.reduce((res: string, valueItem: any) => res + ' ' + (isNumber(valueItem) ? valueItem + config.unit : valueItem), '') : isNumber(value) ?
+            value + config.unit : value}${important ? ' !important' : ''};`
+}
+
+// mount single styleRule , for instance, body{...styleMap}
+function createStyleRuleString(selector: string, declaration: any, config: any) {
+    return `${selector}{${Object.entries(declaration).map(([property, { value, important }]: any) => toStyleMapString(property, value, important, config)).join('')}}`
+}
+
+
+function mountRule(styleSheet: any, rule: any, index: number) {
+    if (rule.type === CSSRULE_TYPE.MEDIARULE) {
+        styleSheet.insertRule(`@media ${rule.condition}{}`, index)
+        updateStyleSheet(styleSheet.cssRules[index], rule.rules)
+    } else if (rule.type === CSSRULE_TYPE.KEYFRAMESRULE) {
+        styleSheet.insertRule(`@keyframes ${rule.name}{}`,index)
+        updateStyleSheet(styleSheet.cssRules[index], rule.rules)
+
+    } else if (rule.type === CSSRULE_TYPE.STYLERULE) {
+        styleSheet.insertRule(createStyleRuleString(rule.selector, rule.declaration, rule.config), index)
+    } else if (rule.type === CSSRULE_TYPE.KEYFRAMERULE) {
+        styleSheet.appendRule(createStyleRuleString(rule.key, rule.declaration, rule.config), index)
     }
 }
 
-function createMedia(condition: string, rules: Array<any>) {
-    return {
-        type: 'CSSMediaRule',
-        condition,
-        rules
-    }
+function updateStyleSheet(sheet: any, rules: any) {
+    rules.forEach((rule: any, index: number) => {
+        mountRule(sheet, rule, index)
+    });
 }
 
 
 
-function createKeyframes(name: string, rules: Array<any>) {
-    return {
-        type: 'CSSKeyframesRule',
-        name,
-        rules
-    }
+var style: any = (document.querySelector('#style') as any).sheet
+const styleRender = (config = { unit: 'px', url: '../images/' }) => {
+    return [
+        createMediaRuleNode('screen and (min-width:500px)', [
+            createStyleRuleNode('body', {
+                border: {
+                    important: true,
+                    value: '100px solid green'
+                },
+                animation:{
+                    important:true,
+                    value:'a 3s infinite'
+                }
+            }, config)
+        ]),
+        createKeyframesRuleNode('a',[
+            createKeyframeRuleNode('0%',{
+                ['background-color']:{
+                    value:'red',important:false
+                }
+            },config),
+            createKeyframeRuleNode('100%',{
+                ['background-color']:{
+                    value:'blue',important:false
+                }
+            },config)
+        ])
+    ]
 }
 
-function createKeyframe(selector: string, declaration: Record<string, any>) {
-    return {
-        type: 'CSSKeyframeRule',
-        selector,
-        declaration
-    }
+function test(){
+    updateStyleSheet(style, styleRender())
+    console.log(styleRender());
 }
 
-var nextStyle = [
-    createKeyframes('first', [
-        createKeyframe('from', {
-            'background-color': 'red'
-        }),
-        createKeyframe('to', {
-            'background-color': 'blue'
-        })
-    ])
-]
-
-
-
-
-// 获取styleRule的字符串形式
-function baseStyleRuleToString(styleRule: any) {
-    var {
-        selector,
-        declaration
-    } = styleRule
-
-    var ruleContent = Object.keys(declaration).reduce((res, property) => {
-        return res + property + ':' + declaration[property] + ';'
-    }, '')
-
-    return selector + '{' + ruleContent + '}'
+export {
+    test
 }
-
-
-function getMediaRuleString(mediaRule: any) {
-    const {
-        condition,
-        rules
-    } = mediaRule
-
-    var ruleContent = rules.reduce((res: string, rule: any) => {
-        return res + baseStyleRuleToString(rule)
-    }, '')
-
-    return '@media' + ' ' + condition + '{' + ruleContent + '}'
-}
-
-function getEmptyMediaRuleString(condition: string) {
-    return getMediaRuleString(createMedia(condition, []))
-}
-
-function getEmptyKeyframesRule(name: string) {
-    return '@keyframes' + ' ' + name + '{' + '' + '}'
-}
-
-
-function getKeyframeRuleString(keyframeRule: any) {
-    var {
-        selector,
-        declaration
-    } = keyframeRule
-
-    var ruleContent = Object.keys(declaration).reduce((res, property) => {
-        return res + property + ':' + declaration[property] + ';'
-    }, '')
-
-    return selector + '{' + ruleContent + '}'
-}
-
-
-
-
-function updateSheet(sheet: any, nextRules: any) {
-    const prevRules = sheet.__Cr_rules
-    if (!prevRules) {
-        // 直接渲染全新的样式表
-        nextRules.forEach((rule: any, index: number) => {
-            if (rule.type === 'CSSStyleRule') {
-                // 生成普通样式规则
-                sheet.insertRule(baseStyleRuleToString(rule), index)
-                mark(sheet.cssRules[index], '__Cr_styleRule', rule)
-            } else if (rule.type === 'CSSMediaRule') {
-                // 生成媒体样式
-                var { condition, rules } = rule
-                sheet.insertRule(getEmptyMediaRuleString(condition), index)
-                updateSheet(sheet.cssRules[index], rules) // 递归处理媒体样式
-                mark(sheet.cssRules[index], '__Cr_mediaRule', rule)
-            } else if (rule.type === 'CSSKeyframesRule') {
-                // 生成动画规则
-                var { name, rules } = rule
-                sheet.insertRule(getEmptyKeyframesRule(name), index)
-                updateSheet(sheet.cssRules[index], rules)
-                mark(sheet.cssRules[index], '__Cr_keyframesRule', rule)
-            } else if (rule.type === 'CSSKeyframeRule') {
-                // 生成动画帧数规则
-                sheet.appendRule(getKeyframeRuleString(rule), index)
-                mark(sheet.cssRules[index], '__Cr_keyframeRule', rule)
-            }
-        });
-        mark(sheet, '__Cr_rules', nextRules)
-    } else {
-        // 更新样式表
-        console.log('更新样式表');
-        // 对比 prevRules 和  nextRules
-        console.log(prevRules, nextRules);
-
-    }
-}
-
 
 
 

@@ -1,15 +1,18 @@
 {
   "name": "crushed",
   "version": "1.0.0",
+  "workspaces":[
+    "packages/*"
+  ],
   "description": "",
   "main": "index.js",
+
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "fre": "^2.4.4",
     "rollup-plugin-typescript2": "^0.31.1"
   }
 }

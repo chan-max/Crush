@@ -21,7 +21,7 @@ function styleRuleToStr(styleRule) {
         return resStr + kababCase(el[0]) + ':' + el[1] + ';';
     }, styleRule.selector + '{') + '}';
 }
-function updateStyleRule(prev, next) {
+function updateStyleRule1(prev, next) {
     const style = prev.ref.style;
     const prevDeclaration = prev.declaration;
     const nextDeclaration = next.declaration;
@@ -52,7 +52,7 @@ function updateRules(prevRules, nextRules, sheet) {
         if (prevRule.type === nextRuleType) {
             switch (nextRuleType) {
                 case 'CSSStyleRule':
-                    updateStyleRule(prevRule, nextRule);
+                    updateStyleRule1(prevRule, nextRule);
                     break;
             }
         }

@@ -35,7 +35,7 @@ const emptyNode = {}
 
 
 
-function updateStyleRule(prev:any,next:any) {
+function updateStyleRule1(prev:any,next:any) {
 
     const style = prev.ref.style
 
@@ -86,7 +86,7 @@ function updateRules(prevRules:any,nextRules:any,sheet:any) {
     
             switch(nextRuleType){
                 case 'CSSStyleRule':
-                    updateStyleRule(prevRule,nextRule);
+                    updateStyleRule1(prevRule,nextRule);
                     break;
             }
 

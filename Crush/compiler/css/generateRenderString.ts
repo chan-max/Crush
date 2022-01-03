@@ -1,3 +1,4 @@
+import {toBackQuotesString} from '../common'
 
 function flatNestingRules(ast: any, res: any) {
     ast.forEach((fragment: any) => {
@@ -34,7 +35,8 @@ function generateRules(ast: any) {
 }
 
 
-var toBackQuotesString = (_: string) => '`' + _ + '`'
+
+
 
 
 function styleRuleToRenderString(styleRule: any) {

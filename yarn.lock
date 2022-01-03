@@ -78,11 +78,6 @@
     "locate-path" "^6.0.0"
     "path-exists" "^4.0.0"
 
-"fre@^2.4.4":
-  "integrity" "sha512-17ijfXa2c7iAdnL1SYOdrlItY+ps2nUR7ZkLuEE14+tHQwSRLiUXIVB1EIPaEVxKXIxXqoU7cyhr/ozA99cYcg=="
-  "resolved" "https://registry.npmjs.org/fre/-/fre-2.4.4.tgz"
-  "version" "2.4.4"
-
 "fs-extra@8.1.0":
   "integrity" "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="
   "resolved" "https://registry.npmjs.org/fs-extra/-/fs-extra-8.1.0.tgz"
