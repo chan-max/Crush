@@ -1,4 +1,4 @@
-import { isNumber } from '../shared/dataType'
+import {isNumber} from '../../common/dataType/dataType'
 
 function rgb(red: number, green: number, blue: number) {
     return `rgb(${red},${green},${blue})`

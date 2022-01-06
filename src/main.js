@@ -1,9 +1,13 @@
-"use strict";
-var groupSelectorDelimiter = /\s*,\s*/;
-function mergeSelector() {
-}
-var str = `   123   ,  123132   ,  4564 7889   `;
-console.log(str.split(groupSelectorDelimiter));
-/*
+import { parseDOMTemplate } from "./compiler/dom-parser/parsedom";
+var template = ` 
 
-*/ 
+<ul id="navList">
+      <li>
+            <a id="blog_nav_sitehome" class="menu" href="https://www.cnblogs.com/">
+                  博客园
+            </a>
+      </li>
+</ul>
+
+`;
+console.log(parseDOMTemplate(template));
