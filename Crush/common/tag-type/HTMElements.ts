@@ -5,7 +5,7 @@ export const HTMLELEMENTS = [
     "head",
     "link",
     "meta",
-    "style",
+    /* "style", */
     "title",
     "address",
     "article",

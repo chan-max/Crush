@@ -1,10 +1,11 @@
 import { TagTypes,tagTypeOf } from "../../common/tag-type/tagType"
 import { camelize } from "../../common/string/transfromString"
+import { parseAttrs } from "./parseAttributes"
 
 var closeTagRE = /^<\/([\w-]+)\s*>/
 var openTagRE = /^<([\w-]+)/
 var DOMCommentRE = /<!--((.|[\r\n])*?)-->/
-var attributeRE = /^([^=>\s]+)\s*=\s*(["'])([^\1]*?)(\2)/
+var attributeMapRE = /^([^=>\s]+)\s*=\s*(["'])([^\1]*?)(\2)/
 var emptyAttributeRE = /^([^=>\s]+)/
 var textRE = /([^<]+)/
 
@@ -59,9 +60,11 @@ const parseDOMTemplate = (template: string) => {
                 inOpenTag = false
                 currentTagName = ''
                 subLength = 1
-            } else if ($ = attributeRE.exec(template)) {
+            } else if ($ = attributeMapRE.exec(template)) {
                 /*  try to catch the attr map  */
                 let [{ length }, attribute, _, value]: any = $
+                
+                parseAttrs(attribute,value)
                 attributeCollection.push({
                     attribute, value
                 })
@@ -69,6 +72,7 @@ const parseDOMTemplate = (template: string) => {
             } else {
                 /* no value attribute */
                 let [{ length }, attribute]: any = emptyAttributeRE.exec(template)
+
                 attributeCollection.push({
                     attribute,
                     value: true

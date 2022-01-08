@@ -1,4 +1,4 @@
-import { parseDOMTemplate } from "./compiler/dom-parser/parsedom";
+import { parseDOMTemplate } from "./compiler/dom-parser/parseDOM";
 var template = ` 
 
 <ul id="navList">
@@ -11,3 +11,8 @@ var template = `
 
 `;
 console.log(parseDOMTemplate(template));
+var attr = '@[click].native.stop';
+var attributeExtractRE = /(-{2}|@|$)?(\[)?(\w+)(\])?(\.)/;
+console.log(attributeExtractRE.exec(attr));
+var parseAttrs = () => {
+};
