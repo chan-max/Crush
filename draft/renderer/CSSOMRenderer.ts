@@ -62,7 +62,7 @@
 //                 animation:{
 //                     important:true,
 //                     value:'a 3s infinite'
-//                 }
+//                 } 
 //             }, config)
 //         ]),
 //         createKeyframesRuleNode('a',[

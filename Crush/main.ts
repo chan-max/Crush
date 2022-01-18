@@ -1,13 +1,17 @@
-import { parseCascadingStyleSheet } from "./compiler/parser/parseCascadingStyleSheet";
+import { parseDOMTemplate } from "./compiler/parser/parsedom"
 
-var template = `--if  (num > 0)
-      
+var template = `
 
-
+    <div>
+        <button> 早上好 ！ 请 {{ num < 0  }} 登录 </button>
+    </div>
+    
 `
 
 
+console.log(parseDOMTemplate(template));
 
 
-      
+
+
 

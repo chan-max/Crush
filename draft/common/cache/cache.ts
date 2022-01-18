@@ -1,4 +1,4 @@
-import { isUndefined } from "../dataType";
+import { isUndefined } from "../dataType/dataType";
 
 const cache = (fn: Function) => {
         const cache = Object.create(null);
