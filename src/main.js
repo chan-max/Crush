@@ -1,18 +1,19 @@
-import { parseDOMTemplate } from "./compiler/dom-parser/parseDOM";
-var template = ` 
+import { parseHTML } from "./compiler/parser/parseHTML";
+import { parseAst } from "./compiler/parser/parseAst";
+var template = `
+<div class="ndeallist clear_fix">
+<svg>
+    <dd>
+        <a rel="nofollow" href="/list/list_15_1.htm" target="_blank">PHP</a>
+        <a rel="nofollow" href="/list/list_21_1.htm" target="_blank">ASP.NET</a>
+        <a rel="nofollow" href="/list/list_2_1.htm" target="_blank">ASP</a>
+        <a rel="nofollow" href="/list/list_3_1.htm" target="_blank">JavaScript</a>
+    </dd>
+</svg>
+</div>
 
-<ul id="navList">
-      <li>
-            <a id="blog_nav_sitehome" class="menu" href="https://www.cnblogs.com/">
-                  博客园
-            </a>
-      </li>
-</ul>
 
 `;
-console.log(parseDOMTemplate(template));
-var attr = '@[click].native.stop';
-var attributeExtractRE = /(-{2}|@|$)?(\[)?(\w+)(\])?(\.)/;
-console.log(attributeExtractRE.exec(attr));
-var parseAttrs = () => {
-};
+var ast = parseHTML(template);
+parseAst(ast);
+console.log(ast);
