@@ -1,35 +1,48 @@
-import {
-    trimS,
-} from './utils'
 
-const openTagRE = /^<([\w-]+)(?:\:(\w+))?/
-const closeTagRE = /^<\/([\w-]+)(?:\:\w+)?\s*>/
-const commentRE = /<!--((.|[\r\n])*?)-->/
-const textRE = /((?:\{\{.*?\}\}|[^<])+)/
+import { Nodes } from "../../type/nodeType"
+import { createScanner } from "./scanner"
 
-/*
-    capture the property and value
-    $1 : rawProperty
-    $2 : the value border , " or ' , we can use except the border in value content , but the ast doesnt need the border
-    $3 : the value , the value maybe 'undefined' or empty string , we should to diff the normal property or single property by 'undefined or empty string 
-*/
-const baseAttrRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/
+const openTag = /^<([\w-]+)(?:\:(\w+))?/
+const closeTagEx = /^<\/([\w-]+)(?:\:\w+)?\s*>/
+const comment = /<!--((.|[\r\n])*?)-->/
+const text = /((?:\{\{.*?\}\}|[^<])+)/
+const baseAttr = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/
 
-export const parseHTML = (ts: string) => {
+export type DOMAttr = {
+    attribute: string,
+    value: string | undefined
+}
+
+export type DOMAstNode = {
+    tag: string,
+    tagName?: string
+    content?: string
+    condition?: string
+    iterator?: any
+    rules: any
+    texts: any
+    nodeType: Nodes
+    attrs?: Array<DOMAttr>
+    children: Array<DOMAstNode>
+}
+
+export type DOMAst = Array<DOMAstNode>
+
+/* therre is always return an array of the astTree, althrough only one root node */
+export const parseHTML = (source:string): DOMAst => {
+    var scanner = createScanner(source)
     var ast: any = [],
-        attrs: any, /* use array bbut not map beacuse ,we may support the repeated property and keep the order */
+        attrs: any,
         inOpen = false,
-        sl = 0,
-        $: any,
         tag,
-        modifier /* why need the parse the modifier here, because we need to process the nesting domtree by tagName  */
-    while (ts = trimS(ts, sl)) {
-        if (ts[0] === '<') {
-            if (ts[1] === '/') {
-                $ = closeTagRE.exec(ts)
+        modifier
+    while (scanner.source) {
+        if (scanner.expect('<')) {
+            if (scanner.expect('/', 1)) {
+                var closeTag = scanner.extract(closeTagEx)[0]
                 for (var i = ast.length - 1; i >= 0; i--) {
                     if (ast[i].closed) continue
-                    if (ast[i].tag === $[1]) {
+                    if (ast[i].tag === closeTag) {
                         ast[i].closed = true
                         var children = ast.splice(i + 1)
                         if (children.length) {
@@ -38,26 +51,20 @@ export const parseHTML = (ts: string) => {
                         break
                     }
                 }
-                sl = $[0].length
-            } else if (ts[1] === '!') {
-                $ = commentRE.exec(ts)
+            } else if (scanner.expect('!', 1)) {
                 ast.push({
                     tag: '!',
-                    content: $[1]
+                    content: scanner.extract(comment)[0]
                 })
-                sl = $[0].length
             } else {
-                $ = openTagRE.exec(ts)
-                tag = $[1]
-                modifier = $[2]
+                [tag, modifier] = scanner.extract(openTag)
                 inOpen = true
-                sl = $[0].length
             }
         } else if (inOpen) {
-            if (ts[0] === '/') {
+            if (scanner.expect('/')) {
                 /* there is not must for decide a opentag is close or not by '/', so just forget it */
-                sl = 1
-            } else if (ts[0] === '>') {
+                scanner.move(1)
+            } else if (scanner.expect('>')) {
                 ast.push({
                     tag,
                     modifier,
@@ -67,23 +74,19 @@ export const parseHTML = (ts: string) => {
                 })
                 attrs = null
                 inOpen = false
-                sl = 1
+                scanner.move(1)
             } else {
-                $ = baseAttrRE.exec(ts);
-                attrs = attrs || (attrs = [])
-                attrs.push({
-                    attribute: $[1],
-                    value: $[3]
-                })
-                sl = $[0].length
+                var [attribute, _, value] = scanner.extract(baseAttr);
+                    (attrs ||= []).push({
+                        attribute,
+                        value
+                    })
             }
-        } else {
-            $ = textRE.exec(ts)
+        } else { // text
             ast.push({
                 tag: '',
-                content: $[1]
+                content: scanner.extract(text)[0]
             })
-            sl = $[0].length
         }
     }
     return ast

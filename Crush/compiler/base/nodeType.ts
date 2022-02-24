@@ -1,6 +1,6 @@
 import { HTML_TAGS } from "./HTMLTags";
 import { SVG_TAGS } from "./SVGTags";
-import { cache } from "../../common/cache/cache";
+import { cache } from "../../common/cache";
 import { Nodes } from "../../type/nodeType";
 const isHTMLTag = (tagName: string) => HTML_TAGS.includes(tagName)
 
@@ -22,9 +22,6 @@ const nodeTypeOf = (key: string) => {
     var type = typeMap[key]
     return type || (isHTMLTag(key) ? Nodes.HTMLELEMENT : Nodes.COMPONENT)
 }
-
-
-
 
 export {
     nodeTypeOf

@@ -1,13 +1,26 @@
 import {
     createComponentInstance
 } from '../../core/instance/initOptions'
+import { patch } from './patch'
+import {
+    emptyNode
+} from '../../renderer/vnode/commonNode'
 
 import { renderMethods } from "../../compiler/codegen/const"
 
-export function mountComponent(options: any, el: any) {
-    var instance = createComponentInstance(options)
+import {
+    effect
+} from '../../reactivity/reactive'
+
+export function mountComponent(options: any, container: any) {
+    var instance: any = createComponentInstance(options)
     instance.init(instance.scope)
-    var nextTree = instance.render(instance.scope, renderMethods)
-    el.innerText = JSON.stringify(nextTree,null,2)
+
+    effect(() => {
+        var prev = instance.prev || emptyNode
+        var next = instance.render(instance.scope, renderMethods)
+        patch(prev, next, container)
+        instance.prev = next
+    })
     return instance
 }

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crush docs</title>
+    <link rel="stylesheet" href="./md.css">
+    <style>
+        html,body{
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #docs{
+            height: 100%;
+            display: flex;
+        }
+
+        #directroy{
+           width: 20%;
+           display: flex;
+           margin: 30px;
+        }
+
+        #content{
+            padding-top: 50px;
+            width: 80%;
+            overflow: auto;
+            padding-right: 10%;
+        }
+
+        .children{
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .children a{
+            padding: 10px;
+        }
+
+
+    </style>
+</head>
+
+<body>
+    <div id="docs">
+        <div id="directroy">
+        </div>
+        <div id="content">
+            hello
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="./lib/marked.js"></script>
+<script>
+    function getArticleList() {
+        return fetch('/list', {
+            method: 'GET',
+        }).then((async (res) => {
+            return res.text()
+        }))
+    }
+
+    function getMd(url) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                document.getElementById('content').innerHTML = marked(xmlhttp.responseText);
+            }
+        }
+
+        // 向服务器发送请求
+        xmlhttp.open('GET', url, true);
+        xmlhttp.send();
+    }
+
+    function createDOM(node) {
+        if (node.type === 'directroy') {
+            var container = document.createElement('div')
+            var title = document.createElement('h5')
+            title.textContent = node.name
+            container.appendChild(title)
+            var childrenContainer = document.createElement('div')
+            container.appendChild(childrenContainer)
+            childrenContainer.classList.add('children')
+            if (node.children) {
+                node.children.forEach((item) => {
+                    childrenContainer.appendChild(createDOM(item))
+                });
+            }
+            return container
+        } else if (node.type === 'file') {
+            var a = document.createElement('a')
+            a.href = '#' + node.src // usehash
+            a.textContent = node.name
+            return a
+        }
+    }
+
+    getArticleList().then((res) => {
+        var tree = JSON.parse(res)
+        var treeDOM = createDOM(tree)
+        document.querySelector('#directroy').appendChild(treeDOM)
+        window.onhashchange = (e) => {
+            var src = e.newURL.split('#')[1]
+            getMd(src)
+        }
+    })
+</script>

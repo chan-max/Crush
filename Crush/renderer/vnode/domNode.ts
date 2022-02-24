@@ -48,11 +48,19 @@ function createComponent(type: string, props = null, slots = null) {
 }
 
 var comment = Symbol('comment')
-function createComment(content:string) {
+function createComment(content: string) {
     return {
-        nodeType:Nodes.COMMENT,
-        type:comment,
+        nodeType: Nodes.COMMENT,
+        type: comment,
         content
+    }
+}
+
+function createStyleSheet(props: any, rules: any) {
+    return {
+        nodeType: Nodes.STYLE,
+        props,
+        rules
     }
 }
 
@@ -62,5 +70,6 @@ export {
     createFragment,
     createSVGElement,
     createComponent,
-    createComment
+    createComment,
+    createStyleSheet
 }

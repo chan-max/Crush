@@ -8,7 +8,7 @@ import { Nodes } from "../../type/nodeType"
     $[variable] : variable ; 
 */
 
-const extractDeclarationProperty = /(\$)?(\[)?([\w-]+)(\])?(!)?/
+const extractDeclarationProperty = /(\$)?(\()?([\w-]+)(\))?(!)?/
 
 const parseDeclaration = (rawProperty: string, value: string) => {
     var [

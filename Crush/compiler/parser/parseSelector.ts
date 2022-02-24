@@ -1,4 +1,6 @@
-var extractActiveSelector = /\$\[([^\]]*)\]/g
+
+
+var extractActiveSelector = /\$\(([^\]]*)\)/g
 
 function parseSelector(selector: string) {
     var dynamic = false

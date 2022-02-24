@@ -1,13 +1,5 @@
 import { Nodes } from "../../type/nodeType"
 
-function createSheet(config: any, rules: any) {
-    return {
-        nodeType: Nodes.SHEET,
-        config,
-        rules
-    }
-}
-
 function createStyleRule(selector: string, declaration: any) {
     return {
         nodeType: Nodes.STYLERULE,
@@ -36,19 +28,18 @@ function createKeyframeRule(frame: string, declaration: any) {
     }
 }
 
-function createSupportRule(condition: string, rules: any) {
+function createSupportsRule(support: string, rules: any) {
     return {
         nodeType: Nodes.SUPPORTRULE,
-        condition, rules
+        support, rules
     }
 }
 
 export {
     createKeyframeRule,
-    createSupportRule,
+    createSupportsRule,
     createKeyframesRule,
     createStyleRule,
     createMediaRule,
-    createSheet
 }
 
