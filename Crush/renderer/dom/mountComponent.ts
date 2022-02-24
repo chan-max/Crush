@@ -6,7 +6,7 @@ import {
     emptyNode
 } from '../../renderer/vnode/commonNode'
 
-import { renderMethods } from "../../compiler/codegen/const"
+import { renderMethods } from "../../compiler/generator/const"
 
 import {
     effect

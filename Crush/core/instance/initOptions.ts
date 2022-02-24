@@ -1,4 +1,4 @@
-import { compile } from "../../compiler/codegen/compile"
+import { compile } from "../../compiler/generator/compile"
 import {
     reactive
 } from '../../reactivity/reactive'
