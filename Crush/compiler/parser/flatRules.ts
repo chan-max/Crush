@@ -1,9 +1,9 @@
 import { doFlat } from './doFlat'
 
-function flatRules(ast: any) {
-    return doFlat(ast, [])
+function flatRules(rules: any) {
+    return doFlat(rules, [])
 }
 
 export {
-      flatRules
+    flatRules
 }

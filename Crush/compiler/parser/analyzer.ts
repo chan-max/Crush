@@ -17,7 +17,6 @@ import {
     DOMAttr
 } from './parseHTML'
 
-
 const findAttr = (attrs: Array<DOMAttr>, keys: string[]) => {
     for (var item of attrs) {
         if (keys.includes(item.attribute)) {
@@ -77,6 +76,8 @@ const analyzer = (
             if (styleTemplate) {
                 var rawSheet = parseCSS(styleTemplate)
                 ast.rules = flatRules(rawSheet) /* 平铺结构，不做任何解析 */
+                console.log('flatted',ast.rules);
+                
             }
             break
         case Nodes.TEXT:

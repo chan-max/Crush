@@ -1,6 +1,4 @@
 var fs = require('fs');
-const { dirname } = require('path');
-
 
 var rootDir = '../Docs'
 

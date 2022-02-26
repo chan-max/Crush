@@ -8,7 +8,8 @@ import {
     toString,
     objectStringify,
     toArrowFunction,
-    dynamicMapKey
+    dynamicMapKey,
+    callFn
 } from './stringify'
 import { mergeSelectors } from "../../renderer/common/mergeSelector"
 import { important } from "../../renderer/common/important"
@@ -42,9 +43,7 @@ function genNode(ast: any): string {
         case Nodes.STYLE:
             return genSheet('null', ast.rules)
         case Nodes.STYLERULE:
-            return genStyleRule(ast.selectors, ast.declaration)
-        case Nodes.KEYFRAMERULE:
-            return genKeyframeRule(ast.selectors, ast.declaration)
+            return genStyleRule(ast)
         case Nodes.MEDIARULE:
             callFn = renderSource.MEDIARULE
             params = [
@@ -185,6 +184,12 @@ function genSheet(props: any, rules: any) {
     不建议使用 ！！！
 */
 function genSelector(selectors: Array<any>) {
+    if (selectors.length === 1) {
+        return toBackQuotes(selectors[0].content)
+    }
+
+    //! one dynamic , all dynamic ,so use carefully
+
     var contents: any = []
     var isStatic = selectors.every((selector: any) => {
         contents.push(selector.content)
@@ -192,7 +197,7 @@ function genSelector(selectors: Array<any>) {
     })
     return isStatic ?
         toString(mergeSelectors(...contents)) :
-        toFunctionCall(renderSource.MERGESELECTORS, contents.map(toBackQuotes))
+        callFn(renderSource.MERGESELECTORS, contents.map(toBackQuotes))
 }
 
 /* 处理css样式声明和样式混入 */
@@ -220,16 +225,23 @@ function genDeclaration(declarations: any) {
     return collection.length === 1 ? collection[0] : toFunctionCall(renderSource.PROPERTYMIXIN, collection)
 }
 
-function genStyleRule(selectors: any, declaration: any) {
-    return toFunctionCall(renderSource.STYLERULE, [
+function genStyleRule(ast) {
+    var callFn, selectors
+    /*
+        keframes will not extend the parentSelector,
+        so , put into the root list
+        and we can know which is the style and keyframe by 
+        is there selectors or selector on the ast
+    */
+    if (ast.selectors) {
+        callFn = renderSource.STYLERULE
+        selectors = ast.selectors
+    } else {
+        callFn = renderSource.KEYFRAMESRULE
+        selectors = [ast.selector]
+    }
+    return toFunctionCall(callFn, [
         genSelector(selectors),
-        declaration ? genDeclaration(declaration) : 'null'
-    ])
-}
-
-function genKeyframeRule(selectors: any, declaration: any) {
-    return toFunctionCall(renderSource.KEYFRAMERULE, [
-        genSelector(selectors),
-        genDeclaration(declaration)
+        ast.declaration ? genDeclaration(ast.declaration) : 'null'
     ])
 }

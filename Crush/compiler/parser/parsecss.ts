@@ -23,7 +23,8 @@ export const parseCSS = (source) => {
     var ast: any = [],
         $: any,
         stack: any = [],
-        currentRule: any
+        currentRule: any,
+        shouldPush = true
     while (scanner.source) {
         if (scanner.expect('@')) {
             var [type, content] = scanner.extract(AtRule)
@@ -67,16 +68,17 @@ export const parseCSS = (source) => {
         } else if (scanner.expect('}')) {
             stack.pop()
             scanner.move(1)
+            currentRule = stack[stack.length - 1]
             continue
         } else if (scanner.expect('/*')) {
             /* comment */
         } else if (scanner.expect('...')) {
-            var [mixin] = scanner.extract(mixinEx)
-            stack[stack.length - 1].declaration.push({
+            var [mixin] = scanner.extract(mixinEx);
+            currentRule = {
                 nodeType: Nodes.MIXIN,
                 mixin
-            })
-            continue
+            }
+            shouldPush = false
         } else if ($ = scanner.extract(selectorRE)) {
             /*
                 当不确定规则类型时，
@@ -87,8 +89,8 @@ export const parseCSS = (source) => {
                 selector: parseSelector($[0]),
             }
         } else if ($ = scanner.extract(declarationRE)) {
-            (stack[stack.length - 1].declaration ||= []).push(parseDeclaration($[0], $[1]))
-            continue
+            currentRule = parseDeclaration($[0], $[1])
+            shouldPush = false
         } else {
             /* error */
         }
@@ -100,10 +102,13 @@ export const parseCSS = (source) => {
         if (!parent) {
             ast.push(currentRule)
         } else {
-            (parent.children ||= []).push(currentRule)
+            (parent.children ||= []).push(currentRule);
             currentRule.parent = parent
         }
-        stack.push(currentRule)
+        if (shouldPush) {
+            stack.push(currentRule)
+        }
+        shouldPush = true
     }
     return ast
 }

@@ -30,6 +30,7 @@ export const mountStyleRule = (sheet: any, rule: any, index: number, config: any
         selector,
         declaration
     } = rule
+    debugger
     var ruleString: any = createStyleRuleString(selector, declaration, config)
     sheet.insertRule(ruleString, index)
 }
@@ -52,13 +53,13 @@ export const mountSupportsRule = (sheet: any, rule: any, index: number) => {
     mountSheet(sheet.cssRules[index], rules)
 }
 
-export const mountKeyframesRule = (sheet: any, rule: any, index: number) => {
+export const mountKeyframesRule = (sheet: CSSStyleSheet, rule: any, index: number) => {
     const {
         name,
         rules
     } = rule
     sheet.insertRule(`@keyframes ${name}{}`, index)
-    mountSheet(sheet.cssRules[index], rules)
+    mountSheet((sheet.cssRules[index] as any), rules)
 }
 
 export const mountKeyframeRule = (sheet: any, rule: any, index: number, config: any) => {

@@ -28,7 +28,7 @@ export type DOMAstNode = {
 
 export type DOMAst = Array<DOMAstNode>
 
-/* therre is always return an array of the astTree, althrough only one root node */
+/* there is always return an array of the astTree, althrough only one root node */
 export const parseHTML = (source:string): DOMAst => {
     var scanner = createScanner(source)
     var ast: any = [],

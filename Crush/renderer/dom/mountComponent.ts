@@ -19,6 +19,8 @@ export function mountComponent(options: any, container: any) {
     effect(() => {
         var prev = instance.prev || emptyNode
         var next = instance.render(instance.scope, renderMethods)
+        console.log(next);
+        
         patch(prev, next, container)
         instance.prev = next
     })

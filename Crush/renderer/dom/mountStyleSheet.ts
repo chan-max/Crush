@@ -9,6 +9,6 @@ export const mountStyleSheet = (node: any, container: any) => {
     var el = document.createElement('style')
     container.appendChild(el)
     if (rules) {
-        mountSheet((el.sheet as any), rules)
+        mountSheet(el.sheet, rules)
     }
 }

@@ -7,9 +7,7 @@ import {
     mountKeyframeRule
 } from "./mountRules";
 
-
-
-export const mountSheet = (sheet: any, rules: any) => {
+export const mountSheet = (sheet: CSSStyleSheet, rules: any) => {
     var config = {
         unit: 'px'
     }
