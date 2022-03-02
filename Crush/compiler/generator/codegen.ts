@@ -41,7 +41,7 @@ function genNode(ast: any): string {
             return genText(ast.texts)
         /* style */
         case Nodes.STYLE:
-            return genSheet('null', ast.rules)
+            return genSheet('null', ast.children)
         case Nodes.STYLERULE:
             return genStyleRule(ast)
         case Nodes.MEDIARULE:
@@ -242,6 +242,6 @@ function genStyleRule(ast) {
     }
     return toFunctionCall(callFn, [
         genSelector(selectors),
-        ast.declaration ? genDeclaration(ast.declaration) : 'null'
+        ast.declaration ? genDeclaration(ast.declaration) : renderSource.NULL
     ])
 }

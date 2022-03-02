@@ -39,9 +39,11 @@ export const scope = 'scope'
     the render fns name maping
 */
 
+const NULL = 'null'
 
 /* this is for compiler */
 export const renderSource = {
+    NULL,
     FRAGMENT: rfs + '.' + createFragment.name,
     EMPTY: rfs + '.' + createEmpty.name,
     ELEMENT: rfs + '.' + createElement.name,

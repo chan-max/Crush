@@ -19,21 +19,21 @@ import {
 } from './compiler/parser/flatRules'
 
 var css = `
+    <style>
     body{
-        color:red;
-        h1{
-            color:blue; 
+        --if(condition){
+            color:red;
+            h1{
+                color:blue; 
+            }
         }
     }
+    </style>
 `
 
-var ast = parseCSS(css)
+var code = compile(css)
 
-console.log(ast);
-
-var flated = flatRules(ast)
-
-console.log(flated);
+console.log(code);
 
 
 

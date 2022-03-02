@@ -1,9 +1,8 @@
 <template>
-    <el-button>123</el-button>
+    <!-- <el-scrollbar> -->
+    <router-view></router-view>
+    <!-- </el-scrollbar> -->
 </template>
-<script lang="ts" setup>
-import {
-    reactive,
-} from 'vue'
 
+<script lang="ts" setup>
 </script>

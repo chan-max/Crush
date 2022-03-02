@@ -75,11 +75,9 @@ const analyzer = (
             var styleTemplate = ast.children[0].content
             if (styleTemplate) {
                 var rawSheet = parseCSS(styleTemplate)
-                ast.rules = flatRules(rawSheet) /* 平铺结构，不做任何解析 */
-                console.log('flatted',ast.rules);
-                
+                ast.children = flatRules(rawSheet) /* 平铺结构，不做任何解析 */
             }
-            break
+            return
         case Nodes.TEXT:
             /* 
                 分析text文本，将其中的动态文本分离出来
