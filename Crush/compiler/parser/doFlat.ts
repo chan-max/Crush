@@ -5,11 +5,15 @@ import { warn } from '../../common/console';
 function doFlat(
     rules: any,
     flattedRules: any,
+    isKeyframe = false
 ) {
     rules.forEach((rule: any) => {
         switch (rule.nodeType) {
             case Nodes.STYLERULE:
                 // process style and keyframe , cause parser dont
+                if (isKeyframe) {
+                    rule.nodeType = Nodes.KEYFRAMERULE
+                }
                 var { selector, parent, children } = rule
                 rule.selectors = parent?.selectors ? [...parent.selectors, selector] : [selector] // extends the parent selector
                 flattedRules.push(rule)
@@ -35,7 +39,7 @@ function doFlat(
                 if (rule.children) {
                     // be a boat , mark the directives and redirect to the parent
                     rule.children.forEach(childrule => {
-                        (childrule.dirs||=[]).push(rule)
+                        (childrule.dirs ||= []).push(rule)
                         childrule.parent = rule.parent
                     });
                     doFlat(rule.children, flattedRules)
@@ -44,7 +48,8 @@ function doFlat(
             case Nodes.KEYFRAMESRULE:
                 // should i ?
                 if (rule.children) {
-                    rule.children = flatRules(rule.children) // emmmm 赋给children用于生成code
+                    rule.selectors = null
+                    rule.children = flatRules(rule.children, true) // emmmm 赋给children用于生成code
                     flattedRules.push(rule)
                 }
                 break

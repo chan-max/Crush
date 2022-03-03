@@ -1,5 +1,5 @@
 {
-    "name": "doc",
+    "name": "docs",
     "private": true,
     "version": "0.0.0",
     "scripts": {
@@ -33,6 +33,7 @@
         "@vitejs/plugin-vue": "^2.2.0",
         "typescript": "^4.5.4",
         "vite": "^2.8.0",
-        "vue-tsc": "^0.29.8"
+        "vue-tsc": "^0.29.8",
+        "@crush/common":"1.0.0"
     }
 }

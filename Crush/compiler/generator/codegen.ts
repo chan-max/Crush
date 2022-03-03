@@ -20,8 +20,6 @@ export function genCode(ast: any) {
 }
 
 function genNode(ast: any): string {
-    var callFn: any
-    var params: any = []
     switch (ast.nodeType) {
         case Nodes.FOR:
             return genFor(ast.iterator, genCode(ast.children))
@@ -45,31 +43,15 @@ function genNode(ast: any): string {
         case Nodes.STYLERULE:
             return genStyleRule(ast)
         case Nodes.MEDIARULE:
-            callFn = renderSource.MEDIARULE
-            params = [
-                toString(ast.mediaCondition),
-                genChildren(ast.children)
-            ]
-            break
+            return callFn(renderSource.MEDIARULE, toString(ast.mediaCondition), genChildren(ast.children))
         case Nodes.SUPPORTRULE:
-            callFn = renderSource.SUPPORTRULE
-            params = [
-                toString(ast.support),
-                genChildren(ast.children)
-            ]
-            break
+            return callFn(renderSource.SUPPORTRULE, toString(ast.support), genChildren(ast.children))
         case Nodes.KEYFRAMESRULE:
-            callFn = renderSource.KEYFRAMESRULE
-            params = [
-                toString(ast.keyframesName),
-                genChildren(ast.children)
-            ]
-            break
+            return callFn(renderSource.KEYFRAMESRULE, toString(ast.keyframesName), genChildren(ast.children))
+        case Nodes.KEYFRAMERULE:
+            return genKeyframeRule(ast)
         default:
-            callFn = renderSource.ERROR
     }
-
-    return toFunctionCall(callFn, params)
 }
 
 /* 将所有子元素包裹一层fragment */
@@ -184,12 +166,7 @@ function genSheet(props: any, rules: any) {
     不建议使用 ！！！
 */
 function genSelector(selectors: Array<any>) {
-    if (selectors.length === 1) {
-        return toBackQuotes(selectors[0].content)
-    }
-
     //! one dynamic , all dynamic ,so use carefully
-
     var contents: any = []
     var isStatic = selectors.every((selector: any) => {
         contents.push(selector.content)
@@ -226,22 +203,16 @@ function genDeclaration(declarations: any) {
 }
 
 function genStyleRule(ast) {
-    var callFn, selectors
-    /*
-        keframes will not extend the parentSelector,
-        so , put into the root list
-        and we can know which is the style and keyframe by 
-        is there selectors or selector on the ast
-    */
-    if (ast.selectors) {
-        callFn = renderSource.STYLERULE
-        selectors = ast.selectors
-    } else {
-        callFn = renderSource.KEYFRAMESRULE
-        selectors = [ast.selector]
-    }
-    return toFunctionCall(callFn, [
-        genSelector(selectors),
+    return callFn(renderSource.STYLERULE,
+        genSelector(ast.selectors),
         ast.declaration ? genDeclaration(ast.declaration) : renderSource.NULL
-    ])
+    )
+}
+
+function genKeyframeRule(ast) {
+    //  dont use selectors , because keyframe wont extend the parent
+    return callFn(renderSource.KEYFRAMERULE,
+        genSelector([ast.selector]),
+        ast.declaration ? genDeclaration(ast.declaration) : renderSource.NULL
+    )
 }

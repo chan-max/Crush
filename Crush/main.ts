@@ -21,19 +21,23 @@ import {
 var css = `
     <style>
     body{
-        --if(condition){
-            color:red;
-            h1{
-                color:blue; 
+        @keyframes name{
+            from{
+                color:red;
+            }
+            to{
+                color:blue;
             }
         }
     }
     </style>
 `
 
-var code = compile(css)
+var fn = compile(css)
 
-console.log(code);
+console.log(fn);
+
+console.log(fn({},renderMethods));
 
 
 
