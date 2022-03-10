@@ -10,37 +10,22 @@ import {
     renderMethods
 } from './compiler/generator/const'
 
-import {
-    parseCSS
-} from './compiler/parser/parseCSS'
-import { Nodes } from './type/nodeType'
-import {
-    flatRules
-} from './compiler/parser/flatRules'
-
 var css = `
-    <style>
-    body{
-        @keyframes name{
-            from{
-                color:red;
-            }
-            to{
-                color:blue;
-            }
-        }
-    }
-    </style>
+    <div @click="" @hook:before-mount=""></div>
+`
+
+var template = `
+    <div>
+        {{ isLogin ? 'welcome' : 'please login' }}
+    </div>
+    <hello>
+        <div --slot=""></div>
+        <div></div>
+    </hello>
 `
 
 var fn = compile(css)
 
 console.log(fn);
 
-console.log(fn({},renderMethods));
-
-
-
-
-
-
+console.log(fn({}, renderMethods));

@@ -7,7 +7,13 @@ const routes = [
         path: '/',
         component: () => import('../views/homepage.vue'),
         children: [{
-            path: '/docs',
+            path: '/Api',
+            component: {
+                template:'666'
+            }
+        },{
+            // 其他匹配路径默认会寻找文档文档
+            path: '/:chapters*',
             component: () => import('../views/docs'),
         }],
     },

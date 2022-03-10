@@ -1,6 +1,5 @@
 import { flatRules } from './flatRules'
 import { Nodes } from '../../type/nodeType'
-import { warn } from '../../common/console';
 
 function doFlat(
     rules: any,
@@ -8,12 +7,13 @@ function doFlat(
     isKeyframe = false
 ) {
     rules.forEach((rule: any) => {
-        switch (rule.nodeType) {
+        switch (rule.type) {
             case Nodes.STYLERULE:
                 // process style and keyframe , cause parser dont
                 if (isKeyframe) {
-                    rule.nodeType = Nodes.KEYFRAMERULE
+                    rule.type = Nodes.KEYFRAMERULE
                 }
+                debugger
                 var { selector, parent, children } = rule
                 rule.selectors = parent?.selectors ? [...parent.selectors, selector] : [selector] // extends the parent selector
                 flattedRules.push(rule)
@@ -38,9 +38,9 @@ function doFlat(
             case Nodes.IF:
                 if (rule.children) {
                     // be a boat , mark the directives and redirect to the parent
-                    rule.children.forEach(childrule => {
-                        (childrule.dirs ||= []).push(rule)
-                        childrule.parent = rule.parent
+                    rule.children.forEach(child => {
+                        (child.dirs ||= []).push(rule)
+                        child.parent = rule.parent
                     });
                     doFlat(rule.children, flattedRules)
                 }

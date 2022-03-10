@@ -4,7 +4,7 @@ import typescript from 'rollup-plugin-typescript2';
 //console.log(replace(replacements));
 
 const entry = './crush/main.ts'
-
+  
 export default {
     input:entry ,
     output:[

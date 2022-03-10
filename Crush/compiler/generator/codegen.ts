@@ -20,7 +20,7 @@ export function genCode(ast: any) {
 }
 
 function genNode(ast: any): string {
-    switch (ast.nodeType) {
+    switch (ast.type) {
         case Nodes.FOR:
             return genFor(ast.iterator, genCode(ast.children))
         case Nodes.IF:
@@ -39,9 +39,9 @@ function genNode(ast: any): string {
             return genText(ast.texts)
         /* style */
         case Nodes.STYLE:
-            return genSheet('null', ast.children)
+            return genSheet('null', ast.children || [])
         case Nodes.STYLERULE:
-            return genStyleRule(ast)
+            return genStyleRule(ast) // invalid children
         case Nodes.MEDIARULE:
             return callFn(renderSource.MEDIARULE, toString(ast.mediaCondition), genChildren(ast.children))
         case Nodes.SUPPORTRULE:
@@ -81,7 +81,7 @@ function genIf(condition: string, target: string) {
 function genProps(props: any) {
     var propsMap: any = {}
     props.forEach((prop: any) => {
-        switch (prop.nodeType) {
+        switch (prop.node) {
             case Nodes.EVENT:
                 var {
                     eventName,
@@ -182,12 +182,12 @@ function genDeclaration(declarations: any) {
     var collection: any = []
     var properties = {}
     declarations.forEach((declaration: any) => {
-        if (declaration.nodeType === Nodes.DECLARATION) {
+        if (declaration.type === Nodes.DECLARATION) {
             var property = `[${declaration.dynamicProperty ? declaration.property : toString(declaration.property)}]`
             var value = declaration.dynamicValue ? declaration.value : toString(declaration.value)
             value = declaration.important ? important(value) : value
             properties[property] = value
-        } else if (declaration.nodeType === Nodes.MIXIN) {
+        } else if (declaration.type === Nodes.MIXIN) {
             var part = objectStringify(properties)
             if (part !== '{}') {
                 collection.push(part)

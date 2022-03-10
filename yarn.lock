@@ -300,9 +300,9 @@
   "resolved" "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   "version" "0.2.3"
 
-"@crush/common@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\common":
+"@crush/common@1.0.0", "@crush/common@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\common":
   "resolved" "file:packages/common"
-  "version" "0.0.0"
+  "version" "1.0.0"
 
 "@ctrl/tinycolor@^3.4.0":
   "integrity" "sha512-JZButFdZ1+/xAfpguQHoabIXkcqRRKpMrWKBkpEZZyxfY9C1DpADFB8PEqGSTeFr135SaTRfKqGKx5xSCLI7ZQ=="
@@ -1625,6 +1625,11 @@
   "resolved" "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.179.tgz"
   "version" "4.14.179"
 
+"@types/marked@^4.0.2":
+  "integrity" "sha512-auNrZ/c0w6wsM9DccwVxWHssrMDezHUAXNesdp2RQrCVCyrQbOiSq7yqdJKrUQQpw9VTm7CGYJH2A/YG7jjrjQ=="
+  "resolved" "https://registry.npmjs.org/@types/marked/-/marked-4.0.2.tgz"
+  "version" "4.0.2"
+
 "@types/mdast@^3.0.0":
   "integrity" "sha512-W864tg/Osz1+9f4lrGTZpCSO5/z4608eUp19tbozkq2HJK6i3z1kT0H9tlADXuYIb1YYOBByU4Jsqkk75q48qA=="
   "resolved" "https://registry.npmjs.org/@types/mdast/-/mdast-3.0.10.tgz"
@@ -2250,6 +2255,13 @@
   "resolved" "https://registry.npmjs.org/aws4/-/aws4-1.11.0.tgz"
   "version" "1.11.0"
 
+"axios@^0.26.0":
+  "integrity" "sha512-lKoGLMYtHvFrPVt3r+RBMp9nh34N0M8zEfCWqdWZx6phynIEhQqAdydpyBAAG211zlhX9Rgu08cOamy6XjE5Og=="
+  "resolved" "https://registry.npmjs.org/axios/-/axios-0.26.0.tgz"
+  "version" "0.26.0"
+  dependencies:
+    "follow-redirects" "^1.14.8"
+
 "babel-jest@^27.5.1", "babel-jest@>=27.0.0 <28":
   "integrity" "sha512-cdQ5dXjGRd0IBRATiQ4mZGlGlRE8kJpjPOixdNRdT+m3UcNqmYWN6rK6nvtXYfY3D76cb8s/O1Ss8ea24PIwcg=="
   "resolved" "https://registry.npmjs.org/babel-jest/-/babel-jest-27.5.1.tgz"
@@ -2732,6 +2744,20 @@
     "readable-stream" "^3.0.2"
     "typedarray" "^0.0.6"
 
+"concurrently@^7.0.0":
+  "integrity" "sha512-WKM7PUsI8wyXpF80H+zjHP32fsgsHNQfPLw/e70Z5dYkV7hF+rf8q3D+ScWJIEr57CpkO3OWBko6hwhQLPR8Pw=="
+  "resolved" "https://registry.npmjs.org/concurrently/-/concurrently-7.0.0.tgz"
+  "version" "7.0.0"
+  dependencies:
+    "chalk" "^4.1.0"
+    "date-fns" "^2.16.1"
+    "lodash" "^4.17.21"
+    "rxjs" "^6.6.3"
+    "spawn-command" "^0.0.2-1"
+    "supports-color" "^8.1.0"
+    "tree-kill" "^1.2.2"
+    "yargs" "^16.2.0"
+
 "config-chain@^1.1.12":
   "integrity" "sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ=="
   "resolved" "https://registry.npmjs.org/config-chain/-/config-chain-1.1.13.tgz"
@@ -2901,6 +2927,30 @@
     "shebang-command" "^2.0.0"
     "which" "^2.0.1"
 
+"crush-docs@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs":
+  "resolved" "file:packages/docs"
+  "version" "0.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin" "^5.1.0"
+    "@typescript-eslint/parser" "^5.1.0"
+    "element-plus" "^2.0.3"
+    "eslint" "^7.2.0"
+    "eslint-config-airbnb-base" "^14.2.1"
+    "eslint-plugin-import" "^2.25.2"
+    "eslint-plugin-typescript" "^0.14.0"
+    "eslint-plugin-vue" "^7.20.0"
+    "husky" "^4.2.3"
+    "less" "^4.1.2"
+    "sass" "^1.43.3"
+    "stylelint" "^13.13.1"
+    "stylelint-config-standard" "^22.0.0"
+    "stylelint-scss" "^3.21.0"
+    "typescript" "^4.4.3"
+    "vue" "^3.2.25"
+    "vue-eslint-parser" "^7.11.0"
+    "vue-i18n" "^9.2.0-beta.30"
+    "vue-router" "^4.0.12"
+
 "crush@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\crush":
   "resolved" "file:packages/crush"
   "version" "1.0.0"
@@ -2952,6 +3002,11 @@
     "abab" "^2.0.3"
     "whatwg-mimetype" "^2.3.0"
     "whatwg-url" "^8.0.0"
+
+"date-fns@^2.16.1":
+  "integrity" "sha512-8d35hViGYx/QH0icHYCeLmsLmMUheMmTyV9Fcm6gvNwdw31yXXH+O85sOBJ+OLnLQMKZowvpKb6FgMIQjcpvQw=="
+  "resolved" "https://registry.npmjs.org/date-fns/-/date-fns-2.28.0.tgz"
+  "version" "2.28.0"
 
 "dateformat@^3.0.0":
   "integrity" "sha512-jyCETtSl3VMZMWeRo7iY1FL19ges1t55hMo5yaam4Jrsm5EPL89UQkoQRyiI+Yf4k8r2ZpdngkV8hr1lIdjb3Q=="
@@ -3149,30 +3204,6 @@
   "version" "3.0.1"
   dependencies:
     "path-type" "^4.0.0"
-
-"docs@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs":
-  "resolved" "file:packages/docs"
-  "version" "0.0.0"
-  dependencies:
-    "@typescript-eslint/eslint-plugin" "^5.1.0"
-    "@typescript-eslint/parser" "^5.1.0"
-    "element-plus" "^2.0.3"
-    "eslint" "^7.2.0"
-    "eslint-config-airbnb-base" "^14.2.1"
-    "eslint-plugin-import" "^2.25.2"
-    "eslint-plugin-typescript" "^0.14.0"
-    "eslint-plugin-vue" "^7.20.0"
-    "husky" "^4.2.3"
-    "less" "^4.1.2"
-    "sass" "^1.43.3"
-    "stylelint" "^13.13.1"
-    "stylelint-config-standard" "^22.0.0"
-    "stylelint-scss" "^3.21.0"
-    "typescript" "^4.4.3"
-    "vue" "^3.2.25"
-    "vue-eslint-parser" "^7.11.0"
-    "vue-i18n" "^9.2.0-beta.30"
-    "vue-router" "^4.0.12"
 
 "doctrine@^2.1.0":
   "integrity" "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw=="
@@ -3946,6 +3977,11 @@
   "resolved" "https://registry.npmjs.org/flatted/-/flatted-3.2.5.tgz"
   "version" "3.2.5"
 
+"follow-redirects@^1.14.8":
+  "integrity" "sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w=="
+  "resolved" "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.14.9.tgz"
+  "version" "1.14.9"
+
 "forever-agent@~0.6.1":
   "integrity" "sha1-+8cfDEGt6zf5bFd60e1C2P2sypE="
   "resolved" "https://registry.npmjs.org/forever-agent/-/forever-agent-0.6.1.tgz"
@@ -4305,6 +4341,11 @@
   "version" "1.0.3"
   dependencies:
     "function-bind" "^1.1.1"
+
+"highlight.js@^11.4.0":
+  "integrity" "sha512-nawlpCBCSASs7EdvZOYOYVkJpGmAOKMYZgZtUqSRqodZE0GRVcFKwo1RcpeOemqh9hyttTdd5wDBwHkuSyUfnA=="
+  "resolved" "https://registry.npmjs.org/highlight.js/-/highlight.js-11.4.0.tgz"
+  "version" "11.4.0"
 
 "hosted-git-info@^2.1.4":
   "integrity" "sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw=="
@@ -5763,6 +5804,11 @@
   "integrity" "sha512-hdN1wVrZbb29eBGiGjJbeP8JbKjq1urkHJ/LIP/NY48MZ1QVXUsQBV1G1zvYFHn1XE06cwjBsOI2K3Ulnj1YXQ=="
   "resolved" "https://registry.npmjs.org/map-obj/-/map-obj-4.3.0.tgz"
   "version" "4.3.0"
+
+"marked@^4.0.12":
+  "integrity" "sha512-hgibXWrEDNBWgGiK18j/4lkS6ihTe9sxtV4Q1OQppb/0zzyPSzoFANBa5MfsG/zgsWklmNnhm0XACZOH/0HBiQ=="
+  "resolved" "https://registry.npmjs.org/marked/-/marked-4.0.12.tgz"
+  "version" "4.0.12"
 
 "mathml-tag-names@^2.1.3":
   "integrity" "sha512-APMBEanjybaPzUrfqU0IMU5I0AswKMH7k8OTLs0vvV4KZpExkTkY87nR/zpbuTPj+gARop7aGUbl11pnDfW6xg=="
@@ -7516,7 +7562,7 @@
   dependencies:
     "queue-microtask" "^1.2.2"
 
-"rxjs@^6.6.0":
+"rxjs@^6.6.0", "rxjs@^6.6.3":
   "integrity" "sha512-hTdwr+7yYNIT5n4AMYp85KA6yw2Va0FLa3Rguvbpa4W3I5xynaBZo41cM3XM+4Q6fRMj3sBYIR1VAmZMXYJvRQ=="
   "resolved" "https://registry.npmjs.org/rxjs/-/rxjs-6.6.7.tgz"
   "version" "6.6.7"
@@ -7811,6 +7857,11 @@
   "integrity" "sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA=="
   "resolved" "https://registry.npmjs.org/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz"
   "version" "1.4.8"
+
+"spawn-command@^0.0.2-1":
+  "integrity" "sha1-YvXpRmmBwbeW3Fkpk34RycaSG9A="
+  "resolved" "https://registry.npmjs.org/spawn-command/-/spawn-command-0.0.2-1.tgz"
+  "version" "0.0.2-1"
 
 "spdx-correct@^3.0.0":
   "integrity" "sha512-cOYcUWwhCuHCXi49RhFRCyJEK3iPj1Ziz9DpViV3tbZOwXD49QzIN3MpOLJNxh2qwq2lJJZaKMVw9qNi4jTC0w=="
@@ -8122,6 +8173,13 @@
   dependencies:
     "has-flag" "^4.0.0"
 
+"supports-color@^8.1.0":
+  "integrity" "sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q=="
+  "resolved" "https://registry.npmjs.org/supports-color/-/supports-color-8.1.1.tgz"
+  "version" "8.1.1"
+  dependencies:
+    "has-flag" "^4.0.0"
+
 "supports-hyperlinks@^2.0.0":
   "integrity" "sha512-6sXEzV5+I5j8Bmq9/vUphGRM/RJNT9SCURJLjwfOg51heRtguGWDzcaBlgAzKhQa0EVNpPEKzQuBwZ8S8WaCeQ=="
   "resolved" "https://registry.npmjs.org/supports-hyperlinks/-/supports-hyperlinks-2.2.0.tgz"
@@ -8311,6 +8369,11 @@
   "integrity" "sha1-gYT9NH2snNwYWZLzpmIuFLnZq2o="
   "resolved" "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz"
   "version" "0.0.3"
+
+"tree-kill@^1.2.2":
+  "integrity" "sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A=="
+  "resolved" "https://registry.npmjs.org/tree-kill/-/tree-kill-1.2.2.tgz"
+  "version" "1.2.2"
 
 "trim-newlines@^3.0.0":
   "integrity" "sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw=="

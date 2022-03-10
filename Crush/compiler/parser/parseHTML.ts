@@ -21,7 +21,7 @@ export type DOMAstNode = {
     iterator?: any
     rules: any
     texts: any
-    nodeType: Nodes
+    type: Nodes
     attrs?: Array<DOMAttr>
     children: Array<DOMAstNode>
 }

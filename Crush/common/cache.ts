@@ -6,8 +6,7 @@ const cache = (fn: Function) => {
                 const cached = cache[key];
                 return isUndefined(cached) ? (cache[key] = fn(key)) : cached
         });
-}
-
+}   
 const useCache = (fn: Function) => {
         fn = cache(fn)
         return fn

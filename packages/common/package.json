@@ -1,5 +1,9 @@
 {
   "name": "@crush/common",
   "version": "1.0.0",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@crush/compiler": "^1.0.0",
+    "@crush/types": "^1.0.0"
+  }
 }

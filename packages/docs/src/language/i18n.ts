@@ -11,7 +11,7 @@ const i18n = createI18n({
     legacy: false,
     literals: true,
     // locale: language.split('-')[0] || 'zh',
-    locale: 'en',
+    locale: localStorage.getItem('crush-docs-language') || 'en',
     messages,
 })
 

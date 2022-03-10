@@ -23,7 +23,7 @@
                         >
                             <el-sub-menu index="0">
                                 <template #title><div class="menu-item">{{ $t('menu.docs') }}</div></template>
-                                <el-menu-item index="/docs">item one</el-menu-item>
+                                <el-menu-item index="/docs#intro/install">install</el-menu-item>
                                 <el-menu-item index="/docs">item two</el-menu-item>
                                 <el-menu-item index="/docs">item three</el-menu-item>
                             </el-sub-menu>
@@ -65,7 +65,7 @@
     </div>
 </template>
 <script lang="ts" setup>
-
+import 'element-plus/theme-chalk/display.css'
 import {
     useLanguage,
 } from '../common/language'
@@ -76,8 +76,10 @@ const {
 } = useLanguage()
 
 function go() {
-    console.log(123)
+    window.open('https://github.com/chan-max/Crush')
 }
+
+
 
 </script>
 <style lang="less">
@@ -107,6 +109,10 @@ function go() {
     .el-icon svg {
         color: #333;
     }
+}
+
+.menu-item {
+    margin: 0 !important;
 }
 
 .el-menu--popup {

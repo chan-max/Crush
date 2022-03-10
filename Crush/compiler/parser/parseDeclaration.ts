@@ -4,8 +4,8 @@ import { Nodes } from "../../type/nodeType"
     color : red ;
     color!:red; important
     $color : variable ; support string,array,number
-    [variable] : red ;
-    $[variable] : variable ; 
+    (variable) : red ;
+    $(variable) : variable ; 
 */
 
 const extractDeclarationProperty = /(\$)?(\()?([\w-]+)(\))?(!)?/
@@ -20,7 +20,7 @@ const parseDeclaration = (rawProperty: string, value: string) => {
         important
     ]: any = extractDeclarationProperty.exec(rawProperty)
     return {
-        nodeType: Nodes.DECLARATION,
+        type:Nodes.DECLARATION,
         property,
         value,
         dynamicValue,
