@@ -2,10 +2,27 @@ import {
     compile
 } from '@crush/compiler'
 
-var template = `
-    <button --slot:header="666">
+import {
+    Nodes
+} from '@crush/types'
 
-    </button>
+var template = `
+
+<div> 
+    <div></div>
+    <svg>
+        <div>
+        <div>
+    <div></div>
+    <svg>
+        <div></div>
+    </svg>
+</div></div>
+    </svg>
+</div>
+
 `
 
 console.log(compile(template));
+
+

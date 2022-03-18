@@ -1,5 +1,5 @@
 
-import { NodeTypes } from '@crush/types'
+import { Nodes } from '@crush/types'
 import {
     AstNode
 } from '../parser/parseNode'
@@ -29,29 +29,38 @@ import {
 } from '../parser/parseText'
 
 export const genNodes = (nodes: AstNode[]) => {
-    return nodes.length === 1 ?
-        genNode(nodes[0]) :
-        genFragment(genChildren(nodes))
+
+    var lastBranch = null
+
+    nodes.forEach((node) => {
+        
+    })
 }
 
-function genChildren(nodes: any) {
+function genChildren(nodes: AstNode[]) {
+
     var children = nodes.map((ast: any) => genNode(ast))
     return toArray(children)
 }
+
 function genNode(node: AstNode) {
     switch (node.type) {
-        case NodeTypes.FOR:
+        case Nodes.IF:
+        case Nodes.ELSE_IF:
+        case Nodes.ELSE:
+            return genNodes(node.children as AstNode[])
+        case Nodes.FOR:
             debugger
-        case NodeTypes.HTML_ELEMENT:
+        case Nodes.HTML_ELEMENT:
             return callFn(
                 Source.createElement,
                 toString(node.tagName)
-                )
-        case NodeTypes.SVG_ELEMENT:
+            )
+        case Nodes.SVG_ELEMENT:
             return callFn(Source.createSVGElement)
-        case NodeTypes.COMPONENT:
+        case Nodes.COMPONENT:
             return callFn(Source.createComponent)
-        case NodeTypes.TEXT:
+        case Nodes.TEXT:
             return genText(node.children as Text[])
     }
 }
@@ -68,6 +77,6 @@ const genText = (texts: Text[]) => {
     return callFn(
         Source.createText,
         genTextContent(texts)
-        )
+    )
 }
 

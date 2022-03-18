@@ -2,5 +2,8 @@
   "name": "@crush/renderer",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@crush/types": "^1.0.0"
+  }
 }

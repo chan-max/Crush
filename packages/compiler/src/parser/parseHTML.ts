@@ -1,7 +1,7 @@
 import { createScanner } from "./scanner"
 
 import {
-    NodeTypes
+    Nodes
 } from '@crush/types'
 
 const openTag = /^<([\w-]+)(?:\:(\w+))?/

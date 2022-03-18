@@ -15,7 +15,7 @@ import {
 } from './parseDeclaration'
 
 import {
-    NodeTypes,
+    Nodes,
     nodeTypeMap
 } from '@crush/types'
 
@@ -26,10 +26,8 @@ const CSSDir = /^--([\w]+)\s*(?:\(([^{]*)\))?\s*{/
 const AtRule = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/
 const mixinEx = /\.\.\.([^;]+);/
 
-
-
 export type CSSNode = {
-    type: NodeTypes,
+    type: Nodes,
     children?: CSSNode[],
     parent?: CSSNode,
     content?: string | Selector | Declaration
@@ -43,12 +41,10 @@ export const parseCSS = (source: string): CSSNode[] => {
         currentRule: any,
         shouldPush = true
     while (scanner.source) {
-        if (scanner.startsWith('@')) {
-            var [type, content] = scanner.exec(AtRule)
-            currentRule = {
-                type: nodeTypeMap[type], content
-            }
-        } else if (scanner.expect('--')) {
+        if (scanner.startsWith(Nodes.AT_RULE)) {
+            var [type, content]: [Nodes, any] = scanner.exec(AtRule)
+            currentRule = { type, content }
+        } else if (scanner.startsWith(Nodes.COMMON_DIR)) {
             var [dir, content] = scanner.exec(CSSDir)
             /*  not ensure to parse , keep a suspense for the code generator */
             currentRule = {
@@ -64,7 +60,7 @@ export const parseCSS = (source: string): CSSNode[] => {
         } else if (scanner.expect('...')) {
             var [content] = scanner.exec(mixinEx);
             currentRule = {
-                type: NodeTypes.MIXIN,
+                type: Nodes.MIXIN,
                 content
             }
             shouldPush = false
@@ -74,12 +70,12 @@ export const parseCSS = (source: string): CSSNode[] => {
                 先尝试获取选择器，在获取样式声明
             */
             currentRule = {
-                type: NodeTypes.STYLE_RULE,
+                type: Nodes.STYLE_RULE,
                 content: parseSelector($[0])
             }
         } else if ($ = scanner.exec(declarationRE)) {
             currentRule = {
-                type: NodeTypes.DECLARATION,
+                type: Nodes.DECLARATION,
                 content: parseDeclaration($[0], $[1])
             }
             shouldPush = false

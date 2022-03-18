@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@crush/compiler": "^1.0.0",
-    "@crush/renderer": "^1.0.0"
+    "@crush/renderer": "^1.0.0",
+    "@crush/types": "^1.0.0"
   }
 }

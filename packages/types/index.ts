@@ -1,6 +1,6 @@
 
 export {
-    NodeTypes,
+    Nodes,
     nodeTypeMap,
     nodeTypeOf
-} from './src/nodeTypes'
+} from './src/Nodes'
