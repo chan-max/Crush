@@ -5,7 +5,6 @@ export enum Nodes {
     */
     NULL = 'null',
 
-
     /*
         directives and fragments
     */
@@ -55,17 +54,27 @@ import {
 } from './const'
 
 //  keywords ===> NodeTypes
-export const NodesMapping = Object.entries(Nodes).reduce((map: Record<string | number, string>, [key, value]: [string, string | number]) => {
+export const NodesReverseMapping = Object.entries(Nodes).reduce((map: Record<string | number, string>, [key, value]: [string, string | number]) => {
     map[value] = key
     return map
 }, Object.create(null))
-
 /*
     input a keyword and return the nodetype,
-    we can use it to parse the dom tags and attributes
+    we can use it to parse the dom tags and attributes , directives and so on
 */
-export const nodeTypeOf = (key: string) => {
-
+export const nodeTypeOf = (
+    key: string,
+    onlyUseNodesMap = false
+    /*
+        when input true ,
+        if the map doesn't exist the nodetype , it will return undefined
+        so we can do other things
+    */
+) => {
+    // this key is nodeType value
+    return NodesReverseMapping[key] ? key : (onlyUseNodesMap ? undefined : (
+        isHTMLTag(key) ? Nodes.HTML_ELEMENT : isSVGTag(key) ? Nodes.SVG_ELEMENT : Nodes.COMPONENT
+    ))
 }
 
 

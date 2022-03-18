@@ -27,7 +27,6 @@ import {
     parseCSS
 } from './parseCSS'
 import {
-    findAttrByName,
     processAttribute
 } from './processAttribute'
 
@@ -42,6 +41,8 @@ export type Dir = {
     content: any
 }
 
+
+
 export type AstNode = Omit<HTMLNode, 'children'> & {
     type: Nodes
     tagName: string
@@ -51,21 +52,54 @@ export type AstNode = Omit<HTMLNode, 'children'> & {
 }
 
 type ParseContext = {
-    ignoreChildren?: boolean // shoudle parse the children
-    defaultType?: Nodes | null
+    ignoreChildren: boolean // shoudle parse the children
+    defaultType: Nodes | null
 }
 
-export const parseNodes = (nodes: AstNode[], ctx: ParseContext = {}) => nodes.forEach((node) => {
-    parseNode(node, ctx)
-    if (isArray(node.children) && !ctx.ignoreChildren) {
-        parseNodes(node.children as AstNode[], ctx)
+
+/*
+    find the value of attribute list
+*/
+function findAttr(
+    attrs: HTMLAttribute[],
+    validator: Function, // to decide a value is legal by attribute 
+    getAll: boolean // should get all value 
+) {
+    var res: any
+    for (let i = 0; i < attrs.length; i++) {
+        var attr = attrs[i]
+        if (validator(attr.attribute)) {
+            if (getAll) {
+                res ||= [];
+                res.push(attr.value)
+            } else {
+                res = attr.value
+                break
+            }
+        }
     }
-    // reset status
-    ctx.ignoreChildren = false
-    ctx.defaultType = null
-})
+    return res
+}
 
+const findValueByattribute = (attrs: HTMLAttribute[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, false)
+const findValueByattributes = (attrs: HTMLAttribute[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), false)
+const findValuesByattribute = (attrs: HTMLAttribute[], attributes: string) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
+const findValuesByattributes = (attrs: HTMLAttribute[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
+export const parseNodes = (
+    nodes: AstNode[],
+    ctx: ParseContext = {
+        ignoreChildren: false,
+        defaultType: null
+    }) => nodes.forEach((node) => {
+        parseNode(node, ctx)
+        if (isArray(node.children) && !ctx.ignoreChildren) {
+            parseNodes(node.children as AstNode[], ctx)
+        }
+        // reset status
+        ctx.ignoreChildren = false
+        ctx.defaultType = null
+    })
 
 function parseNode(node: AstNode, ctx: any) {
     node.tagName = camelize(node.tag)
@@ -75,7 +109,7 @@ function parseNode(node: AstNode, ctx: any) {
             node.children = parseText(node.children as string)
             ctx.ignoreChildren = true
             return
-        case Nodes.STYLESHEET:
+        case Nodes.STYLE:
             /*
                 special attrs
                 unit , url ,
@@ -89,6 +123,7 @@ function parseNode(node: AstNode, ctx: any) {
         case Nodes.HTML_ELEMENT:
         case Nodes.FOR:
         case Nodes.IF:
+            node.content = findValueByattribute(node.attributes as HTMLAttribute[], '--')
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
             processAttribute(node)

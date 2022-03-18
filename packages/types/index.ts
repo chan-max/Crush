@@ -1,6 +1,6 @@
 
 export {
     Nodes,
-    nodeTypeMap,
+    NodesReverseMapping,
     nodeTypeOf
 } from './src/Nodes'

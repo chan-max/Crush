@@ -7,20 +7,9 @@ import {
 } from '@crush/types'
 
 var template = `
-
-<div> 
-    <div></div>
-    <svg>
-        <div>
-        <div>
-    <div></div>
-    <svg>
-        <div></div>
-    </svg>
-</div></div>
-    </svg>
-</div>
-
+<if --="isloign">
+    
+</if>
 `
 
 console.log(compile(template));

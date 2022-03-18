@@ -15,8 +15,7 @@ import {
 } from './parseDeclaration'
 
 import {
-    Nodes,
-    nodeTypeMap
+    Nodes, nodeTypeOf,
 } from '@crush/types'
 
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
@@ -48,7 +47,7 @@ export const parseCSS = (source: string): CSSNode[] => {
             var [dir, content] = scanner.exec(CSSDir)
             /*  not ensure to parse , keep a suspense for the code generator */
             currentRule = {
-                type: nodeTypeMap[dir],
+                type: nodeTypeOf(dir),
                 content
             }
         } else if (scanner.expect('}')) {
