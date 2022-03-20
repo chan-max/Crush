@@ -28,3 +28,7 @@ export {
 export {
     makeMap
 } from './src/makeMap'
+
+export {
+    exec
+} from './src/regex'

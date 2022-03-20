@@ -3,15 +3,26 @@ import {
 } from '@crush/compiler'
 
 import {
-    Nodes
-} from '@crush/types'
+    parseCSS
+} from '@crush/compiler'
 
 var template = `
-<if --="isloign">
-    
-</if>
+    body{
+        --for(i in 6){
+            background-color:red;
+            h$(i){
+                color:red;
+            }
+        }
+    }
 `
 
-console.log(compile(template));
+/*
+
+*/
+
+console.log(parseCSS(template))
+
+
 
 

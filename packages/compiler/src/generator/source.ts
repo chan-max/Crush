@@ -38,7 +38,21 @@ export const methods = '_' // am I cute ?
 export const context = 'ctx'
 export const instance = 'st'
 
-export const Source = Object.keys(renderMethods).reduce((res: Record<string, string>, name: string): Record<string, string> => {
-    res[name] = methods + '.' + name
-    return res
-}, {})
+export const Source = {
+    createComment: 'createComment',
+    createElement: 'createElement',
+    createFragment: 'createFragment',
+    createComponent: 'createComponent',
+    createKeyframe: 'createKeyframe',
+    createKeyframes: 'createKeyframes',
+    createMedia: 'createStyle',
+    createSVGElement: 'createSVGElement',
+    createSheet: 'createSheet',
+    createStyle: 'createStyle',
+    createText: 'createText',
+    iterator: 'iterator',
+    mergeSelectors: 'mergeSelectors',
+    display: 'display',
+    mixin: 'mixin',
+    null: 'null'
+}

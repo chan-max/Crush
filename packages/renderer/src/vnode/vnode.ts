@@ -1,24 +1,31 @@
 
+function createNode(type: any, props: any, children: any) {
+    return {
+        type,
+        props,
+        children
+    }
+}
 
-const createElement = () => {}
+const createElement = (type: any, props: any, children: any) => createNode(type, props, children)
 
-const createText = () => {}
+const createText = () => { }
+     
+const createSVGElement = () => { }
 
-const createSVGElement = () => {}
+const createComment = () => { }
 
-const createComment = () => {}
+const createFragment = () => { }
 
-const createFragment = () => {}
+const createSheet = () => { }
 
-const createSheet = () => {}
+const createStyle = () => { }
 
-const createStyle = () => {}
+const createMedia = () => { }
 
-const createMedia = () => {}
+const createKeyframes = () => { }
 
-const createKeyframes = () => {}
-
-const createKeyframe = () => {}
+const createKeyframe = () => { }
 
 export {
     createComment,

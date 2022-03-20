@@ -49,7 +49,7 @@ export const parseCSS = (source: string): CSSNode[] => {
             currentRule = {
                 type: nodeTypeOf(dir),
                 content
-            }
+            }  
         } else if (scanner.expect('}')) {
             stack.pop()
             scanner.move(1)

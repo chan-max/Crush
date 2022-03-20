@@ -5,6 +5,9 @@ export enum Nodes {
     */
     NULL = 'null',
 
+    /* fragment as builtin tags */
+    FRAGMENT = 'fragment',
+
     /*
         directives and fragments
     */
@@ -46,8 +49,16 @@ export enum Nodes {
     builtin dir and custom dir
     and css dir
     */
-    COMMON_DIR = '--'
+    COMMON_DIR = '--',
+
+    BUILTIN_DIRECTIVE = 'builtin_directive',
+    CUSTOM_DIRECTIVE = 'custom_direvtive'
 }
+
+const NodesKey = {
+    [Nodes.IF]: 'if'
+}
+
 
 import {
     isHTMLTag, isSVGTag
