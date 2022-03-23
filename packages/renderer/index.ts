@@ -24,3 +24,7 @@ export {
 export {
     mixin
 } from './src/common/mixin'
+
+export {
+    mountComponent
+} from './src/render/mountComponent'

@@ -12,7 +12,7 @@ class Scanner {
     expect(expect: string, index = 0) {
         return this.source.slice(index, expect.length + index) === expect
     }
-    startsWith(expect: string) {
+    startsWith(expect: any) {
         // same as use expect without the second arg
         return this.source.startsWith(expect)
     }

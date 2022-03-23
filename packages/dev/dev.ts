@@ -6,11 +6,23 @@ import {
     parseCSS
 } from '@crush/compiler'
 
-var template = `
+import {
+    createApp
+} from '@crush/core'
+
+
+
+import {
+    NodesMap,
+    Nodes
+} from '@crush/types'
+
+
+var css = `
     body{
-        --for(i in 6){
-            background-color:red;
-            h$(i){
+        --if(isLogin){
+            color:red;
+            a{
                 color:red;
             }
         }
@@ -19,9 +31,33 @@ var template = `
 
 /*
 
+
+
 */
 
-console.log(parseCSS(template))
+console.log(parseCSS(css));
+
+const app = {
+    template: `
+        <style>
+            div{
+                $width:x;
+                $height:x;
+                background-color:red;
+            }
+        </style>
+        <div @click="pad">
+        </div>
+    `,
+    create(self) {
+        self.x = 10
+        self.pad = () => self.x += 10
+    },
+    created(self){
+
+          
+    }
+}
 
 
 

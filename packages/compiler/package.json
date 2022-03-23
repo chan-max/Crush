@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "@crush/core": "^1.0.0",
     "@crush/renderer": "^1.0.0",
     "@crush/types": "^1.0.0"
   }

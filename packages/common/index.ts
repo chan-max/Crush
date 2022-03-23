@@ -18,12 +18,9 @@ export {
 
 export {
     error,
-    warn
+    warn,
+    throwError
 } from './src/console'
-
-export {
-    arrToMap
-} from './src/transform'
 
 export {
     makeMap
@@ -32,3 +29,8 @@ export {
 export {
     exec
 } from './src/regex'
+
+export {
+    getEmptyMap,
+    getUid
+} from './src/value'

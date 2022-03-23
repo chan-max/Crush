@@ -1,6 +1,13 @@
+import {
+    getEmptyMap
+} from './value'
 
-export const makeMap = (str:string) => {
-    var map:Record<string,boolean> = {}
-    str.split(',').forEach((item:string) => map[item] = true)
-    return (key:string) => !!map[key] 
+export const arrayToMap = (arr: string[], mapValue: any = true) => arr.reduce((res, item) => {
+    res[item] = mapValue
+    return res
+}, getEmptyMap() as Record<string, any>)
+
+export const makeMap = (str: string) => {
+    var map: Record<string, boolean> = arrayToMap(str.split(','))
+    return (key: string) => !!map[key]
 }

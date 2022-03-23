@@ -1,93 +1,60 @@
 // all is nodes
 export enum Nodes {
-    /*
-        for compiler
-    */
-    NULL = 'null',
 
-    /* fragment as builtin tags */
-    FRAGMENT = 'fragment',
+    NULL,
 
-    /*
-        directives and fragments
-    */
-    IF = "if",
-    ELSE_IF = 'elseIf',
-    ELSE = 'else',
-    FOR = 'for',
+    FRAGMENT,
 
-    SVG_ELEMENT = 'svg',
-    HTML_COMMENT = '!',
-    TEXT = '',
+    IF,
+    ELSE_IF,
+    ELSE,
+    FOR,
 
-    /* style element and style attribute */
-    STYLE = 'style',
+    SVG_ELEMENT,
+    HTML_COMMENT,
+    TEXT,
+    HTML_ELEMENT,
+    COMPONENT,
 
-    DYNAMIC_CLASS = '$class',
-    STATIC_CLASS = 'class',
-    DYNAMIC_STYLE = '$style',
+    STYLE,
 
-    AT_RULE = '@',
+    DYNAMIC_CLASS,
+    STATIC_CLASS,
+    DYNAMIC_STYLE,
 
-    MEDIA_RULE = 'media',
-    SUPPORT_RULE = 'support',
-    KEYFRAMES_RULE = 'keyframes',
-    MIXIN = '...',
-    HTML_ELEMENT = 'html_element',
-    COMPONENT = 'component',
+    AT_RULE,
 
-    STYLE_RULE = 'style_rule',
-
-    KEYFRAME_RULE = "keyframe",
-    DECLARATION = 'declaration',
+    MEDIA_RULE,
+    SUPPORT_RULE,
+    KEYFRAMES_RULE,
+    MIXIN,
 
 
-    UNKNOWN = 'unknown',
+    STYLE_RULE,
 
-    /*
-    common directives flag , 
-    builtin dir and custom dir
-    and css dir
-    */
-    COMMON_DIR = '--',
+    KEYFRAME_RULE,
+    DECLARATION,
 
-    BUILTIN_DIRECTIVE = 'builtin_directive',
-    CUSTOM_DIRECTIVE = 'custom_direvtive'
+    UNKNOWN,
+
+    DIRECTIVE_FLAG,
+
+    BUILTIN_DIRECTIVE,
+    CUSTOM_DIRECTIVE
 }
 
-const NodesKey = {
-    [Nodes.IF]: 'if'
-}
-
-
-import {
-    isHTMLTag, isSVGTag
-} from './const'
-
-//  keywords ===> NodeTypes
-export const NodesReverseMapping = Object.entries(Nodes).reduce((map: Record<string | number, string>, [key, value]: [string, string | number]) => {
-    map[value] = key
-    return map
-}, Object.create(null))
 /*
-    input a keyword and return the nodetype,
-    we can use it to parse the dom tags and attributes , directives and so on
+    input nodeType return nodeKeyword
+    input nodeKeyword return nodeType
 */
-export const nodeTypeOf = (
-    key: string,
-    onlyUseNodesMap = false
-    /*
-        when input true ,
-        if the map doesn't exist the nodetype , it will return undefined
-        so we can do other things
-    */
-) => {
-    // this key is nodeType value
-    return NodesReverseMapping[key] ? key : (onlyUseNodesMap ? undefined : (
-        isHTMLTag(key) ? Nodes.HTML_ELEMENT : isSVGTag(key) ? Nodes.SVG_ELEMENT : Nodes.COMPONENT
-    ))
+export enum NodesMap {
+    'if' = Nodes.IF,
+    'elseIf' = Nodes.ELSE_IF,
+    'else' = Nodes.ELSE,
+    'for' = Nodes.FOR,
+    '' = Nodes.TEXT,
+    '!' = Nodes.HTML_COMMENT,
+    '...' = Nodes.MIXIN,
+    '@' = Nodes.AT_RULE,
+    '--' = Nodes.DIRECTIVE_FLAG
 }
-
-
-
-

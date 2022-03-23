@@ -1,5 +1,4 @@
 
-var objectToString = Object.prototype.toString
 
 const isNumber = (value: any) => typeof value === 'number'
 const isString = (value: any) => typeof value === 'string'
@@ -7,13 +6,15 @@ const isArray = Array.isArray
 const isObject = (value: any) => objectToString.call(value) === '[object Object]'
 const isUndefined = (value: any) => typeof value === 'undefined'
 
+var objectToString = Object.prototype.toString
+
 function typeOf(value: any) {
-    return Object.prototype.toString.call(value).slice(8, -1).toLowerCase()
+    return objectToString.call(value).slice(8, -1).toLowerCase()
 }
 
-const instanceOf = (value:any,constructor:Function) => value.constructor = constructor
+const instanceOf = (value: any, constructor: Function) => value.constructor = constructor
 
-
+const isElement = (el: any) => el instanceof Element
 
 export {
     isNumber,
@@ -22,5 +23,6 @@ export {
     isObject,
     isUndefined,
     instanceOf,
-    typeOf
+    typeOf,
+    isElement
 }
