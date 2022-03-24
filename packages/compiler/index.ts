@@ -10,5 +10,9 @@ export {
 } from './src/parser/parseNode'
 
 export {
+    flatRules
+} from './src/parser/flatRules'
+
+export {
     compile
 } from './src/generator/compile'

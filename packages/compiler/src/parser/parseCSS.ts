@@ -14,10 +14,14 @@ import {
     Declaration
 } from './parseDeclaration'
 
+import {
+    warn, error
+} from '@crush/common'
+
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
-const CSSDir = /^--([\w]+)\s*(?:\(([^{]*)\))?\s*{/
+const CSSDir = /^--([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
 const AtRule = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/
 const mixinEx = /\.\.\.([^;]+);/
 
@@ -29,8 +33,11 @@ export type CSSNode = {
     type: Nodes,
     children?: CSSNode[],
     parent?: CSSNode,
-    content?: string | Selector | Declaration
+    selectors?: any
+    content?: string | Selector | Declaration[],
+    dirs?: any[]
 }
+
 
 
 export const parseCSS = (source: string): CSSNode[] => {
@@ -39,28 +46,30 @@ export const parseCSS = (source: string): CSSNode[] => {
         exResult: any,
         stack: CSSNode[] = [],
         currentRule: any,
-        shouldPush = true
+        parent = null
+
     while (scanner.source) {
         if (scanner.startsWith(NodesMap[Nodes.AT_RULE])) {
             var [type, content]: [Nodes, any] = scanner.exec(AtRule)
-            currentRule = { type, content }
+            currentRule = { type: NodesMap[type], content }
         } else if (scanner.startsWith(NodesMap[Nodes.DIRECTIVE_FLAG])) {
             var [dir, content] = scanner.exec(CSSDir)
-            /*  not ensure to parse , keep a suspense for the code generator */
             currentRule = { type: NodesMap[dir], content }
         } else if (scanner.expect('}')) {
             stack.pop()
+            parent = stack[stack.length - 1]
             scanner.move(1)
             continue
         } else if (scanner.expect('/*')) {
-            /* comment */
+            /* comment continue */
         } else if (scanner.startsWith(NodesMap[Nodes.MIXIN])) {
             var [content] = scanner.exec(mixinEx);
-            currentRule = {
+            (parent.children ||= []).push({
                 type: Nodes.MIXIN,
-                content
-            }
-            shouldPush = false
+                content,
+                parent
+            })
+            continue
         } else if (exResult = scanner.exec(selectorRE)) {
             /*
                 当不确定规则类型时，
@@ -71,27 +80,39 @@ export const parseCSS = (source: string): CSSNode[] => {
                 content: parseSelector(exResult[0])
             }
         } else if (exResult = scanner.exec(declarationRE)) {
-            currentRule = {
-                type: Nodes.DECLARATION,
-                content: parseDeclaration(exResult[0], exResult[1])
+            var declaration = parseDeclaration(exResult[0], exResult[1]);
+            if (!parent) {
+                //error
+            } else {
+                var children = parent.children ||= []
+                var lastChild = children[children.length - 1]
+                if (lastChild?.type === Nodes.DECLARATION) {
+                    lastChild.content.push(declaration)
+                } else {
+                    children.push({
+                        type: Nodes.DECLARATION,
+                        content: [declaration],
+                        parent
+                    })
+                }
             }
-            shouldPush = false
+            continue
         } else {
             /* error */
         }
 
-        /* process the relation */ 
-        var parent = stack[stack.length - 1]
+        /* process the relation , with cascading struct */
+
         if (!parent) {
+            // while there is no parent , the currentDeclaration is meaningless
             ast.push(currentRule)
         } else {
             (parent.children ||= []).push(currentRule);
             currentRule.parent = parent
         }
-        if (shouldPush) {
-            stack.push(currentRule)
-        }
-        shouldPush = true
+
+        stack.push(currentRule);
+        parent = currentRule
     }
     return ast
 }

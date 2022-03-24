@@ -56,5 +56,21 @@ export enum NodesMap {
     '!' = Nodes.HTML_COMMENT,
     '...' = Nodes.MIXIN,
     '@' = Nodes.AT_RULE,
-    '--' = Nodes.DIRECTIVE_FLAG
+    '--' = Nodes.DIRECTIVE_FLAG,
+    'media' = Nodes.MEDIA_RULE,
+    'keyframes' = Nodes.KEYFRAMES_RULE,
+    'support' = Nodes.SUPPORT_RULE
+}
+
+import {
+    isHTMLTag, isSVGTag
+} from './const'
+
+export const nodeTypeOf = (
+    key: any,
+) => {
+    // this key is nodeType value
+    return NodesMap[key] || (
+        isHTMLTag(key) ? Nodes.HTML_ELEMENT : isSVGTag(key) ? Nodes.SVG_ELEMENT : Nodes.COMPONENT
+    )
 }

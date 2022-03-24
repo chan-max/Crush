@@ -55,8 +55,6 @@ type ParseContext = {
     defaultType: Nodes | null
 }
 
-
-
 export const parseNodes = (
     nodes: AstNode[],
     ctx: ParseContext = {

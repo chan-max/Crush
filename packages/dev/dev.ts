@@ -11,6 +11,9 @@ import {
 } from '@crush/core'
 
 
+import {
+    flatRules
+} from '@crush/compiler'
 
 import {
     NodesMap,
@@ -20,12 +23,15 @@ import {
 
 var css = `
     body{
-        --if(isLogin){
-            color:red;
-            a{
-                color:red;
-            }
-        }
+       --if(A){
+           background-color:red;
+       }
+       --else-if(B){
+            background-color:green;
+       }
+       --else{
+            background-color:blue;
+       }
     }
 `
 
@@ -35,29 +41,10 @@ var css = `
 
 */
 
-console.log(parseCSS(css));
+var ast = parseCSS(css)
+console.log(ast);
 
-const app = {
-    template: `
-        <style>
-            div{
-                $width:x;
-                $height:x;
-                background-color:red;
-            }
-        </style>
-        <div @click="pad">
-        </div>
-    `,
-    create(self) {
-        self.x = 10
-        self.pad = () => self.x += 10
-    },
-    created(self){
-
-          
-    }
-}
+console.log(flatRules(ast));
 
 
 
