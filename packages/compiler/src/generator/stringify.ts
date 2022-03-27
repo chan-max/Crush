@@ -40,6 +40,8 @@ function ternaryChains(conditions: string[], returns: string[], index = 0): stri
     )
 }
 
+const destructur = (target:string) => `...${target}`
+
 export {
     ternaryExp,
     ternaryChains,
