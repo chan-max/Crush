@@ -21,3 +21,4 @@ export function compile(template: string) {
     const code = genNodes(htmlAst as AstNode[])
     return code
 }
+

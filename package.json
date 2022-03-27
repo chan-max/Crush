@@ -9,7 +9,6 @@
   "scripts": {
     "dev": "vite",
     "test": "jest",
-    "docs": "cd docs & cd server & node server.js",
     "docsdev": "cd packages/docs &   concurrently \"npm run serve\" \"npm run dev\""
   },
   "author": "chan",
