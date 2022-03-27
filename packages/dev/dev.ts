@@ -12,39 +12,33 @@ import {
 
 
 import {
-    flatRules
-} from '@crush/compiler'
-
-import {
     NodesMap,
     Nodes
 } from '@crush/types'
+import {
+    processRules
+} from '@crush/compiler'
 
-
-var css = `
+var template = `
+    <style>
     body{
-       --if(A){
-           background-color:red;
-       }
-       --else-if(B){
-            background-color:green;
-       }
-       --else{
-            background-color:blue;
-       }
+        color:red;
+        blue:red;
+        ...mixin;
+        --for(i in 6){
+
+        }
     }
+    </style>
 `
 
-/*
+console.log(compile(template));
 
 
 
-*/
 
-var ast = parseCSS(css)
-console.log(ast);
 
-console.log(flatRules(ast));
+
 
 
 

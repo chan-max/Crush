@@ -150,6 +150,8 @@ function genNode(node: AstNode): string {
             return callFn(Source.createComponent)
         case Nodes.TEXT:
             return genText(node.children as Text[])
+        case Nodes.STYLE:
+            return callFn(Source.createSheet)            
         default:
             return ''
     }

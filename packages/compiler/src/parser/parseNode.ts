@@ -23,14 +23,15 @@ import {
 } from './parseText'
 
 import {
-    CSSNode,
     parseCSS
 } from './parseCSS'
 import {
     processAttribute
 } from './processAttribute'
 
-
+import {
+    processRules
+} from './processRules'
 
 import {
     warn
@@ -47,7 +48,7 @@ export type AstNode = Omit<HTMLNode, 'children'> & {
     compileDir?: Dir[]
     customDir?: any
     content: any
-    children: Text[] | string | AstNode[] | CSSNode[]
+    children: Text[] | string | AstNode[]
 }
 
 type ParseContext = {
@@ -86,7 +87,9 @@ function parseNode(node: AstNode, ctx: any) {
                 unit , url ,
             */
             if (node.children) {
-                node.children = parseCSS((node.children[0] as HTMLNode).children as string)
+                const css = parseCSS((node.children[0] as HTMLNode).children as string)
+                processRules(css)
+                node.children = css as any
             }
             ctx.ignoreChildren = true
         case Nodes.HTML_COMMENT:

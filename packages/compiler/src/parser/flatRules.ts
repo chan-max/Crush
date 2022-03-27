@@ -1,10 +1,10 @@
 import { doFlat } from './doFlat'
 import {
-    CSSNode
-} from './parseCSS'
+    Asb
+} from './ast'
 
 
-function flatRules(rules: CSSNode[], isKeyframe = false) {
+function flatRules(rules: Asb[], isKeyframe = false) {
     return doFlat(rules, [], isKeyframe)
 }
 

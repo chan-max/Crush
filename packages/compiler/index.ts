@@ -12,6 +12,9 @@ export {
 export {
     flatRules
 } from './src/parser/flatRules'
+export {
+    processRules
+} from './src/parser/processRules'
 
 export {
     compile

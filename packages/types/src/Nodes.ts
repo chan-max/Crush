@@ -22,18 +22,21 @@ export enum Nodes {
     STATIC_CLASS,
     DYNAMIC_STYLE,
 
-    AT_RULE,
+    AT,
 
     MEDIA_RULE,
     SUPPORT_RULE,
     KEYFRAMES_RULE,
-    MIXIN,
+
 
 
     STYLE_RULE,
 
     KEYFRAME_RULE,
+
+    DECLARATIONS,
     DECLARATION,
+    MIXIN,
 
     UNKNOWN,
 
@@ -55,11 +58,12 @@ export enum NodesMap {
     '' = Nodes.TEXT,
     '!' = Nodes.HTML_COMMENT,
     '...' = Nodes.MIXIN,
-    '@' = Nodes.AT_RULE,
+    '@' = Nodes.AT,
     '--' = Nodes.DIRECTIVE_FLAG,
     'media' = Nodes.MEDIA_RULE,
     'keyframes' = Nodes.KEYFRAMES_RULE,
-    'support' = Nodes.SUPPORT_RULE
+    'support' = Nodes.SUPPORT_RULE,
+    'style' = Nodes.STYLE
 }
 
 import {
