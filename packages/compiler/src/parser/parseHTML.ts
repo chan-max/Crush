@@ -3,6 +3,10 @@ import { createScanner } from "./scanner"
 import {
     Nodes
 } from '@crush/types'
+import {
+    createAsb,
+    Asb
+} from './ast'
 
 const openTag = /^<([\w-]+)(?:\:(\w+))?/
 /*
@@ -18,31 +22,21 @@ const textRE = /((?:\{\{.*?\}\}|[^<])+)/
 const baseAttr = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/
 // the value is wrap in ' and " , so just remember dont contain them
 
-export type HTMLAttribute = {
-    attribute: string,
-    value: string | undefined
-    /*
-        undefined is single attribute
-    */
-}
-
-export type HTMLNode= {
-    tag: string,
-    modifier?: string | undefined
-    closed?: boolean
-    attributes?: HTMLAttribute[]
-    children?: Array<HTMLNode> | string
-}
+import {
+    camelize,
+    getEmptyMap
+} from '@crush/common'
 
 /* there is always return an array of the astTree, althrough only one root node */
 
-export const parseHTML = (source: string): HTMLNode[] => {
+export const parseHTML = (source: string): Asb[] => {
     var scanner = createScanner(source)
-    var ast: HTMLNode[] = [],
-        attributes: HTMLAttribute[] | undefined,
+    var ast: Asb[] = [],
+        attributes: any,
+        attributeMap: any,
         inOpen: boolean = false,
         tag,
-        modifier
+        modifier /* extend feature */
     while (scanner.source) {
         if (scanner.expect('<')) {
             if (scanner.expect('/', 1)) {
@@ -59,10 +53,9 @@ export const parseHTML = (source: string): HTMLNode[] => {
                     }
                 }
             } else if (scanner.expect('!', 1)) {
-                ast.push({
-                    tag: '!',
-                    children: scanner.exec(comment)[0]
-                })
+                var asb = createAsb(Nodes.HTML_COMMENT)
+                asb.children = scanner.exec(comment)[0]
+                ast.push(createAsb(Nodes.HTML_COMMENT))
             } else {
                 [tag, modifier] = scanner.exec(openTag)
                 inOpen = true
@@ -72,27 +65,31 @@ export const parseHTML = (source: string): HTMLNode[] => {
                 /* there is not must for decide a opentag is close or not by '/', so just forget it */
                 scanner.move(1)
             } else if (scanner.expect('>')) {
-                ast.push({
-                    tag,
-                    modifier,
-                    attributes,
-                    closed: false,
-                })
-                attributes = undefined
+                var asb = createAsb(Nodes.DOM_ELEMENT)
+                asb.tag = tag
+                asb.tagName = camelize(tag)
+                asb.modifier = modifier
+                asb.closed = false
+                asb.attributes = attributes
+                asb.attributeMap = attributeMap
+                ast.push(asb)
+                attributes = null
+                attributeMap = null
                 inOpen = false
                 scanner.move(1)
             } else {
+                /* catch attribute */
                 var [attribute, _, value] = scanner.exec(baseAttr);
-                (attributes ||= []).push({
-                    attribute,
-                    value
-                })
+                var asb = createAsb(Nodes.HTML_ATTRIBUTE);
+                asb.attribute = attribute
+                asb.value = value;
+                (attributes ||= []).push(asb);
+                (attributeMap ||= getEmptyMap())[attribute] = value;
             }
         } else { // text
-            ast.push({
-                tag: '',
-                children: scanner.exec(textRE)[0]
-            })
+            var asb = createAsb(Nodes.TEXT)
+            asb.children = scanner.exec(textRE)[0]
+            ast.push(asb)
         }
     }
     return ast

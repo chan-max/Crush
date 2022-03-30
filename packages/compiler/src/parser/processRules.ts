@@ -2,38 +2,36 @@ import { Nodes } from '@crush/types'
 import {
     Asb
 } from './ast'
-import { parseIterator } from './parseIterator'
 
-export const processRules = (rules: Asb[]) => {
+/*
+    extend the selectors and process keyframes
+*/
+export const processRules = (rules: Asb[], isKeyframe = false) => {
     rules.forEach((rule: Asb) => {
         switch (rule.type) {
             case Nodes.STYLE_RULE:
-                const { content, parent } = rule
+                const { selector, parent } = rule
                 var extendSelectors = parent?.selectors
                 if (extendSelectors) {
-                    rule.selectors = [...extendSelectors, content]
+                    rule.selectors = [...extendSelectors, selector]
                 } else {
-                    rule.selectors = [content]
+                    rule.selectors = [selector]
                 }
-                break
-            case Nodes.FOR:
-                rule.selectors = rule.parent?.selectors
-                rule.content = parseIterator(rule.content)
-                rule.dirs = [rule]
                 break
             case Nodes.IF:
             case Nodes.ELSE_IF:
             case Nodes.ELSE:
-                rule.selectors = rule.parent?.selectors
-                rule.dirs = [rule]
-                break;
+            case Nodes.FOR:
             case Nodes.MEDIA_RULE:
             case Nodes.SUPPORT_RULE:
                 rule.selectors = rule.parent?.selectors
+                break;
+            case Nodes.KEYFRAMES_RULE:
+                isKeyframe = true
                 break
         }
         if (rule.children) {
-            processRules(rule.children)
+            processRules(rule.children,isKeyframe)
         }
     })
 }

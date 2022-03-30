@@ -1,24 +1,25 @@
 
-import { Nodes, nodeTypeOf } from '@crush/types'
+import { directiveTypeOf, Nodes, NodesMap, } from '@crush/types'
 import {
-    AstNode,
 } from './parseNode'
 
 import {
-    HTMLAttribute
-} from './parseHTML'
+    scopedExp
+} from '../helper/scopedExp'
+import { Asb } from './ast'
 
 import {
     camelize,
     makeMap,
     exec
 } from '@crush/common'
+import { parseIterator } from './parseIterator'
 
 /*
     find the value of attribute list
 */
 function findAttr(
-    attrs: HTMLAttribute[],
+    attrs: Asb[],
     validator: Function, // to decide a value is legal by attribute 
     getAll: boolean // should get all value 
 ) {
@@ -38,99 +39,48 @@ function findAttr(
     return res
 }
 
-import {
-    parseIterator
-} from './parseIterator'
-import {
-    scopedExp
-} from '../helper/scopedExp'
+export const findValueByattribute = (attrs: Asb[], attribute: string) => {
 
-const findValueByattribute = (attrs: HTMLAttribute[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, false)
-const findValueByattributes = (attrs: HTMLAttribute[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), false)
-const findValuesByattribute = (attrs: HTMLAttribute[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
-const findValuesByattributes = (attrs: HTMLAttribute[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
-
-
-// not allow to use ( ) for dynamic property
-
-
-
-const isCompileDir = makeMap('if,elseIf,else,for,slot,slotDef')
+    return findAttr(attrs, (_attribute: string) => _attribute === attribute, false)
+}
+export const findValueByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), false)
+export const findValuesByattribute = (attrs: Asb[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
+export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
 const extAttribute = /(@|$|-{2})?(?:\(([^\)]+)\)|([\w-]+))(?::(\w+))?(?:\.([\w\.]+))?/
 
-
-export const processAttribute = (node: AstNode) => {
-    switch (node.type) {
-        case Nodes.IF:
-            node.compileDir = [{
-                type: Nodes.IF,
-                content: scopedExp(findValueByattribute(node.attributes as HTMLAttribute[], '--'))
-            }]
-            break
-        case Nodes.ELSE_IF:
-            node.compileDir = [{
-                type: Nodes.ELSE_IF,
-                content: scopedExp(findValueByattribute(node.attributes as HTMLAttribute[], '--'))
-            }]
-            break
-        case Nodes.ELSE:
-            node.compileDir = [{
-                type: Nodes.ELSE
-            }]
-            break
-        case Nodes.FOR:
-            node.compileDir = [{
-                type: Nodes.FOR,
-                content: parseIterator(findValueByattribute(node.attributes as HTMLAttribute[], '--'))
-            }]
-            break
-        case Nodes.HTML_ELEMENT:
-            node.attributes?.forEach(({ attribute, value }) => {
-                var [flag, dynamicAttr, staticAttr, name, modifier]: any = exec(attribute, extAttribute)
-                if (flag === '@') {
-                    
-                } else if (flag === '--') {
-                    /* dirctive doesnt suppoort dynamic */
-                    const directiveName = camelize(staticAttr)
-                    if (isCompileDir(directiveName)) {
-                        switch (directiveName as Nodes) {
-                            case Nodes.IF:
-                                (node.compileDir ||= []).push({
-                                    type: Nodes.IF,
-                                    content: value
-                                })
-                                break
-                            case Nodes.ELSE_IF:
-                                (node.compileDir ||= []).push({
-                                    type: Nodes.ELSE_IF,
-                                    content: value
-                                })
-                                break
-                            case Nodes.ELSE:
-                                (node.compileDir ||= []).push({
-                                    type: Nodes.ELSE,
-                                    content: value
-                                })
-                                break
-                            case Nodes.FOR:
-                                (node.compileDir ||= []).push({
-                                    type: Nodes.FOR,
-                                    content: parseIterator(value as string)
-                                })
-                                break
-                        }
-                    }
-                }
-            })
-            break
-        case Nodes.COMPONENT:
-            /*
-                no special attribute
-            */
-            break
-        case Nodes.SVG_ELEMENT:
-            break
-    }
+export const processAttribute = (node: Asb) => {
+    const {
+        type, attributes
+    } = node;
+    attributes?.forEach((attr) => {
+        var exResult = exec(attr.attribute as string, extAttribute) as string[];
+        const [flag, dynamicProperty, staticProperty, content, modifiers] = exResult;
+        if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
+            var dirName = camelize(staticProperty)
+            const dirType = directiveTypeOf(dirName)
+            attr.type = dirType
+            switch (dirType) {
+                case Nodes.IF:
+                case Nodes.ELSE_IF:
+                    attr.condition = attr.value;
+                    (node.dirs ||= []).push(attr)
+                    break
+                case Nodes.ELSE:
+                    (node.dirs ||= []).push(attr)
+                    break
+                case Nodes.FOR:
+                    attr.iterator = parseIterator(attr.value as string);
+                    (node.dirs ||= []).push(attr)
+                    break
+                case Nodes.CUSTOM_DIRECTIVE:
+                    attr.dirName = dirName
+                    attr.content = content
+                    attr.modifiers = modifiers && modifiers.split('.');
+                    (node.customDir ||= []).push(attr)
+                    break
+            }
+        }
+    })
 }
 

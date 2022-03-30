@@ -40,8 +40,8 @@ function ternaryChains(conditions: string[], returns: string[], index = 0): stri
     )
 }
 
-const destructur = (target:string) => `...${target}`
-var declare = ''
+const destructur = (target: string) => `...${target}`
+var declare = (name: string, value: string) => `const ${name} = ${value} ;`
 
 export {
     ternaryExp,
@@ -54,5 +54,6 @@ export {
     objectStringify,
     toArrowFunction,
     callFn,
-    destructur
+    destructur,
+    declare
 }

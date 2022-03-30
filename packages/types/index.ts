@@ -2,7 +2,8 @@
 
 export {
     Nodes,
-    nodeTypeOf,
+    tagTypeOf,
+    directiveTypeOf,
     NodesMap
 } from './src/nodes'
 

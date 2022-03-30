@@ -1,11 +1,10 @@
 
 import {
-    HTMLNode,
-    HTMLAttribute
+    parseHTML
 } from './parseHTML'
 
 import {
-    isArray
+    isArray, throwError
 } from '@crush/common'
 
 import {
@@ -14,7 +13,7 @@ import {
 
 import {
     Nodes,
-    nodeTypeOf
+    tagTypeOf
 } from '@crush/types'
 
 import {
@@ -23,9 +22,14 @@ import {
 } from './parseText'
 
 import {
+    parseIterator
+} from './parseIterator'
+
+import {
     parseCSS
 } from './parseCSS'
 import {
+    findValueByattribute,
     processAttribute
 } from './processAttribute'
 
@@ -36,71 +40,77 @@ import {
 import {
     warn
 } from '@crush/common'
-
-export type Dir = {
-    type: Nodes
-    content?: any
-}
-
-export type AstNode = Omit<HTMLNode, 'children'> & {
-    type: Nodes
-    tagName: string
-    compileDir?: Dir[]
-    customDir?: any
-    content: any
-    children: Text[] | string | AstNode[]
-}
+import { Asb } from './ast'
 
 type ParseContext = {
     ignoreChildren: boolean // shoudle parse the children
-    defaultType: Nodes | null
 }
 
-export const parseNodes = (
-    nodes: AstNode[],
+export const parseTemplate = (template: string) => {
+    var htmlAst = parseHTML(template)
+    parseNodes(htmlAst)
+    return htmlAst
+}
+
+const parseNodes = (
+    nodes: Asb[],
     ctx: ParseContext = {
         ignoreChildren: false,
-        defaultType: null
-    }) => nodes.forEach((node) => {
+    }) => {
+    nodes.forEach((node) => {
         parseNode(node, ctx)
         if (isArray(node.children) && !ctx.ignoreChildren) {
-            parseNodes(node.children as AstNode[], ctx)
+            parseNodes(node.children as Asb[], ctx)
         }
         // reset status
         ctx.ignoreChildren = false
-        ctx.defaultType = null
     })
+}
 
-function parseNode(node: AstNode, ctx: any) {
-    node.tagName = camelize(node.tag)
-    node.type = ctx.defaultType || nodeTypeOf(node.tagName as string) as Nodes
-    switch (node.type) {
-        case Nodes.HTML_COMMENT:
-            break
-        case Nodes.TEXT:
-            node.children = parseText(node.children as string)
-            ctx.ignoreChildren = true
-            return
-        case Nodes.STYLE:
-            /*
-                special attrs
-                unit , url ,
-            */
-            if (node.children) {
-                const css = parseCSS((node.children[0] as HTMLNode).children as string)
-                processRules(css)
-                node.children = css as any
-            }
-            ctx.ignoreChildren = true
-        case Nodes.HTML_COMMENT:
-        case Nodes.SVG_ELEMENT:
-            ctx.defaultType = Nodes.SVG_ELEMENT
-        case Nodes.COMPONENT:
-        case Nodes.HTML_ELEMENT:
-        case Nodes.FOR:
-        case Nodes.IF:
-        case Nodes.ELSE_IF:
-        case Nodes.ELSE:
-            processAttribute(node)
+function parseNode(node: Asb, ctx: any) {
+    const type = node.type
+    if (type === Nodes.DOM_ELEMENT) {
+        const tagType = tagTypeOf(node.tagName as string)
+        node.type = tagType
+        switch (tagType) {
+            case Nodes.HTML_ELEMENT:
+                processAttribute(node)
+                break
+            case Nodes.SVG_ELEMENT:
+                break
+            case Nodes.COMPONENT:
+                processAttribute(node)
+                break
+            case Nodes.STYLE:
+                var template = node.children?.[0].children
+                if (template) {
+                    var styleAst = parseCSS(template)
+                    processRules(styleAst)
+                    node.children = styleAst
+                }
+                return
+            case Nodes.IF:
+                node.type = 
+                node.condition = node.attributeMap['condition']
+                node.dirs = [node]
+                break
+            case Nodes.ELSE_IF:
+                node.condition = node?.attributeMap?.['condition']
+                node.dirs = [node]
+                break
+            case Nodes.ELSE:
+                node.dirs = [node]
+                break
+            case Nodes.FOR:
+                node.iterator = parseIterator(node.attributeMap['iterator'])
+                node.dirs = [node]
+                break
+        }
+    } else if (type === Nodes.TEXT) {
+        node.children = parseText(node.children as string)
+        ctx.ignoreChildren = true
+        return
+    } else if (type === Nodes.HTML_COMMENT) {
+        // todo
     }
 }

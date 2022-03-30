@@ -14,6 +14,6 @@ export enum ComponentOptions {
     UNMOUNTED_HOOK = 'unmounted'
 }
 
-export const initOptions = (options: Component) => {
+export const initOptions = () => {
         
 }

@@ -34,10 +34,6 @@ export const renderMethods = {
     mixin
 }
 
-export const methods = '_' // am I cute ?
-export const context = 'ctx'
-export const instance = 'st'
-
 export const Source = {
     createComment: 'createComment',
     createElement: 'createElement',
@@ -45,7 +41,7 @@ export const Source = {
     createComponent: 'createComponent',
     createKeyframe: 'createKeyframe',
     createKeyframes: 'createKeyframes',
-    createMedia: 'createStyle',
+    createMedia: 'createMedia',
     createSVGElement: 'createSVGElement',
     createSheet: 'createSheet',
     createStyle: 'createStyle',
@@ -54,9 +50,5 @@ export const Source = {
     mergeSelectors: 'mergeSelectors',
     display: 'display',
     mixin: 'mixin',
-    null: 'null'
 }
 
-const cmpilerOptions = {
-    
-}

@@ -6,7 +6,7 @@ export {
     parseCSS
 } from './src/parser/parseCSS'
 export {
-    parseNodes
+    parseTemplate,
 } from './src/parser/parseNode'
 
 export {
@@ -16,6 +16,9 @@ export {
     processRules
 } from './src/parser/processRules'
 
+
+
 export {
+    createFunction,
     compile
 } from './src/generator/compile'

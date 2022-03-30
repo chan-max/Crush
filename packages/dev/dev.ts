@@ -3,36 +3,33 @@ import {
 } from '@crush/compiler'
 
 import {
-    parseCSS
+    parseTemplate
 } from '@crush/compiler'
 
 import {
     createApp
 } from '@crush/core'
 
-
 import {
     NodesMap,
     Nodes
 } from '@crush/types'
+
 import {
-    processRules
+    createFunction
 } from '@crush/compiler'
 
 var template = `
-    <style>
-    body{
-        color:red;
-        blue:red;
-        ...mixin;
-        --for(i in 6){
-
-        }
-    }
-    </style>
+<h1 --if="isLogin" --for="item,i in 6">111</h1>
 `
 
-console.log(compile(template));
+var rf = compile(template)
+console.log(rf);
+
+var code = document.createElement('code')
+code.innerHTML = rf
+document.body.appendChild(code)
+
 
 
 

@@ -1,9 +1,6 @@
 
 import { Nodes } from '@crush/types'
 import {
-    AstNode
-} from '../parser/parseNode'
-import {
     Source
 } from './source'
 
@@ -28,11 +25,10 @@ import {
     Text
 } from '../parser/parseText'
 
-
 // the code Entrance
-export const genNodes = (nodes: AstNode[]): string => {
+export const genNodes = (nodes: any[]): string => {
     if (nodes.length === 0) {
-        return Source.null
+        return 'null'
     } else if (nodes.length === 1) {
         return genNode(nodes[0])
     } else {
@@ -48,29 +44,35 @@ export const genNodes = (nodes: AstNode[]): string => {
 /*
     process if elseIf else branch
 */
-function genChildren(nodes: AstNode[]): string[] {
+
+var UNKNOWN = Symbol('unknown')
+
+function genChildren(nodes: any[]): string[] {
     const children: string[] = []
     const branchContent: string[] = []
     const branchCondition: string[] = []
     var inBranch = false
     nodes.forEach((node) => {
-        const firstDir = node.compileDir?.[0]
+        const firstDir = node.dirs?.[0]
         const firstDirType = firstDir?.type
-        const firstDirContent = firstDir?.content
+        const firstDirContent = firstDir?.condition
         // 8 branch
         if (firstDirType === Nodes.IF) {
             if (inBranch) {
+                /*
+                    in branch , and end
+                */
                 children.push(ternaryChains(branchCondition, branchContent))
                 inBranch = false
             } else {
-                node.compileDir?.shift()
+                node.dirs?.shift()
                 branchContent.push(genNode(node))
                 branchCondition.push(firstDirContent)
                 inBranch = true
             }
         } else if (firstDirType === Nodes.ELSE_IF) {
             if (inBranch) {
-                node.compileDir?.shift()
+                node.dirs?.shift()
                 branchContent.push(genNode(node))
                 branchCondition.push(firstDirContent)
             } else {
@@ -79,7 +81,7 @@ function genChildren(nodes: AstNode[]): string[] {
         } else if (firstDirType === Nodes.ELSE) {
             // else not as the end flag of the branch , when the type is not branch or undifined , it will end 
             if (inBranch) {
-                node.compileDir?.shift()
+                node.dirs?.shift()
                 branchContent.push(genNode(node))
                 children.push(ternaryChains(branchCondition, branchContent))
             } else {
@@ -94,6 +96,7 @@ function genChildren(nodes: AstNode[]): string[] {
             }
         }
     })
+
     return children
 }
 
@@ -101,13 +104,10 @@ import {
     Iterator
 } from '../parser/parseIterator'
 
-const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, toArrowFunction(target, iterator.items))
-const genIf = (target: string, condition: string) => ternaryExp(condition, target, Source.null)
+const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable,toArrowFunction(target, iterator.items))
+const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
 
-import {
-    Dir
-} from '../parser/parseNode'
-const genDirectives = (target: string, dirs: Dir[]): string => {
+const genDirectives = (target: string, dirs: any[]): string => {
     /*
         there is no possible to exist else-if or else
     */
@@ -118,30 +118,30 @@ const genDirectives = (target: string, dirs: Dir[]): string => {
         dirs.shift()
         switch (dir.type) {
             case Nodes.IF:
-                target = genIf(target, dir.content)
+                target = genIf(target, dir.condition)
                 break
             case Nodes.FOR:
-                target = genFor(target, dir.content)
+                target = genFor(target, dir.iterator)
                 break
         }
         return genDirectives(target, dirs)
     }
 }
 
-function genNode(node: AstNode): string {
+function genNode(node: any): string {
     switch (node.type) {
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
-            return genNodes(node.children as AstNode[])
+            return genNodes(node.children as any[])
         case Nodes.FOR:
         case Nodes.HTML_ELEMENT:
             var el = callFn(
                 Source.createElement,
                 toString(node.tagName)
             )
-            if (node.compileDir) {
-                el = genDirectives(el, node.compileDir)
+            if (node.dirs) {
+                el = genDirectives(el, node.dirs)
             }
             return el
         case Nodes.SVG_ELEMENT:
@@ -151,7 +151,8 @@ function genNode(node: AstNode): string {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            return callFn(Source.createSheet)            
+            debugger
+            return callFn(Source.createSheet,)
         default:
             return ''
     }

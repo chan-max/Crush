@@ -35,6 +35,7 @@ import {
     Asb,
     createAsb
 } from './ast'
+import { parseIterator } from './parseIterator'
 
 export const parseCSS = (source: string): Asb[] => {
     var scanner = createScanner(source)
@@ -52,25 +53,52 @@ export const parseCSS = (source: string): Asb[] => {
             /*
                 media conditions
             */
-            var [type, content]: [Nodes, any] = scanner.exec(AtRule)
-            current = createAsb(NodesMap[type], content)
+            var [type, content]: [NodesMap, any] = scanner.exec(AtRule)
+            const nodeType: any = NodesMap[type]
+            var asb = createAsb(nodeType)
+            if (nodeType === Nodes.MEDIA_RULE) {
+                asb.media = content
+            } else if (nodeType === Nodes.KEYFRAMES_RULE) {
+                asb.keyframes = content
+            }
+            current = asb
         } else if (scanner.startsWith(NodesMap[Nodes.DIRECTIVE_FLAG])) {
             var [dir, content] = scanner.exec(CSSDir)
-            current = createAsb(NodesMap[camelize(dir)], content)
+            var dirType: any = NodesMap[camelize(dir)]
+            var asb = createAsb(dirType)
+            switch (dirType) {
+                case Nodes.FOR:
+                    asb.iterator = parseIterator(content)
+                    break
+                case Nodes.IF:
+                case Nodes.ELSE_IF:
+                    asb.condition = content
+                    break
+                case Nodes.ELSE:
+                    break
+            }
+            asb.dirs = [asb]
+            current = asb
         } else if (scanner.expect('/*')) {
             /* comment continue */
         } else if (scanner.startsWith(NodesMap[Nodes.MIXIN])) {
-            var [content] = scanner.exec(mixinEx);
-            (declarations ||= []).push(createAsb(Nodes.MIXIN, content))
+            var [mixin] = scanner.exec(mixinEx);
+            var asb = createAsb(Nodes.MIXIN);
+            asb.mixin = mixin;
+            (declarations ||= []).push(asb)
             continue
         } else if (exResult = scanner.exec(selectorRE)) {
-            current = createAsb(Nodes.STYLE_RULE, parseSelector(exResult[0]))
+            var asb = createAsb(Nodes.STYLE_RULE)
+            asb.selector = parseSelector(exResult[0])
+            current = asb
         } else if (exResult = scanner.exec(declarationRE)) {
             /*
                 the last declaration must end with  " ; "
             */
             var declaration = parseDeclaration(exResult[0], exResult[1]);
-            (declarations ||= []).push(createAsb(Nodes.DECLARATION, declaration))
+            var asb = createAsb(Nodes.DECLARATION);
+            asb.declaration = declaration;
+            (declarations ||= []).push(asb)
             continue
         } else {
             /* error */
@@ -80,7 +108,10 @@ export const parseCSS = (source: string): Asb[] => {
         /* process the relation , with cascading struct */
 
         if (declarations) {
-            (parent.children ||= []).push(createAsb(Nodes.DECLARATIONS, declarations,parent))
+            var asb = createAsb(Nodes.DECLARATIONS);
+            asb.declarations = declarations;
+            asb.parent = parent;
+            (parent.children ||= []).push(asb)
             declarations = null
         }
 

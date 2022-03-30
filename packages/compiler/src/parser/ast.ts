@@ -1,18 +1,40 @@
 import { Nodes } from "@crush/types";
-import { Selector } from "./parseSelector";
 
 export interface Asb {
-    type: Nodes
-    content: any
-    children: Asb[] | null
-    parent: Asb | null,
+    type: Nodes | string
+    tag?: string
+    tagName?: string
+    children?: any
+    content?: any
+    closed?: boolean
+    attributes?: Asb[]
+    attributeMap?: any
+    modifier?: string
+    parent?: Asb
+    attribute?: string
+    value?: string
     dirs?: Asb[]
-    selectors?: Selector[]
+
+    condition?: string /* branch */
+
+    iterator?: any
+
+    media?: string
+
+    keyframes?: string
+
+    mixin?: string
+
+    selector?: any
+    selectors?: any
+
+    declaration?: any
+    declarations?: any
+
+    customDir?:any
+    modifiers?:any
+    dirName?:string
+    
 }
 
-export const createAsb = (type: any, content: any = null, parent = null, children = null): Asb => ({
-    type,
-    content,
-    parent,
-    children
-})
+export const createAsb = (type: Nodes | string,): Asb => ({ type })
