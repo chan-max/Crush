@@ -1,6 +1,4 @@
-import {
-    Component
-} from '../instance/component'
+
 import {
     isBuiltInTag,
     isBuiltInDirective
@@ -19,7 +17,7 @@ import {
 
 import {
     mountComponent
-} from '@crush/renderer'
+} from '../renderer/render/mountComponent'
 
 class AppModule {
 
@@ -31,11 +29,11 @@ class AppModule {
 
     directives = getEmptyMap()
 
-    rootOptions: Component | null = null
+    rootOptions: any = null
 
     rootInstance: any
 
-    component(name: string, options: Component) {
+    component(name: string, options: any) {
         if (this.components[name]) {
             warn(`
                 component has already registered
@@ -80,7 +78,7 @@ class AppModule {
             return
         }
 
-        var instance = mountComponent(el, this.rootOptions as Component)
+        var instance = mountComponent(el, this.rootOptions)
         this.rootInstance = instance
         this.el = el
         return instance

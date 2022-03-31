@@ -14,7 +14,7 @@ import {
     mergeSelectors,
     display,
     mixin
-} from '@crush/renderer'
+} from '@crush/core'
 
 
 export const renderMethods = {

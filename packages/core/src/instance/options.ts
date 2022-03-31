@@ -1,19 +1,67 @@
+import { compile } from "../../../dev/node_modules/@crush/compiler"
 import {
-    Component
-} from './component'
+    injectHook,
+    LifecycleHooks
+} from './lifecycle'
+
+import {
+    isArray
+} from '@crush/common'
 
 export enum ComponentOptions {
     CREATE = 'create',
     // setup funcition
-    CREATED_HOOK = 'created',
-    BEFORE_MOUNT_HOOK = 'beforeMount',
-    MOUNTED_HOOK = 'mounted',
-    BEFORE_UPDATE_HOOK = 'beforeUpdate',
-    UPDATED_HOOK = 'updated',
-    BEFORE_UNMOUNT_HOOK = 'beforeUnmount',
-    UNMOUNTED_HOOK = 'unmounted'
+    CREATED = 'created',
+    BEFORE_MOUNT = 'beforeMount',
+    MOUNTED = 'mounted',
+    BEFORE_UPDATE = 'beforeUpdate',
+    UPDATED = 'updated',
+    BEFORE_UNMOUNT = 'beforeUnmount',
+    UNMOUNTED = 'unmounted',
+    TEMPLATE = 'template',
+    MIXINS = 'mixins',
+    COMPOENNTS = 'components',
+    DIRECTIVES = 'directives'
 }
 
-export const initOptions = () => {
-        
+export const initOptions = (options: any, target = null) => {
+    const initTarget = target || options
+    for (let key in options) {
+        switch (key) {
+            // root options only
+            case ComponentOptions.TEMPLATE:
+                options.renderCreator = compile(options[ComponentOptions.TEMPLATE])
+                break
+            case ComponentOptions.CREATE:
+                injectHook(initTarget, LifecycleHooks.CREATE, options[ComponentOptions.CREATE])
+                break
+            case ComponentOptions.CREATED:
+                injectHook(initTarget, LifecycleHooks.CREATED, options[ComponentOptions.CREATED])
+                break
+            case ComponentOptions.BEFORE_MOUNT:
+                injectHook(initTarget, LifecycleHooks.BEFORE_MOUNT, options[ComponentOptions.BEFORE_MOUNT])
+                break
+            case ComponentOptions.MOUNTED:
+                injectHook(initTarget, LifecycleHooks.MOUNTED, options[ComponentOptions.MOUNTED])
+                break
+            case ComponentOptions.BEFORE_UNMOUNT:
+                injectHook(initTarget, LifecycleHooks.BEFORE_UNMOUNT, options[ComponentOptions.BEFORE_UNMOUNT])
+                break
+            case ComponentOptions.UNMOUNTED:
+                injectHook(initTarget, LifecycleHooks.UNMOUNTED, options[ComponentOptions.UNMOUNTED])
+                break
+            case ComponentOptions.BEFORE_UPDATE:
+                injectHook(initTarget, LifecycleHooks.BEFORE_UPDATE, options[ComponentOptions.BEFORE_UPDATE])
+                break
+            case ComponentOptions.UPDATED:
+                injectHook(initTarget, LifecycleHooks.UPDATED, options[ComponentOptions.UPDATED])
+                break
+            case ComponentOptions.MIXINS:
+                options[ComponentOptions.MIXINS].forEach((mixin: any) => {
+                    initOptions(mixin, initTarget)
+                })
+                break
+        }
+    }
+    options._isOptions = true
 }

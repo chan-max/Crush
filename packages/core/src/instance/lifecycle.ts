@@ -1,6 +1,9 @@
 
 
 const enum LifecycleHooks {
+
+    CREATE = 'C',
+
     CREATED = 'c',
     BEFORE_MOUNT = 'bm',
     MOUNTED = 'm',

@@ -7,6 +7,34 @@ export {
     ComponentOptions
 } from './src/instance/options'
 
+
+
 export {
-    Component
-} from './src/instance/component'
+    createComment,
+    createElement,
+    createFragment,
+    createKeyframe,
+    createKeyframes,
+    createMedia,
+    createSVGElement,
+    createSheet,
+    createStyle,
+    createText,
+} from './src/renderer/vnode/vnode'
+
+export {
+    display
+} from './src/renderer/common/display'
+export {
+    iterator
+} from './src/renderer/common/iterator'
+export {
+    mergeSelectors
+} from './src/renderer/common/mergeSelector'
+export {
+    mixin
+} from './src/renderer/common/mixin'
+
+export {
+    mountComponent
+} from './src/renderer/render/mountComponent'
