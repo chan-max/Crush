@@ -16,6 +16,9 @@ import {
     mixin
 } from '@crush/core'
 
+import {
+    flatRules
+} from '../parser/flatRules'
 
 export const renderMethods = {
     createComment,
@@ -31,8 +34,14 @@ export const renderMethods = {
     iterator,
     mergeSelectors,
     display,
-    mixin
+    mixin,
+    flatRules
 }
+
+export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {
+    res[name] = method.name
+    return res
+}, {})
 
 export const Source = {
     createComment: 'createComment',

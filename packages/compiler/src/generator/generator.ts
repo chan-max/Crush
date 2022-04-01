@@ -1,7 +1,8 @@
 
 import { Nodes } from '@crush/types'
 import {
-    Source
+    Source,
+    renderMethodsNameMap
 } from './source'
 
 import {
@@ -72,6 +73,7 @@ function genChildren(nodes: any[]): string[] {
                 node.dirs?.shift()
                 branchContent.push(genNode(node))
                 branchCondition.push(firstDirContent)
+                debugger // 当只有一个if 分支时， 不会清空内容
                 inBranch = true
             }
         } else if (firstDirType === Nodes.ELSE_IF) {
@@ -159,7 +161,8 @@ function genNode(node: any): string {
             return callFn(Source.createSheet, children as any)
         case Nodes.STYLE_RULE:
             var selector = genSelector(node.selectors)
-            return callFn(Source.createStyle, selector)
+            var children = genChildren(node.children)
+            return callFn(Source.createStyle, selector,toArray(children))
         default:
             return ''
     }
@@ -182,7 +185,11 @@ const genText = (texts: Text[]) => {
 
 function genSelector(selectors: Array<any>) {
     //! one dynamic selector will effect all 
-    debugger
+
+    /*
+        s , d , s ,d ,s ,d ,s ,d
+    */
+
     var contents: any = []
     var isDynamic = selectors.every((selector: any) => {
         contents.push(selector.selectorText)

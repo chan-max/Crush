@@ -9,7 +9,6 @@ import {
  export function doFlat(
     rules: Asb[],
     flattedRules: any,
-    isKeyframe = false
 ) {
     rules.forEach((rule: Asb) => {
         const type = rule.type

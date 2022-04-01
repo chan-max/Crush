@@ -85,12 +85,13 @@ function parseNode(node: Asb, ctx: any) {
                 var template = node.children?.[0].children
                 if (template) {
                     var styleAst = parseCSS(template)
+                    console.log('styleAst',styleAst);
                     processRules(styleAst)
                     node.children = styleAst
+                    ctx.ignoreChildren = true
                 }
                 return
             case Nodes.IF:
-                node.type = 
                 node.condition = node.attributeMap['condition']
                 node.dirs = [node]
                 break

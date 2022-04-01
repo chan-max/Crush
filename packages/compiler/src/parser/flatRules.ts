@@ -4,8 +4,8 @@ import {
 } from './ast'
 
 
-function flatRules(rules: Asb[], isKeyframe = false) {
-    return doFlat(rules, [], isKeyframe)
+function flatRules(rules: Asb[]) {
+    return doFlat(rules, [])
 }
 
 export {
