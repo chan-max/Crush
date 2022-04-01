@@ -18,6 +18,10 @@ import {
 } from './stringify'
 
 import {
+    mergeSelectors
+} from '@crush/core'
+
+import {
     scopedExp
 } from '../helper/scopedExp'
 
@@ -104,7 +108,7 @@ import {
     Iterator
 } from '../parser/parseIterator'
 
-const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable,toArrowFunction(target, iterator.items))
+const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
 
 const genDirectives = (target: string, dirs: any[]): string => {
@@ -151,8 +155,11 @@ function genNode(node: any): string {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            debugger
-            return callFn(Source.createSheet,)
+            var children = genChildren(node.children)
+            return callFn(Source.createSheet, children as any)
+        case Nodes.STYLE_RULE:
+            var selector = genSelector(node.selectors)
+            return callFn(Source.createStyle, selector)
         default:
             return ''
     }
@@ -173,3 +180,15 @@ const genText = (texts: Text[]) => {
     )
 }
 
+function genSelector(selectors: Array<any>) {
+    //! one dynamic selector will effect all 
+    debugger
+    var contents: any = []
+    var isDynamic = selectors.every((selector: any) => {
+        contents.push(selector.selectorText)
+        return !selector.isDynamic
+    })
+    return isDynamic ?
+        callFn(Source.mergeSelectors, contents.map(toBackQuotes)) :
+        toString(mergeSelectors(...contents))
+}

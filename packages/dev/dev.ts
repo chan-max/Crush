@@ -7,18 +7,24 @@ import {
 } from '@crush/core'
 
 var template = `
-<h1 --if="isLogin" --for="item,i in 6">111</h1>
+<style>
+    body{
+        color:red;
+    }
+</style>
 `
 
 var rf = compile(template)
 console.log(rf);
-var code = document.createElement('code')
-code.innerHTML = rf
+var code = document.createElement('code');
+(code as any).innerHTML = rf
 document.body.appendChild(code)
+
 
 
 var app = createApp({
     create() {
+        var { num, setNum, onNumChange } = useNumber(0)
 
     },
     created() {
@@ -27,8 +33,14 @@ var app = createApp({
 })
 console.log(app);
 
-app.mount('#app')
+var instance = app.mount('#app')
+console.log(instance);
 
+import {
+    mergeSelectors
+} from '@crush/core'
+
+console.log(mergeSelectors('header,footer','h1,h2'));
 
 
 

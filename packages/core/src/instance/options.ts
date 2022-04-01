@@ -25,12 +25,18 @@ export enum ComponentOptions {
 }
 
 export const initOptions = (options: any, target = null) => {
-    const initTarget = target || options
+    var initTarget: any, isMixin = false;
+    if (target) {
+        initTarget = target
+        isMixin = true
+    } else {
+        initTarget = options
+    }
     for (let key in options) {
         switch (key) {
             // root options only
             case ComponentOptions.TEMPLATE:
-                options.renderCreator = compile(options[ComponentOptions.TEMPLATE])
+                initTarget.renderCreator = compile(options[ComponentOptions.TEMPLATE])
                 break
             case ComponentOptions.CREATE:
                 injectHook(initTarget, LifecycleHooks.CREATE, options[ComponentOptions.CREATE])
@@ -61,7 +67,12 @@ export const initOptions = (options: any, target = null) => {
                     initOptions(mixin, initTarget)
                 })
                 break
+            default:
+                /*custom options*/
+                break
         }
     }
-    options._isOptions = true
+    if (!isMixin) {
+        options._isOptions = true
+    }
 }

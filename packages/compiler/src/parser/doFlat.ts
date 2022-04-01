@@ -2,7 +2,6 @@ import { flatRules } from './flatRules'
 import { Nodes } from '@crush/types'
 import { Selector } from './parseSelector';
 import { parseIterator } from './parseIterator';
-import { Dir } from './parseNode';
 import {
     Asb
 } from './ast'

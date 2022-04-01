@@ -1,21 +1,43 @@
 
-const groupSelectorDelimiter = /\s*,\s*/
+// rebuilding
 
-function mergeSelector(parent: string, child: string) {
-    return parent.split(groupSelectorDelimiter).map((p: string) => {
-        return child.split(groupSelectorDelimiter).map((c: string) => {
-            var ref = false // is using & 
-            var merged = c.replace('&', () => {
-                ref = true
-                return p
-            })
-            return ref ? merged : p + ' ' + c
-        }).join(',')
-    }).join(',')
+const groupSelectorDelimiter = /\s*,\s*/
+const splitSelector = (selector: string): string[] => selector.split(groupSelectorDelimiter)
+
+function mergeSelector(p: string, c: string) {
+    var ref = false  // is using & 
+    var merged = c.replace('&', () => {
+        ref = true
+        return p
+    })
+    return ref ? merged : p + ' ' + c
 }
 
+function mergeSplitedSelector(parent: string[], children: string[]): string[] {
+    return parent.map((p: string) => {
+        return children.map((c: string) => mergeSelector(p, c))
+    }).reduce((x, y) => x.concat(y))
+}
 
-const mergeSelectors = (...selectors: string[]) => selectors.reduce(mergeSelector)
+const mergeSplitedSelectors = (selectors: string[][]): string[] => selectors.reduce(mergeSplitedSelector)
+
+const mergeSelectors = (...selectors: string[]) => mergeSplitedSelectors(selectors.map(splitSelector)).join(',')
+
+
+// function mergeSelector(parent: string, child: string) {
+//     return parent.split(groupSelectorDelimiter).map((p: string) => {
+//         return child.split(groupSelectorDelimiter).map((c: string) => {
+//             var ref = false // is using & 
+//             var merged = c.replace('&', () => {
+//                 ref = true
+//                 return p
+//             })
+//             return ref ? merged : p + ' ' + c
+//         }).join(',')
+//     }).join(',')
+// }
+
+
 
 export {
     mergeSelector,
