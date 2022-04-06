@@ -10,7 +10,7 @@ function createNode(type: any, props: any, children: any) {
 const createElement = (type: any, props: any, children: any) => createNode(type, props, children)
 
 const createText = () => { }
-     
+
 const createSVGElement = () => { }
 
 const createComment = () => { }
@@ -27,6 +27,8 @@ const createKeyframes = () => { }
 
 const createKeyframe = () => { }
 
+const createDeclaration = () => { }
+
 export {
     createComment,
     createElement,
@@ -38,4 +40,5 @@ export {
     createSheet,
     createStyle,
     createText,
+    createDeclaration
 }

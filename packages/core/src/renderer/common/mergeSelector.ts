@@ -3,6 +3,7 @@
 
 const groupSelectorDelimiter = /\s*,\s*/
 const splitSelector = (selector: string): string[] => selector.split(groupSelectorDelimiter)
+const joinSelector = (splitedSelector: string[]): string => splitedSelector.join(',')
 
 function mergeSelector(p: string, c: string) {
     var ref = false  // is using & 
@@ -10,7 +11,7 @@ function mergeSelector(p: string, c: string) {
         ref = true
         return p
     })
-    return ref ? merged : p + ' ' + c
+    return ref ? merged : p + ' ' + c  // default merge
 }
 
 
@@ -25,27 +26,17 @@ function mergeSplitedSelector(parent: string[], children: string[]): string[] {
 
 const mergeSplitedSelectors = (...selectors: string[][]): string[] => selectors.reduce(mergeSplitedSelector)
 
-//
+const mergeSplitedSelectorsAndJoin = (...selectors: string[][]): string => joinSelector(mergeSplitedSelectors(...selectors))
 
+// wont exist at render function  , use mergeSplitedSelectors instead
 const mergeSelectors = (...selectors: string[]) => mergeSplitedSelectors(...selectors.map(splitSelector)).join(',')
-
-
-// function mergeSelector(parent: string, child: string) {
-//     return parent.split(groupSelectorDelimiter).map((p: string) => {
-//         return child.split(groupSelectorDelimiter).map((c: string) => {
-//             var ref = false // is using & 
-//             var merged = c.replace('&', () => {
-//                 ref = true
-//                 return p
-//             })
-//             return ref ? merged : p + ' ' + c
-//         }).join(',')
-//     }).join(',')
-// }
 
 
 
 export {
-    mergeSelector,
-    mergeSelectors
+    splitSelector,
+    mergeSplitedSelector,
+    mergeSelectors,
+    joinSelector,
+    mergeSplitedSelectorsAndJoin
 }

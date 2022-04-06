@@ -109,6 +109,8 @@ function genChildren(nodes: any[]): string[] {
 import {
     Iterator
 } from '../parser/parseIterator'
+import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
+import { isArray } from '@crush/common'
 
 const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
@@ -162,7 +164,9 @@ function genNode(node: any): string {
         case Nodes.STYLE_RULE:
             var selector = genSelector(node.selectors)
             var children = genChildren(node.children)
-            return callFn(Source.createStyle, selector,toArray(children))
+            return callFn(Source.createStyle, selector, toArray(children))
+        case Nodes.DECLARATIONS:
+            return callFn(renderMethodsNameMap.createDeclaration, genDeclarations(node.declarations))
         default:
             return ''
     }
@@ -183,19 +187,55 @@ const genText = (texts: Text[]) => {
     )
 }
 
+
+/*
+    while there is unknown selectors
+    header,footer ? h1,h2
+*/
+
+
 function genSelector(selectors: Array<any>) {
-    //! one dynamic selector will effect all 
-
     /*
-        s , d , s ,d ,s ,d ,s ,d
+        先保留数组形式,再进行处理
     */
-
-    var contents: any = []
-    var isDynamic = selectors.every((selector: any) => {
-        contents.push(selector.selectorText)
-        return !selector.isDynamic
+    var res: any = []
+    var lastIsStatic = false
+    selectors.forEach(({ selectorText, isDynamic }: any) => {
+        if (isDynamic) {
+            res.push(selectorText)
+            lastIsStatic = false
+        } else {
+            var splitedSelector = splitSelector(selectorText)
+            if (lastIsStatic) {
+                res[res.length - 1] = mergeSplitedSelector(res[res.length - 1], splitedSelector)
+            } else {
+                res.push(splitedSelector)
+            }
+            lastIsStatic = true
+        }
     })
-    return isDynamic ?
-        callFn(Source.mergeSelectors, contents.map(toBackQuotes)) :
-        toString(mergeSelectors(...contents))
+
+    var selectorCode = res.map((item: any) => {
+        if (isArray(item)) { // static
+            return toString(joinSelector(item))
+        } else { // dynamic
+            // scope  
+            return toBackQuotes(item)
+        }
+    })
+
+    return selectorCode.length === 1 ?
+        selectorCode[0] :
+        callFn(renderMethodsNameMap.mergeSelectors, ...selectorCode)
+
+    //! one dynamic selector will effect all 
+}
+
+// declaration and mixin
+function genDeclarations(declarations: any[]) {
+    debugger
+    /*
+        createDeclatation
+    */
+    return ''
 }

@@ -6,24 +6,23 @@ import {
     createApp
 } from '@crush/core'
 
+import {
+    mergeSelectors
+} from '@crush/core'
+
 var template = `
 <style>
     body{
-        --if(isLogin){
-            h1{
-                color:red;
-            }
-        }
+        background-color:red;
+        ...mixin;
     }
 </style>
 `
 
 var rf = compile(template)
-console.log(rf);
 var code = document.createElement('code');
 (code as any).innerHTML = rf
 document.body.appendChild(code)
-
 
 
 

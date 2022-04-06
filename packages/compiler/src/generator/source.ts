@@ -12,7 +12,10 @@ import {
     createText,
     iterator,
     mergeSelectors,
+    splitSelector,
+    mergeSplitedSelectorsAndJoin,
     display,
+    createDeclaration,
     mixin
 } from '@crush/core'
 
@@ -35,7 +38,10 @@ export const renderMethods = {
     mergeSelectors,
     display,
     mixin,
-    flatRules
+    flatRules,
+    splitSelector,
+    mergeSplitedSelectorsAndJoin,
+    createDeclaration
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

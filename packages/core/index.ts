@@ -20,6 +20,7 @@ export {
     createSheet,
     createStyle,
     createText,
+    createDeclaration
 } from './src/renderer/vnode/vnode'
 
 export {
@@ -29,7 +30,9 @@ export {
     iterator
 } from './src/renderer/common/iterator'
 export {
-    mergeSelectors
+    mergeSelectors,
+    splitSelector,
+    mergeSplitedSelectorsAndJoin
 } from './src/renderer/common/mergeSelector'
 export {
     mixin
