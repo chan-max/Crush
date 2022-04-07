@@ -10,13 +10,12 @@ export {
 } from './src/parser/parseNode'
 
 export {
-    flatRules
-} from './src/parser/flatRules'
-export {
     processRules
 } from './src/parser/processRules'
 
-
+export {
+    renderMethods
+} from './src/generator/source'
 
 export {
     createFunction,

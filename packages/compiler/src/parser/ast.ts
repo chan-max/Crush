@@ -31,10 +31,11 @@ export interface Asb {
     declaration?: any
     declarations?: any
 
-    customDir?:any
-    modifiers?:any
-    dirName?:string
-    
+    customDir?: any
+    modifiers?: any
+    dirName?: string
+
+    isBranch?: any
 }
 
 export const createAsb = (type: Nodes | string,): Asb => ({ type })

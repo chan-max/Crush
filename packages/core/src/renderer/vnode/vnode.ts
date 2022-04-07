@@ -1,3 +1,4 @@
+import { Nodes } from "@crush/types"
 
 function createNode(type: any, props: any, children: any) {
     return {
@@ -17,17 +18,38 @@ const createComment = () => { }
 
 const createFragment = () => { }
 
-const createSheet = () => { }
+const createSheet = (props: any, children: any) => {
+    return {
+        type: Nodes.STYLE,
+        props,
+        children
+    }
+}
 
-const createStyle = () => { }
+const createStyle = (selector: string, children: any) => {
+    return {
+        type: Nodes.STYLE_RULE,
+        selector,
+        children
+    }
+}
 
-const createMedia = () => { }
+const createMedia = (media:string,children:any) => {
+    type:Nodes.MEDIA_RULE,
+    media,
+    children
+ }
 
 const createKeyframes = () => { }
 
 const createKeyframe = () => { }
 
-const createDeclaration = () => { }
+const createDeclaration = (children: any) => {
+    return {
+        type: Nodes.DECLARATIONS,
+        children
+    }
+}
 
 export {
     createComment,

@@ -16,12 +16,13 @@ import {
     mergeSplitedSelectorsAndJoin,
     display,
     createDeclaration,
-    mixin
+    mixin,
+    important
 } from '@crush/core'
 
 import {
     flatRules
-} from '../parser/flatRules'
+} from '@crush/core'
 
 export const renderMethods = {
     createComment,
@@ -41,7 +42,8 @@ export const renderMethods = {
     flatRules,
     splitSelector,
     mergeSplitedSelectorsAndJoin,
-    createDeclaration
+    createDeclaration,
+    important,
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

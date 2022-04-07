@@ -38,11 +38,12 @@ export const genNodes = (nodes: any[]): string => {
         return genNode(nodes[0])
     } else {
         var children = genChildren(nodes)
-        if (children.length <= 1) {
-            return children[0]
-        } else {
-            return genFragment(toArray(children))
-        }
+        return toArray(children)
+        // if (children.length <= 1) {
+        //     return children[0]
+        // } else {
+        //     return genFragment(toArray(children))
+        // }
     }
 }
 
@@ -110,7 +111,7 @@ import {
     Iterator
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { isArray } from '@crush/common'
+import { isArray, isObject } from '@crush/common'
 
 const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
@@ -139,6 +140,7 @@ const genDirectives = (target: string, dirs: any[]): string => {
 function genNode(node: any): string {
     switch (node.type) {
         case Nodes.IF:
+
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
             return genNodes(node.children as any[])
@@ -159,17 +161,37 @@ function genNode(node: any): string {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            var children = genChildren(node.children)
-            return callFn(Source.createSheet, children as any)
+            var children = toArray(genRules(node.children))
+            return callFn(renderMethodsNameMap.createSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
-            var selector = genSelector(node.selectors)
-            var children = genChildren(node.children)
-            return callFn(Source.createStyle, selector, toArray(children))
+            return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children)))
         case Nodes.DECLARATIONS:
             return callFn(renderMethodsNameMap.createDeclaration, genDeclarations(node.declarations))
         default:
             return ''
     }
+}
+
+function genRules(children: any[]) {
+    /*
+        if elseif else for need destructur
+    */
+    const res: any = []
+    const inBranch = false
+    children.forEach((rule: any) => {
+        if (rule.type === Nodes.IF) {
+            
+        } else if (rule.type === Nodes.ELSE_IF) {
+
+        } else if (rule.type === Nodes.ELSE) {
+
+        } else if (rule.type === Nodes.FOR) {
+            debugger
+        } else {
+            res.push(genNode(rule))
+        }
+    })
+    return res
 }
 
 const genFragment = (code: string) => callFn(Source.createFragment, code)
@@ -233,9 +255,46 @@ function genSelector(selectors: Array<any>) {
 
 // declaration and mixin
 function genDeclarations(declarations: any[]) {
-    debugger
-    /*
-        createDeclatation
-    */
-    return ''
+    var res: any = []
+    var lastIsDeclaration = false
+    declarations.forEach((declaration) => {
+        if (declaration.type === Nodes.MIXIN) {
+            res.push(declaration.mixin)
+            lastIsDeclaration = false
+        } else if (declaration.type === Nodes.DECLARATION) {
+            var target
+            if (lastIsDeclaration) {
+                target = res[res.length - 1]
+            } else {
+                target = {}
+                res.push(target)
+                lastIsDeclaration = true
+            }
+            const {
+                property,
+                value,
+                isDynamicPropery,
+                isDynamicValue,
+                isImportant
+            } = declaration.declaration
+            const _property = isDynamicPropery ? dynamicMapKey(property) : property
+            const _value = isDynamicValue ? value : toString(value)
+            const __value = isImportant ? callFn(renderMethodsNameMap.important, _value) : _value
+            target[_property] = __value
+        }
+    })
+
+    const _res = res.map((item: any) => {
+        if (isObject(item)) {
+            return objectStringify(item)
+        } else {
+            return item
+        }
+    })
+
+    if (_res.length === 1) {
+        return _res[0]
+    } else {
+        return callFn(renderMethodsNameMap.mixin, ..._res)
+    }
 }

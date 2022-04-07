@@ -12,8 +12,7 @@ import {
 } from '../generator/stringify'
 
 import {
-    Source,
-
+    renderMethodsNameMap,
 } from './source'
 
 export const createFunction = (returned: string, content: string, ...params: string[]) => new Function(...params, `${content} return ${returned}`)
@@ -41,7 +40,7 @@ export function compile(template: string) {
     var code = new CodeBuffer()
     code.push(
         declare(
-            `{\n${Object.values(Source).join(',\n')}\n}`
+            `{\n${Object.values(renderMethodsNameMap).join(',\n')}\n}`
             , RENDER_METHODS
         )
     )

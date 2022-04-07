@@ -73,6 +73,7 @@ export const parseCSS = (source: string): Asb[] => {
                 case Nodes.IF:
                 case Nodes.ELSE_IF:
                     asb.condition = content
+                    asb.isBranch = true
                     break
                 case Nodes.ELSE:
                     break

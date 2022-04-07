@@ -7,6 +7,8 @@
     $(variable) : variable ; 
 */
 
+import { camelize } from "@crush/common"
+
 
 export type Declaration = {
     property: string,
@@ -30,7 +32,7 @@ const parseDeclaration = (rawProperty: string, value: string): Declaration => {
         isImportant
     ] = extractDeclarationProperty.exec(rawProperty) as RegExpExecArray
     return {
-        property,
+        property:camelize(property),
         value,
         isDynamicValue,
         isDynamicProperty: l && r,

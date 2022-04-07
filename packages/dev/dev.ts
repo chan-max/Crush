@@ -3,18 +3,15 @@ import {
 } from '@crush/compiler'
 
 import {
-    createApp
-} from '@crush/core'
-
-import {
-    mergeSelectors
-} from '@crush/core'
+    renderMethods
+} from '@crush/compiler'
 
 var template = `
 <style>
     body{
-        background-color:red;
-        ...mixin;
+        --if(){
+            
+        }
     }
 </style>
 `
@@ -24,10 +21,15 @@ var code = document.createElement('code');
 (code as any).innerHTML = rf
 document.body.appendChild(code)
 
+var instance = {
+    scope: {
+        mixin: {
+            color: 'red'
+        }
+    }
+}
 
-
-
-
+console.log('vdom', rf(instance, renderMethods)());
 
 
 

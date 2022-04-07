@@ -1,10 +1,8 @@
 import { doFlat } from './doFlat'
-import {
-    Asb
-} from './ast'
 
 
-function flatRules(rules: Asb[]) {
+function flatRules(rules: any[]) {
+    console.log('unprocessed',rules)
     return doFlat(rules, [])
 }
 

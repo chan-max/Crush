@@ -39,5 +39,11 @@ export {
 } from './src/renderer/common/mixin'
 
 export {
+    important
+} from './src/renderer/common/important'
+
+export { flatRules } from './src/renderer/common/flatRules'
+
+export {
     mountComponent
 } from './src/renderer/render/mountComponent'
