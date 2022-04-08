@@ -15,7 +15,8 @@ import {
     toString,
     objectStringify,
     toArrowFunction,
-    callFn
+    callFn,
+    destructur
 } from './stringify'
 
 import {
@@ -38,12 +39,11 @@ export const genNodes = (nodes: any[]): string => {
         return genNode(nodes[0])
     } else {
         var children = genChildren(nodes)
-        return toArray(children)
-        // if (children.length <= 1) {
-        //     return children[0]
-        // } else {
-        //     return genFragment(toArray(children))
-        // }
+        if (children.length <= 1) {
+            return children[0]
+        } else {
+            return genFragment(toArray(children))
+        }
     }
 }
 
@@ -111,7 +111,7 @@ import {
     Iterator
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { isArray, isObject } from '@crush/common'
+import { isArray, isObject, throwError } from '@crush/common'
 
 const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
@@ -165,6 +165,15 @@ function genNode(node: any): string {
             return callFn(renderMethodsNameMap.createSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
             return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children)))
+        case Nodes.MEDIA_RULE:
+            const rules = toArray(genRules(node.children))
+            return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules)
+        case Nodes.KEYFRAMES_RULE:
+            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genRules(node.children)))
+        case Nodes.KEYFRAME_RULE:
+            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genRules(node.children)))
+        case Nodes.SUPPORT_RULE:
+            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genRules(node.children)))
         case Nodes.DECLARATIONS:
             return callFn(renderMethodsNameMap.createDeclaration, genDeclarations(node.declarations))
         default:
@@ -172,23 +181,58 @@ function genNode(node: any): string {
     }
 }
 
-function genRules(children: any[]) {
-    /*
-        if elseif else for need destructur
-    */
-    const res: any = []
-    const inBranch = false
-    children.forEach((rule: any) => {
-        if (rule.type === Nodes.IF) {
-            
-        } else if (rule.type === Nodes.ELSE_IF) {
 
-        } else if (rule.type === Nodes.ELSE) {
+/*
+    if children have one child return fragment
+*/
+function genRulesWithFragment(rules: any) {
+    const children = genRules(rules)
+    return children.length === 1 ? children[0] : genFragment(toArray(children))
+}
 
-        } else if (rule.type === Nodes.FOR) {
-            debugger
+function genRules(rules: any[]) {
+    var res: any = []
+    var inBranch = false
+    rules.forEach((rule) => {
+        switch (rule.type) {
+            case Nodes.IF:
+                // new branch
+                res.push([rule])
+                inBranch = true
+                break
+            case Nodes.ELSE_IF:
+                if (inBranch) {
+                    res[res.length - 1].push(rule)
+                } else {
+                    throwError(' not legal else-if ')
+                }
+                break
+            case Nodes.ELSE:
+                if (inBranch) {
+                    res[res.length - 1].push(rule)
+                } else {
+                    throwError(' not legal else-if ')
+                }
+                break
+            case Nodes.FOR:
+                inBranch = false
+                // 循环结构不会使用解构 ， 并且for循环会携带一层fragment
+                res.push(genFragment(genFor(genRulesWithFragment(rule.children), rule.iterator)))
+                break
+            default:
+                inBranch = false
+                res.push(genNode(rule))
+        }
+    })
+
+    // array 代表分支内容
+    res = res.map((item: any) => {
+        if (isArray(item)) {
+            const branchCondition = item.map((b) => b.condition)
+            const branchContent = item.map((b) => genRulesWithFragment(b.children))
+            return ternaryChains(branchCondition, branchContent)
         } else {
-            res.push(genNode(rule))
+            return item
         }
     })
     return res

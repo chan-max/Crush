@@ -32,11 +32,11 @@ const callFn = (fnName: string, ...params: string[]) => `${fnName}(${params.join
 
 const ternaryExp = (condition: string, ifTrue: string, ifFalse: string): string => `${condition}?(${ifTrue}):(${ifFalse})`
 
-function ternaryChains(conditions: string[], returns: string[], index = 0): string {
+function ternaryChains(conditions: string[], returns: string[], falseDefault = 'undifined', index = 0): string {
     return ternaryExp(
         conditions[index],
         returns[index],
-        index < conditions.length - 1 ? ternaryChains(conditions, returns, ++index) : returns[index + 1]
+        index < conditions.length - 1 ? ternaryChains(conditions, returns, falseDefault, ++index) : (returns[index + 1] || falseDefault)
     )
 }
 

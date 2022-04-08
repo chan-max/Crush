@@ -17,7 +17,8 @@ import {
     display,
     createDeclaration,
     mixin,
-    important
+    important,
+    createSupport
 } from '@crush/core'
 
 import {
@@ -44,6 +45,7 @@ export const renderMethods = {
     mergeSplitedSelectorsAndJoin,
     createDeclaration,
     important,
+    createSupport
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

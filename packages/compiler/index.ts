@@ -21,3 +21,7 @@ export {
     createFunction,
     compile
 } from './src/generator/compile'
+
+export {
+    ternaryChains
+} from './src/generator/stringify'

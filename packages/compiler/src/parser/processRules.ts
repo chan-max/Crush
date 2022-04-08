@@ -11,11 +11,15 @@ export const processRules = (rules: Asb[], isKeyframe = false) => {
         switch (rule.type) {
             case Nodes.STYLE_RULE:
                 const { selector, parent } = rule
-                var extendSelectors = parent?.selectors
-                if (extendSelectors) {
-                    rule.selectors = [...extendSelectors, selector]
+                if (isKeyframe) {
+                    rule.type = Nodes.KEYFRAME_RULE
                 } else {
-                    rule.selectors = [selector]
+                    var extendSelectors = parent?.selectors
+                    if (extendSelectors) {
+                        rule.selectors = [...extendSelectors, selector]
+                    } else {
+                        rule.selectors = [selector]
+                    }
                 }
                 break
             case Nodes.IF:
@@ -31,7 +35,7 @@ export const processRules = (rules: Asb[], isKeyframe = false) => {
                 break
         }
         if (rule.children) {
-            processRules(rule.children,isKeyframe)
+            processRules(rule.children, isKeyframe)
         }
     })
 }

@@ -8,11 +8,14 @@ import {
 
 var template = `
 <style>
+
     body{
-        --if(){
-            
+        color:red;
+        h1{
+            color:red;
         }
     }
+
 </style>
 `
 
@@ -23,6 +26,7 @@ document.body.appendChild(code)
 
 var instance = {
     scope: {
+        x: '666',
         mixin: {
             color: 'red'
         }
@@ -31,5 +35,8 @@ var instance = {
 
 console.log('vdom', rf(instance, renderMethods)());
 
+/*
+    []
+*/
 
-
+import { ternaryChains } from '@crush/compiler/src/generator/stringify';

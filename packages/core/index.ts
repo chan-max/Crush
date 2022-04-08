@@ -20,7 +20,8 @@ export {
     createSheet,
     createStyle,
     createText,
-    createDeclaration
+    createDeclaration,
+    createSupport
 } from './src/renderer/vnode/vnode'
 
 export {

@@ -16,7 +16,12 @@ const createSVGElement = () => { }
 
 const createComment = () => { }
 
-const createFragment = () => { }
+const createFragment = (children:any) => {
+    return {
+        type:Nodes.FRAGMENT,
+        children
+    }
+ }
 
 const createSheet = (props: any, children: any) => {
     return {
@@ -34,15 +39,33 @@ const createStyle = (selector: string, children: any) => {
     }
 }
 
-const createMedia = (media:string,children:any) => {
-    type:Nodes.MEDIA_RULE,
+const createMedia = (media: string, children: any) => ({
+    type: Nodes.MEDIA_RULE,
     media,
     children
+})
+
+const createKeyframes = (keyframes: any, children: any) => {
+    return {
+        type: Nodes.KEYFRAMES_RULE,
+        keyframes,
+        children
+    }
+}
+
+const createKeyframe = (keyframe:any,children:any) => {
+    return {
+        type:Nodes.KEYFRAME_RULE,
+        keyframe,
+        children
+    }
  }
 
-const createKeyframes = () => { }
-
-const createKeyframe = () => { }
+ const createSupport = (support: string, children: any) => ({
+    type: Nodes.SUPPORT_RULE,
+    support,
+    children
+})
 
 const createDeclaration = (children: any) => {
     return {
@@ -62,5 +85,6 @@ export {
     createSheet,
     createStyle,
     createText,
-    createDeclaration
+    createDeclaration,
+    createSupport
 }

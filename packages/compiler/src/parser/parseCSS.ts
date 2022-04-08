@@ -60,6 +60,8 @@ export const parseCSS = (source: string): Asb[] => {
                 asb.media = content
             } else if (nodeType === Nodes.KEYFRAMES_RULE) {
                 asb.keyframes = content
+            }else if(nodeType === Nodes.SUPPORT_RULE){
+                asb.support = content
             }
             current = asb
         } else if (scanner.startsWith(NodesMap[Nodes.DIRECTIVE_FLAG])) {
@@ -71,14 +73,14 @@ export const parseCSS = (source: string): Asb[] => {
                     asb.iterator = parseIterator(content)
                     break
                 case Nodes.IF:
+                    asb.condition = content
+                    break
                 case Nodes.ELSE_IF:
                     asb.condition = content
-                    asb.isBranch = true
                     break
                 case Nodes.ELSE:
                     break
             }
-            asb.dirs = [asb]
             current = asb
         } else if (scanner.expect('/*')) {
             /* comment continue */
