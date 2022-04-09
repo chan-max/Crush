@@ -12,7 +12,7 @@ var iterableFlag = Symbol.iterator
 
 var isIterableData = (data: any) => !!data[iterableFlag]
 
-export const iterator = (data: Iterator, callee: Function) => {
+export var iterator = (data: Iterator, callee: Function) => {
     if (!isIterableData(data)) {
         if (isNumber(data)) {
             var from = []

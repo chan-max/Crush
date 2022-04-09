@@ -18,14 +18,11 @@ import {
     createDeclaration,
     mixin,
     important,
-    createSupport
-} from '@crush/core'
-
-import {
+    createSupport,
     flatRules
 } from '@crush/core'
 
-export const renderMethods = {
+export var renderMethods = {
     createComment,
     createElement,
     createFragment,

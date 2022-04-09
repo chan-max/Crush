@@ -19,14 +19,23 @@ export function doFlat(
             switch (type) {
                 case Nodes.STYLE_RULE:
                     flattedRules.push(rule)
-                    if (rule.children) {
-                        doFlat(rule.children, flattedRules, rule)
+                    const _children = rule.children
+                    rule.children = []
+                    if (_children) {
+                        doFlat(_children, flattedRules, rule)
                     }
                     break
                 case Nodes.DECLARATIONS:
+                    if (!rule.parent) {
+                        // 声明不再任何样式规则或媒体规则下时
+                    } else if (rule.parent.type === Nodes.STYLE_RULE) {
+                        rule.parent.children.push(rule)
+                    }else{
+                        debugger
+                    }
+
                     break
                 case Nodes.MEDIA_RULE:
-                    debugger
                     rule.children = flatRules(rule.children, rule)
                     flattedRules.push(rule)
                     break
@@ -41,8 +50,8 @@ export function doFlat(
                 case Nodes.KEYFRAME_RULE:
                     break
                 case Nodes.FRAGMENT:
-                    debugger
-                    doFlat(rule.children, flattedRules)
+                    // fragmen wont be a parent
+                    doFlat(rule.children, flattedRules, rule.parent)
                     break
             }
         }

@@ -19,13 +19,6 @@ import {
     destructur
 } from './stringify'
 
-import {
-    mergeSelectors
-} from '@crush/core'
-
-import {
-    scopedExp
-} from '../helper/scopedExp'
 
 import {
     Text
@@ -47,16 +40,22 @@ export const genNodes = (nodes: any[]): string => {
     }
 }
 
+
 /*
     process if elseIf else branch
 */
 
-var UNKNOWN = Symbol('unknown')
-
 function genChildren(nodes: any[]): string[] {
+
+    /*
+        process the condition branch and the first dir is condition 
+    */
+
     const children: string[] = []
     const branchContent: string[] = []
     const branchCondition: string[] = []
+    
+
     var inBranch = false
     nodes.forEach((node) => {
         const firstDir = node.dirs?.[0]
@@ -140,7 +139,6 @@ const genDirectives = (target: string, dirs: any[]): string => {
 function genNode(node: any): string {
     switch (node.type) {
         case Nodes.IF:
-
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
             return genNodes(node.children as any[])
@@ -185,7 +183,7 @@ function genNode(node: any): string {
 /*
     if children have one child return fragment
 */
-function genRulesWithFragment(rules: any) {
+function genRulesOrFragment(rules: any) {
     const children = genRules(rules)
     return children.length === 1 ? children[0] : genFragment(toArray(children))
 }
@@ -193,6 +191,7 @@ function genRulesWithFragment(rules: any) {
 function genRules(rules: any[]) {
     var res: any = []
     var inBranch = false
+    // 相比于genchildren ， 不需要处理属性中的指令
     rules.forEach((rule) => {
         switch (rule.type) {
             case Nodes.IF:
@@ -217,7 +216,7 @@ function genRules(rules: any[]) {
             case Nodes.FOR:
                 inBranch = false
                 // 循环结构不会使用解构 ， 并且for循环会携带一层fragment
-                res.push(genFragment(genFor(genRulesWithFragment(rule.children), rule.iterator)))
+                res.push(genFragment(genFor(genRulesOrFragment(rule.children), rule.iterator)))
                 break
             default:
                 inBranch = false
@@ -229,7 +228,7 @@ function genRules(rules: any[]) {
     res = res.map((item: any) => {
         if (isArray(item)) {
             const branchCondition = item.map((b) => b.condition)
-            const branchContent = item.map((b) => genRulesWithFragment(b.children))
+            const branchContent = item.map((b) => genRulesOrFragment(b.children))
             return ternaryChains(branchCondition, branchContent)
         } else {
             return item
@@ -242,7 +241,7 @@ const genFragment = (code: string) => callFn(Source.createFragment, code)
 
 const genTextContent = (texts: Text[]) => {
     return texts.map((text: Text) => {
-        return text.isDynamic ? callFn(Source.display, text.content) : toString(text.content)
+        return text.isDynamic ? callFn(Source.display, text.content) : toBackQuotes(text.content)
     }).join('+')
 }
 
@@ -317,11 +316,11 @@ function genDeclarations(declarations: any[]) {
             const {
                 property,
                 value,
-                isDynamicPropery,
+                isDynamicProperty,
                 isDynamicValue,
                 isImportant
             } = declaration.declaration
-            const _property = isDynamicPropery ? dynamicMapKey(property) : property
+            const _property = isDynamicProperty ? dynamicMapKey(property) : property
             const _value = isDynamicValue ? value : toString(value)
             const __value = isImportant ? callFn(renderMethodsNameMap.important, _value) : _value
             target[_property] = __value

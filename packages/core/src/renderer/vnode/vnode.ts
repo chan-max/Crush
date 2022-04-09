@@ -8,22 +8,27 @@ function createNode(type: any, props: any, children: any) {
     }
 }
 
-const createElement = (type: any, props: any, children: any) => createNode(type, props, children)
+var createElement = (type: any, props: any, children: any) => createNode(type, props, children)
 
-const createText = () => { }
-
-const createSVGElement = () => { }
-
-const createComment = () => { }
-
-const createFragment = (children:any) => {
+var createText = (children: any) => {
     return {
-        type:Nodes.FRAGMENT,
+        type: Nodes.TEXT,
         children
     }
- }
+}
 
-const createSheet = (props: any, children: any) => {
+var createSVGElement = () => { }
+
+var createComment = () => { }
+
+var createFragment = (children: any) => {
+    return {
+        type: Nodes.FRAGMENT,
+        children
+    }
+}
+
+var createSheet = (props: any, children: any) => {
     return {
         type: Nodes.STYLE,
         props,
@@ -31,7 +36,7 @@ const createSheet = (props: any, children: any) => {
     }
 }
 
-const createStyle = (selector: string, children: any) => {
+var createStyle = (selector: string, children: any) => {
     return {
         type: Nodes.STYLE_RULE,
         selector,
@@ -39,13 +44,13 @@ const createStyle = (selector: string, children: any) => {
     }
 }
 
-const createMedia = (media: string, children: any) => ({
+var createMedia = (media: string, children: any) => ({
     type: Nodes.MEDIA_RULE,
     media,
     children
 })
 
-const createKeyframes = (keyframes: any, children: any) => {
+var createKeyframes = (keyframes: any, children: any) => {
     return {
         type: Nodes.KEYFRAMES_RULE,
         keyframes,
@@ -53,21 +58,21 @@ const createKeyframes = (keyframes: any, children: any) => {
     }
 }
 
-const createKeyframe = (keyframe:any,children:any) => {
+var createKeyframe = (keyframe: any, children: any) => {
     return {
-        type:Nodes.KEYFRAME_RULE,
+        type: Nodes.KEYFRAME_RULE,
         keyframe,
         children
     }
- }
+}
 
- const createSupport = (support: string, children: any) => ({
+var createSupport = (support: string, children: any) => ({
     type: Nodes.SUPPORT_RULE,
     support,
     children
 })
 
-const createDeclaration = (children: any) => {
+var createDeclaration = (children: any) => {
     return {
         type: Nodes.DECLARATIONS,
         children

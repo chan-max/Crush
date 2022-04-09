@@ -37,6 +37,7 @@ export const initOptions = (options: any, target = null) => {
             // root options only
             case ComponentOptions.TEMPLATE:
                 initTarget.renderCreator = compile(options[ComponentOptions.TEMPLATE])
+                document.body.innerHTML = initTarget.renderCreator
                 break
             case ComponentOptions.CREATE:
                 injectHook(initTarget, LifecycleHooks.CREATE, options[ComponentOptions.CREATE])

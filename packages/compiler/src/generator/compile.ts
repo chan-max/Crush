@@ -53,8 +53,6 @@ export function compile(template: string) {
     ))
     code.newLine()
 
-    console.log(code);
-
     const vnode = genNodes(ast as any[])
     return createFunction(toArrowFunction(vnode), code.getCode(), RENDER_INSTANCE, RENDER_METHODS)
 }
