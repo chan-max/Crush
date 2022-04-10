@@ -85,7 +85,7 @@ function parseNode(node: Asb, ctx: any) {
                 var template = node.children?.[0].children
                 if (template) {
                     var styleAst = parseCSS(template)
-                    console.log('styleAst',styleAst);
+                    console.log('styleAst', styleAst);
                     processRules(styleAst)
                     node.children = styleAst
                     ctx.ignoreChildren = true
@@ -93,18 +93,17 @@ function parseNode(node: Asb, ctx: any) {
                 return
             case Nodes.IF:
                 node.condition = node.attributeMap['condition']
-                node.dirs = [node]
+                node.isBranchStart = true
                 break
             case Nodes.ELSE_IF:
                 node.condition = node?.attributeMap?.['condition']
-                node.dirs = [node]
+                node.isBranch = true
                 break
             case Nodes.ELSE:
-                node.dirs = [node]
+                node.isBranch = true
                 break
             case Nodes.FOR:
                 node.iterator = parseIterator(node.attributeMap['iterator'])
-                node.dirs = [node]
                 break
         }
     } else if (type === Nodes.TEXT) {

@@ -5,21 +5,18 @@ import {
 
 console.log(renderMethods);
 
-
-
-
 import {
     createApp
 } from '@crush/core'
 const app = createApp({
     template: `
-    <div>
-        <h1>111</h1>
-        <h2>222</h2>
-        <h3>333</h3>
-    </div>
-    `
+        <button>{{count}}</button>
+    `,
+    create(scope){
+        scope.count = 6666
+    }
 })
 console.log('app', app);
 const instance = app.mount('#app')
 console.log('instance', instance);
+

@@ -15,15 +15,25 @@ import {
     renderMethodsNameMap,
 } from './source'
 
-export const createFunction = (returned: string, content: string, ...params: string[]) => new Function(...params, `${content} return ${returned}`)
+export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
 class CodeBuffer {
     code = ''
+
     push(code: string) {
         this.code = this.code + code
     }
+
     newLine = () => this.code += '\n'
+
     tab = () => this.code += '\t'
+
+    pushNewLine = (code: string) => {
+        this.newLine()
+        this.push(code)
+        this.newLine()
+    }
+
     getCode() {
         return this.code
     }
@@ -31,9 +41,18 @@ class CodeBuffer {
 
 const RENDER_INSTANCE = 'instance'
 const RENDER_METHODS = 'renderMethods'
-const SCOPE = 'scope'
+const SCOPE = '_scope'
 
-export function compile(template: string) {
+
+const defaultCompilerConfig = {
+}
+
+const extend = Object.assign
+
+export function compile(template: string, config = defaultCompilerConfig) {
+
+    config &&= extend(defaultCompilerConfig, config)
+
     var ast = parseTemplate(template)
     console.log('nodeast', ast)
 
@@ -49,11 +68,28 @@ export function compile(template: string) {
 
     code.push(declare(
         SCOPE,
-        `${RENDER_INSTANCE}.scope`
+        `${RENDER_INSTANCE}._scope`
     ))
     code.newLine()
 
-    const vnode = genNodes(ast as any[])
-    return createFunction(toArrowFunction(vnode), code.getCode(), RENDER_INSTANCE, RENDER_METHODS)
+    const transformContext = {
+        code
+    }
+
+    const renderCode = genNodes(ast as any[], transformContext)
+
+    const content = `
+        with(${SCOPE}){
+            return ${toArrowFunction(renderCode)}
+        }
+    `
+
+    code.pushNewLine(content)
+
+    /*  
+        the dom template ast will alwways return an array
+    */
+    
+    return createFunction(code.getCode(), RENDER_INSTANCE, RENDER_METHODS)
 }
 

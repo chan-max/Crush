@@ -1,4 +1,2 @@
+import { isFunction } from "@crush/common/src/dataType"
 
-export enum DirectiveOptions  {
-    
-}

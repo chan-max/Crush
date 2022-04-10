@@ -7,8 +7,6 @@ export {
     ComponentOptions
 } from './src/instance/options'
 
-
-
 export {
     createComment,
     createElement,
@@ -21,7 +19,8 @@ export {
     createStyle,
     createText,
     createDeclaration,
-    createSupport
+    createSupport,
+    createComponent
 } from './src/renderer/vnode/vnode'
 
 export {
@@ -48,3 +47,8 @@ export { flatRules } from './src/renderer/common/flatRules'
 export {
     mountComponent
 } from './src/renderer/render/mountComponent'
+
+export {
+    getComponent,
+    getDirective
+} from './src/instance/assets'

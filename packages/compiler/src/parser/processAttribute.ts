@@ -5,7 +5,7 @@ import {
 
 import {
     scopedExp
-} from '../helper/scopedExp'
+} from '../shared/scopedExp'
 import { Asb } from './ast'
 
 import {
@@ -62,12 +62,28 @@ export const processAttribute = (node: Asb) => {
             attr.type = dirType
             switch (dirType) {
                 case Nodes.IF:
+                    if (!node.dirs) {
+                        node.condition = attr.value
+                        node.isBranchStart = true
+                    } else {
+                        attr.condition = attr.value;
+                        node.dirs.push(attr)
+                    }
+                    break
                 case Nodes.ELSE_IF:
-                    attr.condition = attr.value;
-                    (node.dirs ||= []).push(attr)
+                    if (!node.dirs) {
+                        node.condition = attr.value
+                        node.isBranch = true
+                    } else {
+                        // else-if 指令只会在第一个指令出现
+                    }
                     break
                 case Nodes.ELSE:
-                    (node.dirs ||= []).push(attr)
+                    if (!node.dirs) {
+                        node.isBranch = true
+                    } else {
+                        // else-if 指令只会在第一个指令出现
+                    }
                     break
                 case Nodes.FOR:
                     attr.iterator = parseIterator(attr.value as string);

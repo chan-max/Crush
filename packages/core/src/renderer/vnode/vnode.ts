@@ -66,6 +66,15 @@ var createKeyframe = (keyframe: any, children: any) => {
     }
 }
 
+const createComponent = (component: any, props: any, slots: any) => {
+    return {
+        type: Nodes.COMPONENT,
+        component,
+        props,
+        slots
+    }
+}
+
 var createSupport = (support: string, children: any) => ({
     type: Nodes.SUPPORT_RULE,
     support,
@@ -91,5 +100,6 @@ export {
     createStyle,
     createText,
     createDeclaration,
-    createSupport
+    createSupport,
+    createComponent
 }

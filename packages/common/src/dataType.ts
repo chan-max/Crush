@@ -6,6 +6,8 @@ const isArray = Array.isArray
 const isObject = (value: any) => objectToString.call(value) === '[object Object]'
 const isUndefined = (value: any) => typeof value === 'undefined'
 
+const isFunction = (value: any) => typeof value === 'function'
+
 var objectToString = Object.prototype.toString
 
 function typeOf(value: any) {
@@ -24,5 +26,6 @@ export {
     isUndefined,
     instanceOf,
     typeOf,
-    isElement
+    isElement,
+    isFunction
 }

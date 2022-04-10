@@ -18,7 +18,7 @@ function injectHook(target: any, type: LifecycleHooks, hook: Function) {
     hooks.push(hook)
 }
 
-function callHook(target: any, type: LifecycleHooks, ...args: any[]) {
+function callHook( type: LifecycleHooks, target: any,...args: any[]) {
     const hooks = target[type]
     if (!hooks) return
     hooks.forEach((hook: Function) => hook(...args))

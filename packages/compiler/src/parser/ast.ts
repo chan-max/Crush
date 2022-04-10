@@ -35,9 +35,11 @@ export interface Asb {
     modifiers?: any
     dirName?: string
 
+    isBranchStart?:boolean
     isBranch?: any
 
-    support?:any
+    support?:any,
+
 }
 
 export const createAsb = (type: Nodes | string,): Asb => ({ type })

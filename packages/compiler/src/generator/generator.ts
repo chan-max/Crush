@@ -16,27 +16,23 @@ import {
     objectStringify,
     toArrowFunction,
     callFn,
-    destructur
+    destructur,
+    declare
 } from './stringify'
-
 
 import {
     Text
 } from '../parser/parseText'
 
 // the code Entrance
-export const genNodes = (nodes: any[]): string => {
-    if (nodes.length === 0) {
+export const genNodes = (nodes: any[], context: any): string => {
+    const children = genChildren(nodes, context)
+    if (children.length === 0) {
         return 'null'
-    } else if (nodes.length === 1) {
-        return genNode(nodes[0])
+    } else if (children.length === 1) {
+        return children[0]
     } else {
-        var children = genChildren(nodes)
-        if (children.length <= 1) {
-            return children[0]
-        } else {
-            return genFragment(toArray(children))
-        }
+        return genFragment(toArray(children))
     }
 }
 
@@ -45,64 +41,41 @@ export const genNodes = (nodes: any[]): string => {
     process if elseIf else branch
 */
 
-function genChildren(nodes: any[]): string[] {
-
+function genChildren(nodes: any[], context: any): string[] {
     /*
-        process the condition branch and the first dir is condition 
+        process the condition branch and the first dir is condition ,
+        处理分支时会为if边际上branch start ， elseif else 标记为branch，或者元素的第一个指令为分支
     */
-
-    const children: string[] = []
-    const branchContent: string[] = []
-    const branchCondition: string[] = []
-    
-
+    var children: any = []
     var inBranch = false
     nodes.forEach((node) => {
-        const firstDir = node.dirs?.[0]
-        const firstDirType = firstDir?.type
-        const firstDirContent = firstDir?.condition
-        // 8 branch
-        if (firstDirType === Nodes.IF) {
+        /*
+            branchstart mean if frgment and if the element has the first directive is if 
+        */
+        if (node.isBranchStart) {
+            children.push([node])
+            inBranch = true
+        } else if (node.isBranch) {
             if (inBranch) {
-                /*
-                    in branch , and end
-                */
-                children.push(ternaryChains(branchCondition, branchContent))
-                inBranch = false
-            } else {
-                node.dirs?.shift()
-                branchContent.push(genNode(node))
-                branchCondition.push(firstDirContent)
-                debugger // 当只有一个if 分支时， 不会清空内容
-                inBranch = true
-            }
-        } else if (firstDirType === Nodes.ELSE_IF) {
-            if (inBranch) {
-                node.dirs?.shift()
-                branchContent.push(genNode(node))
-                branchCondition.push(firstDirContent)
-            } else {
-                //error
-            }
-        } else if (firstDirType === Nodes.ELSE) {
-            // else not as the end flag of the branch , when the type is not branch or undifined , it will end 
-            if (inBranch) {
-                node.dirs?.shift()
-                branchContent.push(genNode(node))
-                children.push(ternaryChains(branchCondition, branchContent))
+                children[children.length - 1].push(node)
             } else {
                 //error
             }
         } else {
-            if (inBranch) {
-                children.push(ternaryChains(branchCondition, branchContent))
-                inBranch = false
-            } else {
-                children.push(genNode(node))
-            }
+            children.push(genNode(node, context))
+            inBranch = false
         }
     })
 
+    children = children.map((child: any) => {
+        if (isArray(child)) {
+            const branchCondition = child.map((b) => b.condition).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
+            const branchContent = child.map((b) => genNode(b, context))
+            return ternaryChains(branchCondition, branchContent)
+        } else {
+            return child
+        }
+    })
     return children
 }
 
@@ -110,10 +83,15 @@ import {
     Iterator
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { isArray, isObject, throwError } from '@crush/common'
+import { getUid, isArray, isObject, throwError } from '@crush/common'
+import { getUstr } from '@crush/common/src/value'
 
 const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
+
+function genForWithFragment(target: string, iterator: Iterator) {
+    return genFragment(genFor(target, iterator))
+}
 
 const genDirectives = (target: string, dirs: any[]): string => {
     /*
@@ -129,49 +107,61 @@ const genDirectives = (target: string, dirs: any[]): string => {
                 target = genIf(target, dir.condition)
                 break
             case Nodes.FOR:
-                target = genFor(target, dir.iterator)
+                target = genForWithFragment(target, dir.iterator)
                 break
         }
         return genDirectives(target, dirs)
     }
 }
 
-function genNode(node: any): string {
+function genChildrenString(children: any, context: any) {
+    return toArray(genChildren(children, context))
+}
+
+function genNode(node: any, context: any): string {
     switch (node.type) {
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
-            return genNodes(node.children as any[])
+            return genNodes(node.children as any[], context)
         case Nodes.FOR:
+            debugger
         case Nodes.HTML_ELEMENT:
-            var el = callFn(
-                Source.createElement,
-                toString(node.tagName)
-            )
+            const tagName = toString(node.tagName) // required
+            var children = node.children ? genChildrenString(node.children, context) : 'null'
+            const props = 'null'
+            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children)
             if (node.dirs) {
-                el = genDirectives(el, node.dirs)
+                code = genDirectives(code, node.dirs)
             }
-            return el
+            return code
         case Nodes.SVG_ELEMENT:
             return callFn(Source.createSVGElement)
         case Nodes.COMPONENT:
-            return callFn(Source.createComponent)
+            var uVar = getUstr()
+            context.code.pushNewLine(
+                declare(
+                    uVar,
+                    callFn(renderMethodsNameMap.getComponent, toString(node.tagName), 'instance')
+                )
+            )
+            return callFn(renderMethodsNameMap.createComponent, uVar)
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            var children = toArray(genRules(node.children))
+            var children = toArray(genRules(node.children, context))
             return callFn(renderMethodsNameMap.createSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
-            return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children)))
+            return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children, context)))
         case Nodes.MEDIA_RULE:
-            const rules = toArray(genRules(node.children))
+            const rules = toArray(genRules(node.children, context))
             return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules)
         case Nodes.KEYFRAMES_RULE:
-            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genRules(node.children)))
+            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genRules(node.children, context)))
         case Nodes.KEYFRAME_RULE:
-            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genRules(node.children)))
+            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genRules(node.children, context)))
         case Nodes.SUPPORT_RULE:
-            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genRules(node.children)))
+            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genRules(node.children, context)))
         case Nodes.DECLARATIONS:
             return callFn(renderMethodsNameMap.createDeclaration, genDeclarations(node.declarations))
         default:
@@ -183,12 +173,12 @@ function genNode(node: any): string {
 /*
     if children have one child return fragment
 */
-function genRulesOrFragment(rules: any) {
-    const children = genRules(rules)
+function genRulesOrFragment(rules: any, context: any) {
+    const children = genRules(rules, context)
     return children.length === 1 ? children[0] : genFragment(toArray(children))
 }
 
-function genRules(rules: any[]) {
+function genRules(rules: any[], context: any) {
     var res: any = []
     var inBranch = false
     // 相比于genchildren ， 不需要处理属性中的指令
@@ -216,11 +206,11 @@ function genRules(rules: any[]) {
             case Nodes.FOR:
                 inBranch = false
                 // 循环结构不会使用解构 ， 并且for循环会携带一层fragment
-                res.push(genFragment(genFor(genRulesOrFragment(rule.children), rule.iterator)))
+                res.push(genFragment(genFor(genRulesOrFragment(rule.children, context), rule.iterator)))
                 break
             default:
                 inBranch = false
-                res.push(genNode(rule))
+                res.push(genNode(rule, context))
         }
     })
 
@@ -228,7 +218,7 @@ function genRules(rules: any[]) {
     res = res.map((item: any) => {
         if (isArray(item)) {
             const branchCondition = item.map((b) => b.condition)
-            const branchContent = item.map((b) => genRulesOrFragment(b.children))
+            const branchContent = item.map((b) => genRulesOrFragment(b.children, context))
             return ternaryChains(branchCondition, branchContent)
         } else {
             return item
@@ -236,6 +226,8 @@ function genRules(rules: any[]) {
     })
     return res
 }
+
+
 
 const genFragment = (code: string) => callFn(Source.createFragment, code)
 
