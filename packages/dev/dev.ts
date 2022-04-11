@@ -11,8 +11,12 @@ import {
 const app = createApp({
     template: `
         <button>{{count}}</button>
+        <h1>
+            title 1
+        </h1>
     `,
     create(scope: any) {
+        debugger
         scope.count = 6666
     }
 })

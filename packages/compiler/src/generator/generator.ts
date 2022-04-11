@@ -139,7 +139,7 @@ function genNode(node: any, context: any): string {
             return callFn(Source.createSVGElement)
         case Nodes.COMPONENT:
             var uVar = getUstr()
-            context.code.pushNewLine(
+            context.pushNewLine(
                 declare(
                     uVar,
                     callFn(renderMethodsNameMap.getComponent, toString(node.tagName))

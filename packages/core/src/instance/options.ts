@@ -40,28 +40,28 @@ export const initOptions = (options: any, target = null) => {
                 console.log('RENDER_CREATOR',initTarget.createRender);
                 break
             case ComponentOptions.CREATE:
-                injectHook(initTarget, LifecycleHooks.CREATE, options[ComponentOptions.CREATE])
+                injectHook( LifecycleHooks.CREATE,initTarget, options[ComponentOptions.CREATE])
                 break
             case ComponentOptions.CREATED:
-                injectHook(initTarget, LifecycleHooks.CREATED, options[ComponentOptions.CREATED])
+                injectHook( LifecycleHooks.CREATED,initTarget, options[ComponentOptions.CREATED])
                 break
             case ComponentOptions.BEFORE_MOUNT:
-                injectHook(initTarget, LifecycleHooks.BEFORE_MOUNT, options[ComponentOptions.BEFORE_MOUNT])
+                injectHook( LifecycleHooks.BEFORE_MOUNT,initTarget, options[ComponentOptions.BEFORE_MOUNT])
                 break
             case ComponentOptions.MOUNTED:
-                injectHook(initTarget, LifecycleHooks.MOUNTED, options[ComponentOptions.MOUNTED])
+                injectHook(LifecycleHooks.MOUNTED,initTarget,  options[ComponentOptions.MOUNTED])
                 break
             case ComponentOptions.BEFORE_UNMOUNT:
-                injectHook(initTarget, LifecycleHooks.BEFORE_UNMOUNT, options[ComponentOptions.BEFORE_UNMOUNT])
+                injectHook( LifecycleHooks.BEFORE_UNMOUNT,initTarget, options[ComponentOptions.BEFORE_UNMOUNT])
                 break
             case ComponentOptions.UNMOUNTED:
-                injectHook(initTarget, LifecycleHooks.UNMOUNTED, options[ComponentOptions.UNMOUNTED])
+                injectHook( LifecycleHooks.UNMOUNTED,initTarget, options[ComponentOptions.UNMOUNTED])
                 break
             case ComponentOptions.BEFORE_UPDATE:
-                injectHook(initTarget, LifecycleHooks.BEFORE_UPDATE, options[ComponentOptions.BEFORE_UPDATE])
+                injectHook(LifecycleHooks.BEFORE_UPDATE, initTarget, options[ComponentOptions.BEFORE_UPDATE])
                 break
             case ComponentOptions.UPDATED:
-                injectHook(initTarget, LifecycleHooks.UPDATED, options[ComponentOptions.UPDATED])
+                injectHook( LifecycleHooks.UPDATED,initTarget, options[ComponentOptions.UPDATED])
                 break
             case ComponentOptions.MIXINS:
                 options[ComponentOptions.MIXINS].forEach((mixin: any) => {

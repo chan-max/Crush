@@ -1,19 +1,20 @@
 import { Nodes } from "@crush/types"
 
-function createNode(type: any, props: any, children: any) {
+var createElement = (type: any, props: any, children: any) => {
     return {
         type,
         props,
-        children
+        children,
+        nodeType:Nodes.HTML_ELEMENT
     }
 }
 
-var createElement = (type: any, props: any, children: any) => createNode(type, props, children)
-
+var Text = Symbol('Text')
 var createText = (children: any) => {
     return {
-        type: Nodes.TEXT,
-        children
+        type: Text,
+        children,
+        nodeType:Nodes.TEXT
     }
 }
 
@@ -23,7 +24,7 @@ var createComment = () => { }
 
 var createFragment = (children: any) => {
     return {
-        type: Nodes.FRAGMENT,
+        nodeType: Nodes.FRAGMENT,
         children
     }
 }

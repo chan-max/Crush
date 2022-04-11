@@ -18,11 +18,7 @@ import {
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
-class CodegenContext {
-    
-}
-
-class CodeBuffer {
+class CodeGenerator {
     code = ''
 
     push(code: string) {
@@ -48,9 +44,10 @@ class CodeBuffer {
 
 const RENDER_METHODS = 'renderMethods'
 
-const SCOPE = '_scope'
+const SCOPE = 'scope'
 
 const defaultCompilerConfig = {
+
 }
 
 const extend = Object.assign
@@ -62,40 +59,36 @@ export function compile(template: string, config = defaultCompilerConfig) {
     var ast = parseTemplate(template)
     console.log('nodeast', ast)
 
-    var code = new CodeBuffer()
+    var context = new CodeGenerator()
     // 初始化所有渲染方法
-    code.push(
+    context.push(
         declare(
             `{\n${Object.values(renderMethodsNameMap).join(',\n')}\n}`
             , RENDER_METHODS
         )
     )
 
-    code.pushNewLine(
+    context.pushNewLine(
         declare(
             SCOPE,
             callFn(renderMethodsNameMap.getCurrentScope)
         )
     )
-
-    const transformContext = {
-        code
-    }
-
-    const renderCode = genNodes(ast as any[], transformContext)
-
+    
+    const renderCode = genNodes(ast as any[], context)
+    
     const content = `
         with(${SCOPE}){
             return ${toArrowFunction(renderCode)} // the return function is render function
         }    
     `
 
-    code.pushNewLine(content)
+    context.pushNewLine(content)
 
     /*  
         the dom template ast will alwways return an array
     */
 
-    return createFunction(code.getCode(), RENDER_METHODS)
+    return createFunction(context.getCode(), RENDER_METHODS)
 }
 

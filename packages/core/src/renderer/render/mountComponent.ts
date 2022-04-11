@@ -22,11 +22,11 @@ function createComponentInstance(options: any) {
         uid: getUid(),
         scope: getEmptyMap(),
         render: null,
-        _scope: getEmptyMap(),
         currentTree: null,
         createRender: options.createRender,
         components: options.components || getEmptyMap(),
         directives: options.direvtives || getEmptyMap(),
+        // hooks will always be an array
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
         [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],
         [LifecycleHooks.BEFORE_MOUNT]: options[LifecycleHooks.BEFORE_MOUNT] && [...options[LifecycleHooks.BEFORE_MOUNT]],
@@ -41,20 +41,20 @@ function createComponentInstance(options: any) {
 export var currentInstance: any = null
 export const setCurrentInstance = (instance: any) => currentInstance = instance
 export const getCurrentInstance = () => currentInstance
-export const getCurrentScope = () => getCurrentInstance()._scope
+export const getCurrentScope = () => getCurrentInstance().scope
 
 export const mountComponent = (container: Element, options: any) => {
     var instance: any = createComponentInstance(options)
     // 当前
     currentInstance = instance
     const {
-        _scope,
+        scope,
         createRender,
     } = instance
 
     // init instance
-    callHook(LifecycleHooks.CREATE, instance, _scope)
-
+    callHook(LifecycleHooks.CREATE, instance, scope)
+    callHook(LifecycleHooks.CREATED, instance)
     // render function
     const render = createRender(renderMethods)
 
