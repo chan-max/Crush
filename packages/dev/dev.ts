@@ -12,7 +12,7 @@ const app = createApp({
     template: `
         <button>{{count}}</button>
     `,
-    create(scope){
+    create(scope: any) {
         scope.count = 6666
     }
 })

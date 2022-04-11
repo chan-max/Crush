@@ -8,7 +8,8 @@ import {
 
 import {
     toArrowFunction,
-    declare
+    declare,
+    callFn
 } from '../generator/stringify'
 
 import {
@@ -16,6 +17,10 @@ import {
 } from './source'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
+
+class CodegenContext {
+    
+}
 
 class CodeBuffer {
     code = ''
@@ -39,10 +44,11 @@ class CodeBuffer {
     }
 }
 
-const RENDER_INSTANCE = 'instance'
-const RENDER_METHODS = 'renderMethods'
-const SCOPE = '_scope'
 
+
+const RENDER_METHODS = 'renderMethods'
+
+const SCOPE = '_scope'
 
 const defaultCompilerConfig = {
 }
@@ -57,6 +63,7 @@ export function compile(template: string, config = defaultCompilerConfig) {
     console.log('nodeast', ast)
 
     var code = new CodeBuffer()
+    // 初始化所有渲染方法
     code.push(
         declare(
             `{\n${Object.values(renderMethodsNameMap).join(',\n')}\n}`
@@ -64,13 +71,12 @@ export function compile(template: string, config = defaultCompilerConfig) {
         )
     )
 
-    code.newLine()
-
-    code.push(declare(
-        SCOPE,
-        `${RENDER_INSTANCE}._scope`
-    ))
-    code.newLine()
+    code.pushNewLine(
+        declare(
+            SCOPE,
+            callFn(renderMethodsNameMap.getCurrentScope)
+        )
+    )
 
     const transformContext = {
         code
@@ -80,8 +86,8 @@ export function compile(template: string, config = defaultCompilerConfig) {
 
     const content = `
         with(${SCOPE}){
-            return ${toArrowFunction(renderCode)}
-        }
+            return ${toArrowFunction(renderCode)} // the return function is render function
+        }    
     `
 
     code.pushNewLine(content)
@@ -89,7 +95,7 @@ export function compile(template: string, config = defaultCompilerConfig) {
     /*  
         the dom template ast will alwways return an array
     */
-    
-    return createFunction(code.getCode(), RENDER_INSTANCE, RENDER_METHODS)
+
+    return createFunction(code.getCode(), RENDER_METHODS)
 }
 

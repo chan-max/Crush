@@ -3,7 +3,7 @@ import {
 } from './scanner'
 import {
     scopedExp
-} from '../helper/scopedExp'
+} from '../shared/scopedExp'
 
 import {
     parseSelector, Selector

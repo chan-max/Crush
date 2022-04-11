@@ -12,17 +12,19 @@ import {
 import {
     initOptions
 } from '../../instance/options'
+import { patch } from './patch'
 
 function createComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
     }
-
     const instance: any = {
         uid: getUid(),
         scope: getEmptyMap(),
         render: null,
         _scope: getEmptyMap(),
+        currentTree: null,
+        createRender: options.createRender,
         components: options.components || getEmptyMap(),
         directives: options.direvtives || getEmptyMap(),
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
@@ -33,26 +35,43 @@ function createComponentInstance(options: any) {
         [LifecycleHooks.BEFORE_UPDATE]: options[LifecycleHooks.BEFORE_UPDATE] && [...options[LifecycleHooks.BEFORE_UPDATE]],
         [LifecycleHooks.UPDATED]: options[LifecycleHooks.UPDATED] && [...options[LifecycleHooks.UPDATED]]
     }
-
     return instance
 }
 
+export var currentInstance: any = null
+export const setCurrentInstance = (instance: any) => currentInstance = instance
+export const getCurrentInstance = () => currentInstance
+export const getCurrentScope = () => getCurrentInstance()._scope
+
 export const mountComponent = (container: Element, options: any) => {
     var instance: any = createComponentInstance(options)
-
+    // 当前
+    currentInstance = instance
     const {
-        _scope
+        _scope,
+        createRender,
     } = instance
 
+    // init instance
     callHook(LifecycleHooks.CREATE, instance, _scope)
 
-    const render = options.renderCreator(instance, renderMethods)
-    console.log(render);
-    const currentTree = render()
+    // render function
+    const render = createRender(renderMethods)
 
+    // 每次状态更新都会触发
+    function update() {
+        const {
+            isMounted,
+            currentTree
+        } = instance
+        var nextTree = render()
+        console.log('currentTree', currentTree);
+        console.log('nextTree', nextTree);
 
+        patch(currentTree, nextTree, container)
+    }
 
-    console.log(currentTree);
+    update()
 
     return instance
 }

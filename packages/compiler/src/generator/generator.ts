@@ -142,7 +142,7 @@ function genNode(node: any, context: any): string {
             context.code.pushNewLine(
                 declare(
                     uVar,
-                    callFn(renderMethodsNameMap.getComponent, toString(node.tagName), 'instance')
+                    callFn(renderMethodsNameMap.getComponent, toString(node.tagName))
                 )
             )
             return callFn(renderMethodsNameMap.createComponent, uVar)

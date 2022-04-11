@@ -1,19 +1,8 @@
 import { throwError } from "@crush/common"
+import {
+    currentInstance
+} from '../renderer/render/mountComponent'
 
-export const getComponent = (name: string, instance: any) => {
-    const component = instance.components[name]
-    if (!component) {
-        throwError(`cant find component ${name}`)
-    } else {
-        return component
-    }
-}
+export const getComponent = (name: string) => currentInstance.components[name]
 
-export const getDirective = (name: string, instance: any) => {
-    const directive = instance.directives[name]
-    if (!directive) {
-        throwError(`cant find directive ${name}`)
-    } else {
-        return directive
-    }
-}
+export const getDirective = (name: string) => currentInstance.directives[name]

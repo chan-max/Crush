@@ -36,8 +36,8 @@ export const initOptions = (options: any, target = null) => {
         switch (key) {
             // root options only
             case ComponentOptions.TEMPLATE:
-                initTarget.renderCreator = compile(options[ComponentOptions.TEMPLATE])
-                console.log('RENDER_CREATOR',initTarget.renderCreator);
+                initTarget.createRender = compile(options[ComponentOptions.TEMPLATE])
+                console.log('RENDER_CREATOR',initTarget.createRender);
                 break
             case ComponentOptions.CREATE:
                 injectHook(initTarget, LifecycleHooks.CREATE, options[ComponentOptions.CREATE])

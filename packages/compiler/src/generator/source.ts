@@ -22,7 +22,8 @@ import {
     flatRules,
     createComponent,
     getComponent,
-    getDirective
+    getDirective,
+    getCurrentScope
 } from '@crush/core'
 
 export var renderMethods = {
@@ -48,7 +49,8 @@ export var renderMethods = {
     createSupport,
     createComponent,
     getComponent,
-    getDirective
+    getDirective,
+    getCurrentScope
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

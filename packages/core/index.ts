@@ -45,6 +45,9 @@ export {
 export { flatRules } from './src/renderer/common/flatRules'
 
 export {
+    setCurrentInstance,
+    getCurrentInstance,
+    getCurrentScope,
     mountComponent
 } from './src/renderer/render/mountComponent'
 
