@@ -15,8 +15,8 @@ export function doFlat(
             // null
         } else {
             rule.parent = parent
-            const type = rule.type
-            switch (type) {
+            const nodeType = rule.nodeType
+            switch (nodeType) {
                 case Nodes.STYLE_RULE:
                     flattedRules.push(rule)
                     const _children = rule.children
@@ -28,12 +28,11 @@ export function doFlat(
                 case Nodes.DECLARATIONS:
                     if (!rule.parent) {
                         // 声明不再任何样式规则或媒体规则下时
-                    } else if (rule.parent.type === Nodes.STYLE_RULE) {
+                    } else if (rule.parent.nodeType === Nodes.STYLE_RULE) {
                         rule.parent.children.push(rule)
                     }else{
                         debugger
                     }
-
                     break
                 case Nodes.MEDIA_RULE:
                     rule.children = flatRules(rule.children, rule)

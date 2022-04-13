@@ -28,8 +28,10 @@ const mergeSplitedSelectors = (...selectors: string[][]): string[] => selectors.
 
 const mergeSplitedSelectorsAndJoin = (...selectors: string[][]): string => joinSelector(mergeSplitedSelectors(...selectors))
 
-// wont exist at render function  , use mergeSplitedSelectors instead
-const mergeSelectors = (...selectors: string[]) => mergeSplitedSelectors(...selectors.map(splitSelector)).join(',')
+
+function mergeSelectors(...selectors: string[]) {
+    return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',')
+}
 
 
 

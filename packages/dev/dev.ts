@@ -10,14 +10,20 @@ import {
 } from '@crush/core'
 const app = createApp({
     template: `
-        <button>{{count}}</button>
+        <style>
+                h1{
+                    color!:red;
+                    ...customMixin;
+                }
+        </style>
         <h1>
             title 1
         </h1>
     `,
     create(scope: any) {
-        debugger
-        scope.count = 6666
+        scope.customMixin = {
+            backgroundColor: 'blue'
+        }
     }
 })
 console.log('app', app);

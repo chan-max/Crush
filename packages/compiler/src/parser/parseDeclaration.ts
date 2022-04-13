@@ -32,7 +32,9 @@ const parseDeclaration = (rawProperty: string, value: string): Declaration => {
         isImportant
     ] = extractDeclarationProperty.exec(rawProperty) as RegExpExecArray
     return {
-        property: camelize(property),
+        //property: camelize(property), setProperty must use - , so no need to camelize
+       // property, 
+       property:camelize(property), // property need to be camlized , for support mixin 
         value,
         isDynamicValue,
         isDynamicProperty: l && r,

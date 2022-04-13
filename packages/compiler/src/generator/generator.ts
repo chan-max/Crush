@@ -150,7 +150,7 @@ function genNode(node: any, context: any): string {
             return genText(node.children as Text[])
         case Nodes.STYLE:
             var children = toArray(genRules(node.children, context))
-            return callFn(renderMethodsNameMap.createSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
+            return callFn(renderMethodsNameMap.createStyleSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
             return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children, context)))
         case Nodes.MEDIA_RULE:

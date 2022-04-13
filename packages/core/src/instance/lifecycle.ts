@@ -3,15 +3,15 @@ import { getCurrentInstance } from "../.."
 
 const enum LifecycleHooks {
 
-    CREATE = 'c',
+    CREATE = 'create',
 
-    CREATED = 'cd',
-    BEFORE_MOUNT = 'bm',
-    MOUNTED = 'm',
-    BEFORE_UPDATE = 'bu',
-    UPDATED = 'u',
-    BEFORE_UNMOUNT = 'bum',
-    UNMOUNTED = 'um',
+    CREATED = 'created',
+    BEFORE_MOUNT = 'beforeMount',
+    MOUNTED = 'mounted',
+    BEFORE_UPDATE = 'beforeUpdate',
+    UPDATED = 'updated',
+    BEFORE_UNMOUNT = 'beforeUnmount',
+    UNMOUNTED = 'unmounted',
 }
 
 function injectHook(type: LifecycleHooks, target: any, hook: Function) {
@@ -19,11 +19,10 @@ function injectHook(type: LifecycleHooks, target: any, hook: Function) {
     hooks.push(hook)
 }
 
-function callHook(type: LifecycleHooks, target: any, ...args: any[]) {
+function callHook(type: LifecycleHooks, target: any, binding: any = null, ...args: any[]) {
     const hooks = target[type]
-    debugger
     if (!hooks) return
-    hooks.forEach((hook: Function) => hook(...args))
+    hooks.forEach((hook: Function) => hook.apply(binding, args))
 }
 
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)

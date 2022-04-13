@@ -5,6 +5,10 @@ import {
 import { renderMethods } from '../../../../dev/node_modules/@crush/compiler'
 
 import {
+    reactive
+} from '../../reactivity/reactive'
+
+import {
     callHook,
     LifecycleHooks
 } from '../../instance/lifecycle'
@@ -20,7 +24,7 @@ function createComponentInstance(options: any) {
     }
     const instance: any = {
         uid: getUid(),
-        scope: getEmptyMap(),
+        scope: reactive(getEmptyMap()),
         render: null,
         currentTree: null,
         createRender: options.createRender,
@@ -32,6 +36,7 @@ function createComponentInstance(options: any) {
         [LifecycleHooks.BEFORE_MOUNT]: options[LifecycleHooks.BEFORE_MOUNT] && [...options[LifecycleHooks.BEFORE_MOUNT]],
         [LifecycleHooks.MOUNTED]: options[LifecycleHooks.MOUNTED] && [...options[LifecycleHooks.MOUNTED]],
         [LifecycleHooks.BEFORE_UNMOUNT]: options[LifecycleHooks.BEFORE_UNMOUNT] && [...options[LifecycleHooks.BEFORE_UNMOUNT]],
+        [LifecycleHooks.UNMOUNTED]: options[LifecycleHooks.UNMOUNTED] && [...options[LifecycleHooks.UNMOUNTED]],
         [LifecycleHooks.BEFORE_UPDATE]: options[LifecycleHooks.BEFORE_UPDATE] && [...options[LifecycleHooks.BEFORE_UPDATE]],
         [LifecycleHooks.UPDATED]: options[LifecycleHooks.UPDATED] && [...options[LifecycleHooks.UPDATED]]
     }
@@ -53,11 +58,12 @@ export const mountComponent = (container: Element, options: any) => {
     } = instance
 
     // init instance
-    callHook(LifecycleHooks.CREATE, instance, scope)
+    callHook(LifecycleHooks.CREATE, instance, scope, scope)
+
     callHook(LifecycleHooks.CREATED, instance)
     // render function
     const render = createRender(renderMethods)
-
+    
     // 每次状态更新都会触发
     function update() {
         const {

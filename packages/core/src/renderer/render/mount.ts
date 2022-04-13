@@ -1,6 +1,10 @@
 import { Nodes } from "@crush/types"
 import { callHook, LifecycleHooks } from "../../instance/lifecycle"
 
+import {
+    mountStyleSheet
+} from './mountStyleSheet'
+
 export function mount(vnode: any, container: any) {
     const type = vnode.nodeType
     switch (type) {
@@ -14,7 +18,7 @@ export function mount(vnode: any, container: any) {
             mountFragment(vnode, container)
             break
         case Nodes.STYLE:
-            
+            mountStyleSheet(vnode, container)
             break
     }
 }

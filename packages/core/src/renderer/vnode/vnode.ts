@@ -29,9 +29,9 @@ var createFragment = (children: any) => {
     }
 }
 
-var createSheet = (props: any, children: any) => {
+var createStyleSheet = (props: any, children: any) => {
     return {
-        type: Nodes.STYLE,
+        nodeType: Nodes.STYLE,
         props,
         children
     }
@@ -39,21 +39,21 @@ var createSheet = (props: any, children: any) => {
 
 var createStyle = (selector: string, children: any) => {
     return {
-        type: Nodes.STYLE_RULE,
+        nodeType: Nodes.STYLE_RULE,
         selector,
         children
     }
 }
 
 var createMedia = (media: string, children: any) => ({
-    type: Nodes.MEDIA_RULE,
+    nodeType: Nodes.MEDIA_RULE,
     media,
     children
 })
 
 var createKeyframes = (keyframes: any, children: any) => {
     return {
-        type: Nodes.KEYFRAMES_RULE,
+        nodeType: Nodes.KEYFRAMES_RULE,
         keyframes,
         children
     }
@@ -61,7 +61,7 @@ var createKeyframes = (keyframes: any, children: any) => {
 
 var createKeyframe = (keyframe: any, children: any) => {
     return {
-        type: Nodes.KEYFRAME_RULE,
+        nodeType: Nodes.KEYFRAME_RULE,
         keyframe,
         children
     }
@@ -69,7 +69,7 @@ var createKeyframe = (keyframe: any, children: any) => {
 
 const createComponent = (component: any, props: any, slots: any) => {
     return {
-        type: Nodes.COMPONENT,
+        nodeType: Nodes.COMPONENT,
         component,
         props,
         slots
@@ -77,14 +77,14 @@ const createComponent = (component: any, props: any, slots: any) => {
 }
 
 var createSupport = (support: string, children: any) => ({
-    type: Nodes.SUPPORT_RULE,
+    nodeType: Nodes.SUPPORT_RULE,
     support,
     children
 })
 
 var createDeclaration = (children: any) => {
     return {
-        type: Nodes.DECLARATIONS,
+        nodeType: Nodes.DECLARATIONS,
         children
     }
 }
@@ -97,7 +97,7 @@ export {
     createKeyframes,
     createMedia,
     createSVGElement,
-    createSheet,
+    createStyleSheet,
     createStyle,
     createText,
     createDeclaration,

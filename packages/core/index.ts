@@ -15,7 +15,7 @@ export {
     createKeyframes,
     createMedia,
     createSVGElement,
-    createSheet,
+    createStyleSheet,
     createStyle,
     createText,
     createDeclaration,
