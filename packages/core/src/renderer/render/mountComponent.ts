@@ -46,7 +46,9 @@ function createComponentInstance(options: any) {
 export var currentInstance: any = null
 export const setCurrentInstance = (instance: any) => currentInstance = instance
 export const getCurrentInstance = () => currentInstance
-export const getCurrentScope = () => getCurrentInstance().scope
+export function getCurrentScope() {
+    return getCurrentInstance().scope
+}
 
 export const mountComponent = (container: Element, options: any) => {
     var instance: any = createComponentInstance(options)
@@ -63,7 +65,7 @@ export const mountComponent = (container: Element, options: any) => {
     callHook(LifecycleHooks.CREATED, instance)
     // render function
     const render = createRender(renderMethods)
-    
+
     // 每次状态更新都会触发
     function update() {
         const {
@@ -73,7 +75,6 @@ export const mountComponent = (container: Element, options: any) => {
         var nextTree = render()
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
-
         patch(currentTree, nextTree, container)
     }
 

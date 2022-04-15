@@ -15,6 +15,10 @@ import {
 } from '@crush/common'
 import { parseIterator } from './parseIterator'
 
+import {
+    removeFromArray
+} from '@crush/common'
+
 /*
     find the value of attribute list
 */
@@ -40,29 +44,35 @@ function findAttr(
 }
 
 export const findValueByattribute = (attrs: Asb[], attribute: string) => {
-
     return findAttr(attrs, (_attribute: string) => _attribute === attribute, false)
 }
 export const findValueByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), false)
 export const findValuesByattribute = (attrs: Asb[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
 export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
-const extAttribute = /(@|$|-{2})?(?:\(([^\)]+)\)|([\w-]+))(?::(\w+))?(?:\.([\w\.]+))?/
+const extAttribute = /(@|$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/
 
-export const processAttribute = (node: Asb) => {
-    const {
-        type, attributes
-    } = node;
-    attributes?.forEach((attr) => {
+var fnIsCalled = /.+\([\w,]*\)$/
+
+
+export const processAttribute = (node: any) => {
+    const { type, attributes } = node;
+    if (!attributes) return
+
+    attributes.forEach((attr: any) => { // not destructur becasue keep the node
         var exResult = exec(attr.attribute as string, extAttribute) as string[];
-        const [flag, dynamicProperty, staticProperty, content, modifiers] = exResult;
+        var [flag, l, property, r, argument, modifiers]: any = exResult;
+        var isDynamicProperty = l && r
+        modifiers = modifiers && modifiers.split('.')
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
-            var dirName = camelize(staticProperty)
+            // directive effect the root node
+            var dirName = camelize(property)
             const dirType = directiveTypeOf(dirName)
             attr.type = dirType
             switch (dirType) {
                 case Nodes.IF:
                     if (!node.dirs) {
+                        // 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
                         node.condition = attr.value
                         node.isBranchStart = true
                     } else {
@@ -91,12 +101,25 @@ export const processAttribute = (node: Asb) => {
                     break
                 case Nodes.CUSTOM_DIRECTIVE:
                     attr.dirName = dirName
-                    attr.content = content
-                    attr.modifiers = modifiers && modifiers.split('.');
-                    (node.customDir ||= []).push(attr)
+                    attr.argument = argument
+                    attr.modifiers = modifiers
+                        (node.customDirs ||= []).push(attr)
                     break
             }
         }
+
+        if (flag === NodesMap[Nodes.AT]) {
+            // events
+            attr.isCalled = fnIsCalled.test(attr.value)
+            attr.type = Nodes.EVENT
+            attr.argument = argument
+            attr.modifiers = modifiers
+            attr.isDynamicProperty = isDynamicProperty
+            attr.property = property
+        }
+
+        
+
     })
 }
 

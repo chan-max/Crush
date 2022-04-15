@@ -76,11 +76,11 @@ function parseNode(node: Asb, ctx: any) {
             case Nodes.HTML_ELEMENT:
                 processAttribute(node)
                 break
-            case Nodes.SVG_ELEMENT:
-                break
             case Nodes.COMPONENT:
                 processAttribute(node)
                 break
+            // case Nodes.SVG_ELEMENT:
+            //     break
             case Nodes.STYLE:
                 var template = node.children?.[0].children
                 if (template) {

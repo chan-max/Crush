@@ -23,7 +23,9 @@ import {
     createComponent,
     getComponent,
     getDirective,
-    getCurrentScope
+    getCurrentScope,
+    createEvent,
+    toHandlerKey
 } from '@crush/core'
 
 export var renderMethods = {
@@ -42,15 +44,17 @@ export var renderMethods = {
     display,
     mixin,
     flatRules,
-    splitSelector,
-    mergeSplitedSelectorsAndJoin,
+    // splitSelector,
+    // mergeSplitedSelectorsAndJoin,
     createDeclaration,
     important,
     createSupport,
     createComponent,
     getComponent,
     getDirective,
-    getCurrentScope
+    getCurrentScope,
+    createEvent,
+    toHandlerKey
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {
@@ -58,21 +62,4 @@ export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: R
     return res
 }, {})
 
-export const Source = {
-    createComment: 'createComment',
-    createElement: 'createElement',
-    createFragment: 'createFragment',
-    createComponent: 'createComponent',
-    createKeyframe: 'createKeyframe',
-    createKeyframes: 'createKeyframes',
-    createMedia: 'createMedia',
-    createSVGElement: 'createSVGElement',
-    createStyleSheet: 'createStyleSheet',
-    createStyle: 'createStyle',
-    createText: 'createText',
-    iterator: 'iterator',
-    mergeSelectors: 'mergeSelectors',
-    display: 'display',
-    mixin: 'mixin',
-}
 

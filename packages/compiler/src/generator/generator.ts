@@ -1,7 +1,6 @@
 
 import { Nodes } from '@crush/types'
 import {
-    Source,
     renderMethodsNameMap
 } from './source'
 
@@ -85,8 +84,9 @@ import {
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
 import { getUid, isArray, isObject, throwError } from '@crush/common'
 import { getUstr } from '@crush/common/src/value'
+import { toHandlerKey } from '@crush/core'
 
-const genFor = (target: string, iterator: Iterator) => callFn(Source.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
+const genFor = (target: string, iterator: Iterator) => callFn(renderMethodsNameMap.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
 
 function genForWithFragment(target: string, iterator: Iterator) {
@@ -125,18 +125,17 @@ function genNode(node: any, context: any): string {
         case Nodes.ELSE:
             return genNodes(node.children as any[], context)
         case Nodes.FOR:
-            debugger
         case Nodes.HTML_ELEMENT:
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
-            const props = 'null'
+            const props = genProps(node.attributes)
             var code = callFn(renderMethodsNameMap.createElement, tagName, props, children)
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
             }
             return code
         case Nodes.SVG_ELEMENT:
-            return callFn(Source.createSVGElement)
+            return callFn(renderMethodsNameMap.createSVGElement)
         case Nodes.COMPONENT:
             var uVar = getUstr()
             context.pushNewLine(
@@ -152,7 +151,7 @@ function genNode(node: any, context: any): string {
             var children = toArray(genRules(node.children, context))
             return callFn(renderMethodsNameMap.createStyleSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
-            return callFn(Source.createStyle, genSelector(node.selectors), toArray(genRules(node.children, context)))
+            return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genRules(node.children, context)))
         case Nodes.MEDIA_RULE:
             const rules = toArray(genRules(node.children, context))
             return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules)
@@ -229,17 +228,17 @@ function genRules(rules: any[], context: any) {
 
 
 
-const genFragment = (code: string) => callFn(Source.createFragment, code)
+const genFragment = (code: string) => callFn(renderMethodsNameMap.createFragment, code)
 
 const genTextContent = (texts: Text[]) => {
     return texts.map((text: Text) => {
-        return text.isDynamic ? callFn(Source.display, text.content) : toBackQuotes(text.content)
+        return text.isDynamic ? callFn(renderMethodsNameMap.display, text.content) : toBackQuotes(text.content)
     }).join('+')
 }
 
 const genText = (texts: Text[]) => {
     return callFn(
-        Source.createText,
+        renderMethodsNameMap.createText,
         genTextContent(texts)
     )
 }
@@ -333,3 +332,26 @@ function genDeclarations(declarations: any[]) {
         return callFn(renderMethodsNameMap.mixin, ..._res)
     }
 }
+
+
+function genProps(attrs: any) {
+    var props:any = {}
+    attrs.forEach((attr: any) => {
+        switch (attr.type) {
+            case Nodes.EVENT:
+                var {
+                    property,
+                    isDynamicProperty,
+                    value,
+                    isCalled,
+                    argument,
+                    modifiers
+                } = attr
+                var handlerKey = isDynamicProperty ? callFn(renderMethodsNameMap.toHandlerKey, property) : toHandlerKey(property)
+                var callback = value
+                props[handlerKey] = callback
+                break
+        }
+    });
+    return objectStringify(props)
+} 

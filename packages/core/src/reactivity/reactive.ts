@@ -8,7 +8,9 @@ var handlers = {
     },
     set(target:any,key:any,value:any,receiver:any){
         console.warn('set')
-        return target[key] = value
+        target[key] = value
+
+        return true
     }
 }
 

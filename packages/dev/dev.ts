@@ -8,25 +8,22 @@ console.log(renderMethods);
 import {
     createApp
 } from '@crush/core'
+import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-        <style>
-                h1{
-                    color!:red;
-                    ...customMixin;
-                }
-        </style>
-        <h1>
-            title 1
-        </h1>
+        <button @click="add">
+            {{count}}
+        </button>
     `,
     create(scope: any) {
-        scope.customMixin = {
-            backgroundColor: 'blue'
+        scope.count = 0
+        scope.add = () => {
+            console.log(66666);
         }
     }
 })
 console.log('app', app);
 const instance = app.mount('#app')
 console.log('instance', instance);
+
 

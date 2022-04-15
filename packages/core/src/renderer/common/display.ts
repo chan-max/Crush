@@ -1,4 +1,4 @@
 
-export const display = (displayData:any) => {
+export function display(displayData:any){
     return displayData
 }

@@ -5,7 +5,7 @@ export enum Nodes {
 
     FRAGMENT, /* fragment for fragment tag , css directive */
 
-    IF, 
+    IF,
     ELSE_IF,
     ELSE,
     FOR,
@@ -32,7 +32,7 @@ export enum Nodes {
     SUPPORT_RULE,
     KEYFRAMES_RULE,
 
-
+    EVENT, // events , elements and components
 
     STYLE_RULE,
 

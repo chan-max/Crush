@@ -20,7 +20,6 @@ export type Declaration = {
 
 const extractDeclarationProperty = /(\$)?(\()?([\w-]+)(\))?(!)?/
 
-const IMPORTANT_KEY = '!important'
 
 const parseDeclaration = (rawProperty: string, value: string): Declaration => {
     var [

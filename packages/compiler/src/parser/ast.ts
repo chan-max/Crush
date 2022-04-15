@@ -31,7 +31,9 @@ export interface Asb {
     declaration?: any
     declarations?: any
 
-    customDir?: any
+    argument?:any
+
+    customDirs?: any
     modifiers?: any
     dirName?: string
 
@@ -40,6 +42,8 @@ export interface Asb {
 
     support?:any,
 
+    isDynamicProperty?:any
+    property?:any
 }
 
 export const createAsb = (type: Nodes | string,): Asb => ({ type })

@@ -55,3 +55,8 @@ export {
     getComponent,
     getDirective
 } from './src/instance/assets'
+
+export {
+    toHandlerKey,
+    createEvent
+} from './src/renderer/common/event'

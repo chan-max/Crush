@@ -37,6 +37,11 @@ function mountText(vnode: any, container: any) {
     container.appendChild(text)
 }
 
+import {
+    isEvent,
+    getEventName
+} from '../common/event'
+
 function mountHTMLElement(vnode: any, container: any) {
     const {
         type,
@@ -46,7 +51,21 @@ function mountHTMLElement(vnode: any, container: any) {
 
     var el = document.createElement(type)
     callHook(LifecycleHooks.CREATED, vnode, el)
-    callHook(LifecycleHooks.BEFORE_MOUNT, vnode)
+    callHook(LifecycleHooks.BEFORE_MOUNT, vnode, el)
+
+    Object.entries(props).forEach(([key, value]: any) => {
+        if (isEvent(key)) {
+            var event = getEventName(key)
+            el.addEventListener(event, value)
+        } else if (key === 'class') {
+
+        } else if (key === 'style') {
+            
+        } else {
+
+        }
+    })
+
     container.appendChild(el)
     callHook(LifecycleHooks.MOUNTED, vnode)
 

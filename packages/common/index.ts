@@ -1,5 +1,5 @@
 
- export {
+export {
     isNumber,
     isString,
     isArray,
@@ -13,7 +13,9 @@ export {
 } from './src/cache'
 
 export {
-    camelize
+    camelize,
+    capitalize,
+    hyphenate
 } from './src/transformString'
 
 export {
@@ -34,3 +36,7 @@ export {
     getEmptyMap,
     getUid
 } from './src/value'
+
+export {
+    removeFromArray
+} from './src/operate'
