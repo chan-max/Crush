@@ -19,6 +19,10 @@ import {
     removeFromArray
 } from '@crush/common'
 
+import {
+    parseInlineClass
+} from './specialAttr'
+
 /*
     find the value of attribute list
 */
@@ -50,10 +54,9 @@ export const findValueByattributes = (attrs: Asb[], attributes: string[]) => fin
 export const findValuesByattribute = (attrs: Asb[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
 export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
-const extAttribute = /(@|$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/
+const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/
 
 var fnIsCalled = /.+\([\w,]*\)$/
-
 
 export const processAttribute = (node: any) => {
     const { type, attributes } = node;
@@ -61,9 +64,12 @@ export const processAttribute = (node: any) => {
 
     attributes.forEach((attr: any) => { // not destructur becasue keep the node
         var exResult = exec(attr.attribute as string, extAttribute) as string[];
-        var [flag, l, property, r, argument, modifiers]: any = exResult;
+        var [flag, l, property, r, argument, modifiersList]: any = exResult;
         var isDynamicProperty = l && r
-        modifiers = modifiers && modifiers.split('.')
+        var isDynamicValue = flag === '$'
+        var modifiers = modifiersList && modifiersList.split('.')
+
+        // process directive
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
             var dirName = camelize(property)
@@ -106,9 +112,7 @@ export const processAttribute = (node: any) => {
                         (node.customDirs ||= []).push(attr)
                     break
             }
-        }
-
-        if (flag === NodesMap[Nodes.AT]) {
+        } else if (flag === NodesMap[Nodes.AT]) {
             // events
             attr.isCalled = fnIsCalled.test(attr.value)
             attr.type = Nodes.EVENT
@@ -116,10 +120,20 @@ export const processAttribute = (node: any) => {
             attr.modifiers = modifiers
             attr.isDynamicProperty = isDynamicProperty
             attr.property = property
+        } else if (property === NodesMap[Nodes.CLASS]) {
+            // contain dynamic class and static class
+            attr.type = Nodes.CLASS
+            attr.isDynamic = isDynamicValue
+        } else if (property === NodesMap[Nodes.STYLE]) {
+
+        } else {
+            //  normal attribute
+            attr.property = property
+            attr.argument = argument
+            attr.modifiers = modifiers
+            attr.isDynamicValue = isDynamicValue
+            attr.isDynamicProperty = isDynamicProperty
         }
-
-        
-
     })
 }
 

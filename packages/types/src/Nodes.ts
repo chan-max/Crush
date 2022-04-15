@@ -22,9 +22,10 @@ export enum Nodes {
 
     STYLE,
 
+    // class contain dynamic class and static class
+    CLASS,
     DYNAMIC_CLASS,
     STATIC_CLASS,
-    DYNAMIC_STYLE,
 
     AT,
 
@@ -65,7 +66,8 @@ export enum NodesMap {
     'media' = Nodes.MEDIA_RULE,
     'keyframes' = Nodes.KEYFRAMES_RULE,
     'support' = Nodes.SUPPORT_RULE,
-    'style' = Nodes.STYLE
+    'style' = Nodes.STYLE,
+    'class' = Nodes.CLASS
 }
 
 import {

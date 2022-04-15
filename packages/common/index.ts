@@ -25,7 +25,9 @@ export {
 } from './src/console'
 
 export {
-    makeMap
+    makeMap,
+    arrayToMap,
+    stringToMap
 } from './src/makeMap'
 
 export {

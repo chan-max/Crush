@@ -335,7 +335,7 @@ function genDeclarations(declarations: any[]) {
 
 
 function genProps(attrs: any) {
-    var props:any = {}
+    var props: any = {}
     attrs.forEach((attr: any) => {
         switch (attr.type) {
             case Nodes.EVENT:
@@ -351,7 +351,41 @@ function genProps(attrs: any) {
                 var callback = value
                 props[handlerKey] = callback
                 break
+            /*
+                better to support mutiple class in one element 
+                <h1
+                    class="top"
+                    class="warn"
+                    $class="myCustomClass1"
+                    $class="myCustomClass2"
+                >
+            */
+            case Nodes.CLASS:
+                var {
+                    isDynamic,
+                    value
+                } = attr
+                var classList = props.class ||= []
+                classList.push(isDynamic ? value : toString(value))
+                break
+            case Nodes.HTML_ATTRIBUTE:
+                var {
+                    property,
+                    value,
+                    isDynamicProperty,
+                    isDynamicValue,
+                } = attr
+                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toString(value)
+                break
         }
     });
+
+    // merge class , there could be more than one class
+    if (props.class) {
+        props.class = callFn(renderMethodsNameMap.normalizeClass, toArray(props.class))
+    }
+
+
+
     return objectStringify(props)
 } 

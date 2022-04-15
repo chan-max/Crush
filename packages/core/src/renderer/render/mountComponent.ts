@@ -57,8 +57,8 @@ export const mountComponent = (container: Element, options: any) => {
     const {
         scope,
         createRender,
-    } = instance
-
+    } = instance;
+    
     // init instance
     callHook(LifecycleHooks.CREATE, instance, scope, scope)
 

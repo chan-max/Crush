@@ -57,6 +57,10 @@ export {
 } from './src/instance/assets'
 
 export {
+    normalizeClass,
+} from './src/renderer/common/normalizeClass'
+
+export {
     toHandlerKey,
     createEvent
 } from './src/renderer/common/event'

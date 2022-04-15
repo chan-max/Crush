@@ -14,12 +14,10 @@ function parseInlineStyle(styleString: string) {
     return styleMap
 }
 
-const inlineClassDelimiter = /\s+/
-function parseInlineClass(classString: string) {
-    return classString.trim().split(inlineClassDelimiter)
-}
 
-export {
-    parseInlineStyle,
-    parseInlineClass
-}
+import {
+    stringToMap
+} from '@crush/common'
+const inlineClassDelimiter = /\s+/
+export const parseInlineClass = (classString: string): Record<string, boolean> => stringToMap(classString, inlineClassDelimiter)
+

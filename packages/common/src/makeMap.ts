@@ -7,7 +7,9 @@ export const arrayToMap = (arr: string[], mapValue: any = true) => arr.reduce((r
     return res
 }, getEmptyMap() as Record<string, any>)
 
-export const makeMap = (str: string) => {
-    var map: Record<string, boolean> = arrayToMap(str.split(','))
+export const stringToMap = (str: string, delimiter: string | RegExp) => arrayToMap(str.split(delimiter))
+
+export const makeMap = (str: string, delimiter: string = ',') => {
+    var map: Record<string, boolean> = arrayToMap(str.split(delimiter))
     return (key: string) => !!map[key]
 }

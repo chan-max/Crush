@@ -25,7 +25,8 @@ import {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey
+    toHandlerKey,
+    normalizeClass,
 } from '@crush/core'
 
 export var renderMethods = {
@@ -44,8 +45,6 @@ export var renderMethods = {
     display,
     mixin,
     flatRules,
-    // splitSelector,
-    // mergeSplitedSelectorsAndJoin,
     createDeclaration,
     important,
     createSupport,
@@ -54,7 +53,8 @@ export var renderMethods = {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey
+    toHandlerKey,
+    normalizeClass
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

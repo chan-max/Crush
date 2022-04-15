@@ -1,4 +1,4 @@
-import { Nodes } from "@crush/types"
+import { Nodes, NodesMap } from "@crush/types"
 import { callHook, LifecycleHooks } from "../../instance/lifecycle"
 
 import {
@@ -57,12 +57,15 @@ function mountHTMLElement(vnode: any, container: any) {
         if (isEvent(key)) {
             var event = getEventName(key)
             el.addEventListener(event, value)
-        } else if (key === 'class') {
-
+        } else if (key === NodesMap[Nodes.CLASS]) {
+            // mount class
+            var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
+            el.className = className
         } else if (key === 'style') {
-            
-        } else {
 
+        } else {
+            // normal attribute
+            el.setAttribute(key, value)
         }
     })
 
