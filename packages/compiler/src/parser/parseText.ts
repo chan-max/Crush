@@ -26,7 +26,6 @@ export var parseText = (text: string):Text[] => {
         }
         cursor = execArr[0].length + execArr.index 
     }
-
     if(cursor < text.length){
         texts.push({
             content:text.slice(cursor),

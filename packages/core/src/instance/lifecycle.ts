@@ -1,6 +1,8 @@
 import { getCurrentInstance } from "../.."
 
-
+/*
+    those hooks is shared with the component instance and element vnode 
+*/
 const enum LifecycleHooks {
 
     CREATE = 'create',
@@ -19,6 +21,9 @@ function injectHook(type: LifecycleHooks, target: any, hook: Function) {
     hooks.push(hook)
 }
 
+/*
+    binding is used for bind the callback context , it is necessary
+*/
 function callHook(type: LifecycleHooks, target: any, binding: any = null, ...args: any[]) {
     const hooks = target[type]
     if (!hooks) return

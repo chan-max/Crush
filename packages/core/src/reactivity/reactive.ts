@@ -1,19 +1,88 @@
 
 
-var handlers = {
-    get(target:any,key:any,receiver:any){
-        
-        console.warn('get')
-        return target[key]
-    },
-    set(target:any,key:any,value:any,receiver:any){
-        console.warn('set')
-        target[key] = value
 
-        return true
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+const hasOwn = (target: Record<any, any>, key: any) => hasOwnProperty.call(target, key);
+
+const isReference = (value: any) => typeof value === 'object'
+
+var targetMap = new WeakMap()
+
+const get = Reflect.get
+const set = Reflect.set
+
+var shouldTrack = false
+var activeEffect: any = null
+
+function track(target: any, key: any) {
+    if (!shouldTrack) return
+    let depsMap = targetMap.get(target)
+    if (!depsMap) {
+        targetMap.set(target, (depsMap = new Map()));
+    }
+    let deps: Set<Function> = depsMap.get(key);
+    if (!deps) {
+        depsMap.set(key, (deps = new Set()));
+    }
+    deps.add(activeEffect)
+}
+
+function trigger(target: any, key: any) {
+    const depsMap = targetMap.get(target);
+    if (!depsMap) return;
+    const deps = depsMap.get(key)
+    if (!deps) return
+    deps.forEach((e: any) => e())
+}
+
+var handler = {
+    get(target: any, key: any, receiver: any) {
+        var value = get(target, key, receiver)
+        console.warn('get', target, key, value)
+        if (hasOwn(target, key)) {
+            track(target, key)
+        }
+        return isReference(value) ? reactive(value) : value
+    },
+    set(target: any, key: any, newValue: any, receiver: any) {
+        console.warn(
+            'set',
+            target, key, newValue
+        )
+
+        var setRes = set(target, key, newValue, receiver)
+        trigger(target, key)
+        return setRes
     }
 }
 
-export const reactive = (target: any) => {
-    return new Proxy(target, handlers)
+function reactive(target: any): any {
+    return new Proxy(target, handler)
+}
+
+function effect(fn: any) {
+    activeEffect = fn
+    shouldTrack = true
+    fn()
+    activeEffect = null
+    shouldTrack = false
+}
+
+import {
+    nextTick
+} from '../schduler/nextTick'
+/*
+    当一个回调函数
+*/
+export function asyncEffect(fn: any) {
+    var asyncFn = () => {
+        nextTick(() => {
+            effect(fn)
+        })
+    }
+}
+
+export {
+    reactive,
+    effect
 }

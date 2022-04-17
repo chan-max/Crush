@@ -5,7 +5,8 @@ import {
 import { renderMethods } from '../../../../dev/node_modules/@crush/compiler'
 
 import {
-    reactive
+    reactive,
+    effect
 } from '../../reactivity/reactive'
 
 import {
@@ -17,8 +18,11 @@ import {
     initOptions
 } from '../../instance/options'
 import { patch } from './patch'
+import {
+    dispatchSingleWork
+} from '../../schduler/dispatchSingleWork'
 
-function createComponentInstance(options: any) {
+function createCommonComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
     }
@@ -51,34 +55,52 @@ export function getCurrentScope() {
 }
 
 export const mountComponent = (container: Element, options: any) => {
-    var instance: any = createComponentInstance(options)
+    var instance: any = createCommonComponentInstance(options)
     // 当前
     currentInstance = instance
     const {
         scope,
         createRender,
     } = instance;
-    
+
     // init instance
     callHook(LifecycleHooks.CREATE, instance, scope, scope)
 
-    callHook(LifecycleHooks.CREATED, instance)
+    callHook(LifecycleHooks.CREATED, instance, scope, scope)
+
     // render function
     const render = createRender(renderMethods)
+    instance.render = render
 
-    // 每次状态更新都会触发
+    // component update fn
     function update() {
         const {
             isMounted,
             currentTree
         } = instance
+
+        // test hooks
+        if (isMounted) {
+            console.log('component is updating');
+        } else {
+            console.log('component is mounting');
+        }
+
         var nextTree = render()
+
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
         patch(currentTree, nextTree, container)
+        instance.currentTree = currentTree
     }
 
-    update()
+    //  call at every update
+    instance.update = update
 
+    
+
+    effect(() => {
+        dispatchSingleWork(update)
+    })
     return instance
 }

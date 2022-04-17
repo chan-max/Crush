@@ -118,17 +118,20 @@ function genChildrenString(children: any, context: any) {
     return toArray(genChildren(children, context))
 }
 
-function genNode(node: any, context: any): string {
+function genNode(node: any, context: any): any {
     switch (node.type) {
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
             return genNodes(node.children as any[], context)
         case Nodes.FOR:
+            // use for tag not directive
+            return genForWithFragment(genNodes(node.children,context), node.iterator)
         case Nodes.HTML_ELEMENT:
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
-            const props = genProps(node.attributes)
+            // 需要判断数组的长度是否为0 ， 因为指令到时会会被移出数组
+            const props = (node.attributes && node.attributes.length > 0) ? genProps(node.attributes) : 'null'
             var code = callFn(renderMethodsNameMap.createElement, tagName, props, children)
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)

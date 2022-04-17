@@ -50,25 +50,28 @@ function mountHTMLElement(vnode: any, container: any) {
     } = vnode
 
     var el = document.createElement(type)
+    if (props) {
+        // mount props
+        Object.entries(props).forEach(([key, value]: any) => {
+            if (isEvent(key)) {
+                var event = getEventName(key)
+                el.addEventListener(event, value)
+            } else if (key === NodesMap[Nodes.CLASS]) {
+                // mount class
+                var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
+                el.className = className
+            } else if (key === 'style') {
+
+            } else {
+                // normal attribute
+                el.setAttribute(key, value)
+            }
+        })
+    }
     callHook(LifecycleHooks.CREATED, vnode, el)
+
+
     callHook(LifecycleHooks.BEFORE_MOUNT, vnode, el)
-
-    Object.entries(props).forEach(([key, value]: any) => {
-        if (isEvent(key)) {
-            var event = getEventName(key)
-            el.addEventListener(event, value)
-        } else if (key === NodesMap[Nodes.CLASS]) {
-            // mount class
-            var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
-            el.className = className
-        } else if (key === 'style') {
-
-        } else {
-            // normal attribute
-            el.setAttribute(key, value)
-        }
-    })
-
     container.appendChild(el)
     callHook(LifecycleHooks.MOUNTED, vnode)
 

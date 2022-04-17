@@ -88,7 +88,7 @@ export const parseHTML = (source: string): Asb[] => {
             }
         } else { // text
             var asb = createAsb(Nodes.TEXT)
-            asb.children = scanner.exec(textRE)[0]
+            asb.children = scanner.exec(textRE)[0].trim()
             ast.push(asb)
         }
     }

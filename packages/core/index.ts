@@ -64,3 +64,7 @@ export {
     toHandlerKey,
     createEvent
 } from './src/renderer/common/event'
+
+export {
+    nextTick
+} from './src/schduler/nextTick'
