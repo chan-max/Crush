@@ -65,7 +65,6 @@ function genChildren(nodes: any[], context: any): string[] {
             inBranch = false
         }
     })
-
     children = children.map((child: any) => {
         if (isArray(child)) {
             const branchCondition = child.map((b) => b.condition).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
@@ -123,10 +122,10 @@ function genNode(node: any, context: any): any {
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
-            return genNodes(node.children as any[], context)
+            return node.children ? genNodes(node.children as any[], context) : 'null'
         case Nodes.FOR:
             // use for tag not directive
-            return genForWithFragment(genNodes(node.children,context), node.iterator)
+            return genForWithFragment(genNodes(node.children, context), node.iterator)
         case Nodes.HTML_ELEMENT:
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
@@ -151,85 +150,25 @@ function genNode(node: any, context: any): any {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            var children = toArray(genRules(node.children, context))
+            var children = toArray(genChildren(node.children, context))
             return callFn(renderMethodsNameMap.createStyleSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
         case Nodes.STYLE_RULE:
-            return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genRules(node.children, context)))
+            return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)))
         case Nodes.MEDIA_RULE:
-            const rules = toArray(genRules(node.children, context))
+            const rules = toArray(genChildren(node.children, context))
             return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules)
         case Nodes.KEYFRAMES_RULE:
-            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genRules(node.children, context)))
+            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genChildren(node.children, context)))
         case Nodes.KEYFRAME_RULE:
-            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genRules(node.children, context)))
+            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genChildren(node.children, context)))
         case Nodes.SUPPORT_RULE:
-            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genRules(node.children, context)))
-        case Nodes.DECLARATIONS:
-            return callFn(renderMethodsNameMap.createDeclaration, genDeclarations(node.declarations))
+            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genChildren(node.children, context)))
+        case Nodes.DECLARATION_GROUP:
+            return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children))
         default:
             return ''
     }
 }
-
-
-/*
-    if children have one child return fragment
-*/
-function genRulesOrFragment(rules: any, context: any) {
-    const children = genRules(rules, context)
-    return children.length === 1 ? children[0] : genFragment(toArray(children))
-}
-
-function genRules(rules: any[], context: any) {
-    var res: any = []
-    var inBranch = false
-    // 相比于genchildren ， 不需要处理属性中的指令
-    rules.forEach((rule) => {
-        switch (rule.type) {
-            case Nodes.IF:
-                // new branch
-                res.push([rule])
-                inBranch = true
-                break
-            case Nodes.ELSE_IF:
-                if (inBranch) {
-                    res[res.length - 1].push(rule)
-                } else {
-                    throwError(' not legal else-if ')
-                }
-                break
-            case Nodes.ELSE:
-                if (inBranch) {
-                    res[res.length - 1].push(rule)
-                } else {
-                    throwError(' not legal else-if ')
-                }
-                break
-            case Nodes.FOR:
-                inBranch = false
-                // 循环结构不会使用解构 ， 并且for循环会携带一层fragment
-                res.push(genFragment(genFor(genRulesOrFragment(rule.children, context), rule.iterator)))
-                break
-            default:
-                inBranch = false
-                res.push(genNode(rule, context))
-        }
-    })
-
-    // array 代表分支内容
-    res = res.map((item: any) => {
-        if (isArray(item)) {
-            const branchCondition = item.map((b) => b.condition)
-            const branchContent = item.map((b) => genRulesOrFragment(b.children, context))
-            return ternaryChains(branchCondition, branchContent)
-        } else {
-            return item
-        }
-    })
-    return res
-}
-
-
 
 const genFragment = (code: string) => callFn(renderMethodsNameMap.createFragment, code)
 
@@ -291,10 +230,10 @@ function genSelector(selectors: Array<any>) {
 }
 
 // declaration and mixin
-function genDeclarations(declarations: any[]) {
+function genDeclartion(declarationGroup: any[]) {
     var res: any = []
     var lastIsDeclaration = false
-    declarations.forEach((declaration) => {
+    declarationGroup.forEach((declaration) => {
         if (declaration.type === Nodes.MIXIN) {
             res.push(declaration.mixin)
             lastIsDeclaration = false

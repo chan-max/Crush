@@ -45,7 +45,7 @@ export const parseCSS = (source: string): Asb[] => {
         current: any,
         parent = null,
         closing = false,
-        declarations: any
+        declarationGroup: any
     while (scanner.source) {
         if (scanner.startsWith('}')) {
             closing = true
@@ -60,7 +60,7 @@ export const parseCSS = (source: string): Asb[] => {
                 asb.media = content
             } else if (nodeType === Nodes.KEYFRAMES_RULE) {
                 asb.keyframes = content
-            }else if(nodeType === Nodes.SUPPORT_RULE){
+            } else if (nodeType === Nodes.SUPPORT_RULE) {
                 asb.support = content
             }
             current = asb
@@ -74,11 +74,14 @@ export const parseCSS = (source: string): Asb[] => {
                     break
                 case Nodes.IF:
                     asb.condition = content
+                    asb.isBranchStart = true
                     break
                 case Nodes.ELSE_IF:
                     asb.condition = content
+                    asb.isBranch = true
                     break
                 case Nodes.ELSE:
+                    asb.isBranch = true
                     break
             }
             current = asb
@@ -88,7 +91,7 @@ export const parseCSS = (source: string): Asb[] => {
             var [mixin] = scanner.exec(mixinEx);
             var asb = createAsb(Nodes.MIXIN);
             asb.mixin = mixin;
-            (declarations ||= []).push(asb)
+            (declarationGroup ||= []).push(asb)
             continue
         } else if (exResult = scanner.exec(selectorRE)) {
             var asb = createAsb(Nodes.STYLE_RULE)
@@ -101,7 +104,7 @@ export const parseCSS = (source: string): Asb[] => {
             var declaration = parseDeclaration(exResult[0], exResult[1]);
             var asb = createAsb(Nodes.DECLARATION);
             asb.declaration = declaration;
-            (declarations ||= []).push(asb)
+            (declarationGroup ||= []).push(asb)
             continue
         } else {
             /* error */
@@ -110,12 +113,12 @@ export const parseCSS = (source: string): Asb[] => {
 
         /* process the relation , with cascading struct */
 
-        if (declarations) {
-            var asb = createAsb(Nodes.DECLARATIONS);
-            asb.declarations = declarations;
+        if (declarationGroup) {
+            var asb = createAsb(Nodes.DECLARATION_GROUP);
+            asb.children = declarationGroup;
             asb.parent = parent;
             (parent.children ||= []).push(asb)
-            declarations = null
+            declarationGroup = null
         }
 
         if (closing) {

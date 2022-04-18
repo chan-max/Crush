@@ -19,8 +19,8 @@ import {
 } from '../../instance/options'
 import { patch } from './patch'
 import {
-    dispatchSingleWork
-} from '../../schduler/dispatchSingleWork'
+    nextTickSingleWork
+} from '../../scheduler/nextTickSingleWork'
 
 function createCommonComponentInstance(options: any) {
     if (!options._isOptions) {
@@ -79,28 +79,37 @@ export const mountComponent = (container: Element, options: any) => {
             currentTree
         } = instance
 
-        // test hooks
-        if (isMounted) {
-            console.log('component is updating');
-        } else {
-            console.log('component is mounting');
-        }
-
         var nextTree = render()
 
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
-        patch(currentTree, nextTree, container)
-        instance.currentTree = currentTree
+
+        // test hooks
+        if (isMounted) {
+            console.log('component is updating');
+            callHook(LifecycleHooks.BEFORE_UPDATE, instance, scope, scope)
+            patch(currentTree, nextTree, container)
+            callHook(LifecycleHooks.UPDATED, instance, scope, scope)
+        } else {
+            console.log('component is mounting');
+            callHook(LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
+            patch(currentTree, nextTree, container)
+            callHook(LifecycleHooks.MOUNTED, instance, scope, scope)
+            instance.isMounted = true
+        }
+        instance.currentTree = nextTree
     }
 
     //  call at every update
     instance.update = update
 
-    
-
     effect(() => {
-        dispatchSingleWork(update)
+        update()
+    }, {
+        scheduler: (fn: any) => {
+            nextTickSingleWork(fn)
+        }
     })
+
     return instance
 }

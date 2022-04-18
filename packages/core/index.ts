@@ -67,4 +67,13 @@ export {
 
 export {
     nextTick
-} from './src/schduler/nextTick'
+} from './src/scheduler/nextTick'
+
+export {
+    reactive,
+    effect
+} from './src/reactivity/reactive'
+
+export {
+    nextTickSingleWork
+} from './src/scheduler/nextTickSingleWork'

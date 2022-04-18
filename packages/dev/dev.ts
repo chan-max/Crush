@@ -11,21 +11,19 @@ import {
 import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-            <button @click="add">
-                {{count}}
-            </button>
+        <style>
+            body{
+                --for(i in 6){
+                    $(i):i;
+                }
+            }
+        </style>
     `,
     create(scope: any) {
-        scope.count = 0
-        scope.add = () => {
-            scope.count++
-        }
+        scope.count = 666
+        scope.add = () => scope.count++
     }
 })
 console.log('app', app);
 const instance = app.mount('#app')
 console.log('instance', instance);
-
-import {
-    nextTick
-} from '@crush/core'

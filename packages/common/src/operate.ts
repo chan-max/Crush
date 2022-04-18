@@ -9,3 +9,17 @@ export const removeFromArray = (arr: any[], item: any) => {
     arr.splice(index, 1)
     return true
 }
+
+
+/*
+    mark 
+*/
+
+export function mark(target: any, key: string, value = true) {
+    return Object.defineProperty(target, key, {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+        value
+    })
+}

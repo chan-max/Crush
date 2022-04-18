@@ -1,20 +1,27 @@
 import { Nodes } from "@crush/types"
 
-var createElement = (type: any, props: any, children: any) => {
+
+export const empty = ({
+    type: Symbol('empty')
+})
+
+var createElement = (type: any, props: any, children: any, key: any) => {
     return {
         type,
         props,
         children,
-        nodeType:Nodes.HTML_ELEMENT
+        key,
+        nodeType: Nodes.HTML_ELEMENT,
     }
 }
 
 var Text = Symbol('Text')
-var createText = (children: any) => {
+var createText = (children: any, key: any) => {
     return {
+        key,
         type: Text,
         children,
-        nodeType:Nodes.TEXT
+        nodeType: Nodes.TEXT
     }
 }
 
@@ -29,41 +36,46 @@ var createFragment = (children: any) => {
     }
 }
 
-var createStyleSheet = (props: any, children: any) => {
+var createStyleSheet = (props: any, children: any, key: any) => {
     return {
         nodeType: Nodes.STYLE,
         props,
-        children
+        children,
+        key
     }
 }
 
-var createStyle = (selector: string, children: any) => {
+var createStyle = (selector: string, children: any, key: any) => {
     return {
         nodeType: Nodes.STYLE_RULE,
         selector,
-        children
+        children,
+        key
     }
 }
 
-var createMedia = (media: string, children: any) => ({
+var createMedia = (media: string, children: any, key: any) => ({
     nodeType: Nodes.MEDIA_RULE,
     media,
-    children
+    children,
+    key
 })
 
-var createKeyframes = (keyframes: any, children: any) => {
+var createKeyframes = (keyframes: any, children: any, key: any) => {
     return {
         nodeType: Nodes.KEYFRAMES_RULE,
         keyframes,
-        children
+        children,
+        key
     }
 }
 
-var createKeyframe = (keyframe: any, children: any) => {
+var createKeyframe = (keyframe: any, children: any, key: any) => {
     return {
         nodeType: Nodes.KEYFRAME_RULE,
         keyframe,
-        children
+        children,
+        key
     }
 }
 
@@ -76,15 +88,20 @@ const createComponent = (component: any, props: any, slots: any) => {
     }
 }
 
-var createSupport = (support: string, children: any) => ({
+var createSupport = (support: string, children: any, key: any) => ({
     nodeType: Nodes.SUPPORT_RULE,
     support,
-    children
+    children,
+    key
 })
 
 var createDeclaration = (children: any) => {
     return {
-        nodeType: Nodes.DECLARATIONS,
+        nodeType: Nodes.DECLARATION,
+        /*
+            render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
+        */
+        //nodeType: Nodes.DECLARATION_GROUP,
         children
     }
 }

@@ -2,7 +2,7 @@ import { nextTick } from "./nextTick"
 
 var currentWork: any = null
 
-export function dispatchSingleWork(work: Function) {
+export function nextTickSingleWork(work: Function) {
     if (!currentWork) {
         currentWork = work
         nextTick(() => {

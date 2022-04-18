@@ -25,7 +25,7 @@ export function doFlat(
                         doFlat(_children, flattedRules, rule)
                     }
                     break
-                case Nodes.DECLARATIONS:
+                case Nodes.DECLARATION:
                     if (!rule.parent) {
                         // 声明不再任何样式规则或媒体规则下时
                     } else if (rule.parent.nodeType === Nodes.STYLE_RULE) {

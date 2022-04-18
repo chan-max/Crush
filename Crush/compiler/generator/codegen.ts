@@ -178,10 +178,10 @@ function genSelector(selectors: Array<any>) {
 }
 
 /* 处理css样式声明和样式混入 */
-function genDeclaration(declarations: any) {
+function genDeclaration(DECLARATION_GROUP: any) {
     var collection: any = []
     var properties = {}
-    declarations.forEach((declaration: any) => {
+    DECLARATION_GROUP.forEach((declaration: any) => {
         if (declaration.type === Nodes.DECLARATION) {
             var property = `[${declaration.dynamicProperty ? declaration.property : toString(declaration.property)}]`
             var value = declaration.dynamicValue ? declaration.value : toString(declaration.value)

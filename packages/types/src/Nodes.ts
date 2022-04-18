@@ -39,7 +39,11 @@ export enum Nodes {
 
     KEYFRAME_RULE,
 
-    DECLARATIONS,
+
+   /*
+    declarationGroup is contain declaratin and mixin
+   */
+    DECLARATION_GROUP,
     DECLARATION,
     MIXIN,
 

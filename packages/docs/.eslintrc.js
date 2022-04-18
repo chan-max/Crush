@@ -67,7 +67,7 @@ module.exports = {
         'no-await-in-loop': 'off',
         'import/no-extraneous-dependencies': 'off',
         'import/no-unresolved': 'off',
-        'no-case-declarations': 'off',
+        'no-case-DECLARATION_GROUP': 'off',
         'template-curly-spacing': 'off',
         'vue/valid-v-for': 'off',
         '@typescript-eslint/no-var-requires': 'off',

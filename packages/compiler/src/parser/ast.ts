@@ -29,7 +29,7 @@ export interface Asb {
     selectors?: any
 
     declaration?: any
-    declarations?: any
+    DECLARATION_GROUP?: any
 
     argument?:any
 

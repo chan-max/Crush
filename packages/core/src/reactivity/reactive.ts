@@ -32,7 +32,14 @@ function trigger(target: any, key: any) {
     if (!depsMap) return;
     const deps = depsMap.get(key)
     if (!deps) return
-    deps.forEach((e: any) => e())
+    deps.forEach((e: any) => {
+        var scheduler = e.options.scheduler
+        if(scheduler){
+            scheduler(e)
+        }else{
+            e()
+        }
+    })
 }
 
 var handler = {
@@ -60,27 +67,20 @@ function reactive(target: any): any {
     return new Proxy(target, handler)
 }
 
-function effect(fn: any) {
-    activeEffect = fn
+function effect(fn: any, options = {}) {
+
+    var effectFn: any = () => {
+        fn()
+    }
+    effectFn.options = options
+
+    activeEffect = effectFn
     shouldTrack = true
-    fn()
+    effectFn()
     activeEffect = null
     shouldTrack = false
 }
 
-import {
-    nextTick
-} from '../schduler/nextTick'
-/*
-    当一个回调函数
-*/
-export function asyncEffect(fn: any) {
-    var asyncFn = () => {
-        nextTick(() => {
-            effect(fn)
-        })
-    }
-}
 
 export {
     reactive,
