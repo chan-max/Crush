@@ -82,20 +82,21 @@ function parseNode(node: Asb, ctx: any) {
             // case Nodes.SVG_ELEMENT:
             //     break
             case Nodes.STYLE:
-                var template = node.children?.[0].children
+                processAttribute(node)
+                var template = node.children?.[0].children      
                 if (template) {
                     var styleAst = parseCSS(template)
                     processRules(styleAst)
                     node.children = styleAst
                     ctx.ignoreChildren = true
                 }
-                return
+                break
             case Nodes.IF:
                 node.condition = node.attributeMap['condition']
                 node.isBranchStart = true
                 break
             case Nodes.ELSE_IF:
-                node.condition = node?.attributeMap?.['condition']
+                node.condition = node.attributeMap['condition']
                 node.isBranch = true
                 break
             case Nodes.ELSE:

@@ -17,7 +17,7 @@ export const patch = (current: any, next: any, container: any) => {
         if these two nodes have the same type , they must have the same nodeType
     */
     if (t1.type === t2.type) {
-        update(current, next, container)
+        update(t1, t2, container)
     } else {
         unmount(t1, container)
         mount(t2, container)

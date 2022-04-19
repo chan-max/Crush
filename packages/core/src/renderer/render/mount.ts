@@ -28,7 +28,14 @@ function mountFragment(vnode: any, container: any) {
 }
 
 function mountChildren(children: any, container: any) {
-    children.forEach((child: any) => mount(child, container));
+    children.forEach((child: any) => {
+        /*
+            会出现由于分支产生的 空节点
+        */
+        if (child) {
+            mount(child, container)
+        }
+    });
 }
 
 function mountText(vnode: any, container: any) {

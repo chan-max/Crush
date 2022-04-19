@@ -8,7 +8,7 @@ import {
 function flatRules(rules: any[], parent = null) {
     const flatted = doFlat(rules, [], parent)
     // 当一层平铺结束后 ， 处理declaration
-
+    
     flatted.forEach((rule: any) => {
         if (rule.nodeType === Nodes.STYLE_RULE) {
             const children: [any] = rule.children.map((r: any) => r.children)

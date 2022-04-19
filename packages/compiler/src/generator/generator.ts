@@ -99,8 +99,9 @@ const genDirectives = (target: string, dirs: any[]): string => {
     if (dirs.length === 0) {
         return target
     } else {
-        var dir = dirs[0]
-        dirs.shift()
+        // from end to start
+        var dir = dirs[dirs.length - 1]
+        dirs.pop()
         switch (dir.type) {
             case Nodes.IF:
                 target = genIf(target, dir.condition)

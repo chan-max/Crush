@@ -33,9 +33,12 @@ import {
     IMPORTANT
 } from '../common/important'
 function mountStyleRule(sheet: any, rule: any, vnode: any) {
-    var selector = rule.selector
-    var declaration = rule.children
-    var index = sheet.insertRule(`${selector}{}`, sheet.cssRules.length)
+    const {
+        selector,
+        children: declaration // rename
+    } = rule
+    if (!declaration) return
+    const index = sheet.insertRule(`${selector}{}`, sheet.cssRules.length)
     const insertedRule = sheet.cssRules[index]
     const insertedRuleStyle = insertedRule.style
     Object.entries(declaration).forEach(([key, value]: [any, any]) => {
@@ -55,7 +58,7 @@ function mountStyleRule(sheet: any, rule: any, vnode: any) {
 function mountMediaRule(sheet: any, rule: any, vnode: any) {
     var media = rule.media
     var rules = rule.children
-    var index = sheet.insertRule(`@media ${media}{}`)
+    var index = sheet.insertRule(`@media ${media}{}`,sheet.cssRules.length)
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }

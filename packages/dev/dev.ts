@@ -11,17 +11,10 @@ import {
 import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-        <style>
-            body{
-                for(i in 6){
-                    $(i):i;
-                }
-            }
-        </style>
+        <h1 --for="i in 6" --if="i%2 === 0">11111</h1>
     `,
     create(scope: any) {
-        scope.count = 666
-        scope.add = () => scope.count++
+        scope.randomBoolean = Math.random() > 0.5
     }
 })
 console.log('app', app);

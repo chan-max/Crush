@@ -61,14 +61,13 @@ var fnIsCalled = /.+\([\w,]*\)$/
 export const processAttribute = (node: any) => {
     const { type, attributes } = node;
     if (!attributes) return
-
-    attributes.forEach((attr: any) => { // not destructur becasue keep the node
+    for (let i = 0; i < attributes.length; i++) { // not destructur becasue keep the node
+        const attr = attributes[i]
         var exResult = exec(attr.attribute as string, extAttribute) as string[];
-        var [flag, l, property, r, argument, modifiersList]: any = exResult;
+        var [flag, l, property, r, argument, modifierList]: any = exResult;
         var isDynamicProperty = l && r
         var isDynamicValue = flag === '$'
-        var modifiers = modifiersList && modifiersList.split('.')
-
+        var modifiers = modifierList && modifierList.split('.')
         // process directive
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
@@ -78,7 +77,7 @@ export const processAttribute = (node: any) => {
             switch (dirType) {
                 case Nodes.IF:
                     if (!node.dirs) {
-                        // 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
+                        //  此时为元素的第一个指令为if ， 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
                         node.condition = attr.value
                         node.isBranchStart = true
                     } else {
@@ -112,6 +111,14 @@ export const processAttribute = (node: any) => {
                         (node.customDirs ||= []).push(attr)
                     break
             }
+            /*
+                attributes 中的内置和自定义指令都会被移出
+                编译时指令放在dirs中，
+                内置或自定义指令放在customDirs中
+            */
+            removeFromArray(attributes, attr)
+            i--
+            // 因为删除了数组中的元素，所以指针回退一步
         } else if (flag === NodesMap[Nodes.AT]) {
             // events
             attr.isCalled = fnIsCalled.test(attr.value)
@@ -127,6 +134,7 @@ export const processAttribute = (node: any) => {
         } else if (property === NodesMap[Nodes.STYLE]) {
 
         } else {
+            debugger
             //  normal attribute
             attr.property = property
             attr.argument = argument
@@ -134,6 +142,6 @@ export const processAttribute = (node: any) => {
             attr.isDynamicValue = isDynamicValue
             attr.isDynamicProperty = isDynamicProperty
         }
-    })
+    }
 }
 
