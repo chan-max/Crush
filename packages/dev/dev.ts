@@ -13,7 +13,7 @@ const app = createApp({
     template: `
         <style>
             body{
-                --for(i in 6){
+                for(i in 6){
                     $(i):i;
                 }
             }
@@ -27,3 +27,5 @@ const app = createApp({
 console.log('app', app);
 const instance = app.mount('#app')
 console.log('instance', instance);
+
+

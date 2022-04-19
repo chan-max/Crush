@@ -21,10 +21,16 @@ import {
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
-const CSSDir = /^--([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
+
 const AtRule = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/
 const mixinEx = /\.\.\.([^;]+);/
 
+
+const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
+/*
+    判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
+*/
+const cssReservedWord = /^(if|else-if|else|for|elseIf)/
 
 import {
     Nodes, NodesMap
@@ -36,6 +42,7 @@ import {
     createAsb
 } from './ast'
 import { parseIterator } from './parseIterator'
+
 
 export const parseCSS = (source: string): Asb[] => {
     var scanner = createScanner(source)
@@ -64,7 +71,18 @@ export const parseCSS = (source: string): Asb[] => {
                 asb.support = content
             }
             current = asb
-        } else if (scanner.startsWith(NodesMap[Nodes.DIRECTIVE_FLAG])) {
+        } else if (scanner.expect('/*')) {
+            /* comment continue */
+        } else if (scanner.startsWith(NodesMap[Nodes.MIXIN])) {
+            var [mixin] = scanner.exec(mixinEx);
+            var asb = createAsb(Nodes.MIXIN);
+            asb.mixin = mixin;
+            (declarationGroup ||= []).push(asb)
+            continue
+        } else if (cssReservedWord.test(scanner.source)) {
+            /* 
+                处理指令，指令不再需要通过标识符去判断
+            */
             var [dir, content] = scanner.exec(CSSDir)
             var dirType: any = NodesMap[camelize(dir)]
             var asb = createAsb(dirType)
@@ -85,15 +103,10 @@ export const parseCSS = (source: string): Asb[] => {
                     break
             }
             current = asb
-        } else if (scanner.expect('/*')) {
-            /* comment continue */
-        } else if (scanner.startsWith(NodesMap[Nodes.MIXIN])) {
-            var [mixin] = scanner.exec(mixinEx);
-            var asb = createAsb(Nodes.MIXIN);
-            asb.mixin = mixin;
-            (declarationGroup ||= []).push(asb)
-            continue
         } else if (exResult = scanner.exec(selectorRE)) {
+            /*
+                try to get the selector
+            */
             var asb = createAsb(Nodes.STYLE_RULE)
             asb.selector = parseSelector(exResult[0])
             current = asb
