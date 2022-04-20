@@ -16,7 +16,8 @@ import {
     toArrowFunction,
     callFn,
     destructur,
-    declare
+    declare,
+    NULL
 } from './stringify'
 
 import {
@@ -130,8 +131,7 @@ function genNode(node: any, context: any): any {
         case Nodes.HTML_ELEMENT:
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
-            // 需要判断数组的长度是否为0 ， 因为指令到时会会被移出数组
-            const props = (node.attributes && node.attributes.length > 0) ? genProps(node.attributes) : 'null'
+            const props = genProps(node)
             var code = callFn(renderMethodsNameMap.createElement, tagName, props, children)
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
@@ -277,9 +277,18 @@ function genDeclartion(declarationGroup: any[]) {
 }
 
 
-function genProps(attrs: any) {
+function genProps(node: any) {
+    var {
+        type, attributes
+    } = node
+    if (!(attributes && attributes.length)) {
+        /*
+            此时为无属性或均为指令
+        */
+        return NULL
+    }
     var props: any = {}
-    attrs.forEach((attr: any) => {
+    attributes.forEach((attr: any) => {
         switch (attr.type) {
             case Nodes.EVENT:
                 var {
@@ -290,12 +299,15 @@ function genProps(attrs: any) {
                     argument,
                     modifiers
                 } = attr
-                var handlerKey = isDynamicProperty ? callFn(renderMethodsNameMap.toHandlerKey, property) : toHandlerKey(property)
+                var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property)
                 var callback = value
+                if (modifiers) {
+                    callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toString)))
+                }
                 props[handlerKey] = callback
                 break
             /*
-                better to support mutiple class in one element 
+                support mutiple class in one element 
                 <h1
                     class="top"
                     class="warn"
@@ -305,13 +317,14 @@ function genProps(attrs: any) {
             */
             case Nodes.CLASS:
                 var {
-                    isDynamic,
+                    isDynamicValue,
                     value
                 } = attr
                 var classList = props.class ||= []
-                classList.push(isDynamic ? value : toString(value))
+                classList.push(isDynamicValue ? value : toString(value))
                 break
             case Nodes.HTML_ATTRIBUTE:
+                // normal attributes
                 var {
                     property,
                     value,

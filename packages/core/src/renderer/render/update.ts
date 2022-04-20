@@ -1,16 +1,7 @@
 import { Nodes } from "@crush/types";
 
 export function update(current: any, next: any, container: any) {
-    const {
-        nodeType,
-        props: nextProps,
-        children: nextChidren
-    } = next
-    const {
-        props: currentProps,
-        children: currentChildren
-    } = current
-    switch (nodeType) {
+    switch (next.nodeType) {
         case Nodes.TEXT:
 
             break
@@ -18,7 +9,8 @@ export function update(current: any, next: any, container: any) {
             /*
                 update props    
             */
-            updateChildren(currentChildren, nextChidren)
+           debugger
+            updateChildren(current.children, next.children)
             break
     }
 }

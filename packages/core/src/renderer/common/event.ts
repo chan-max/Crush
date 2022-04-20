@@ -1,6 +1,5 @@
 import { capitalize } from "@crush/common"
 
-
 // for renderer
 const onRE = /^on[A-Z]/;
 export const isEvent = (key: string) => onRE.test(key);
@@ -9,9 +8,7 @@ export const getEventName = (handlerKey: string) => {
 }
 
 // for compiler
-export const toHandlerKey = (event: string) => {
-    return `on${capitalize(event)}`
-}
+export const toHandlerKey = (event: string) => `on${capitalize(event)}`
 
 const modifierGuards: any = {
     stop: (e: any) => e.stopPropagation(),
@@ -26,13 +23,16 @@ const modifierGuards: any = {
     right: (e: any) => 'button' in e && e.button !== 2,
 };
 
-export function createEvent(callback: any, modifiers: any) {
+/*
+    使用修饰符后每次都会创建一个新的函数    
+*/
+export function createEvent(fn: any, modifiers: any) {
     return (event: any, ...args: any) => {
         for (let i = 0; i < modifiers.length; i++) {
             const guard = modifierGuards[modifiers[i]];
             if (guard && guard(event, modifiers))
                 return;
         }
-        return callback(event, ...args);
+        return fn(event, ...args);
     };
-}
+};

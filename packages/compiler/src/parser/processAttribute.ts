@@ -120,9 +120,17 @@ export const processAttribute = (node: any) => {
             i--
             // 因为删除了数组中的元素，所以指针回退一步
         } else if (flag === NodesMap[Nodes.AT]) {
-            // events
-            attr.isCalled = fnIsCalled.test(attr.value)
+            // the events attributeValue will always be dynamicMapKey
+            /*
+                support :
+                methods name : @click="login"
+                expression : @click="login = true" //此时需要包裹一层函数
+                function : @click="function(){ ... }"
+                arrow function : @click="() => { ... }"
+            */
             attr.type = Nodes.EVENT
+            attr.isDynamicValue = true
+            attr.isCalled = fnIsCalled.test(attr.value)
             attr.argument = argument
             attr.modifiers = modifiers
             attr.isDynamicProperty = isDynamicProperty
@@ -130,11 +138,10 @@ export const processAttribute = (node: any) => {
         } else if (property === NodesMap[Nodes.CLASS]) {
             // contain dynamic class and static class
             attr.type = Nodes.CLASS
-            attr.isDynamic = isDynamicValue
+            attr.isDynamicValue = isDynamicValue
         } else if (property === NodesMap[Nodes.STYLE]) {
 
         } else {
-            debugger
             //  normal attribute
             attr.property = property
             attr.argument = argument

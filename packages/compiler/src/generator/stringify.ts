@@ -3,6 +3,8 @@ import {
     isArray
 } from '@crush/common'
 
+const NULL = 'null'
+
 const toBackQuotes = (_: string): string => '`' + _ + '`'
 const toString = (_: string): string => "'" + _ + "'"
 
@@ -39,9 +41,11 @@ function ternaryChains(conditions: string[], returns: string[], falseDefault = '
         index < conditions.length - 1 ? ternaryChains(conditions, returns, falseDefault, ++index) : (returns[index + 1] || falseDefault)
     )
 }
- 
+
 const destructur = (target: string) => `...${target}`
 var declare = (name: string, value: string) => `const ${name} = ${value} ;`
+
+
 
 export {
     ternaryExp,
@@ -55,5 +59,6 @@ export {
     toArrowFunction,
     callFn,
     destructur,
-    declare
+    declare,
+    NULL
 }
