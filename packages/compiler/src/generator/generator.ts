@@ -24,6 +24,10 @@ import {
     Text
 } from '../parser/parseText'
 
+import {
+    getUstringId
+} from '@crush/common'
+
 // the code Entrance
 export const genNodes = (nodes: any[], context: any): string => {
     const children = genChildren(nodes, context)
@@ -132,7 +136,7 @@ function genNode(node: any, context: any): any {
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
             const props = genProps(node)
-            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children)
+            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children,getUstringId())
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
             }
@@ -182,7 +186,8 @@ const genTextContent = (texts: Text[]) => {
 const genText = (texts: Text[]) => {
     return callFn(
         renderMethodsNameMap.createText,
-        genTextContent(texts)
+        genTextContent(texts),
+        getUstringId()
     )
 }
 

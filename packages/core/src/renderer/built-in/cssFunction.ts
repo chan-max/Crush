@@ -67,9 +67,12 @@ function linearGradient() {
 
 }
 
-function radialGradient(){
-    
+function radialGradient() {
+
 }
+
+const max = (...items: string[]) => `max(${items.join(',')})`
+const min = (...items: string[]) => `min(${items.join(',')})`
 
 export default {
     rgba,
@@ -79,5 +82,7 @@ export default {
     $var,
     attr,
     calc,
-    cubicBzier
+    cubicBzier,
+    max,
+    min
 }

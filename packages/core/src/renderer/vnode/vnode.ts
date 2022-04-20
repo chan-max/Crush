@@ -2,6 +2,7 @@ import { Nodes } from "@crush/types"
 
 
 export const empty = ({
+    nodeType: Nodes.NULL,
     type: Symbol('empty')
 })
 

@@ -36,7 +36,8 @@ export {
 
 export {
     getEmptyMap,
-    getUid
+    getUid,
+    getUstringId
 } from './src/value'
 
 export {

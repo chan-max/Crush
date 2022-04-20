@@ -1,3 +1,4 @@
+import { Nodes } from '@crush/types'
 import { empty } from '../vnode/vnode'
 import {
     mount
@@ -6,7 +7,7 @@ import {
     unmount
 } from './unmount'
 import {
-    update
+    update, updateChildren
 } from './update'
 
 export const patch = (current: any, next: any, container: any) => {
@@ -19,8 +20,9 @@ export const patch = (current: any, next: any, container: any) => {
     if (t1.type === t2.type) {
         update(t1, t2, container)
     } else {
-        unmount(t1, container)
-        mount(t2, container)
+        /*
+            可能存在fragment多种复杂情况，直接diff处理
+        */
+        updateChildren([t1], [t2], container)
     }
-
 }

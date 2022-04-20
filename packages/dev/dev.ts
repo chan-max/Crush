@@ -11,17 +11,18 @@ import {
 import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-        <button @click.ctrl="login">
+        <button @click="login">
             {{count}}
         </button>
+        <if condition="count">
+            <h1>111</h1>
+            <h2>222</h2>
+        </if>
         `,
     create(scope: any) {
         scope.count = 0
-        scope.login = (x, y, z) => {
+        scope.login = () => {
             scope.count++
-            console.log(x);
-            console.log(y);
-            console.log(z);
         }
     }
 })
