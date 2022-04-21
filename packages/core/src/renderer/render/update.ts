@@ -31,15 +31,34 @@ function flatChildren(children: any[]) {
     return flattedChiildren
 }
 
+/*
+    根据一组子节点的key生成一个映射表
+*/
+function getChildrenKeyMap(children: any) {
+    return children.reduce((res: any, node: any, index: any) => {
+        res[node.key] = {
+            index,
+            node
+        }
+        return res
+    }, {})
+}
+
 export function updateChildren(currentChildren: any, nextChildren: any, container: any) {
     /*
-        会处理所有层级的fragment，平铺成一维结构,
-        返回的结构中不带有fragment,
-        暂时无组件，所以只会有元素和文本节点，
-        相同的key一定会复用，key不同但类型相同则会进入假挂载和卸载
+        相同key的节点类型不一定相同，
+        只有类型和key都相同的节点车才会作为同一节点复用，
+        不同类型的节点一定会卸载，
+        当节点类型相同但key不同并且需要复用时，会进入假挂载和卸载阶段，只是为了相关钩子的调用，并不会真卸载当前元素
     */
     var current = flatChildren(currentChildren)
     var next = flatChildren(nextChildren)
+    /*
+        map is key to node , so we also keep the key to type
+    */
+    var currentMap = getChildrenKeyMap(current)
+    var nextMap = getChildrenKeyMap(next)
+
     var max = current.length < next.length ? next : current
     debugger
     max.forEach((node: any) => {

@@ -30,6 +30,9 @@ import {
 
 // the code Entrance
 export const genNodes = (nodes: any[], context: any): string => {
+    if (!nodes) {
+        return NULL
+    }
     const children = genChildren(nodes, context)
     if (children.length === 0) {
         return 'null'
@@ -90,7 +93,11 @@ import { uid, isArray, isObject, throwError } from '@crush/common'
 import { uvar } from '@crush/common/src/value'
 import { toHandlerKey } from '@crush/core'
 
-const genFor = (target: string, iterator: Iterator) => callFn(renderMethodsNameMap.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
+const genFor = (target: string, iterator: Iterator) => callFn(
+    renderMethodsNameMap.renderList,
+    iterator.iterable, toArrowFunction(target, iterator.items),
+    ustringid() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
+)
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
 
 function genForWithFragment(target: string, iterator: Iterator) {
@@ -128,15 +135,19 @@ function genNode(node: any, context: any): any {
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
-            return node.children ? genNodes(node.children as any[], context) : 'null'
+            return genNodes(node.children as any[], context)
         case Nodes.FOR:
             // use for tag not directive
             return genForWithFragment(genNodes(node.children, context), node.iterator)
+        case Nodes.TEMPLATE:
+            var code = genNodes(node.children as any[], context)
+            if (node.dirs) { code = genDirectives(code, node.dirs) }
+            return code
         case Nodes.HTML_ELEMENT:
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
             const props = genProps(node)
-            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children,ustringid())
+            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid())
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
             }

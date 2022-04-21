@@ -140,7 +140,7 @@ export const processAttribute = (node: any) => {
             attr.type = Nodes.CLASS
             attr.isDynamicValue = isDynamicValue
         } else if (property === NodesMap[Nodes.STYLE]) {
-
+            
         } else {
             //  normal attribute
             attr.property = property

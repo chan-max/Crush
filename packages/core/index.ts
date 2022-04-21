@@ -27,7 +27,7 @@ export {
     display
 } from './src/renderer/common/display'
 export {
-    iterator
+    renderList
 } from './src/renderer/common/iterator'
 export {
     mergeSelectors,

@@ -83,7 +83,7 @@ function parseNode(node: Asb, ctx: any) {
             //     break
             case Nodes.STYLE:
                 processAttribute(node)
-                var template = node.children?.[0].children      
+                var template = node.children?.[0].children
                 if (template) {
                     var styleAst = parseCSS(template)
                     processRules(styleAst)
@@ -104,6 +104,9 @@ function parseNode(node: Asb, ctx: any) {
                 break
             case Nodes.FOR:
                 node.iterator = parseIterator(node.attributeMap['iterator'])
+                break
+            case Nodes.TEMPLATE:
+                processAttribute(node)
                 break
         }
     } else if (type === Nodes.TEXT) {

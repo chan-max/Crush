@@ -11,11 +11,9 @@ import {
 import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-        <for iterator="i in 6">
-            <h1>
-                6666666
-            </h1>
-        </for>
+        <template --if="666" --for="i in 12">
+            6666
+        </template>
         `,
     create(scope: any) {
         scope.count = 1

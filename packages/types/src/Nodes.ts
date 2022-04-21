@@ -5,6 +5,8 @@ export enum Nodes {
 
     FRAGMENT, /* fragment for fragment tag , css directive */
 
+    TEMPLATE, /* the built-in tag template */
+
     IF,
     ELSE_IF,
     ELSE,
@@ -40,9 +42,9 @@ export enum Nodes {
     KEYFRAME_RULE,
 
 
-   /*
-    declarationGroup is contain declaratin and mixin
-   */
+    /*
+     declarationGroup is contain declaratin and mixin
+    */
     DECLARATION_GROUP,
     DECLARATION,
     MIXIN,
@@ -71,7 +73,8 @@ export enum NodesMap {
     'keyframes' = Nodes.KEYFRAMES_RULE,
     'support' = Nodes.SUPPORT_RULE,
     'style' = Nodes.STYLE,
-    'class' = Nodes.CLASS
+    'class' = Nodes.CLASS,
+    'template' = Nodes.TEMPLATE
 }
 
 import {
