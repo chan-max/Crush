@@ -31,7 +31,7 @@ function flatChildren(children: any[]) {
     return flattedChiildren
 }
 
-export function updateChildren(currentChildren: any, nextChidren: any, container: any) {
+export function updateChildren(currentChildren: any, nextChildren: any, container: any) {
     /*
         会处理所有层级的fragment，平铺成一维结构,
         返回的结构中不带有fragment,
@@ -39,12 +39,10 @@ export function updateChildren(currentChildren: any, nextChidren: any, container
         相同的key一定会复用，key不同但类型相同则会进入假挂载和卸载
     */
     var current = flatChildren(currentChildren)
-    var next = flatChildren(nextChidren)
+    var next = flatChildren(nextChildren)
     var max = current.length < next.length ? next : current
-    /*
-        如果是新树比较长,遍历后可以得到
-    */
+    debugger
     max.forEach((node: any) => {
-
+        
     });
 }

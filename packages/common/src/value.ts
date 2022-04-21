@@ -1,7 +1,7 @@
 
 export const getEmptyMap = () => Object.create(null)
 
-var uid = 0
-export const getUid = () => uid++
-export const getUstringId = () => String(getUid())
-export const getUstr = () => `_${getUid()}`
+var id = 0
+export const uid = () => id++
+export const ustringid = () => String(uid())
+export const uvar = () => `_${uid()}`

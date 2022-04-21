@@ -15,18 +15,15 @@ import {
 import {
     renderMethodsNameMap,
 } from './source'
+import { uvar } from '@crush/common/src/value'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
 class CodeGenerator {
     code = ''
-
-    push(code: string) {
-        this.code = this.code + code
-    }
-
+    getCode = () => this.code
+    push = (code: string) => this.code += code
     newLine = () => this.code += '\n'
-
     tab = () => this.code += '\t'
 
     pushNewLine = (code: string) => {
@@ -35,16 +32,18 @@ class CodeGenerator {
         this.newLine()
     }
 
-    getCode() {
-        return this.code
+    // input an expression and hoist to the context , and return the variable name
+    hoistExpression = (expression: string) => {
+        var varname = uvar()
+        this.pushNewLine(declare(varname, expression))
+        return varname
     }
+
 }
 
 
 
 const RENDER_METHODS = 'renderMethods'
-
-const SCOPE = 'scope'
 
 const defaultCompilerConfig = {
 
@@ -68,15 +67,10 @@ export function compile(template: string, config = defaultCompilerConfig) {
         )
     )
 
-    context.pushNewLine(
-        declare(
-            SCOPE,
-            callFn(renderMethodsNameMap.getCurrentScope)
-        )
-    )
-    
+    var SCOPE = context.hoistExpression(callFn(renderMethodsNameMap.getCurrentScope))
+
     const renderCode = genNodes(ast as any[], context)
-    
+
     const content = `
         with(${SCOPE}){
             return ${toArrowFunction(renderCode)} // the return function is render function

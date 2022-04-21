@@ -25,7 +25,7 @@ import {
 } from '../parser/parseText'
 
 import {
-    getUstringId
+    ustringid
 } from '@crush/common'
 
 // the code Entrance
@@ -86,8 +86,8 @@ import {
     Iterator
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { getUid, isArray, isObject, throwError } from '@crush/common'
-import { getUstr } from '@crush/common/src/value'
+import { uid, isArray, isObject, throwError } from '@crush/common'
+import { uvar } from '@crush/common/src/value'
 import { toHandlerKey } from '@crush/core'
 
 const genFor = (target: string, iterator: Iterator) => callFn(renderMethodsNameMap.iterator, iterator.iterable, toArrowFunction(target, iterator.items))
@@ -136,7 +136,7 @@ function genNode(node: any, context: any): any {
             const tagName = toString(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
             const props = genProps(node)
-            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children,getUstringId())
+            var code = callFn(renderMethodsNameMap.createElement, tagName, props, children,ustringid())
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
             }
@@ -144,7 +144,7 @@ function genNode(node: any, context: any): any {
         case Nodes.SVG_ELEMENT:
             return callFn(renderMethodsNameMap.createSVGElement)
         case Nodes.COMPONENT:
-            var uVar = getUstr()
+            var uVar = uvar()
             context.pushNewLine(
                 declare(
                     uVar,
@@ -187,7 +187,7 @@ const genText = (texts: Text[]) => {
     return callFn(
         renderMethodsNameMap.createText,
         genTextContent(texts),
-        getUstringId()
+        ustringid()
     )
 }
 

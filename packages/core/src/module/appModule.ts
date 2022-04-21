@@ -16,6 +16,10 @@ import {
 } from '@crush/common'
 
 import {
+    createComponent
+} from '../renderer/vnode/vnode'
+
+import {
     mountComponent
 } from '../renderer/render/mountComponent'
 
@@ -78,9 +82,10 @@ class AppModule {
             return
         }
 
-        var instance = mountComponent(el, this.rootOptions)
+        var instance = mountComponent(createComponent(this.rootOptions, {}, {}), el)
         this.rootInstance = instance
         this.el = el
+        this.isMounted = true
         return instance
     }
 

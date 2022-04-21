@@ -80,12 +80,12 @@ var createKeyframe = (keyframe: any, children: any, key: any) => {
     }
 }
 
-const createComponent = (component: any, props: any, slots: any) => {
+const createComponent = (type: any, props: any, children: any) => {
     return {
         nodeType: Nodes.COMPONENT,
-        component,
+        type,
         props,
-        slots
+        children
     }
 }
 

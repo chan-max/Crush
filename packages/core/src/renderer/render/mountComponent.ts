@@ -1,6 +1,6 @@
 import {
     getEmptyMap,
-    getUid
+    uid
 } from '@crush/common'
 import { renderMethods } from '../../../../dev/node_modules/@crush/compiler'
 
@@ -27,7 +27,7 @@ function createCommonComponentInstance(options: any) {
         initOptions(options)
     }
     const instance: any = {
-        uid: getUid(),
+        uid: uid(),
         scope: reactive(getEmptyMap()),
         render: null,
         currentTree: null,
@@ -54,7 +54,10 @@ export function getCurrentScope() {
     return getCurrentInstance().scope
 }
 
-export const mountComponent = (container: Element, options: any) => {
+export const mountComponent = (vnode: any, container: Element) => {
+    var {
+        type: options
+    } = vnode
     var instance: any = createCommonComponentInstance(options)
     // 当前
     currentInstance = instance
