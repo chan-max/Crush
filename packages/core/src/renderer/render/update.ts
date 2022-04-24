@@ -1,6 +1,7 @@
 import { removeFromArray } from "@crush/common";
 import { Nodes } from "@crush/types";
 import { patch } from "./patch";
+import { updateStyleSheet } from "./updateStyleSheet";
 
 export function update(p: any, n: any, container: any, anchor: any) {
     switch (n.nodeType) {
@@ -21,7 +22,7 @@ export function update(p: any, n: any, container: any, anchor: any) {
             updateChildren(p.children, n.children, container, anchor)
             break
         case Nodes.STYLE:
-            debugger
+            updateStyleSheet(p, n)
             break
     }
 }
@@ -49,6 +50,7 @@ function createKeyMapAndList(children: any) {
 
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {
+
     /*
         相同key的节点类型不一定相同，
         只有类型和key都相同的节点车才会作为同一节点复用，
@@ -61,7 +63,7 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
     var p = pChildren
     var n = nChildren
 
-    debugger
+
 
     // 使用patchkey，不使用key
 

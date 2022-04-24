@@ -9,6 +9,7 @@ import { Nodes } from "@crush/types"
 
 export const mountStyleSheet = (vnode: any, container: any) => {
     var el = document.createElement('style')
+    vnode.el = el
     container.appendChild(el)
     var sheet = el.sheet
     const rules = vnode.children

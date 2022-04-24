@@ -7,7 +7,7 @@ import {
 /*
     处理结果返回始终是数组
 */
-export function processdom(node: any[], k: any = null) {
+export function processdom(node: any[], k: any = null): null | any[] {
 
     if (!node) {
         return null
@@ -17,13 +17,13 @@ export function processdom(node: any[], k: any = null) {
         node = [node]
     }
 
-    var flattednode: any = []
+    var flattedNode: any = []
 
     node.forEach((child: any) => {
         if (child) {
             if (child.nodeType === Nodes.FRAGMENT) {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
-                flattednode = flattednode.concat(processdom(child.children, child.key))
+                flattedNode = flattedNode.concat(processdom(child.children, child.key))
             } else {
                 if (k) {
                     child.patchKey = k + '_' + child.key
@@ -40,9 +40,9 @@ export function processdom(node: any[], k: any = null) {
                     child.children = flatRules(child.children)
                 }
                 
-                flattednode.push(child)
+                flattedNode.push(child)
             }
         }
     })
-    return flattednode
+    return flattedNode
 }         

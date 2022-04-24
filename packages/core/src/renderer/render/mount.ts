@@ -27,7 +27,7 @@ function mountFragment(vnode: any, container: any, anchor: any) {
     mountChildren(vnode.children, container, anchor)
 }
 
-function mountChildren(children: any, container: any, anchor: any) {
+export function mountChildren(children: any, container: any, anchor: any) {
     children.forEach((child: any) => {
         /*
             会出现由于分支产生的 空节点

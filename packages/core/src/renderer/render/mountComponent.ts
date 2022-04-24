@@ -86,14 +86,13 @@ export const mountComponent = (vnode: any, container: Element) => {
 
 
         var nextTree = render()
+        
+        // 处理fragment
         nextTree = processdom(nextTree)
-        if (nextTree && nextTree.length === 1) {
-            nextTree = nextTree[0]
-        }
-
+        
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
-        
+
         // test hooks
         if (isMounted) {
             callHook(LifecycleHooks.BEFORE_UPDATE, instance, scope, scope)

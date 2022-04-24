@@ -5,8 +5,8 @@ import {
     mixin
 } from '../common/mixin'
 
-function flatRules(rules: any[], parent = null) {
-    const flatted = doFlat(rules, [], parent)
+function flatRules(rules: any[], parent = null, key = null) {
+    const flatted = doFlat(rules, [], parent, key)
     /*
         当一层平铺结束后 ， 处理declaration
         stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了

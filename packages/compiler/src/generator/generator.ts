@@ -174,16 +174,16 @@ function genNode(node: any, context: any): any {
         case Nodes.STYLE:
             return callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
         case Nodes.STYLE_RULE:
-            return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)))
+            return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.MEDIA_RULE:
             const rules = toArray(genChildren(node.children, context))
-            return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules)
+            return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules, ustringid())
         case Nodes.KEYFRAMES_RULE:
-            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genChildren(node.children, context)))
+            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.KEYFRAME_RULE:
-            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genChildren(node.children, context)))
+            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.SUPPORT_RULE:
-            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genChildren(node.children, context)))
+            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.DECLARATION_GROUP:
             return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children))
         default:

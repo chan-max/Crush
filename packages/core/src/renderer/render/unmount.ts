@@ -18,6 +18,7 @@ export function unmount(vnode: any, container: any,anchor:any) {
     }
 }
 
-function unmountChildren(children: any) {
+export function unmountChildren(children: any) {
+    // 卸载过程目前不需要锚点
     children.forEach(unmount);
 }

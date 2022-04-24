@@ -8,9 +8,11 @@ import { Nodes } from '@crush/types'
 export function doFlat(
     rules: any[],
     flattedRules: any[],
-    parent: any = null
+    parent: any = null, // 保存parent的作用主要是当遍历到declaration时
+    key: any = null
 ) {
-    rules.forEach((rule: any) => {
+    for (let i = 0; i < rules.length; i++) {
+        var rule = rules[i]
         if (!rule) {
             // null
         } else {
@@ -34,7 +36,7 @@ export function doFlat(
                     } else {
                         debugger
                     }
-                    break
+                    continue
                 case Nodes.MEDIA_RULE:
                     rule.children = flatRules(rule.children, rule)
                     flattedRules.push(rule)
@@ -51,10 +53,15 @@ export function doFlat(
                     break
                 case Nodes.FRAGMENT:
                     // fragmen wont be a parent
-                    doFlat(rule.children, flattedRules, rule.parent)
+                    doFlat(rule.children, flattedRules, rule.parent, rule.key)
                     break
             }
+            if (key) {
+                rule.patchKey = key + '_' + rule.key
+            } else {
+                rule.patchKey = rule.key
+            }
         }
-    })
+    }
     return flattedRules
 }
