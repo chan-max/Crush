@@ -49,10 +49,16 @@ export const genNodes = (nodes: any[], context: any): string => {
 */
 
 function genChildren(nodes: any[], context: any): string[] {
+
+    if (!nodes) {
+        return []
+    }
+
     /*
         process the condition branch and the first dir is condition ,
         处理分支时会为if边际上branch start ， elseif else 标记为branch，或者元素的第一个指令为分支
     */
+
     var children: any = []
     var inBranch = false
     nodes.forEach((node) => {
@@ -166,8 +172,7 @@ function genNode(node: any, context: any): any {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            var children = toArray(genChildren(node.children, context))
-            return callFn(renderMethodsNameMap.createStyleSheet, 'null', callFn(renderMethodsNameMap.flatRules, children))
+            return callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
         case Nodes.STYLE_RULE:
             return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)))
         case Nodes.MEDIA_RULE:
@@ -186,7 +191,7 @@ function genNode(node: any, context: any): any {
     }
 }
 
-const genFragment = (code: string) => callFn(renderMethodsNameMap.createFragment, code)
+const genFragment = (code: string) => callFn(renderMethodsNameMap.createFragment, code, ustringid())
 
 const genTextContent = (texts: Text[]) => {
     return texts.map((text: Text) => {
@@ -356,8 +361,6 @@ function genProps(node: any) {
     if (props.class) {
         props.class = callFn(renderMethodsNameMap.normalizeClass, toArray(props.class))
     }
-
-
 
     return objectStringify(props)
 } 

@@ -5,17 +5,17 @@ import {
     mountStyleSheet
 } from './mountStyleSheet'
 
-export function mount(vnode: any, container: any) {
+export function mount(vnode: any, container: any, anchor: any) {
     const type = vnode.nodeType
     switch (type) {
         case Nodes.HTML_ELEMENT:
-            mountHTMLElement(vnode, container)
+            mountHTMLElement(vnode, container, anchor)
             break
         case Nodes.TEXT:
-            mountText(vnode, container)
+            mountText(vnode, container, anchor)
             break
         case Nodes.FRAGMENT:
-            mountFragment(vnode, container)
+            mountFragment(vnode, container, anchor)
             break
         case Nodes.STYLE:
             mountStyleSheet(vnode, container)
@@ -23,33 +23,35 @@ export function mount(vnode: any, container: any) {
     }
 }
 
-function mountFragment(vnode: any, container: any) {
-    mountChildren(vnode.children, container)
+function mountFragment(vnode: any, container: any, anchor: any) {
+    mountChildren(vnode.children, container, anchor)
 }
 
-function mountChildren(children: any, container: any) {
+function mountChildren(children: any, container: any, anchor: any) {
     children.forEach((child: any) => {
         /*
             会出现由于分支产生的 空节点
         */
         if (child) {
-            mount(child, container)
+            mount(child, container, anchor)
         }
     });
 }
 
-function mountText(vnode: any, container: any) {
+function mountText(vnode: any, container: any, anchor: any) {
     var textContent = vnode.children
-    var text = document.createTextNode(textContent)
-    container.appendChild(text)
+    var el = document.createTextNode(textContent)
+    vnode.el = el
+    nodeOps.insert(el, container, anchor)
 }
 
 import {
     isEvent,
     getEventName
 } from '../common/event'
+import nodeOps from "./nodeOps"
 
-function mountHTMLElement(vnode: any, container: any) {
+function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const {
         type,
         props,
@@ -57,6 +59,7 @@ function mountHTMLElement(vnode: any, container: any) {
     } = vnode
 
     var el = document.createElement(type)
+    vnode.el = el
     if (props) {
         // mount props
         Object.entries(props).forEach(([key, value]: any) => {
@@ -76,13 +79,11 @@ function mountHTMLElement(vnode: any, container: any) {
         })
     }
     callHook(LifecycleHooks.CREATED, vnode, el)
-
-
     callHook(LifecycleHooks.BEFORE_MOUNT, vnode, el)
-    container.appendChild(el)
+    nodeOps.insert(el, container, anchor)
     callHook(LifecycleHooks.MOUNTED, vnode)
 
     if (children) {
-        mountChildren(children, el)
+        mountChildren(children, el, anchor)
     }
 }

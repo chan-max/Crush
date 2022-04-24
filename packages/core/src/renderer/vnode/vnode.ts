@@ -30,10 +30,11 @@ var createSVGElement = () => { }
 
 var createComment = () => { }
 
-var createFragment = (children: any) => {
+var createFragment = (children: any, key: any) => {
     return {
         nodeType: Nodes.FRAGMENT,
-        children
+        children,
+        key
     }
 }
 

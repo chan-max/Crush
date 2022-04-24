@@ -22,6 +22,10 @@ import {
     nextTickSingleWork
 } from '../../scheduler/nextTickSingleWork'
 
+import {
+    processdom
+} from '../common/processdom'
+
 function createCommonComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
@@ -68,9 +72,7 @@ export const mountComponent = (vnode: any, container: Element) => {
 
     // init instance
     callHook(LifecycleHooks.CREATE, instance, scope, scope)
-
     callHook(LifecycleHooks.CREATED, instance, scope, scope)
-
     // render function
     const render = createRender(renderMethods)
     instance.render = render
@@ -82,19 +84,22 @@ export const mountComponent = (vnode: any, container: Element) => {
             currentTree
         } = instance
 
+
         var nextTree = render()
+        nextTree = processdom(nextTree)
+        if (nextTree && nextTree.length === 1) {
+            nextTree = nextTree[0]
+        }
 
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
-
+        
         // test hooks
         if (isMounted) {
-            console.log('component is updating');
             callHook(LifecycleHooks.BEFORE_UPDATE, instance, scope, scope)
             patch(currentTree, nextTree, container)
             callHook(LifecycleHooks.UPDATED, instance, scope, scope)
         } else {
-            console.log('component is mounting');
             callHook(LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
             patch(currentTree, nextTree, container)
             callHook(LifecycleHooks.MOUNTED, instance, scope, scope)

@@ -11,15 +11,15 @@ import {
 import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
-        <template --if="666" --for="i in 12">
-            6666
-        </template>
+        <style>
+            body{
+                background-color:red;
+            }
+        </style>
         `,
     create(scope: any) {
-        scope.count = 1
-        scope.login = () => {
-            scope.count++
-        }
+        scope.count = 0
+        scope.add = () => scope.count++
     }
 })
 console.log('app', app);

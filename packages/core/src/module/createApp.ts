@@ -1,5 +1,5 @@
 import {
-    createAppModule
+    AppModule
 } from './appModule'
 import {
     warn,
@@ -8,13 +8,4 @@ import {
 
 
 
-export const createApp = (rootComponent: any) => {
-    const appModule = createAppModule()
-    if (!rootComponent) {
-        error(
-            `app need a root options`
-        )
-    }
-    appModule.rootOptions = rootComponent
-    return appModule
-}
+export const createApp = (rootOptions: any) => new AppModule(rootOptions)

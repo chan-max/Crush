@@ -37,6 +37,10 @@ class AppModule {
 
     rootInstance: any
 
+    constructor(rootOptions: any) {
+        this.rootOptions = rootOptions
+    }
+
     component(name: string, options: any) {
         if (this.components[name]) {
             warn(`
@@ -90,9 +94,11 @@ class AppModule {
     }
 
     unmount() {
-
+        
     }
 }
 
-export const createAppModule = () => new AppModule()
 
+export {
+    AppModule
+}
