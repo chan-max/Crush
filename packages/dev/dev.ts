@@ -12,14 +12,15 @@ import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
         <style>
-            h1{
-                border:5px solid red;
-            }
-            if(count%2 === 0){
                 h1{
-                    color:red;
+                    border:5px solid red;
+                    @media (min-width:500px){
+                        body{
+                            background-color:red;
+                        }
+                        color:red;
+                    }
                 }
-            }
         </style>
         <h1>
             这是title1

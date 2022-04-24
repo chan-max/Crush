@@ -185,7 +185,7 @@ function genNode(node: any, context: any): any {
         case Nodes.SUPPORT_RULE:
             return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.DECLARATION_GROUP:
-            return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children))
+            return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children),ustringid())
         default:
             return ''
     }

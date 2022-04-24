@@ -1,3 +1,4 @@
+import { uid } from "@crush/common"
 import { Nodes } from "@crush/types"
 
 
@@ -97,15 +98,16 @@ var createSupport = (support: string, children: any, key: any) => ({
     key
 })
 
-var createDeclaration = (children: any) => {
+var createDeclaration = (children: any,key:any) => {
     return {
         nodeType: Nodes.DECLARATION,
         /*
             render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
         */
         //nodeType: Nodes.DECLARATION_GROUP,
-        children
-    }
+        children,    
+        key
+    } 
 }
 
 export {
