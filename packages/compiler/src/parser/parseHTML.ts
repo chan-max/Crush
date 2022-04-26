@@ -87,9 +87,20 @@ export const parseHTML = (source: string): Asb[] => {
                 (attributeMap ||= getEmptyMap())[attribute] = value;
             }
         } else { // text
-            debugger       
+
+            var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/
+            var textToken, text
+            if ((textToken = textEndsWithTag.exec(scanner.source))) {
+                text = textToken[1]
+                scanner.move(text.length)
+            } else {
+                // text为结尾 , 直接读取所有内容，并清空
+                text = scanner.source
+                scanner.source = ''
+            }
+
             var asb = createAsb(Nodes.TEXT)
-            asb.children = scanner.exec(textRE)[0].trim()
+            asb.children = text
             ast.push(asb)
         }
     }

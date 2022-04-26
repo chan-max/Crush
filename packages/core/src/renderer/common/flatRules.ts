@@ -22,7 +22,7 @@ function flatRules(
             /*
                 children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                 并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
-                仅需要处理数组解结构
+                仅需要处理数组结构
             */
             if (isArray(rule.children)) {
                 const children: [any] = rule.children.map((r: any) => r.children)
