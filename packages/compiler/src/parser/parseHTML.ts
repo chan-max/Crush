@@ -87,6 +87,7 @@ export const parseHTML = (source: string): Asb[] => {
                 (attributeMap ||= getEmptyMap())[attribute] = value;
             }
         } else { // text
+            debugger       
             var asb = createAsb(Nodes.TEXT)
             asb.children = scanner.exec(textRE)[0].trim()
             ast.push(asb)

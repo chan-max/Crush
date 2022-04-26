@@ -6,7 +6,12 @@ import {
 } from '../common/mixin'
 import { isArray } from '@crush/common'
 
-function flatRules(rules: any[], parent = null, key = null) {
+function flatRules(
+    rules: any[], 
+    parent = null,
+    key = null 
+    /* 这里传入的key是为了避免由循环产生节点中，当第一层是fragment时，无法为子节点设置上唯一的key  */
+    ) {
     const flatted = doFlat(rules, [], parent, key)
     /*
         当一层平铺结束后 ， 处理declaration

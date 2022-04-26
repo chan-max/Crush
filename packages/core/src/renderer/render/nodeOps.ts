@@ -1,6 +1,9 @@
 
+import {
+    IMPORTANT
+} from '../common/important'
 
-export default {
+export const nodeOps = {
     insert: (child: Element | Text, parent: Element, anchor: Element | null = null) => {
 
         /* 可能传入不合理的anchor */
@@ -16,4 +19,10 @@ export default {
             parent.removeChild(el);
         }
     },
+
+
+    // style
+    setProperty(style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) {
+        style.setProperty(property, value, important ? IMPORTANT : '')
+    }
 }

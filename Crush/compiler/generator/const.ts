@@ -23,7 +23,7 @@ import {
     createStyleRule,
     createKeyframeRule,
     createMediaRule,
-    createSupportsRule,
+    createSupportssRule,
     createKeyframesRule
 } from '../../renderer/vnode/ruleNode'
 
@@ -59,7 +59,7 @@ export const renderSource = {
     PROPERTYMIXIN: rfs + '.' + propertyMixin.name,
     ITERATECALL: rfs + '.' + iterateCall.name,
     IMPORTANT: rfs + '.' + important.name,
-    SUPPORTRULE: rfs + '.' + createSupportsRule.name,
+    SUPPORTRULE: rfs + '.' + createSupportssRule.name,
     KEYFRAMESRULE: rfs + '.' + createKeyframesRule.name,
     KEYFRAMERULE: rfs + '.' + createKeyframeRule.name,
     CREATEEVENT: rfs + '.' + createEvent.name,
@@ -78,7 +78,7 @@ export const renderMethods = {
     createStyleRule,
     createKeyframeRule,
     createMediaRule,
-    createSupportsRule,
+    createSupportssRule,
     createKeyframesRule,
     propertyMixin,
     iterateCall,

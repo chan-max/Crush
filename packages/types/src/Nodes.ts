@@ -32,7 +32,7 @@ export enum Nodes {
     AT,
 
     MEDIA_RULE,
-    SUPPORT_RULE,
+    SUPPORTS_RULE,
     KEYFRAMES_RULE,
 
     EVENT, // events , elements and components
@@ -71,7 +71,7 @@ export enum NodesMap {
     '--' = Nodes.DIRECTIVE_FLAG,
     'media' = Nodes.MEDIA_RULE,
     'keyframes' = Nodes.KEYFRAMES_RULE,
-    'support' = Nodes.SUPPORT_RULE,
+    'supports' = Nodes.SUPPORTS_RULE,
     'style' = Nodes.STYLE,
     'class' = Nodes.CLASS,
     'template' = Nodes.TEMPLATE

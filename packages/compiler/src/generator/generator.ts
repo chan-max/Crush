@@ -11,7 +11,6 @@ import {
     toBackQuotes,
     toTernaryExp,
     toArray,
-    toString,
     objectStringify,
     toArrowFunction,
     callFn,
@@ -150,7 +149,7 @@ function genNode(node: any, context: any): any {
             if (node.dirs) { code = genDirectives(code, node.dirs) }
             return code
         case Nodes.HTML_ELEMENT:
-            const tagName = toString(node.tagName) // required
+            const tagName = toBackQuotes(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
             const props = genProps(node)
             var code = callFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid())
@@ -165,7 +164,7 @@ function genNode(node: any, context: any): any {
             context.pushNewLine(
                 declare(
                     uVar,
-                    callFn(renderMethodsNameMap.getComponent, toString(node.tagName))
+                    callFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
                 )
             )
             return callFn(renderMethodsNameMap.createComponent, uVar)
@@ -177,13 +176,13 @@ function genNode(node: any, context: any): any {
             return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.MEDIA_RULE:
             const rules = toArray(genChildren(node.children, context))
-            return callFn(renderMethodsNameMap.createMedia, toString(node.media), rules, ustringid())
+            return callFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, ustringid())
         case Nodes.KEYFRAMES_RULE:
-            return callFn(renderMethodsNameMap.createKeyframes, toString(node.keyframes), toArray(genChildren(node.children, context)), ustringid())
+            return callFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.KEYFRAME_RULE:
-            return callFn(renderMethodsNameMap.createKeyframe, toString(node.selector.selectorText), toArray(genChildren(node.children, context)), ustringid())
-        case Nodes.SUPPORT_RULE:
-            return callFn(renderMethodsNameMap.createSupport, toString(node.support), toArray(genChildren(node.children, context)), ustringid())
+            return callFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), toArray(genChildren(node.children, context)), ustringid())
+        case Nodes.SUPPORTS_RULE:
+            return callFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.DECLARATION_GROUP:
             return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children),ustringid())
         default:
@@ -237,7 +236,7 @@ function genSelector(selectors: Array<any>) {
 
     var selectorCode = res.map((item: any) => {
         if (isArray(item)) { // static
-            return toString(joinSelector(item))
+            return toBackQuotes(joinSelector(item))
         } else { // dynamic
             // scope  
             return toBackQuotes(item)
@@ -276,7 +275,7 @@ function genDeclartion(declarationGroup: any[]) {
                 isImportant
             } = declaration.declaration
             const _property = isDynamicProperty ? dynamicMapKey(property) : property
-            const _value = isDynamicValue ? value : toString(value)
+            const _value = isDynamicValue ? value : toBackQuotes(value)
             const __value = isImportant ? callFn(renderMethodsNameMap.important, _value) : _value
             target[_property] = __value
         }
@@ -323,7 +322,7 @@ function genProps(node: any) {
                 var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property)
                 var callback = value
                 if (modifiers) {
-                    callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toString)))
+                    callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)))
                 }
                 props[handlerKey] = callback
                 break
@@ -342,7 +341,7 @@ function genProps(node: any) {
                     value
                 } = attr
                 var classList = props.class ||= []
-                classList.push(isDynamicValue ? value : toString(value))
+                classList.push(isDynamicValue ? value : toBackQuotes(value))
                 break
             case Nodes.HTML_ATTRIBUTE:
                 // normal attributes
@@ -352,7 +351,7 @@ function genProps(node: any) {
                     isDynamicProperty,
                     isDynamicValue,
                 } = attr
-                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toString(value)
+                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
         }
     });

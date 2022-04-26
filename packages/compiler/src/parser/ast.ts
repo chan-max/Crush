@@ -40,7 +40,7 @@ export interface Asb {
     isBranchStart?:boolean
     isBranch?: any
 
-    support?:any,
+    supports?:any,
 
     isDynamicProperty?:any
     property?:any

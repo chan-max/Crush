@@ -7,7 +7,7 @@ import {
 /*
     处理结果返回始终是数组
 */
-export function processdom(node: any[], k: any = null): null | any[] {
+export function processdom(node: any[], key: any = null): null | any[] {
 
     if (!node) {
         return null
@@ -25,8 +25,8 @@ export function processdom(node: any[], k: any = null): null | any[] {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
                 flattedNode = flattedNode.concat(processdom(child.children, child.key))
             } else {
-                if (k) {
-                    child.patchKey = k + '_' + child.key
+                if (key) {
+                    child.patchKey = key + '_' + child.key
                 } else {
                     child.patchKey = child.key
                 }

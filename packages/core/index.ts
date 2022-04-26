@@ -19,7 +19,7 @@ export {
     createStyle,
     createText,
     createDeclaration,
-    createSupport,
+    createSupports,
     createComponent
 } from './src/renderer/vnode/vnode'
 

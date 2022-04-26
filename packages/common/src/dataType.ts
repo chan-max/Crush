@@ -1,6 +1,6 @@
 
 
-const isNumber = (value: any) => typeof value === 'number'
+const isNumber = (value: any) => typeof value === 'number' && value !== NaN
 const isString = (value: any) => typeof value === 'string'
 const isArray = Array.isArray
 const isObject = (value: any) => objectToString.call(value) === '[object Object]'

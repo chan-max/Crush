@@ -49,7 +49,7 @@ import {
     isEvent,
     getEventName
 } from '../common/event'
-import nodeOps from "./nodeOps"
+import {nodeOps} from "./nodeOps"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const {

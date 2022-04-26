@@ -29,10 +29,16 @@ export var renderList = (data: Iterator, callee: Function, key: number) => {
 
     for (var item of data as NativeIterator) {
         var res = isArray(item) ? callee(...item, i) : callee(item, i)
-        results[i] = res
-        /* set ukey for diff */
-        res.key = key + '_' + i
-        i++
+        if (res) {
+            results.push(res)
+            /* set ukey for diff */
+            res.key = key + '_' + i
+            // i++
+        }
+        i++ 
+        /*
+            需要在循环外部 i++ ，这样保证即使有空元素被排出后，索引位置也是正确的
+        */
     }
     return results
 }

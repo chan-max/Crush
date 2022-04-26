@@ -1,7 +1,7 @@
 import { Nodes } from "@crush/types";
-import nodeOps from './nodeOps'
+import { nodeOps } from './nodeOps'
 
-export function unmount(vnode: any, container: any,anchor:any) {
+export function unmount(vnode: any, container: any, anchor: any) {
     switch (vnode.nodeType) {
         case Nodes.NULL:
             // 空节点不需要卸载

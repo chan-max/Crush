@@ -3,7 +3,7 @@
     mountStyleSheet will create a style element
 */
 
-import { isString } from "@crush/common"
+import { isNumber, isString } from "@crush/common"
 import { hyphenate } from "@crush/common/src/transformString"
 import { Nodes } from "@crush/types"
 
@@ -25,8 +25,18 @@ function mountSheet(sheet: any, rules: any, vnode: any) {
             case Nodes.MEDIA_RULE:
                 mountMediaRule(sheet, rule, vnode)
                 break
+            case Nodes.SUPPORTS_RULE:
+                mountSupportsRule(sheet, rule, vnode)
+                break
+            case Nodes.KEYFRAMES_RULE:
+                mountKeyframesRule(sheet, rule, vnode)
+                break
+            case Nodes.KEYFRAME_RULE:
+                mountKeyframeRule(sheet, rule, vnode)
+                break
         }
     })
+
 }
 
 import {
@@ -35,33 +45,25 @@ import {
     IMPORTANT
 } from '../common/important'
 
-function getDeclarationValue(rawValue: any) {
-    var value, important
-    if (rawValue[IMPORTANT_SYMBOL]) {
-        value = rawValue.value
-        important = true
-    } else {
-        value = rawValue
-        important = false
-    }
-    if (isString(value) && value.endsWith(IMPORTANT_KEY)) {
-        value = value.split(IMPORTANT_KEY)[0].trim()
-        important = true
-    }
-    return {
-        value,
-        important
-    }
-}
+import {
+    getDeclarationValue
+} from './declaration'
+import { nodeOps } from "./nodeOps"
 
-function mountStyleRule(sheet: any, rule: any, vnode: any) {
+export function mountStyleRule(
+    sheet: any,
+    rule: any,
+    vnode: any, // this is style vnode, it carry the special attrs for rendering
+    insertIndex = sheet.cssRules.length
+) {
     const {
         selector,
         children: declaration // rename
     } = rule
     if (!declaration) return
-    const index = sheet.insertRule(`${selector}{}`, sheet.cssRules.length)
+    const index = sheet.insertRule(`${selector}{}`, insertIndex)
     const insertedRule = sheet.cssRules[index]
+    rule.ref = insertedRule // set ref
     const insertedRuleStyle = insertedRule.style
     Object.entries(declaration).forEach(([key, value]: [any, any]) => {
         key = hyphenate(key) // the property shoule be uncamelized
@@ -73,10 +75,46 @@ function mountStyleRule(sheet: any, rule: any, vnode: any) {
     })
 }
 
-function mountMediaRule(sheet: any, rule: any, vnode: any) {
+function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var media = rule.media
     var rules = rule.children
-    var index = sheet.insertRule(`@media ${media}{}`, sheet.cssRules.length)
+    var index = sheet.insertRule(`@media ${media}{}`, insertIndex)
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
+}
+
+function mountSupportsRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+    var supports = rule.supports
+    var rules = rule.children
+    var index = sheet.insertRule(`@supports ${supports}{}`, insertIndex)
+    var newSheet = sheet.cssRules[index]
+    mountSheet(newSheet, rules, vnode)
+}
+
+function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+    var keyframes = rule.keyframes
+    var rules = rule.children
+    var index = sheet.insertRule(`@keyframes ${keyframes}{}`, insertIndex)
+    var newSheet = sheet.cssRules[index]
+    mountSheet(newSheet, rules, vnode)
+}
+
+function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+    var { keyframe, children: declaration } = rule
+
+    keyframe = isNumber(keyframe) ? `${keyframe}%` : keyframe // 关键帧支持数字的写法 
+
+    // appendRule wont return the index 
+    sheet.appendRule(`${keyframe}{}`)
+    var index = sheet.cssRules.length - 1
+    const insertedRule: any = sheet.cssRules[index]
+    rule.ref = insertedRule // set ref
+
+    const insertedRuleStyle = insertedRule.style
+    Object.entries(declaration).forEach(([property, value]: [any, any]) => {
+        property = hyphenate(property) // the property shoule be uncamelized
+        var { value } = getDeclarationValue(value)
+        // keyframe 中不能设置important
+        nodeOps.setProperty(insertedRuleStyle, property, value)
+    })
 }

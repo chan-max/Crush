@@ -67,8 +67,8 @@ export const parseCSS = (source: string): Asb[] => {
                 asb.media = content
             } else if (nodeType === Nodes.KEYFRAMES_RULE) {
                 asb.keyframes = content
-            } else if (nodeType === Nodes.SUPPORT_RULE) {
-                asb.support = content
+            } else if (nodeType === Nodes.SUPPORTS_RULE) {
+                asb.supports = content
             }
             current = asb
         } else if (scanner.expect('/*')) {

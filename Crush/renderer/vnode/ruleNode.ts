@@ -28,7 +28,7 @@ function createKeyframeRule(frame: string, declaration: any) {
     }
 }
 
-function createSupportsRule(support: string, rules: any) {
+function createSupportssRule(support: string, rules: any) {
     return {
         nodeType: Nodes.SUPPORTRULE,
         support, rules
@@ -37,7 +37,7 @@ function createSupportsRule(support: string, rules: any) {
 
 export {
     createKeyframeRule,
-    createSupportsRule,
+    createSupportssRule,
     createKeyframesRule,
     createStyleRule,
     createMediaRule,
