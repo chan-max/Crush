@@ -15,32 +15,12 @@ const app = createApp({
             h1{
                 animation:fade 1s infinite;
             }
-
             @keyframes fade{
-                for(i in 100){
-                    $(i){
-                        if( i < 10 ){
-                            color:blue;
-                        }
-                        else-if( i < 20 ){
-                            color:red;
-                        }
-                        else-if( i < 30 ){
-                            color:yellow;
-                        }
-                        else-if( i < 40 ){
-                            color:purple;
-                        }
-                        else-if( i < 50 ){
-                            color:black;
-                        }
-                        else-if( i < 60 ){
-                            color:orange;
-                        }
-                        else{
-                            color:white;
-                        }
-                    }
+                from{
+                    $color: count%2===0?'red':'yellow';
+                }
+                to{
+                    $color: count%2===0?'green':'blue';
                 }
             }
         </style>

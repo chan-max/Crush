@@ -20,6 +20,7 @@ import {
 
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/
+
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
 
 const AtRule = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/

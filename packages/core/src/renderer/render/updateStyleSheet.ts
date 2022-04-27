@@ -35,7 +35,7 @@ function createMapAndList(children: any[]) {
 import {
     insertNull
 } from './common'
-import { getDeclarationValue } from "./declaration"
+import { getDeclarationValue, updateDeclaration } from "./declaration"
 import { mountStyleRule } from "./mountStyleSheet"
 import { nodeOps } from "./nodeOps"
 
@@ -113,6 +113,11 @@ function updateSheet(p: any, n: any, sheet: CSSStyleSheet | CSSMediaRule, vnode:
                 case Nodes.MEDIA_RULE:
                     updateMediaRule(pRule, nRule, vnode)
                     break
+                case Nodes.SUPPORTS_RULE:
+                    break
+                case Nodes.KEYFRAMES_RULE:
+                    updateKeyframesRule(pRule, nRule, vnode)
+                    break
             }
         }
     }
@@ -151,5 +156,45 @@ function updateMediaRule(pRule: any, nRule: any, vnode: any) {
     }
 
     updateSheet(pRules, nRules, ref, vnode)
+}
 
+
+
+
+import { mountKeyframeRule } from './mountStyleSheet'
+import { normalizeKeyframe } from './common'
+
+function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
+    var keyframesRef: CSSKeyframesRule = nRule.ref = pRule.ref
+    var { keyframes: pKeyframes, children: pRules } = pRule
+    var { keyframes: nKeyframes, children: nRules } = nRule
+
+    if (pKeyframes !== nKeyframes) {
+        keyframesRef.name = nKeyframes
+    }
+
+    var maxLength = Math.max(pRules.length, nRules.length)
+
+    /*
+        最简单的更新策略，只存在keyframe，并且可以设置keyText
+    */
+    for (let i = 0; i < maxLength; i++) {
+        var pk = pRules[i]
+        var nk = nRules[i]
+        if (!pk) {
+            mountKeyframeRule(keyframesRef, nk, vnode)
+        } else if (!nk) {
+            keyframesRef.deleteRule(normalizeKeyframe(pk.keyframe))
+        } else {
+            var { keyframe: pKeyframe, children: pDeclaration } = pk
+            var { keyframe: nKeyframe, children: nDeclaration } = nk
+            let keyframeRef = nk.ref = pk.ref
+            var style = keyframeRef.style
+            if (pKeyframe !== nKeyframe) {
+                keyframeRef.keyText = nKeyframe
+            }
+            updateDeclaration(pDeclaration, nDeclaration, style, vnode)
+        }
+        // 不存在两个都没有的情况
+    }
 }

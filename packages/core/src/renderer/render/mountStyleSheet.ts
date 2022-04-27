@@ -95,21 +95,21 @@ function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: numb
     var keyframes = rule.keyframes
     var rules = rule.children
     var index = sheet.insertRule(`@keyframes ${keyframes}{}`, insertIndex)
+    rule.ref = sheet.cssRules[insertIndex]
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }
 
-function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var { keyframe, children: declaration } = rule
 
-    keyframe = isNumber(keyframe) ? `${keyframe}%` : keyframe // 关键帧支持数字的写法 
+    keyframe = isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe // 关键帧支持数字的写法 
 
     // appendRule wont return the index 
     sheet.appendRule(`${keyframe}{}`)
     var index = sheet.cssRules.length - 1
     const insertedRule: any = sheet.cssRules[index]
     rule.ref = insertedRule // set ref
-
     const insertedRuleStyle = insertedRule.style
     Object.entries(declaration).forEach(([property, value]: [any, any]) => {
         property = hyphenate(property) // the property shoule be uncamelized
