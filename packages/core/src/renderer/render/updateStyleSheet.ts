@@ -2,8 +2,8 @@ import { removeFromArray } from "@crush/common"
 import { Nodes } from "@crush/types"
 
 export const updateStyleSheet = (p: any, n: any) => {
-    var el = n.el = p.el
-    var sheet = el.sheet
+    var ref = n.ref = p.ref
+    var sheet = ref.sheet
     /*
         更新style元素的props，并且处理特殊属性如，unit,url 等
     */

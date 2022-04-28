@@ -6,16 +6,16 @@ import { updateStyleSheet } from "./updateStyleSheet";
 export function update(p: any, n: any, container: any, anchor: any) {
     switch (n.nodeType) {
         case Nodes.TEXT:
-            var el = n.el = p.el
+            var ref = n.ref = p.ref
             if (p.children !== n.children) {
-                el.textContent = n.children
+                ref.textContent = n.children
             }
             break
         case Nodes.HTML_ELEMENT:
             /*
                 update props    
             */
-            n.el = p.el
+            n.ref = p.ref
             updateChildren(p.children, n.children, container, anchor)
             break
         case Nodes.FRAGMENT:
@@ -50,6 +50,7 @@ function createKeyMapAndList(children: any) {
 
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {
+
 
     /*
         相同key的节点类型不一定相同，
@@ -104,17 +105,26 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
         }
     })
 
+
+
     // 最终结果用max和newList逐一patch      
     var current = max === n ? newList : max
     var next = max === n ? max : newList
     for (let i = 0; i < maxLength; i++) {
-        var anchor = current[i + 1] ? current[i + 1].el : null;
-        patch(current[i], next[i], container, anchor)
+        patch(current[i], next[i], container, getAnchor(current, i + 1))
     }
 }
 
 /*
-
+    在已经挂载的vnodes中获取anchor
 */
+function getAnchor(vnodes: any, index: number) {
+    for (let i = index; i < vnodes.length; i++) {
+        var ref = vnodes[i]?.ref
+        if (ref) {
+            return ref
+        }
+    }
+}
 
 

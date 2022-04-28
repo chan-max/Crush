@@ -37,6 +37,8 @@ class AppModule {
 
     rootInstance: any
 
+    mixins = null
+
     constructor(rootOptions: any) {
         this.rootOptions = rootOptions
     }
@@ -94,7 +96,7 @@ class AppModule {
     }
 
     unmount() {
-        
+
     }
 }
 

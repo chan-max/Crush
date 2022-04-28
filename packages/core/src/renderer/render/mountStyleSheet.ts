@@ -8,10 +8,10 @@ import { hyphenate } from "@crush/common/src/transformString"
 import { Nodes } from "@crush/types"
 
 export const mountStyleSheet = (vnode: any, container: any) => {
-    var el = document.createElement('style')
-    vnode.el = el
-    container.appendChild(el)
-    var sheet = el.sheet
+    var ref = document.createElement('style')
+    vnode.ref = ref
+    container.appendChild(ref)
+    var sheet = ref.sheet
     const rules = vnode.children
     mountSheet(sheet, rules, vnode)
 }

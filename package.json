@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "test": "jest",
-    "docsdev": "cd packages/docs &   concurrently \"npm run serve\" \"npm run dev\""
+    "docsdev": "cd packages/docs & npm run dev"
   },
   "author": "chan",
   "license": "MIT",

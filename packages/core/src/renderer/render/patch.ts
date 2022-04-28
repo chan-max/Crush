@@ -14,8 +14,6 @@ import {
     mountChildren
 } from './mount'
 
-
-
 export const patch = (current: any, next: any, container: any, anchor: any = null) => {
 
     /*
@@ -27,7 +25,6 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
 
     if (!current) {
         if (next) {
-            // 不管几个元素，直接按数组挂载
             isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor)
         } else {
             // nothing todo
@@ -64,4 +61,6 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
             }
         }
     }
+
+    
 }
