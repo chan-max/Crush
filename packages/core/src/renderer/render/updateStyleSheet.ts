@@ -93,7 +93,11 @@ function updateSheet(p: any, n: any, sheet: CSSStyleSheet | CSSMediaRule, vnode:
             不存在两个对应位置都为空的情况
         */
         if (!pRule) {
-            mountStyleRule(sheet, nRule, vnode)
+            switch (nRule.nodeType) {
+                case Nodes.STYLE_RULE:
+                    mountStyleRule(sheet, nRule, vnode)
+                    break
+            }
         } else if (!nRule) {
             sheet.deleteRule(i)
         } else if (pRule.nodeType !== nRule.nodeType) {
@@ -132,17 +136,7 @@ function updateStyleRule(pRule: any, nRule: any, vnode: any) {
         ref.selectorText = nSelector
     }
     var style = ref.style
-    var delList = Object.keys(pDeclaration)
-
-    for (let property in nDeclaration) {
-        var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property])
-        var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property])
-        if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
-            nodeOps.setProperty(style, property, nValue, nImportant)
-        }
-        removeFromArray(delList, property)
-    }
-    delList.forEach((property: string) => nodeOps.setProperty(style, property, '')) // 清空旧的属性
+    updateDeclaration(pDeclaration, nDeclaration, style, vnode)
 }
 
 function updateMediaRule(pRule: any, nRule: any, vnode: any) {

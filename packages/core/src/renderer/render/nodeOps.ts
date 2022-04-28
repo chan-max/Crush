@@ -1,4 +1,5 @@
 
+import { hyphenate } from '@crush/common';
 import {
     IMPORTANT
 } from '../common/important'
@@ -22,7 +23,5 @@ export const nodeOps = {
 
 
     // style
-    setProperty(style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) {
-        style.setProperty(property, value, important ? IMPORTANT : '')
-    }
+    setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '')
 }
