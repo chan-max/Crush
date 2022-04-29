@@ -9,6 +9,9 @@ import {
 } from '@crush/common'
 
 export enum ComponentOptions {
+
+    BEFORE_CREATE = 'beforeCreate',
+
     CREATE = 'create',
     // setup funcition
     CREATED = 'created',

@@ -25,19 +25,19 @@ export const routes = [
     },
   },
   {
-    name: "v-59fe2fad",
-    path: "/api/builtInTag.html",
-    component: GlobalLayout,
-    beforeEnter: (to, from, next) => {
-      ensureAsyncComponentsLoaded("Layout", "v-59fe2fad").then(next)
-    },
-  },
-  {
     name: "v-d829abfa",
     path: "/api/builtInDirective.html",
     component: GlobalLayout,
     beforeEnter: (to, from, next) => {
       ensureAsyncComponentsLoaded("Layout", "v-d829abfa").then(next)
+    },
+  },
+  {
+    name: "v-59fe2fad",
+    path: "/api/builtInTag.html",
+    component: GlobalLayout,
+    beforeEnter: (to, from, next) => {
+      ensureAsyncComponentsLoaded("Layout", "v-59fe2fad").then(next)
     },
   },
   {

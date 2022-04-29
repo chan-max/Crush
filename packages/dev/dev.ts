@@ -12,17 +12,15 @@ import { onMounted } from '@crush/core/src/instance/lifecycle';
 const app = createApp({
     template: `
         <style>
-            button{
-                $color: count %2 === 0 ? 'red' : 'blue' ;
-                $backgroundColor: count %2 !== 0 ? 'red' : 'blue' ;
+            h1{
+                $color: rgb(r,g,b) ;
             }
         </style>
-        <button @click="add"> {{count}} </button>
+        <h1> red:{{r}} -- green:{{g}} -- blue:{{b}} </h1>
         `,
     create(scope: any) {
-        scope.count = 0
-        scope.add = () => scope.count++
-    }
+
+    },
 })
 console.log('app', app);
 const instance = app.mount('#app')

@@ -51,20 +51,52 @@ export const siteData = {
       "path": "/api/builtInComponent.html"
     },
     {
-      "title": "内置标签",
-      "frontmatter": {},
-      "regularPath": "/api/builtInTag.html",
-      "relativePath": "api/builtInTag.md",
-      "key": "v-59fe2fad",
-      "path": "/api/builtInTag.html"
-    },
-    {
       "title": "内置指令",
       "frontmatter": {},
       "regularPath": "/api/builtInDirective.html",
       "relativePath": "api/builtInDirective.md",
       "key": "v-d829abfa",
       "path": "/api/builtInDirective.html"
+    },
+    {
+      "title": "内置标签",
+      "frontmatter": {},
+      "regularPath": "/api/builtInTag.html",
+      "relativePath": "api/builtInTag.md",
+      "key": "v-59fe2fad",
+      "path": "/api/builtInTag.html",
+      "headers": [
+        {
+          "level": 2,
+          "title": "if",
+          "slug": "if"
+        },
+        {
+          "level": 2,
+          "title": "elseIf",
+          "slug": "elseif"
+        },
+        {
+          "level": 2,
+          "title": "else",
+          "slug": "else"
+        },
+        {
+          "level": 2,
+          "title": "for",
+          "slug": "for"
+        },
+        {
+          "level": 2,
+          "title": "slot",
+          "slug": "slot"
+        },
+        {
+          "level": 2,
+          "title": "template",
+          "slug": "template"
+        }
+      ]
     },
     {
       "title": "CSS 内置函数",

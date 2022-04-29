@@ -25,14 +25,16 @@ import {
 import {
     processdom
 } from '../common/processdom'
+import { initScope } from '../../instance/scope'
 
 function createCommonComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
     }
+
     const instance: any = {
         uid: uid(),
-        scope: reactive(getEmptyMap()),
+        scope: reactive(initScope()),
         render: null,
         currentTree: null,
         createRender: options.createRender,
@@ -54,14 +56,13 @@ function createCommonComponentInstance(options: any) {
 export var currentInstance: any = null
 export const setCurrentInstance = (instance: any) => currentInstance = instance
 export const getCurrentInstance = () => currentInstance
-export function getCurrentScope() {
-    return getCurrentInstance().scope
-}
+export const getCurrentScope = () => getCurrentInstance().scope
 
 export const mountComponent = (vnode: any, container: Element) => {
     var {
         type: options
     } = vnode
+
     var instance: any = createCommonComponentInstance(options)
     // 当前
     currentInstance = instance
@@ -84,12 +85,11 @@ export const mountComponent = (vnode: any, container: Element) => {
             currentTree
         } = instance
 
-
         var nextTree = render()
-        
+
         // 处理fragment
         nextTree = processdom(nextTree)
-        
+
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);
 

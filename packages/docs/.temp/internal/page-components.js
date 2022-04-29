@@ -4,8 +4,8 @@
 export default {
   "v-58fedcd9": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\app.md"),
   "v-872c37b2": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\builtInComponent.md"),
-  "v-59fe2fad": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\builtInTag.md"),
   "v-d829abfa": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\builtInDirective.md"),
+  "v-59fe2fad": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\builtInTag.md"),
   "v-7f37c92a": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\cssBuiltInFunction.md"),
   "v-0830846c": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\api\\readme.md"),
   "v-abf6d344": () => import("E:\\phpstudy_pro\\WWW\\Crush\\packages\\docs\\docs\\en\\guide\\readme..md"),
