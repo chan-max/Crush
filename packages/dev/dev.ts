@@ -19,7 +19,9 @@ const app = createApp({
         <h1> red:{{r}} -- green:{{g}} -- blue:{{b}} </h1>
         `,
     create(scope: any) {
-
+        scope.r = 0
+        scope.g = 0
+        scope.b = 0
     },
 })
 console.log('app', app);
