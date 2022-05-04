@@ -20,6 +20,7 @@ export function doFlat(
     parent: any = null, // 保存parent的作用主要是当遍历到declaration时
     key: any = null
 ) {
+
     for (let i = 0; i < rules.length; i++) {
         var rule = rules[i]
         if (!rule) {
@@ -28,6 +29,7 @@ export function doFlat(
 
         // 使用传来的key生成唯一的key
         var patchKey = key ? key + '_' + rule.key : rule.key
+
         rule.patchKey = patchKey
         rule.parent = parent
 
@@ -103,7 +105,7 @@ export function doFlat(
                 break
             case Nodes.FRAGMENT:
                 // fragment wont be a parent
-                doFlat(rule.children, flattedRules, rule.parent, rule.key)
+                doFlat(rule.children, flattedRules, rule.parent, rule.patchKey)
                 break
         }
     }

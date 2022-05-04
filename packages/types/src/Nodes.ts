@@ -54,7 +54,9 @@ export enum Nodes {
     DIRECTIVE_FLAG,
 
     BUILTIN_DIRECTIVE,
-    CUSTOM_DIRECTIVE
+    CUSTOM_DIRECTIVE,
+
+    SLOT
 }
 
 /*
@@ -74,7 +76,8 @@ export enum NodesMap {
     'supports' = Nodes.SUPPORTS_RULE,
     'style' = Nodes.STYLE,
     'class' = Nodes.CLASS,
-    'template' = Nodes.TEMPLATE
+    'template' = Nodes.TEMPLATE,
+    'slot' = Nodes.SLOT
 }
 
 import {

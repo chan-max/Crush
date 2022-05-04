@@ -50,6 +50,7 @@ import {
     getEventName
 } from '../common/event'
 import { nodeOps } from "./nodeOps"
+import { mountDeclaration } from "./declaration"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const {
@@ -70,12 +71,12 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
                 // mount class
                 var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
                 ref.className = className
-            } else if (key === 'style') {
-                
+            } else if (key === NodesMap[Nodes.STYLE]) {
+                mountDeclaration(value, ref.style, vnode)
             } else {
                 // normal attribute
                 ref.setAttribute(key, value)
-            }
+            } 
         })
     }
 

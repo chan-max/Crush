@@ -61,6 +61,10 @@ export {
 } from './src/renderer/common/normalizeClass'
 
 export {
+    normalizeStyle
+} from './src/renderer/common/normalizeStyle'
+
+export {
     toHandlerKey,
     createEvent
 } from './src/renderer/common/event'

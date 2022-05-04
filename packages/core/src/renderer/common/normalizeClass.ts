@@ -1,7 +1,7 @@
 
 import { arrayToMap, isArray, isObject, isString } from "@crush/common"
 import { isFunction } from "@crush/common/src/dataType"
-import { parseInlineClass } from "../../../../dev/node_modules/@crush/compiler/src/parser/specialAttr"
+import { parseInlineClass } from "../../../../compiler"
 import {
     extend
 } from './extend'

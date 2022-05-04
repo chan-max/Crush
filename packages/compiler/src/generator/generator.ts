@@ -16,7 +16,8 @@ import {
     callFn,
     destructur,
     declare,
-    NULL
+    NULL,
+    stringify
 } from './stringify'
 
 import {
@@ -186,7 +187,7 @@ function genNode(node: any, context: any): any {
         case Nodes.SUPPORTS_RULE:
             return callFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.DECLARATION_GROUP:
-            return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children),ustringid())
+            return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children), ustringid())
         default:
             return ''
     }
@@ -304,11 +305,10 @@ function genProps(node: any) {
         type, attributes
     } = node
     if (!(attributes && attributes.length)) {
-        /*
-            此时为无属性或均为指令
-        */
         return NULL
     }
+
+
     var props: any = {}
     attributes.forEach((attr: any) => {
         switch (attr.type) {
@@ -342,8 +342,17 @@ function genProps(node: any) {
                     isDynamicValue,
                     value
                 } = attr
-                var classList = props.class ||= []
-                classList.push(isDynamicValue ? value : toBackQuotes(value))
+                var _class = props.class ||= []
+                _class.push(value)
+
+                break
+            case Nodes.STYLE:
+                var {
+                    isDynamicValue,
+                    value
+                } = attr
+                var style = props.style ||= []
+                style.push(value)
                 break
             case Nodes.HTML_ATTRIBUTE:
                 // normal attributes
@@ -360,8 +369,12 @@ function genProps(node: any) {
 
     // merge class , there could be more than one class
     if (props.class) {
-        props.class = callFn(renderMethodsNameMap.normalizeClass, toArray(props.class))
+        props.class = callFn(renderMethodsNameMap.normalizeClass, stringify(props.class))
     }
 
-    return objectStringify(props)
-} 
+    if (props.style) {
+        props.style = callFn(renderMethodsNameMap.normalizeStyle, stringify(props.style))
+    }
+    
+    return stringify(props)
+}

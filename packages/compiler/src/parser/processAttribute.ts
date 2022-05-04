@@ -20,7 +20,7 @@ import {
 } from '@crush/common'
 
 import {
-    parseInlineClass
+    parseInlineClass, parseInlineStyle
 } from './specialAttr'
 
 /*
@@ -139,9 +139,15 @@ export const processAttribute = (node: any) => {
             // contain dynamic class and static class
             attr.type = Nodes.CLASS
             attr.isDynamicValue = isDynamicValue
+            if (!isDynamicValue) {
+                attr.value = parseInlineClass(attr.value)
+            }
         } else if (property === NodesMap[Nodes.STYLE]) {
             attr.type = Nodes.STYLE
             attr.isDynamicValue = isDynamicValue
+            if(!isDynamicValue){
+                attr.value = parseInlineStyle(attr.value)
+            }
         } else {
             //  normal attribute
             attr.property = property

@@ -1,6 +1,7 @@
 import {
     isObject,
-    isArray
+    isArray,
+    isString
 } from '@crush/common'
 
 const NULL = 'null'
@@ -8,16 +9,31 @@ const NULL = 'null'
 const toBackQuotes = (_: string): string => '`' + _ + '`'
 const toString = (_: string): string => "'" + _ + "'"
 
+
 /*  use JSON.stringify will fill the " in every propertynames */
-/*
-    使用json.stringify会把所有key，value加上双引号
-*/
+
 const objectStringify = (target: any): string => {
     return '{' +
         Object.entries(target).map(([property, value]: any) => {
             return property + ':' + (isObject(value) ? objectStringify(value) : isArray(value) ? toArray(value) : value)
         }).join(',')
         + '}'
+}
+
+const stringify = (target: any): string => {
+    if (isString(target)) {
+        return target
+    } else if (isArray(target)) {
+        return `[${target.map(stringify).join(',')}]`
+    } else if (isObject(target)) {
+        return '{' +
+            Object.entries(target).map(([property, value]: any) => {
+                return property + ':' + stringify(value)
+            }).join(',')
+            + '}'
+    } else {
+        return String(target)
+    }
 }
 
 const toArrowFunction = (returned: string, params: string[] = []) => {
@@ -60,5 +76,6 @@ export {
     callFn,
     destructur,
     declare,
-    NULL
+    NULL,
+    stringify
 }

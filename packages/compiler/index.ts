@@ -25,3 +25,8 @@ export {
 export {
     ternaryChains
 } from './src/generator/stringify'
+
+export {
+    parseInlineClass,
+    parseInlineStyle
+} from './src/parser/specialAttr'

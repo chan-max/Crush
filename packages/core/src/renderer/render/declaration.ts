@@ -1,6 +1,7 @@
 import {
     isString, removeFromArray
 } from '@crush/common'
+import { EMPTY_MAP } from '@crush/common/src/value'
 import {
     IMPORTANT_SYMBOL,
     IMPORTANT_KEY
@@ -46,4 +47,8 @@ export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: C
         removeFromArray(delList, property)
     }
     delList.forEach((property: string) => nodeOps.setProperty(style, property, '')) // 清空旧的属性
+}
+
+export function mountDeclaration(declaration: any, style: any, vnode: any) {
+    updateDeclaration(EMPTY_MAP, declaration, style, vnode)
 }

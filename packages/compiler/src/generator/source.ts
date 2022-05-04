@@ -27,6 +27,7 @@ import {
     createEvent,
     toHandlerKey,
     normalizeClass,
+    normalizeStyle
 } from '@crush/core'
 
 export var renderMethods = {
@@ -54,7 +55,8 @@ export var renderMethods = {
     getCurrentScope,
     createEvent,
     toHandlerKey,
-    normalizeClass
+    normalizeClass,
+    normalizeStyle
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

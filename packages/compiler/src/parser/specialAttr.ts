@@ -1,14 +1,18 @@
 import {
     camelize
 } from '@crush/common'
+import {
+    toString
+} from '../generator/stringify'
+
 
 const inlineStyleDelimiter = /\s*[:;]\s*/
-function parseInlineStyle(styleString: string) {
-    var chips = styleString.trim().split(inlineStyleDelimiter)
+export function parseInlineStyle(styleString: string): Record<string, string> {
+    var chips = styleString.split(inlineStyleDelimiter).filter(Boolean)
     var l = chips.length
     var styleMap: Record<string, any> = {}
     while (l) {
-        styleMap[camelize(chips[l - 2])] = chips[l - 1]
+        styleMap[camelize(chips[l - 2])] = toString(chips[l - 1])
         l -= 2
     }
     return styleMap

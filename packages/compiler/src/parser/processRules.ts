@@ -27,7 +27,7 @@ export const processRules = (rules: Asb[], isKeyframe = false) => {
             case Nodes.ELSE:
             case Nodes.FOR:
             case Nodes.MEDIA_RULE:
-            case Nodes.SUPPORT_RULE:
+            case Nodes.SUPPORTS_RULE:
                 rule.selectors = rule.parent?.selectors
                 break;
             case Nodes.KEYFRAMES_RULE:
