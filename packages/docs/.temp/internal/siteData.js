@@ -191,6 +191,14 @@ export const siteData = {
       "path": "/guide/install.html"
     },
     {
+      "title": "了解crush",
+      "frontmatter": {},
+      "regularPath": "/guide/",
+      "relativePath": "guide/readme.md",
+      "key": "v-1728bbb0",
+      "path": "/guide/"
+    },
+    {
       "title": "介绍",
       "frontmatter": {},
       "regularPath": "/guide/intro.html",
@@ -209,14 +217,6 @@ export const siteData = {
           "slug": "计数器例子"
         }
       ]
-    },
-    {
-      "title": "了解crush",
-      "frontmatter": {},
-      "regularPath": "/guide/",
-      "relativePath": "guide/readme.md",
-      "key": "v-1728bbb0",
-      "path": "/guide/"
     },
     {
       "title": "Home",

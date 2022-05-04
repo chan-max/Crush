@@ -8,20 +8,24 @@ console.log(renderMethods);
 import {
     createApp
 } from '@crush/core'
-import { onMounted } from '@crush/core/src/instance/lifecycle';
+
 const app = createApp({
     template: `
-        <style>
-            h1{
-                $color: rgb(r,g,b) ;
+        <style --for="i in count">
+            for(i2 in count){
+                body{
+                    background-color : red ;
+                }
             }
         </style>
-        <h1> red:{{r}} -- green:{{g}} -- blue:{{b}} </h1>
+        <button @click="add">{{count}}</button>
         `,
     create(scope: any) {
-        scope.r = 0
-        scope.g = 0
-        scope.b = 0
+        
+        scope.count = 5
+        scope.add = () => {
+            scope.count+=2
+        }
     },
 })
 console.log('app', app);

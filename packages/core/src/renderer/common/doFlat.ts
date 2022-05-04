@@ -102,7 +102,7 @@ export function doFlat(
                 }
                 break
             case Nodes.FRAGMENT:
-                // fragmen wont be a parent
+                // fragment wont be a parent
                 doFlat(rule.children, flattedRules, rule.parent, rule.key)
                 break
         }

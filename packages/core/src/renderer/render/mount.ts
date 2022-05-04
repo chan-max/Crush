@@ -71,13 +71,14 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
                 var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
                 ref.className = className
             } else if (key === 'style') {
-
+                
             } else {
                 // normal attribute
                 ref.setAttribute(key, value)
             }
         })
     }
+
     callHook(LifecycleHooks.CREATED, vnode, ref)
     callHook(LifecycleHooks.BEFORE_MOUNT, vnode, ref)
     nodeOps.insert(ref, container, anchor)

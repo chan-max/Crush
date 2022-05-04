@@ -37,9 +37,9 @@ export function processdom(node: any[], key: any = null): null | any[] {
                 }
 
                 if (child.nodeType === Nodes.STYLE) {
-                    child.children = flatRules(child.children)
+                    child.children = flatRules(child.children, null, child.patchKey)
                 }
-                
+
                 flattedNode.push(child)
             }
         }

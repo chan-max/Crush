@@ -41,6 +41,7 @@ var createFragment = (children: any, key: any) => {
 
 var createStyleSheet = (props: any, children: any, key: any) => {
     return {
+        type: 'style',
         nodeType: Nodes.STYLE,
         props,
         children,

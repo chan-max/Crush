@@ -1,4 +1,8 @@
 import cssFunctions from '../renderer/built-in/cssFunction'
 
 
-export var initScope = () => Object.create(cssFunctions) 
+var proto = {
+    ...cssFunctions
+}
+
+export var initScope = () => Object.create(proto)

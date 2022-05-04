@@ -171,7 +171,9 @@ function genNode(node: any, context: any): any {
         case Nodes.TEXT:
             return genText(node.children as Text[])
         case Nodes.STYLE:
-            return callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
+            var code = callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
+            if (node.dirs) { code = genDirectives(code, node.dirs) }
+            return code
         case Nodes.STYLE_RULE:
             return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.MEDIA_RULE:
