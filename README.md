@@ -71,4 +71,51 @@ Most APIs are similar to vue , but there also are something interesting features
             color:red;
     }
 
-#######
+
+###### & 
+
+    a{
+        &:hover{
+            color:red;
+        }
+    }
+
+*same as*
+
+    a:hover{
+            color:red;
+    }
+
+###### Bubbling At-Rule
+    body{
+        @media (min-width:900x){
+            background-color:red;
+            h1{
+                color:red;
+            }
+        }
+    }
+
+*same as*
+
+    @media (min-width:900x){
+        body{
+            background-color:red;
+        }
+        h1{
+            color:red;
+        }
+    }
+
+###### Mixins
+    body{
+        ...myBodyStyle;
+        /* 
+            'myBodyStyle' is a javascript object, like 
+            {
+                backgroundColor:'blue',
+                color:red;
+            }
+         */
+    }
+
