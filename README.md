@@ -21,6 +21,13 @@ Most APIs are similar to vue , but there also are something interesting features
 
 ## Introduction
  *make sure you are a vue user*
+
+### install
+
+    npm install crushed
+
+*the name 'crush' is registered*
+
 ## API
 
 #### html tempalte syntax
