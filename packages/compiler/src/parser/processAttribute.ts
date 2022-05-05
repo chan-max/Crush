@@ -104,11 +104,14 @@ export const processAttribute = (node: any) => {
                     attr.iterator = parseIterator(attr.value as string);
                     (node.dirs ||= []).push(attr)
                     break
+                case Nodes.SLOT:
+                    (node.dirs ||= []).push(attr)
+                    break
                 case Nodes.CUSTOM_DIRECTIVE:
                     attr.dirName = dirName
                     attr.argument = argument
-                    attr.modifiers = modifiers
-                        (node.customDirs ||= []).push(attr)
+                    attr.modifiers = modifiers;
+                    (node.customDirs ||= []).push(attr)
                     break
             }
             /*
@@ -145,7 +148,7 @@ export const processAttribute = (node: any) => {
         } else if (property === NodesMap[Nodes.STYLE]) {
             attr.type = Nodes.STYLE
             attr.isDynamicValue = isDynamicValue
-            if(!isDynamicValue){
+            if (!isDynamicValue) {
                 attr.value = parseInlineStyle(attr.value)
             }
         } else {

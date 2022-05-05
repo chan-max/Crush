@@ -127,6 +127,11 @@ const genDirectives = (target: string, dirs: any[]): string => {
             case Nodes.FOR:
                 target = genForWithFragment(target, dir.iterator)
                 break
+            case Nodes.SLOT:
+                // where there is a slot directive on a element or component , the target will be the backup content
+                var slotName = toBackQuotes(dir.value || 'default')
+                target = callFn(renderMethodsNameMap.renderSlot, slotName, target)
+                break
         }
         return genDirectives(target, dirs)
     }
@@ -149,6 +154,10 @@ function genNode(node: any, context: any): any {
             var code = genNodes(node.children as any[], context)
             if (node.dirs) { code = genDirectives(code, node.dirs) }
             return code
+        case Nodes.SLOT:
+            var slotName = toBackQuotes(node.attributeMap.name || 'default')
+            var backup = genNodes(node.children, context)
+            return callFn(renderMethodsNameMap.renderSlot, slotName, backup)
         case Nodes.HTML_ELEMENT:
             const tagName = toBackQuotes(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : 'null'
@@ -375,6 +384,6 @@ function genProps(node: any) {
     if (props.style) {
         props.style = callFn(renderMethodsNameMap.normalizeStyle, stringify(props.style))
     }
-    
+
     return stringify(props)
 }

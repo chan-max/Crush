@@ -11,15 +11,24 @@ import {
 
 const app = createApp({
     template: `
-        <button style="color:red;"  $style="{backgroundColor:'blue'}" >{{count}}</button>
+        <style>
+            for(i in 6){
+                h$(i){
+                    color:red;
+                }
+            }
+        </style>
+        <h1>111</h1>
+        <h2>222</h2>
+        <h3>333</h3>
+        <h4>444</h4>
+        <h5>555</h5>
+        <h6>666</h6>
         `,
     create(scope: any) {
-        scope.count = 0
-        scope.aMixin = {
-            backgroundColor:'yellow'
-        }
+        scope.x = 100
         scope.add = () => {
-            scope.count += 10
+            scope.x += 21
         }
     },
 })

@@ -58,6 +58,11 @@ export const setCurrentInstance = (instance: any) => currentInstance = instance
 export const getCurrentInstance = () => currentInstance
 export const getCurrentScope = () => getCurrentInstance().scope
 
+// while the tree is rendering , for render code
+export var renderingInstance = null
+export const getRenderingInstance = () => renderingInstance
+export const setRenderingInstance = (instance: any) => renderingInstance = instance
+
 export const mountComponent = (vnode: any, container: Element) => {
     var {
         type: options
@@ -85,7 +90,10 @@ export const mountComponent = (vnode: any, container: Element) => {
             currentTree
         } = instance
 
+        // 每次更新生成新树
+        setRenderingInstance(instance)
         var nextTree = render()
+        setRenderingInstance(null)
 
         // 处理fragment
         nextTree = processdom(nextTree)
@@ -94,16 +102,12 @@ export const mountComponent = (vnode: any, container: Element) => {
         console.log('nextTree', nextTree);
 
         // test hooks
-        if (isMounted) {
-            callHook(LifecycleHooks.BEFORE_UPDATE, instance, scope, scope)
-            patch(currentTree, nextTree, container)
-            callHook(LifecycleHooks.UPDATED, instance, scope, scope)
-        } else {
-            callHook(LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
-            patch(currentTree, nextTree, container)
-            callHook(LifecycleHooks.MOUNTED, instance, scope, scope)
-            instance.isMounted = true
-        }
+
+        callHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
+        patch(currentTree, nextTree, container)
+        callHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, instance, scope, scope)
+        
+        instance.isMounted = true
         instance.currentTree = nextTree
     }
 

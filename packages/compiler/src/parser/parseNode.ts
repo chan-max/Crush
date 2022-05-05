@@ -108,6 +108,8 @@ function parseNode(node: Asb, ctx: any) {
             case Nodes.TEMPLATE:
                 processAttribute(node)
                 break
+            case Nodes.SLOT:
+                break
         }
     } else if (type === Nodes.TEXT) {
         node.children = parseText(node.children as string)

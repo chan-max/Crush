@@ -48,6 +48,8 @@ export {
     setCurrentInstance,
     getCurrentInstance,
     getCurrentScope,
+    setRenderingInstance,
+    getRenderingInstance,
     mountComponent
 } from './src/renderer/render/mountComponent'
 
@@ -81,3 +83,7 @@ export {
 export {
     nextTickSingleWork
 } from './src/scheduler/nextTickSingleWork'
+
+export {
+    renderSlot
+} from './src/renderer/common/renderSlot'

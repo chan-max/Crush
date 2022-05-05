@@ -34,7 +34,7 @@ export function getDeclarationValue(rawValue: any) {
 
 
 export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: CSSStyleDeclaration, vnode: any) {
-    var delList = Object.keys(pDeclaration)
+    var delList = Object.keys(pDeclaration ||= EMPTY_MAP)
     for (let property in nDeclaration) {
         var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property])
         var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property])

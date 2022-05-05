@@ -12,8 +12,6 @@ import {
     createText,
     renderList,
     mergeSelectors,
-    splitSelector,
-    mergeSplitedSelectorsAndJoin,
     display,
     createDeclaration,
     mixin,
@@ -27,7 +25,9 @@ import {
     createEvent,
     toHandlerKey,
     normalizeClass,
-    normalizeStyle
+    normalizeStyle,
+    getRenderingInstance,
+    renderSlot
 } from '@crush/core'
 
 export var renderMethods = {
@@ -56,7 +56,8 @@ export var renderMethods = {
     createEvent,
     toHandlerKey,
     normalizeClass,
-    normalizeStyle
+    normalizeStyle,
+    renderSlot
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {
