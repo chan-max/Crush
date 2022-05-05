@@ -69,15 +69,19 @@ export const mountComponent = (vnode: any, container: Element) => {
     } = vnode
 
     var instance: any = createCommonComponentInstance(options)
-    // 当前
-    currentInstance = instance
+
     const {
         scope,
         createRender,
     } = instance;
 
-    // init instance
+    // init instance , we only can use getCurrentInstance in create hook 
+    setCurrentInstance(instance)
     callHook(LifecycleHooks.CREATE, instance, scope, scope)
+    setCurrentInstance(null)
+
+
+
     callHook(LifecycleHooks.CREATED, instance, scope, scope)
     // render function
     const render = createRender(renderMethods)
@@ -106,7 +110,7 @@ export const mountComponent = (vnode: any, container: Element) => {
         callHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
         patch(currentTree, nextTree, container)
         callHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, instance, scope, scope)
-        
+
         instance.isMounted = true
         instance.currentTree = nextTree
     }

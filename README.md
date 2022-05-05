@@ -17,7 +17,7 @@ Most APIs are similar to vue , but there also are something interesting features
 ##### what is crush ? 
 
 *crush is an English word that can be understood as break up , press, push , compress and so on*
-*There is another meaning: "to fall in love briefly, passionately, and shyly*
+*There is another meaning: "to fall in love briefly, passionately, and shyly"*
 
 ## Introduction
  *make sure you are a vue user*
@@ -36,7 +36,20 @@ Most APIs are similar to vue , but there also are something interesting features
 ##### Event Binding
     <div @click="expression"> click me </div>
 ##### Dynamic Event Binding
-    <div $(expression)="expression"> click me </div>
+    <div @(expression)="expression"> click me </div>
+
+##### About class
+class supports those types of data
+- string  
+- array
+- object  
+*the key name is the class name ,the value determines whether it is displayed or not*
+
+##### About style
+style supports those types of data
+- string
+- array
+- object
 
 #### css tempalte syntax
 ##### Style Binding
@@ -208,7 +221,7 @@ hooks :
 
     app.direvtive(directiveName,directiveOptions)
 
-#### compoennt options
+#### component options
 
 hooks :
 - beforeCreate
@@ -220,7 +233,57 @@ hooks :
 - beforeUnmount
 - unmounted
 
+##### create
 
-### and more I'm doing !!!
+the `create` hook is the most important hook in crush , just like `setup` in vue
+
+actually , we can do almost anything in create , just like 
+
+    create(scope){
+        scope.count = 0 // state
+        scope.add = () => scope.count++ // methods
+
+        onCreated(() => {
+            // created
+        })
+
+        onBeforeMount(() => {
+            // beforeMount
+        })
+
+        onMounted(() => {
+            // mounted
+        })
+
+        onBeforeUpdate(() => {
+            // beforeUpdate
+        })
+
+        onUpdated(() => {
+            // updated
+        })
+
+        onBeforeUnmount(() => {
+            // beforeUnmount
+        })
+
+        onUnmounted(() => {
+            // unmounted
+        })
+
+        the special hooks , I haven't figured out how to name it
+
+        const { num , setNum , onNumChange } = useNumber(0)
+
+    }
+
+
+### And more I'm doing !!!
+
+#### todos 
+- component
+- router
+- state management
+- devtools
 
 **Inspired by many excellent javascript frameworks , vue , react , sass ,less and so on**

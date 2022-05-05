@@ -14,7 +14,7 @@ const app = createApp({
         <style>
             for(i in 6){
                 h$(i){
-                    color:red;
+                    colo   r:red;
                 }
             }
         </style>
