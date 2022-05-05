@@ -13,23 +13,23 @@ export default {
         format:'esm',
         dir:'./dist/esm'
       },
-      // {
-      //   name:'Crush-cjs',
-      //   file:'./dist/Crush-cjs.js',
-      //   format:'cjs'
-      // },{
-      //   name:'Crush-umd',
-      //   file:'./dist/Crush-umd.js',
-      //   format:'umd'
-      // },
       {
-        name:'Crush-amd',
+        name:'Crush',
+        file:'./dist/cjs/crush.js',
+        format:'cjs'
+      },{
+        name:'Crush',
+        file:'./dist/umd/crush.js',
+        format:'umd'
+      },
+      {
+        name:'Crush',
         format:'amd',
         dir:'./dist/amd'
       },
       {
         name:'Crush',
-        file:'./dist/iife/iife.js',
+        file:'./dist/iife/crush.js',
         format:'iife'
       }
     ],

@@ -8,7 +8,9 @@ export const getEventName = (handlerKey: string) => {
 }
 
 // for compiler
-export const toHandlerKey = (event: string) => `on${capitalize(event)}`
+export function toHandlerKey(event: string){
+    return `on${capitalize(event)}`
+}
 
 const modifierGuards: any = {
     stop: (e: any) => e.stopPropagation(),

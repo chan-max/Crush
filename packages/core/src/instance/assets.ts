@@ -1,8 +1,13 @@
 import { throwError } from "@crush/common"
+
 import {
-    currentInstance
+    getCurrentInstance
 } from '../renderer/render/mountComponent'
 
-export const getComponent = (name: string) => currentInstance.components[name]
+export function getComponent(name: string) {
+    return getCurrentInstance().components[name]
+}
 
-export const getDirective = (name: string) => currentInstance.directives[name]
+export function getDirective(name: string) {
+    return getCurrentInstance().directives[name]
+}

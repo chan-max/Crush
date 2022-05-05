@@ -7,7 +7,7 @@ import {
 } from './extend'
 
 // normalized class always will be a map with true value
-export const normalizeClass = (rawClass: any): any => {
+export function normalizeClass(rawClass: any): any {
     /*
         crush class support 
         string

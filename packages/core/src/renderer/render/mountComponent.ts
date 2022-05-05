@@ -54,14 +54,15 @@ function createCommonComponentInstance(options: any) {
 }
 
 export var currentInstance: any = null
-export const setCurrentInstance = (instance: any) => currentInstance = instance
-export const getCurrentInstance = () => currentInstance
-export const getCurrentScope = () => getCurrentInstance().scope
-
-// while the tree is rendering , for render code
-export var renderingInstance = null
-export const getRenderingInstance = () => renderingInstance
-export const setRenderingInstance = (instance: any) => renderingInstance = instance
+export function setCurrentInstance(instance: any) {
+    currentInstance = instance
+}
+export function getCurrentInstance() {
+    return currentInstance
+}
+export function getCurrentScope() {
+    return getCurrentInstance().scope
+}
 
 export const mountComponent = (vnode: any, container: Element) => {
     var {
@@ -95,9 +96,9 @@ export const mountComponent = (vnode: any, container: Element) => {
         } = instance
 
         // 每次更新生成新树
-        setRenderingInstance(instance)
+        setCurrentInstance(instance)
         var nextTree = render()
-        setRenderingInstance(null)
+        setCurrentInstance(null)
 
         // 处理fragment
         nextTree = processdom(nextTree)

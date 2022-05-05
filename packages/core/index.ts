@@ -48,8 +48,6 @@ export {
     setCurrentInstance,
     getCurrentInstance,
     getCurrentScope,
-    setRenderingInstance,
-    getRenderingInstance,
     mountComponent
 } from './src/renderer/render/mountComponent'
 
