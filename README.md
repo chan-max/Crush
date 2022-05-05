@@ -25,40 +25,40 @@ Most APIs are similar to vue , but there also are something interesting features
 
 #### html tempalte syntax
 
-###### Text Interpolation
+##### Text Interpolation
     <div> {{expression}} </div>
 
-###### Attribute Binding
+##### Attribute Binding
     <div $id="expression"> hello world </div>
-###### Dynamic Attribute Binding
+##### Dynamic Attribute Binding
     <div $(expression)="expression"> hello world </div>
 
-###### Event Binding
+##### Event Binding
     <div @click="expression"> click me </div>
-###### Dynamic Event Binding
+##### Dynamic Event Binding
     <div $(expression)="expression"> click me </div>
 
 #### css tempalte syntax
-###### Style Binding
+##### Style Binding
         body{
             $backgroundColor: expression ;
         }
 
-###### Dynamic Style Binding
+##### Dynamic Style Binding
         body{
             $(expression): expression ;
         }
-###### About Important
+##### About Important
     body{
         background-color!: red;
         /* so we can do this , and its a important declaration */
         $background-color!: expression ;
     }
-###### Dynamic Selector
+##### Dynamic Selector
     $(expression){
         /* some declaration */
     }
-###### Nesting
+##### Nesting
     body{
         h1{
             color:red;
@@ -72,7 +72,7 @@ Most APIs are similar to vue , but there also are something interesting features
     }
 
 
-###### & 
+##### & 
 
     a{
         &:hover{
@@ -86,7 +86,7 @@ Most APIs are similar to vue , but there also are something interesting features
             color:red;
     }
 
-###### Bubbling At-Rule
+##### Bubbling At-Rule
     body{
         @media (min-width:900x){
             background-color:red;
@@ -107,7 +107,7 @@ Most APIs are similar to vue , but there also are something interesting features
         }
     }
 
-###### Mixins
+##### Mixins
     body{
         ...myBodyStyle;
         /* 
@@ -119,3 +119,108 @@ Most APIs are similar to vue , but there also are something interesting features
          */
     }
 
+#### Directives
+
+##### if
+
+an element
+
+    <div --if="expreession">now you see me now you dont</div>
+
+elements 
+
+    <if condition="expression">
+        <h1>111</h1>
+        <h2>222</h2>
+    </if>
+
+in css
+
+    if(expression){
+        body{
+            background-color:red;
+        }
+    }
+
+##### else-if
+*refer to if*
+##### else
+*refer to if*
+
+##### for
+
+an element
+
+    <li --for="i in 10"> {{i}} </li>
+
+elements
+
+    <for iterator="i in 10">
+        <h1> {{i}} </h1>
+        <h2> {{i}} </h2>
+    </for>
+
+in css
+
+    for(i in 6){
+        h$(i){
+            /* use dynamic selector */
+            color:red;
+        }
+    }
+
+*same as*
+
+    h1 { color:red; }
+    h2 { color:red; }
+    h3 { color:red; }
+    h4 { color:red; }
+    h5 { color:red; }
+    h6 { color:red; }
+    
+##### Custom Directives
+
+hooks :
+
+- created
+- beforeMount
+- mounted
+- beforeUpdate
+- updated
+- beforeUnmount
+- unmounted
+
+#### App
+
+##### createApp
+
+    var app = Crush.createApp(/*rootComponent*/)
+
+##### mount
+
+    app.mount('#app')
+
+##### components register 
+
+    app.component(componentName,componentOptions)
+
+##### directives register 
+
+    app.direvtive(directiveName,directiveOptions)
+
+#### compoennt options
+
+hooks :
+- beforeCreate
+- created
+- beforeMount 
+- mounted
+- beforeUpdate
+- updated
+- beforeUnmount
+- unmounted
+
+
+### and more I'm doing !!!
+
+**Inspired by many excellent javascript frameworks , vue , react , sass ,less and so on**
