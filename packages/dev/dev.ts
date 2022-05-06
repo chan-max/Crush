@@ -14,7 +14,7 @@ const app = createApp({
         <style>
             for(i in 6){
                 h$(i){
-                    colo   r:red;
+                    color:red;
                 }
             }
         </style>
@@ -37,3 +37,6 @@ const instance = app.mount('#app')
 console.log('instance', instance);
 
 
+function reactive() {
+    
+}

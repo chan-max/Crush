@@ -23,7 +23,7 @@ import {
     mountComponent
 } from '../renderer/render/mountComponent'
 
-class AppModule {
+export class App {
 
     el: Element | null = null
 
@@ -96,11 +96,9 @@ class AppModule {
     }
 
     unmount() {
-
+        
     }
 }
 
 
-export {
-    AppModule
-}
+

@@ -53,6 +53,8 @@ function createCommonComponentInstance(options: any) {
     return instance
 }
 
+
+// rendering instance and creating instance
 export var currentInstance: any = null
 export function setCurrentInstance(instance: any) {
     currentInstance = instance
@@ -81,11 +83,13 @@ export const mountComponent = (vnode: any, container: Element) => {
     callHook(LifecycleHooks.CREATE, instance, scope, scope)
     setCurrentInstance(null)
 
-
-
     callHook(LifecycleHooks.CREATED, instance, scope, scope)
-    // render function
+
+    // render function  
+    setCurrentInstance(instance)
     const render = createRender(renderMethods)
+    setCurrentInstance(null)
+
     instance.render = render
 
     // component update fn
@@ -96,9 +100,9 @@ export const mountComponent = (vnode: any, container: Element) => {
         } = instance
 
         // 每次更新生成新树
-        setCurrentInstance(instance)
+
         var nextTree = render()
-        setCurrentInstance(null)
+
 
         // 处理fragment
         nextTree = processdom(nextTree)

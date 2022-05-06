@@ -1,5 +1,5 @@
 import {
-    AppModule
-} from './appModule'
+    App
+} from './app'
 
-export const createApp = (rootOptions: any) => new AppModule(rootOptions)
+export const createApp = (rootOptions: any) => new App(rootOptions)
