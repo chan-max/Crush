@@ -326,12 +326,12 @@ function genProps(node: any) {
                     property,
                     isDynamicProperty,
                     value,
-                    isCalled,
+                    isCalled, /* fn() */
                     argument,
                     modifiers
                 } = attr
                 var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property)
-                var callback = value
+                var callback = isCalled ? toArrowFunction(value) : value
                 if (modifiers) {
                     callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)))
                 }

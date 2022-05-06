@@ -56,7 +56,7 @@ export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => fi
 
 const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/
 
-var fnIsCalled = /.+\([\w,]*\)$/
+var fnIsCalled = /.+\(.*\)$/
 
 export const processAttribute = (node: any) => {
     const { type, attributes } = node;
@@ -132,7 +132,7 @@ export const processAttribute = (node: any) => {
                 arrow function : @click="() => { ... }"
             */
             attr.type = Nodes.EVENT
-            attr.isDynamicValue = true
+            attr.isDynamicValue = true  
             attr.isCalled = fnIsCalled.test(attr.value)
             attr.argument = argument
             attr.modifiers = modifiers

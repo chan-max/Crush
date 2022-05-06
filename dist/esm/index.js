@@ -2269,6 +2269,7 @@ function createCommonComponentInstance(options) {
     };
     return instance;
 }
+// rendering instance and creating instance
 var currentInstance = null;
 function setCurrentInstance(instance) {
     currentInstance = instance;
@@ -2288,16 +2289,16 @@ const mountComponent = (vnode, container) => {
     callHook("create" /* CREATE */, instance, scope, scope);
     setCurrentInstance(null);
     callHook("created" /* CREATED */, instance, scope, scope);
-    // render function
+    // render function  
+    setCurrentInstance(instance);
     const render = createRender(renderMethods$1);
+    setCurrentInstance(null);
     instance.render = render;
     // component update fn
     function update() {
         const { isMounted, currentTree } = instance;
         // 每次更新生成新树
-        setCurrentInstance(instance);
         var nextTree = render();
-        setCurrentInstance(null);
         // 处理fragment
         nextTree = processdom(nextTree);
         console.log('currentTree', currentTree);
@@ -2321,7 +2322,7 @@ const mountComponent = (vnode, container) => {
     return instance;
 };
 
-class AppModule {
+class App {
     el = null;
     isMounted = false;
     components = getEmptyMap();
@@ -2385,7 +2386,7 @@ class AppModule {
     }
 }
 
-const createApp = (rootOptions) => new AppModule(rootOptions);
+const createApp = (rootOptions) => new App(rootOptions);
 
 function display(displayData) {
     return displayData;

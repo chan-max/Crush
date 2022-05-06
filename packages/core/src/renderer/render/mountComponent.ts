@@ -126,8 +126,8 @@ export const mountComponent = (vnode: any, container: Element) => {
     effect(() => {
         update()
     }, {
-        scheduler: (fn: any) => {
-            nextTickSingleWork(fn)
+        scheduler: (effect: any) => {
+            nextTickSingleWork(effect.fn)
         }
     })
 

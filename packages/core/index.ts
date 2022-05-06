@@ -85,3 +85,7 @@ export {
 export {
     renderSlot
 } from './src/renderer/common/renderSlot'
+
+export {
+    useState
+} from './src/instance/create'

@@ -9,7 +9,7 @@ export default {
     input:entry ,
     output:[
       {
-        // file:'./dist/Crush-esm.js',
+        // file:'./dist/esm/crush.js',
         format:'esm',
         dir:'./dist/esm'
       },
@@ -25,7 +25,8 @@ export default {
       {
         name:'Crush',
         format:'amd',
-        dir:'./dist/amd'
+        dir:'./dist/amd',
+        // file:'./dist/amd/crush.js',
       },
       {
         name:'Crush',

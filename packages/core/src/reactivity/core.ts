@@ -5,8 +5,6 @@ var effectStack: any[] = []
 
 var targetMap = new WeakMap()
 
-const SYMBOL_WITH = Symbol.unscopables
-
 class ReactiveEffect {
 
     fn: any = null
@@ -48,9 +46,7 @@ function effect(fn: any, options: any = {}) {
 }
 
 function track(target: any, key: any) {
-    if (key === SYMBOL_WITH) return
     if (!shouldTrack) return
-    if (!activeEffect) return
     let depsMap = targetMap.get(target)
     if (!depsMap) {
         depsMap = new Map()
@@ -62,13 +58,11 @@ function track(target: any, key: any) {
         depsMap.set(key, deps);
     }
     deps.add(activeEffect)
-
     activeEffect.deps.push(deps)
 }
 
 
 function trigger(target: any, key: any) {
-    if (key === SYMBOL_WITH) return
     const depsMap = targetMap.get(target);
     if (!depsMap) return;
     var deps = depsMap.get(key)

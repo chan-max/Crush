@@ -1,7 +1,13 @@
 {
   "name": "crushed",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "main": "./dist/cjs/crush.js",
+  "exports":{
+        ".":{
+            "import":"./dist/esm/index.js",
+            "require":"./dist/cjs/crush.js"
+        }
+  },
   "workspaces": [
     "packages/*"
   ],

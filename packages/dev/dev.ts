@@ -1,35 +1,27 @@
 
 import {
-    renderMethods
-} from '@crush/compiler'
-
-console.log(renderMethods);
-
-import {
     createApp
 } from '@crush/core'
 
 const app = createApp({
     template: `
-        <style>
-            for(i in 6){
-                h$(i){
-                    color:red;
-                }
-            }
-        </style>
-        <h1>111</h1>
-        <h2>222</h2>
-        <h3>333</h3>
-        <h4>444</h4>
-        <h5>555</h5>
-        <h6>666</h6>
+        <button @click="setWidth( width + 1 )">
+            width ++
+        </button>
+        <button @click="setHeight( height + 1 )">
+            height ++
+        </button>
+        <h1> width : {{width}} </h1>
+        <h1> height : {{height}} </h1>
         `,
-    create(scope: any) {
-        scope.x = 100
-        scope.add = () => {
-            scope.x += 21
-        }
+    create() {
+        var { width, setWidth , onWidthChange } = useState(0)
+        var { height, setHeight , onHeightChange } = useState(0)
+        
+        onWidthChange(() => {
+            console.log('66666666666666666666');
+        })
+        
     },
 })
 console.log('app', app);
@@ -37,6 +29,9 @@ const instance = app.mount('#app')
 console.log('instance', instance);
 
 
-function reactive() {
-    
-}
+import {
+    useState
+} from '../core/src/instance/create'
+
+
+
