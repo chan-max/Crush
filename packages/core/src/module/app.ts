@@ -82,13 +82,17 @@ export class App {
         }
 
         if (!el) {
-            error(
-                ` not a legal container `
-            )
+            error(` not a legal container `)
             return
         }
 
-        var instance = mountComponent(createComponent(this.rootOptions, {}, {}), el)
+        var options = this.rootOptions
+        
+        if(!options.template){
+            options.template = el.innerHTML
+        }
+        el.innerHTML = ''
+        var instance = mountComponent(createComponent(options, {}, {}), el)
         this.rootInstance = instance
         this.el = el
         this.isMounted = true
