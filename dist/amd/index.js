@@ -637,7 +637,7 @@ define(['exports'], (function (exports) { 'use strict';
     const parseInlineClass$1 = (classString) => stringToMap(classString, inlineClassDelimiter$1);
 
     const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/;
-    var fnIsCalled = /.+\([\w,]*\)$/;
+    var fnIsCalled = /.+\(.*\)$/;
     const processAttribute = (node) => {
         const { type, attributes } = node;
         if (!attributes)
@@ -1165,9 +1165,9 @@ define(['exports'], (function (exports) { 'use strict';
         attributes.forEach((attr) => {
             switch (attr.type) {
                 case Nodes.EVENT:
-                    var { property, isDynamicProperty, value, isCalled, argument, modifiers } = attr;
+                    var { property, isDynamicProperty, value, isCalled, /* fn() */ argument, modifiers } = attr;
                     var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property);
-                    var callback = value;
+                    var callback = isCalled ? toArrowFunction(value) : value;
                     if (modifiers) {
                         callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)));
                     }
@@ -1252,73 +1252,107 @@ define(['exports'], (function (exports) { 'use strict';
         return createFunction(context.getCode(), RENDER_METHODS);
     }
 
-    const hasOwnProperty = Object.prototype.hasOwnProperty;
-    const hasOwn = (target, key) => hasOwnProperty.call(target, key);
-    const isReference = (value) => typeof value === 'object';
-    var targetMap = new WeakMap();
-    const get = Reflect.get;
-    const set = Reflect.set;
-    var shouldTrack = false;
     var activeEffect = null;
+    var shouldTrack = false;
+    var effectStack = [];
+    var targetMap = new WeakMap();
+    const SYMBOL_WITH = Symbol.unscopables;
+    class ReactiveEffect {
+        fn = null;
+        deps = [];
+        scheduler = null;
+        constructor(fn, options) {
+            this.fn = fn;
+            this.scheduler = options.scheduler;
+        }
+        cleanDeps() {
+            this.deps.forEach((deps) => {
+                deps.delete(this);
+            });
+            this.deps = [];
+        }
+        run() {
+            effectStack.push(this);
+            activeEffect = this;
+            shouldTrack = true;
+            this.cleanDeps();
+            var res = this.fn();
+            effectStack.pop();
+            activeEffect = effectStack[effectStack.length - 1];
+            return res;
+        }
+    }
+    function effect(fn, options = {}) {
+        var _effect = new ReactiveEffect(fn, options);
+        if (!options.lazy) {
+            _effect.run();
+        }
+        return _effect;
+    }
     function track(target, key) {
+        if (key === SYMBOL_WITH)
+            return;
         if (!shouldTrack)
+            return;
+        if (!activeEffect)
             return;
         let depsMap = targetMap.get(target);
         if (!depsMap) {
-            targetMap.set(target, (depsMap = new Map()));
+            depsMap = new Map();
+            targetMap.set(target, depsMap);
         }
         let deps = depsMap.get(key);
         if (!deps) {
-            depsMap.set(key, (deps = new Set()));
+            deps = new Set();
+            depsMap.set(key, deps);
         }
         deps.add(activeEffect);
+        activeEffect.deps.push(deps);
     }
     function trigger(target, key) {
+        if (key === SYMBOL_WITH)
+            return;
         const depsMap = targetMap.get(target);
         if (!depsMap)
             return;
-        const deps = depsMap.get(key);
+        var deps = depsMap.get(key);
         if (!deps)
             return;
+        // 克隆一份，防止死循环
+        deps = new Set(deps);
         deps.forEach((e) => {
-            var scheduler = e.options.scheduler;
-            if (scheduler) {
-                scheduler(e);
+            if (e === activeEffect)
+                return;
+            if (e.scheduler) {
+                e.scheduler(e);
             }
             else {
-                e();
+                e.run();
             }
         });
     }
     var handler = {
-        get(target, key, receiver) {
-            var value = get(target, key, receiver);
-            console.warn('get', target, key, value);
-            if (hasOwn(target, key)) {
-                track(target, key);
-            }
-            return isReference(value) ? reactive(value) : value;
+        get(target, key) {
+            console.log('get');
+            track(target, key);
+            return target[key];
         },
-        set(target, key, newValue, receiver) {
-            console.warn('set', target, key, newValue);
-            var setRes = set(target, key, newValue, receiver);
+        set(target, key, newValue) {
+            console.log('set');
             trigger(target, key);
-            return setRes;
+            target[key] = newValue;
+            return true;
         }
     };
     function reactive(target) {
         return new Proxy(target, handler);
     }
-    function effect(fn, options = {}) {
-        var effectFn = () => {
-            fn();
-        };
-        effectFn.options = options;
-        activeEffect = effectFn;
-        shouldTrack = true;
-        effectFn();
-        activeEffect = null;
-        shouldTrack = false;
+    function watch(visitor, callback) {
+        effect(visitor, {
+            scheduler: () => {
+                callback();
+            }
+        });
     }
 
     /*
@@ -2317,8 +2351,8 @@ define(['exports'], (function (exports) { 'use strict';
         effect(() => {
             update();
         }, {
-            scheduler: (fn) => {
-                nextTickSingleWork(fn);
+            scheduler: (effect) => {
+                nextTickSingleWork(effect.fn);
             }
         });
         return instance;
@@ -2378,7 +2412,12 @@ define(['exports'], (function (exports) { 'use strict';
                 error(` not a legal container `);
                 return;
             }
-            var instance = mountComponent(createComponent(this.rootOptions, {}, {}), el);
+            var options = this.rootOptions;
+            if (!options.template) {
+                options.template = el.innerHTML;
+            }
+            el.innerHTML = '';
+            var instance = mountComponent(createComponent(options, {}, {}), el);
             this.rootInstance = instance;
             this.el = el;
             this.isMounted = true;
@@ -2529,6 +2568,46 @@ define(['exports'], (function (exports) { 'use strict';
     function renderSlot(slotName, backup) {
     }
 
+    const stateIniterHandler = {
+        get(initializer, key) {
+            switch (initializer.index) {
+                case 0:
+                    /* define state */
+                    var scope = getCurrentScope();
+                    scope[key] = initializer.value;
+                    initializer.stateName = key;
+                    initializer.index++;
+                    return initializer.value;
+                case 1:
+                    /* update state */
+                    var scope = getCurrentScope();
+                    var updateFn = (newValue) => {
+                        scope[initializer.stateName] = newValue;
+                    };
+                    scope[key] = updateFn;
+                    initializer.index++;
+                    return updateFn;
+                case 2:
+                    var scope = getCurrentScope();
+                    function onChange(callback) {
+                        watch(() => {
+                            scope[initializer.stateName];
+                        }, callback);
+                    }
+                    initializer.index++;
+                    return onChange;
+                default:
+                    warn('stop !!!');
+            }
+        }
+    };
+    function useState(value) {
+        return new Proxy({
+            value,
+            index: 0
+        }, stateIniterHandler);
+    }
+
     exports.createApp = createApp;
     exports.createComment = createComment;
     exports.createComponent = createComponent;
@@ -2566,6 +2645,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.setCurrentInstance = setCurrentInstance;
     exports.splitSelector = splitSelector;
     exports.toHandlerKey = toHandlerKey;
+    exports.useState = useState;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
