@@ -5,22 +5,30 @@ import {
 
 const app = createApp({
     template: `
-        <button @click="setWidth( width + 1 )">
-            width ++
-        </button>
-        <button @click="setHeight( height + 1 )">
-            height ++
-        </button>
-        <h1> width : {{width}} </h1>
-        <h1> height : {{height}} </h1>
+        <style>
+
+           if(flag){
+                h2{
+                    color:red;
+                }
+           }
+           else-if{
+               @media screen{
+                   body{
+                       background-color:blue;
+                   }
+               }
+           }
+            
+        </style>
+        <button @click="toggle"> toggle </button>
+        <h1> 111 </h1>
+        <h2> 222 </h2>
+        <h3> 333 </h3>
         `,
-    create() {
-        var { width, setWidth , onWidthChange } = useState(0)
-        var { height, setHeight , onHeightChange } = useState(0)
-        
-        onWidthChange(() => {
-            console.log('66666666666666666666');
-        })
+    create($) {
+        $.flag = true
+        $.toggle = () => $.flag = !$.flag
     },
 })
 console.log('app', app);

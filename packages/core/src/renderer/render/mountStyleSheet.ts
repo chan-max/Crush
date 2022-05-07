@@ -18,30 +18,31 @@ export const mountStyleSheet = (vnode: any, container: any) => {
 
 function mountSheet(sheet: any, rules: any, vnode: any) {
     rules.forEach((rule: any) => {
-        switch (rule.nodeType) {
-            case Nodes.STYLE_RULE:
-                mountStyleRule(sheet, rule, vnode)
-                break
-            case Nodes.MEDIA_RULE:
-                mountMediaRule(sheet, rule, vnode)
-                break
-            case Nodes.SUPPORTS_RULE:
-                mountSupportsRule(sheet, rule, vnode)
-                break
-            case Nodes.KEYFRAMES_RULE:
-                mountKeyframesRule(sheet, rule, vnode)
-                break
-            case Nodes.KEYFRAME_RULE:
-                mountKeyframeRule(sheet, rule, vnode)
-                break
-        }
+        mountRule(sheet, rule, vnode)
     })
+}
 
+export function mountRule(sheet: any, rule: any, vnode: any, index: number = sheet.cssRules.length) {
+    switch (rule.nodeType) {
+        case Nodes.STYLE_RULE:
+            mountStyleRule(sheet, rule, vnode, index)
+            break
+        case Nodes.MEDIA_RULE:
+            mountMediaRule(sheet, rule, vnode, index)
+            break
+        case Nodes.SUPPORTS_RULE:
+            mountSupportsRule(sheet, rule, vnode, index)
+            break
+        case Nodes.KEYFRAMES_RULE:
+            mountKeyframesRule(sheet, rule, vnode, index)
+            break
+        case Nodes.KEYFRAME_RULE:
+            mountKeyframeRule(sheet, rule, vnode, index)
+            break
+    }
 }
 
 import {
-    IMPORTANT_SYMBOL,
-    IMPORTANT_KEY,
     IMPORTANT
 } from '../common/important'
 

@@ -1,4 +1,4 @@
-import { removeFromArray } from "@crush/common"
+
 import { Nodes } from "@crush/types"
 
 export const updateStyleSheet = (p: any, n: any) => {
@@ -15,31 +15,18 @@ export const updateStyleSheet = (p: any, n: any) => {
     media could be updated by mediaList , appendMedium and deleteMedium
 */
 
-function createMapAndList(children: any[]) {
-    var map: any = {}
-    var list = children.map((child: any, index: number) => {
-        var patchKey = child.patchKey
-        var token = {
-            node: child,
-            patchKey,
-            index
-        }
-        map[patchKey] = token
-        return token
-    })
-    return {
-        map, list
-    }
-}
+import { updateDeclaration } from "./declaration"
+import { mountStyleRule } from "./mountStyleSheet"
 
 import {
-    insertNull
-} from './common'
-import { getDeclarationValue, updateDeclaration } from "./declaration"
-import { mountStyleRule } from "./mountStyleSheet"
-import { nodeOps } from "./nodeOps"
+    diffChildren
+} from './sequence'
 
-function updateSheet(p: any, n: any, sheet: CSSStyleSheet | CSSMediaRule, vnode: any) {
+import {
+    mountRule
+} from './mountStyleSheet'
+
+function updateSheet(pRules: any, nRules: any, sheet: CSSStyleSheet | CSSMediaRule, vnode: any) {
     /*
         与更新dom元素不同，规则中只要patchKey相同就一定会复用,
         更新过程依赖patchkey  
@@ -47,67 +34,35 @@ function updateSheet(p: any, n: any, sheet: CSSStyleSheet | CSSMediaRule, vnode:
         其次为nodetype,
         !还是假设key相同的节点顺序一定不会变，
     */
-    var pLength = p.length
-    var nLength = n.length
-    var { map: pMap, list: pList } = createMapAndList(p)
-    var { map: nMap, list: nList } = createMapAndList(n)
-
-    var pMoved = 0
-
-    for (let i = 0; i < nLength; i++) {
-        /*
-            此次循环用于将两组规则的相同key对应到相同的索引下
-        */
-
-        var node = n[i]
-        var patchKey = node.patchKey
-        var sameNode = pMap[patchKey]
-        if (sameNode) {
-            // 存在key相同的节点
-            var sameNodeIndex = sameNode.index + pMoved
-            var diff = i - sameNodeIndex
-            var diffLength = Math.abs(diff)
-            if (diff < 0) {
-                /* 说明该接点在p中的位置较远，需要再n中条南充元素 */
-                insertNull(n, i, diffLength)
-                i += diffLength
-                nLength += diffLength
-            } else {
-                insertNull(p, sameNodeIndex, diffLength)
-                pMoved += diffLength
-            }
-        }
-    }
+    var {
+        p, n
+    } = diffChildren(pRules, nRules, true)
 
     /* 
         经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
         抛出同一索引下节点类型不相同的情况      
     */
 
-    var maxLength = Math.max(p.length, n.length)
+    var max = Math.max(p.length, n.length)
 
-    for (let i = 0; i < maxLength; i++) {
+    var cursor = 0
+    for (let i = 0; i < max; i++) {
         var pRule = p[i]
         var nRule = n[i]
         /*
             不存在两个对应位置都为空的情况
         */
         if (!pRule) {
-            switch (nRule.nodeType) {
-                case Nodes.STYLE_RULE:
-                    mountStyleRule(sheet, nRule, vnode)
-                    break
-            }
+            mountRule(sheet, nRule, vnode, cursor)
+            cursor++
         } else if (!nRule) {
-            sheet.deleteRule(i)
+            // unmount
+            sheet.deleteRule(cursor)
+            cursor--
         } else if (pRule.nodeType !== nRule.nodeType) {
-            // 当节点类型不同时，先卸载，再挂载
-            sheet.deleteRule(i)
-            switch (nRule.nodeType) {
-                case Nodes.STYLE_RULE:
-                    mountStyleRule(sheet, nRule, vnode)
-                    break
-            }
+            // 当节点类型不同时，先卸载，再挂载 
+            sheet.deleteRule(cursor)
+            mountRule(sheet, nRule, vnode, cursor)
         } else {
             // update
             switch (nRule.nodeType) {
@@ -118,12 +73,14 @@ function updateSheet(p: any, n: any, sheet: CSSStyleSheet | CSSMediaRule, vnode:
                     updateMediaRule(pRule, nRule, vnode)
                     break
                 case Nodes.SUPPORTS_RULE:
+                    // supports cant update , 
                     break
                 case Nodes.KEYFRAMES_RULE:
                     updateKeyframesRule(pRule, nRule, vnode)
                     break
             }
         }
+        cursor++
     }
 }
 

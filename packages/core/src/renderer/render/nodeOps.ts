@@ -23,5 +23,7 @@ export const nodeOps = {
 
 
     // style
-    setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '')
+    setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),
+
+    deleteRule: (sheet: CSSStyleSheet, index: number) => sheet.deleteRule(index)
 }
