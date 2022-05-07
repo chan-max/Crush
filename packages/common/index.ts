@@ -41,5 +41,6 @@ export {
 } from './src/value'
 
 export {
-    removeFromArray
+    removeFromArray,
+    extend
 } from './src/operate'

@@ -47,7 +47,8 @@ import {
 } from '../common/important'
 
 import {
-    getDeclarationValue
+    getDeclarationValue,
+    mountDeclaration
 } from './declaration'
 import { nodeOps } from "./nodeOps"
 
@@ -66,14 +67,7 @@ export function mountStyleRule(
     const insertedRule = sheet.cssRules[index]
     rule.ref = insertedRule // set ref
     const insertedRuleStyle = insertedRule.style
-    Object.entries(declaration).forEach(([key, value]: [any, any]) => {
-        key = hyphenate(key) // the property shoule be uncamelized
-        var {
-            value,
-            important
-        } = getDeclarationValue(value)
-        insertedRuleStyle.setProperty(key, value, important ? IMPORTANT : '')
-    })
+    mountDeclaration(declaration, insertedRuleStyle, vnode)
 }
 
 function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {

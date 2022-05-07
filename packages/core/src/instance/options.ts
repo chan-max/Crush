@@ -71,6 +71,12 @@ export const initOptions = (options: any, target = null) => {
                     initOptions(mixin, initTarget)
                 })
                 break
+            case ComponentOptions.COMPOENNTS:
+                debugger
+                break
+            case ComponentOptions.DIRECTIVES:
+                debugger
+                break
             default:
                 /*custom options*/
                 break

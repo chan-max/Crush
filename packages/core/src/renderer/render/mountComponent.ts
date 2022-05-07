@@ -38,8 +38,8 @@ function createCommonComponentInstance(options: any) {
         render: null,
         currentTree: null,
         createRender: options.createRender,
-        components: options.components || getEmptyMap(),
-        directives: options.direvtives || getEmptyMap(),
+        components: options.components ,
+        directives: options.direvtives ,
         // hooks will always be an array
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
         [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],
@@ -68,10 +68,10 @@ export function getCurrentScope() {
 
 export const mountComponent = (vnode: any, container: Element) => {
     var {
-        type: options
+        type,
     } = vnode
 
-    var instance: any = createCommonComponentInstance(options)
+    var instance: any = createCommonComponentInstance(type)
 
     const {
         scope,

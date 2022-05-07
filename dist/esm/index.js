@@ -875,7 +875,7 @@ var renderMethods$1 = {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey,
+    createHandlerKey,
     normalizeClass,
     normalizeStyle,
     renderSlot
@@ -1164,7 +1164,7 @@ function genProps(node) {
         switch (attr.type) {
             case Nodes.EVENT:
                 var { property, isDynamicProperty, value, isCalled, /* fn() */ argument, modifiers } = attr;
-                var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property);
+                var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.createHandlerKey, property)) : createHandlerKey(property);
                 var callback = isCalled ? toArrowFunction(value) : value;
                 if (modifiers) {
                     callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)));
@@ -1604,11 +1604,11 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
 // for renderer
 const onRE = /^on[A-Z]/;
 const isEvent = (key) => onRE.test(key);
-const getEventName = (handlerKey) => {
+const parseHandlerKey = (handlerKey) => {
     return handlerKey.split('on')[1].toLowerCase();
 };
 // for compiler
-function toHandlerKey(event) {
+function createHandlerKey(event) {
     return `on${capitalize(event)}`;
 }
 const modifierGuards = {
@@ -1681,7 +1681,7 @@ function mountHTMLElement(vnode, container, anchor) {
         // mount props
         Object.entries(props).forEach(([key, value]) => {
             if (isEvent(key)) {
-                var event = getEventName(key);
+                var event = parseHandlerKey(key);
                 ref.addEventListener(event, value);
             }
             else if (key === NodesMap[Nodes.CLASS]) {
@@ -2511,7 +2511,7 @@ var renderMethods = {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey,
+    createHandlerKey,
     normalizeClass,
     normalizeStyle,
     renderSlot
@@ -2606,4 +2606,4 @@ function useState(value) {
     }, stateIniterHandler);
 }
 
-export { ComponentOptions, createApp, createComment, createComponent, createDeclaration, createElement, createEvent, createFragment, createKeyframe, createKeyframes, createMedia, createSVGElement, createStyle, createStyleSheet, createSupports, createText, display, effect, flatRules, getComponent, getCurrentInstance, getCurrentScope, getDirective, important, mergeSelectors, mergeSplitedSelectorsAndJoin, mixin, mountComponent, nextTick, nextTickSingleWork, normalizeClass, normalizeStyle, reactive, renderList, renderSlot, setCurrentInstance, splitSelector, toHandlerKey, useState };
+export { ComponentOptions, createApp, createComment, createComponent, createDeclaration, createElement, createEvent, createFragment, createKeyframe, createKeyframes, createMedia, createSVGElement, createStyle, createStyleSheet, createSupports, createText, display, effect, flatRules, getComponent, getCurrentInstance, getCurrentScope, getDirective, important, mergeSelectors, mergeSplitedSelectorsAndJoin, mixin, mountComponent, nextTick, nextTickSingleWork, normalizeClass, normalizeStyle, reactive, renderList, renderSlot, setCurrentInstance, splitSelector, createHandlerKey, useState };

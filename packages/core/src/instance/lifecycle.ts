@@ -5,6 +5,8 @@ import { getCurrentInstance } from "../.."
 */
 const enum LifecycleHooks {
 
+    BEFORE_CREATE = 'beforeCreate',
+
     CREATE = 'create',
 
     CREATED = 'created',
@@ -32,13 +34,13 @@ function callHook(type: LifecycleHooks, target: any, binding: any = null, ...arg
 
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)
 
-const onCreated = (hook: any) => createHook(LifecycleHooks.CREATED)
-const onBeforeMount = (hook: any) => createHook(LifecycleHooks.BEFORE_MOUNT)
-const onMounted = (hook: any) => createHook(LifecycleHooks.MOUNTED)
-const onBeforeUpdate = (hook: any) => createHook(LifecycleHooks.BEFORE_UPDATE)
-const onUpdated = (hook: any) => createHook(LifecycleHooks.UPDATED)
-const onBeforeUnmount = (hook: any) => createHook(LifecycleHooks.BEFORE_UNMOUNT)
-const onUnmounted = (hook: any) => createHook(LifecycleHooks.UNMOUNTED)
+const onCreated = createHook(LifecycleHooks.CREATED)
+const onBeforeMount =  createHook(LifecycleHooks.BEFORE_MOUNT)
+const onMounted = createHook(LifecycleHooks.MOUNTED)
+const onBeforeUpdate = createHook(LifecycleHooks.BEFORE_UPDATE)
+const onUpdated = createHook(LifecycleHooks.UPDATED)
+const onBeforeUnmount = createHook(LifecycleHooks.BEFORE_UNMOUNT)
+const onUnmounted = createHook(LifecycleHooks.UNMOUNTED)
 
 export {
     LifecycleHooks,

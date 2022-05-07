@@ -23,3 +23,5 @@ export function mark(target: any, key: string, value = true) {
         value
     })
 }
+
+export const extend = Object.assign

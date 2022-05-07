@@ -878,7 +878,7 @@ var Crush = (function (exports) {
         getDirective,
         getCurrentScope,
         createEvent,
-        toHandlerKey,
+        createHandlerKey,
         normalizeClass,
         normalizeStyle,
         renderSlot
@@ -1167,7 +1167,7 @@ var Crush = (function (exports) {
             switch (attr.type) {
                 case Nodes.EVENT:
                     var { property, isDynamicProperty, value, isCalled, /* fn() */ argument, modifiers } = attr;
-                    var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property);
+                    var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.createHandlerKey, property)) : createHandlerKey(property);
                     var callback = isCalled ? toArrowFunction(value) : value;
                     if (modifiers) {
                         callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)));
@@ -1607,11 +1607,11 @@ var Crush = (function (exports) {
     // for renderer
     const onRE = /^on[A-Z]/;
     const isEvent = (key) => onRE.test(key);
-    const getEventName = (handlerKey) => {
+    const parseHandlerKey = (handlerKey) => {
         return handlerKey.split('on')[1].toLowerCase();
     };
     // for compiler
-    function toHandlerKey(event) {
+    function createHandlerKey(event) {
         return `on${capitalize(event)}`;
     }
     const modifierGuards = {
@@ -1684,7 +1684,7 @@ var Crush = (function (exports) {
             // mount props
             Object.entries(props).forEach(([key, value]) => {
                 if (isEvent(key)) {
-                    var event = getEventName(key);
+                    var event = parseHandlerKey(key);
                     ref.addEventListener(event, value);
                 }
                 else if (key === NodesMap[Nodes.CLASS]) {
@@ -2514,7 +2514,7 @@ var Crush = (function (exports) {
         getDirective,
         getCurrentScope,
         createEvent,
-        toHandlerKey,
+        createHandlerKey,
         normalizeClass,
         normalizeStyle,
         renderSlot
@@ -2645,7 +2645,7 @@ var Crush = (function (exports) {
     exports.renderSlot = renderSlot;
     exports.setCurrentInstance = setCurrentInstance;
     exports.splitSelector = splitSelector;
-    exports.toHandlerKey = toHandlerKey;
+    exports.createHandlerKey = createHandlerKey;
     exports.useState = useState;
 
     Object.defineProperty(exports, '__esModule', { value: true });

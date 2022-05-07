@@ -23,7 +23,7 @@ import {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey,
+    createHandlerKey,
     normalizeClass,
     normalizeStyle,
     renderSlot
@@ -53,7 +53,7 @@ export var renderMethods = {
     getDirective,
     getCurrentScope,
     createEvent,
-    toHandlerKey,
+    createHandlerKey,
     normalizeClass,
     normalizeStyle,
     renderSlot

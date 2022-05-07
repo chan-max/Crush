@@ -97,7 +97,7 @@ import {
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
 import { uid, isArray, isObject, throwError } from '@crush/common'
 import { uvar } from '@crush/common/src/value'
-import { toHandlerKey } from '@crush/core'
+import { createHandlerKey, isEventOptions } from '@crush/core'
 
 const genFor = (target: string, iterator: Iterator) => callFn(
     renderMethodsNameMap.renderList,
@@ -316,8 +316,6 @@ function genProps(node: any) {
     if (!(attributes && attributes.length)) {
         return NULL
     }
-
-
     var props: any = {}
     attributes.forEach((attr: any) => {
         switch (attr.type) {
@@ -326,12 +324,17 @@ function genProps(node: any) {
                     property,
                     isDynamicProperty,
                     value,
-                    isCalled, /* fn() */
+                    isFunction, /* if function , just use it , or wrap an arrow function */
                     argument,
                     modifiers
                 } = attr
-                var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.toHandlerKey, property)) : toHandlerKey(property)
-                var callback = isCalled ? toArrowFunction(value) : value
+                var options
+                if (modifiers) {
+                    options = modifiers.filter(isEventOptions)
+                    modifiers = modifiers.filter((modifier: string) => { !isEventOptions(modifier) })
+                }
+                var handlerKey = isDynamicProperty ? dynamicMapKey(callFn(renderMethodsNameMap.createHandlerKey, property, stringify(options.map(toBackQuotes)))) : createHandlerKey(property, options)
+                var callback = isFunction ? value : toArrowFunction(value)
                 if (modifiers) {
                     callback = callFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)))
                 }

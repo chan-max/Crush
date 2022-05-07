@@ -65,8 +65,10 @@ export {
 } from './src/renderer/common/normalizeStyle'
 
 export {
-    toHandlerKey,
-    createEvent
+    parseHandlerKey,
+    createHandlerKey,
+    createEvent,
+    isEventOptions
 } from './src/renderer/common/event'
 
 export {
@@ -89,3 +91,8 @@ export {
 export {
     useState
 } from './src/instance/create'
+
+export {
+    injectHook,
+    onMounted
+} from './src/instance/lifecycle'

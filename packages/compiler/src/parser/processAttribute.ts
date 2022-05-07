@@ -133,7 +133,7 @@ export const processAttribute = (node: any) => {
             */
             attr.type = Nodes.EVENT
             attr.isDynamicValue = true  
-            attr.isCalled = fnIsCalled.test(attr.value)
+            attr.isFunction = !fnIsCalled.test(attr.value)
             attr.argument = argument
             attr.modifiers = modifiers
             attr.isDynamicProperty = isDynamicProperty

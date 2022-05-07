@@ -87,13 +87,15 @@ export class App {
         }
 
         var options = this.rootOptions
-        
-        if(!options.template){
+
+        if (!options.template) {
             options.template = el.innerHTML
         }
-        
+
         el.innerHTML = ''
-        var instance = mountComponent(createComponent(options, {}, {}), el)
+        var vnode: any = createComponent(options, {}, {})
+        vnode.app = this
+        var instance = mountComponent(vnode, el)
         this.rootInstance = instance
         this.el = el
         this.isMounted = true
@@ -101,7 +103,7 @@ export class App {
     }
 
     unmount() {
-        
+
     }
 }
 

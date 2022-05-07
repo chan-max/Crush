@@ -24,6 +24,7 @@ export function mount(vnode: any, container: any, anchor: any) {
 }
 
 function mountFragment(vnode: any, container: any, anchor: any) {
+    debugger
     mountChildren(vnode.children, container, anchor)
 }
 
@@ -47,7 +48,7 @@ function mountText(vnode: any, container: any, anchor: any) {
 
 import {
     isEvent,
-    getEventName
+    parseHandlerKey
 } from '../common/event'
 import { nodeOps } from "./nodeOps"
 import { mountDeclaration } from "./declaration"
@@ -65,8 +66,8 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
         // mount props
         Object.entries(props).forEach(([key, value]: any) => {
             if (isEvent(key)) {
-                var event = getEventName(key)
-                ref.addEventListener(event, value)
+                var { event, options } = parseHandlerKey(key)
+                ref.addEventListener(event, value, options)
             } else if (key === NodesMap[Nodes.CLASS]) {
                 // mount class
                 var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
@@ -76,7 +77,7 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
             } else {
                 // normal attribute
                 ref.setAttribute(key, value)
-            } 
+            }
         })
     }
 
