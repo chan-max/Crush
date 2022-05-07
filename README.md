@@ -11,7 +11,7 @@ Most APIs are similar to vue , but there also are something interesting features
   - emali : 2651308363@qq.com
   - twitter : MaxChanNotBad
   - address : DaLian , LiaoNing , China
-
+ - github : https://github.com/chan-max/Crush
 ---
 
 ##### what is crush ? 

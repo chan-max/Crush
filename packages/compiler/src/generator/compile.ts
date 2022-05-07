@@ -49,7 +49,9 @@ const defaultCompilerConfig = {
 
 }
 
-const extend = Object.assign
+import {
+    extend
+} from '@crush/common'
 
 export function compile(template: string, config = defaultCompilerConfig) {
 

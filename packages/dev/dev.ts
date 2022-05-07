@@ -5,12 +5,9 @@ import {
 
 const app = createApp({
     template: `
-        <button @click="toggle"> toggle </button>
-        <h1> 111 </h1>
-        <h2 --if="flag"> 222 </h2>
-        <h3> 333 </h3>
+        <input --focus>
         `,
-    create($) {
+    create($:any) {
         $.flag = true
         $.toggle = () => $.flag = !$.flag
     },

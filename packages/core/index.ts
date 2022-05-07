@@ -1,7 +1,12 @@
 
 export {
-    createApp
+    createApp,
+
 } from './src/module/createApp'
+
+export {
+    getCurrentApp
+} from './src/module/app'
 
 export {
     ComponentOptions

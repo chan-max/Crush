@@ -23,6 +23,11 @@ import {
     mountComponent
 } from '../renderer/render/mountComponent'
 
+let currentApp: any = null
+export function getCurrentApp() {
+    return currentApp
+}
+
 export class App {
 
     el: Element | null = null
@@ -41,6 +46,7 @@ export class App {
 
     constructor(rootOptions: any) {
         this.rootOptions = rootOptions
+        currentApp = this
     }
 
     component(name: string, options: any) {

@@ -137,6 +137,12 @@ const genDirectives = (target: string, dirs: any[]): string => {
     }
 }
 
+function genCustomDirectives(code: string, customDirs: any[],context:any): string {
+    debugger
+    // injectDirective
+    return ''
+}
+
 function genChildrenString(children: any, context: any) {
     return toArray(genChildren(children, context))
 }
@@ -160,12 +166,16 @@ function genNode(node: any, context: any): any {
             return callFn(renderMethodsNameMap.renderSlot, slotName, backup)
         case Nodes.HTML_ELEMENT:
             const tagName = toBackQuotes(node.tagName) // required
-            var children = node.children ? genChildrenString(node.children, context) : 'null'
+            var children = node.children ? genChildrenString(node.children, context) : NULL
             const props = genProps(node)
             var code = callFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid())
             if (node.dirs) {
                 code = genDirectives(code, node.dirs)
             }
+            if (node.customDirs) {
+                code = genCustomDirectives(code, node.customDirs,context)
+            }
+            debugger
             return code
         case Nodes.SVG_ELEMENT:
             return callFn(renderMethodsNameMap.createSVGElement)
@@ -223,7 +233,6 @@ const genText = (texts: Text[]) => {
     while there is unknown selectors
     header,footer ? h1,h2
 */
-
 
 function genSelector(selectors: Array<any>) {
     /*

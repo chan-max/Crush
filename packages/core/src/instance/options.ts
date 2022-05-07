@@ -72,7 +72,6 @@ export const initOptions = (options: any, target = null) => {
                 })
                 break
             case ComponentOptions.COMPOENNTS:
-                debugger
                 break
             case ComponentOptions.DIRECTIVES:
                 debugger
