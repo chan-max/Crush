@@ -21,7 +21,6 @@ const app = createApp({
         onWidthChange(() => {
             console.log('66666666666666666666');
         })
-        
     },
 })
 console.log('app', app);

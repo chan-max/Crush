@@ -16,6 +16,6 @@
     ! something interesting  , the key order will not change
 */
 
-function createDiffedChildren(p: any, n: any) {
-      
+function diffChildren(p: any, n: any) {
+    
 }

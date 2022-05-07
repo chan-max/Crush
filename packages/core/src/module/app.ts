@@ -91,6 +91,7 @@ export class App {
         if(!options.template){
             options.template = el.innerHTML
         }
+        
         el.innerHTML = ''
         var instance = mountComponent(createComponent(options, {}, {}), el)
         this.rootInstance = instance
