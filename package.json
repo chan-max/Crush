@@ -31,6 +31,9 @@
     "rollup-plugin-typescript2": "^0.31.1",
     "vite": "^2.7.2"
   },
+  "repository": {
+      "url": "https://github.com/chan-max/Crush"
+  },
   "devDependencies": {
     "@types/jest": "^27.4.0",
     "@types/marked": "^4.0.2",
