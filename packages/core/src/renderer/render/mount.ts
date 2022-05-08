@@ -52,6 +52,7 @@ import {
 } from '../common/event'
 import { nodeOps } from "./nodeOps"
 import { mountDeclaration } from "./declaration"
+import { mountProps } from "./props"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const {
@@ -62,30 +63,14 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
 
     var el = document.createElement(type)
     vnode.ref = el
-    if (props) {
-        // mount props
-        Object.entries(props).forEach(([key, value]: any) => {
-            if (isEvent(key)) {
-                var { event, options } = parseHandlerKey(key)
-                el.addEventListener(event, value, options)
-            } else if (key === NodesMap[Nodes.CLASS]) {
-                // mount class
-                var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
-                el.className = className
-            } else if (key === NodesMap[Nodes.STYLE]) {
-                mountDeclaration(value, el.style, vnode)
-            } else {
-                // normal attribute
-                el.setAttribute(key, value)
-            }
-        })
-    }
+
+    mountProps(vnode)
 
     callHook(LifecycleHooks.CREATED, vnode, null, el)
     callHook(LifecycleHooks.BEFORE_MOUNT, vnode, null, el)
     nodeOps.insert(el, container, anchor)
     callHook(LifecycleHooks.MOUNTED, vnode, null, el)
-    
+
     if (children) {
         mountChildren(children, el, anchor)
     }

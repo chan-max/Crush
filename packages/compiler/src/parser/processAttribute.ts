@@ -58,6 +58,14 @@ const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\))?(?::(\w+))?(?:\.([\w\.]+))?/
 
 var fnIsCalled = /.+\(.*\)$/
 
+function isFunctionExpression() {
+    /*
+        fn
+        () => ...
+        function(){}
+    */
+}
+
 export const processAttribute = (node: any) => {
     const { type, attributes } = node;
     if (!attributes) return
@@ -69,7 +77,7 @@ export const processAttribute = (node: any) => {
         var isDynamicValue = flag === '$'
         var modifiers = modifierList && modifierList.split('.')
         // process directive
-        
+
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
             var dirName = camelize(property)

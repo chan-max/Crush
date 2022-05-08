@@ -5,11 +5,12 @@ import {
 
 const app = createApp({
     template: `
-        <input --(active) --focus>
+        <button @click="add"> {{count}} </button>
+        <input --focus>
         `,
     create($:any) {
-        $.flag = true
-        $.toggle = () => $.flag = !$.flag
+        $.count = 0
+        $.add = () => $.count++
     },
     directives:{
         focus(el){

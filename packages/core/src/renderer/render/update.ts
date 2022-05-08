@@ -12,11 +12,7 @@ export function update(p: any, n: any, container: any, anchor: any) {
             }
             break
         case Nodes.HTML_ELEMENT:
-            /*
-                update props    
-            */
-            n.ref = p.ref
-            updateChildren(p.children, n.children, container, anchor)
+            updateHTMLElement(p, n, container, anchor)
             break
         case Nodes.FRAGMENT:
             updateChildren(p.children, n.children, container, anchor)
@@ -30,6 +26,21 @@ export function update(p: any, n: any, container: any, anchor: any) {
 import {
     diffChildren
 } from './sequence'
+
+
+import {
+    updateProps
+} from './props'
+
+function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
+    n.ref = p.ref
+    updateProps(p.props, n.props, n)
+    updateChildren(p.children, n.children, container, anchor)
+}
+
+
+
+
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {
     var {

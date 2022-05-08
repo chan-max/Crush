@@ -37,11 +37,11 @@ function createMapAndList(children: any[]) {
     }
 }
 
-export function diffChildren(p: any, n: any, isRules:any) {
+export function diffChildren(p: any, n: any, isRules: any) {
 
     // copy
-    p = [...p]
-    n = [...n]
+    p = [...p || []]
+    n = [...n || []]
 
     var nLength = n.length
     var { map: pMap } = createMapAndList(p)
