@@ -7,7 +7,7 @@ import {
 const NULL = 'null'
 
 const toBackQuotes = (_: string): string => '`' + _ + '`'
-const toString = (_: string): string => "'" + _ + "'"
+const toCodeString = (_: string): string => "'" + _ + "'"
 
 
 /*  use JSON.stringify will fill the " in every propertynames */
@@ -70,7 +70,7 @@ export {
     toBackQuotes,
     toTernaryExp,
     toArray,
-    toString,
+    toCodeString,
     objectStringify,
     toArrowFunction,
     callFn,

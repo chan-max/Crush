@@ -60,33 +60,33 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
         children
     } = vnode
 
-    var ref = document.createElement(type)
-    vnode.ref = ref
+    var el = document.createElement(type)
+    vnode.ref = el
     if (props) {
         // mount props
         Object.entries(props).forEach(([key, value]: any) => {
             if (isEvent(key)) {
                 var { event, options } = parseHandlerKey(key)
-                ref.addEventListener(event, value, options)
+                el.addEventListener(event, value, options)
             } else if (key === NodesMap[Nodes.CLASS]) {
                 // mount class
                 var className = Object.keys(value).filter((classKey: string) => value[classKey]).join(' ')
-                ref.className = className
+                el.className = className
             } else if (key === NodesMap[Nodes.STYLE]) {
-                mountDeclaration(value, ref.style, vnode)
+                mountDeclaration(value, el.style, vnode)
             } else {
                 // normal attribute
-                ref.setAttribute(key, value)
+                el.setAttribute(key, value)
             }
         })
     }
 
-    callHook(LifecycleHooks.CREATED, vnode, ref)
-    callHook(LifecycleHooks.BEFORE_MOUNT, vnode, ref)
-    nodeOps.insert(ref, container, anchor)
-    callHook(LifecycleHooks.MOUNTED, vnode)
-
+    callHook(LifecycleHooks.CREATED, vnode, null, el)
+    callHook(LifecycleHooks.BEFORE_MOUNT, vnode, null, el)
+    nodeOps.insert(el, container, anchor)
+    callHook(LifecycleHooks.MOUNTED, vnode, null, el)
+    
     if (children) {
-        mountChildren(children, ref, anchor)
+        mountChildren(children, el, anchor)
     }
 }

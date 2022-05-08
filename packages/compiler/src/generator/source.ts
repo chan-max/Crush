@@ -26,7 +26,9 @@ import {
     createHandlerKey,
     normalizeClass,
     normalizeStyle,
-    renderSlot
+    renderSlot,
+    injectDirective,
+    injectDirectives
 } from '@crush/core'
 
 export var renderMethods = {
@@ -56,7 +58,9 @@ export var renderMethods = {
     createHandlerKey,
     normalizeClass,
     normalizeStyle,
-    renderSlot
+    renderSlot,
+    injectDirective,
+    injectDirectives
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

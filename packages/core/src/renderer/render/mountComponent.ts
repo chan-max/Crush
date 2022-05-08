@@ -31,7 +31,7 @@ function createCommonComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
     }
-
+    
     const instance: any = {
         uid: uid(),
         scope: reactive(initScope()),
@@ -39,7 +39,7 @@ function createCommonComponentInstance(options: any) {
         currentTree: null,
         createRender: options.createRender,
         components: options.components ,
-        directives: options.direvtives ,
+        directives: options.directives ,
         // hooks will always be an array
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
         [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],

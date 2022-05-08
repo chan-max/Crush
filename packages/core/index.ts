@@ -29,6 +29,11 @@ export {
 } from './src/renderer/vnode/vnode'
 
 export {
+    injectDirective,
+    injectDirectives
+} from './src/instance/directive'
+
+export {
     display
 } from './src/renderer/common/display'
 export {

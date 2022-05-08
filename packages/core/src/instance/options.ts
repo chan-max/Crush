@@ -74,7 +74,6 @@ export const initOptions = (options: any, target = null) => {
             case ComponentOptions.COMPOENNTS:
                 break
             case ComponentOptions.DIRECTIVES:
-                debugger
                 break
             default:
                 /*custom options*/

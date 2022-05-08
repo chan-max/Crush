@@ -54,7 +54,7 @@ export const findValueByattributes = (attrs: Asb[], attributes: string[]) => fin
 export const findValuesByattribute = (attrs: Asb[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
 export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
-const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\()?(?::(\w+))?(?:\.([\w\.]+))?/
+const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\))?(?::(\w+))?(?:\.([\w\.]+))?/
 
 var fnIsCalled = /.+\(.*\)$/
 
@@ -69,6 +69,7 @@ export const processAttribute = (node: any) => {
         var isDynamicValue = flag === '$'
         var modifiers = modifierList && modifierList.split('.')
         // process directive
+        
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
             var dirName = camelize(property)
@@ -111,6 +112,7 @@ export const processAttribute = (node: any) => {
                     attr.dirName = dirName
                     attr.argument = argument
                     attr.modifiers = modifiers;
+                    attr.isDynamicProperty = isDynamicProperty;
                     (node.customDirs ||= []).push(attr)
                     break
             }
@@ -132,7 +134,7 @@ export const processAttribute = (node: any) => {
                 arrow function : @click="() => { ... }"
             */
             attr.type = Nodes.EVENT
-            attr.isDynamicValue = true  
+            attr.isDynamicValue = true
             attr.isFunction = !fnIsCalled.test(attr.value)
             attr.argument = argument
             attr.modifiers = modifiers

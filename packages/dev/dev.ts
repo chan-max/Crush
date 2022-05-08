@@ -5,12 +5,17 @@ import {
 
 const app = createApp({
     template: `
-        <input --focus>
+        <input --(active) --focus>
         `,
     create($:any) {
         $.flag = true
         $.toggle = () => $.flag = !$.flag
     },
+    directives:{
+        focus(el){
+            el.focus()
+        }
+    }
 })
 console.log('app', app);
 const instance = app.mount('#app')

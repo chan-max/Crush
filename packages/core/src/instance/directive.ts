@@ -1,10 +1,13 @@
 
+import { error } from '@crush/common'
 import { isFunction, isObject } from '@crush/common/src/dataType'
 import {
     injectHook, LifecycleHooks
 } from './lifecycle'
 
-function injectDirective(target: any, directive: Function | Record<string, any>) {
+export type CustomDirective = Function | Record<LifecycleHooks, Function>
+
+export function injectDirective(target: any, directive: any) {
     if (isFunction(directive)) {
         directive = {
             [LifecycleHooks.MOUNTED]: directive,
@@ -13,25 +16,16 @@ function injectDirective(target: any, directive: Function | Record<string, any>)
     }
 
     for (let key in directive) {
-        switch (key) {
-            case LifecycleHooks.CREATED:
-
-                break
-            case LifecycleHooks.BEFORE_MOUNT:
-                break
-            case LifecycleHooks.MOUNTED:
-                break
-            case LifecycleHooks.BEFORE_UPDATE:
-                break
-            case LifecycleHooks.UPDATED:
-                
-                break
-            case LifecycleHooks.BEFORE_UNMOUNT:
-                break
-            case LifecycleHooks.UNMOUNTED:
-                break
-        }
+        injectHook(key as LifecycleHooks, target, directive[key])
     }
     // ! 
     return target
 }
+
+export function injectDirectives(target: any, directives: any[]) {
+    directives.forEach((directive: any) => {
+        injectDirective(target, directive)
+    })
+    return target
+}
+

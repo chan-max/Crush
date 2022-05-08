@@ -20,23 +20,42 @@ import { uvar } from '@crush/common/src/value'
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
 class CodeGenerator {
-    code = ''
-    getCode = () => this.code
+
+    code: string
+
+    methods: Record<string, boolean>
+
+    constructor() {
+        this.code = ''
+        this.methods = {}
+    }
+
+    getCode = () => {
+        this.unshift(declare(
+            `{${Object.keys(this.methods).join(',')}}`
+            , RENDER_METHODS))
+        return this.code
+    }
     push = (code: string) => this.code += code
+    unshift = (code: string) => this.code = code + this.code
     newLine = () => this.code += '\n'
     tab = () => this.code += '\t'
 
-    pushNewLine = (code: string) => {
+    pushNewLine(code: string) {
         this.newLine()
         this.push(code)
-        this.newLine()
     }
 
     // input an expression and hoist to the context , and return the variable name
-    hoistExpression = (expression: string) => {
+    hoistExpression(expression: string): string {
         var varname = uvar()
         this.pushNewLine(declare(varname, expression))
         return varname
+    }
+
+    callRenderFn(fn: string, ...args: string[]): string {
+        this.methods[fn] = true
+        return callFn(fn, ...args)
     }
 
 }
@@ -62,14 +81,8 @@ export function compile(template: string, config = defaultCompilerConfig) {
 
     var context = new CodeGenerator()
     // 初始化所有渲染方法
-    context.push(
-        declare(
-            `{\n${Object.values(renderMethodsNameMap).join(',\n')}\n}`
-            , RENDER_METHODS
-        )
-    )
 
-    var SCOPE = context.hoistExpression(callFn(renderMethodsNameMap.getCurrentScope))
+    var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentScope))
 
     const renderCode = genNodes(ast as any[], context)
 
