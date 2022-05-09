@@ -52,3 +52,7 @@ export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: C
 export function mountDeclaration(declaration: any, style: any, vnode: any) {
     updateDeclaration(EMPTY_MAP, declaration, style, vnode)
 }
+
+export function unmountDeclaration(declaration: any, style: any, vnode: any) {
+    updateDeclaration(declaration, EMPTY_MAP, style, vnode)
+}

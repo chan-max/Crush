@@ -44,3 +44,7 @@ export {
     removeFromArray,
     extend
 } from './src/operate'
+
+export {
+    keys
+} from './src/native'

@@ -174,14 +174,11 @@ function genNode(node: any, context: any): any {
             var children = node.children ? genChildrenString(node.children, context) : NULL
             const props = genProps(node, context)
             var code: string = context.callRenderFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid())
-            if (node.dirs) {
-                code = genDirectives(code, node.dirs, context)
-            }
-            if (node.customDirs) {
-                code = genCustomDirectives(code, node.customDirs, context)
-            }
+            if (node.dirs) { code = genDirectives(code, node.dirs, context) }
+            if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
             return code
         case Nodes.SVG_ELEMENT:
+            debugger
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
         case Nodes.COMPONENT:
             var uVar = uvar()
@@ -197,6 +194,7 @@ function genNode(node: any, context: any): any {
         case Nodes.STYLE:
             var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
             if (node.dirs) { code = genDirectives(code, node.dirs, context) }
+            if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
             return code
         case Nodes.STYLE_RULE:
             return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), toArray(genChildren(node.children, context)), ustringid())
@@ -211,8 +209,6 @@ function genNode(node: any, context: any): any {
             return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), ustringid())
         case Nodes.DECLARATION_GROUP:
             return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), ustringid())
-        default:
-            return ''
     }
 }
 

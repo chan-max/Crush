@@ -28,57 +28,36 @@ export function getCurrentApp() {
     return currentApp
 }
 
+
+
+
 export class App {
 
     el: Element | null = null
 
     isMounted = false
 
-    components = getEmptyMap()
+    components = null
 
-    directives = getEmptyMap()
+    directives = null
 
-    rootOptions: any = null
+    options: any = null
 
-    rootInstance: any
+    instance: any
 
     mixins = null
 
-    constructor(rootOptions: any) {
-        this.rootOptions = rootOptions
+    constructor(options: any) {
+        this.options = options
         currentApp = this
     }
 
     component(name: string, options: any) {
-        if (this.components[name]) {
-            warn(`
-                component has already registered
-            `)
-            return
-        } else if (isBuiltInTag(name)) {
-            error(`
-                failed to register component ,
-                because it is a builtIn tagName
-            `)
-        } else {
-            this.components[name] = options
-        }
+        (this.components ||= getEmptyMap())[name] = options
     }
 
     directive(name: string, options: any) {
-        if (this.directives[name]) {
-            warn(`
-                directive has already registered
-            `)
-            return
-        } else if (isBuiltInDirective(name)) {
-            error(`
-                failed to register directive ,
-                because it is a builtIn directive
-            `)
-        } else {
-            this.directives[name] = options
-        }
+        (this.directives ||= getEmptyMap())[name] = options
     }
 
     mount(container: string | Element) {
@@ -92,7 +71,7 @@ export class App {
             return
         }
 
-        var options = this.rootOptions
+        var options = this.options
 
         if (!options.template) {
             options.template = el.innerHTML
@@ -102,15 +81,12 @@ export class App {
         var vnode: any = createComponent(options, {}, {})
         vnode.app = this
         var instance = mountComponent(vnode, el)
-        this.rootInstance = instance
+        this.instance = instance
         this.el = el
         this.isMounted = true
         return instance
     }
 
-    unmount() {
-
-    }
 }
 
 
