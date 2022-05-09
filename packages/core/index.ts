@@ -9,7 +9,7 @@ export {
 } from './src/module/app'
 
 export {
-    ComponentOptions
+    ComponentOptionKeys
 } from './src/instance/options'
 
 export {

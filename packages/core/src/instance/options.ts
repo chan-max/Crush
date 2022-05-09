@@ -4,11 +4,8 @@ import {
     LifecycleHooks
 } from './lifecycle'
 
-import {
-    isArray
-} from '@crush/common'
 
-export enum ComponentOptions {
+export enum ComponentOptionKeys {
 
     BEFORE_CREATE = 'beforeCreate',
 
@@ -21,9 +18,14 @@ export enum ComponentOptions {
     UPDATED = 'updated',
     BEFORE_UNMOUNT = 'beforeUnmount',
     UNMOUNTED = 'unmounted',
+
     TEMPLATE = 'template',
+    RENDER = 'render',
+
     MIXINS = 'mixins',
+
     COMPOENNTS = 'components',
+
     DIRECTIVES = 'directives'
 }
 
@@ -38,42 +40,42 @@ export const initOptions = (options: any, target = null) => {
     for (let key in options) {
         switch (key) {
             // root options only
-            case ComponentOptions.TEMPLATE:
-                initTarget.createRender = compile(options[ComponentOptions.TEMPLATE])
+            case ComponentOptionKeys.TEMPLATE:
+                initTarget.createRender = compile(options[ComponentOptionKeys.TEMPLATE])
                 console.log('RENDER_CREATOR', initTarget.createRender);
                 break
-            case ComponentOptions.CREATE:
+            case ComponentOptionKeys.CREATE:
                 options[LifecycleHooks.CREATE] = [options[LifecycleHooks.CREATE]]
                 break
-            case ComponentOptions.CREATED:
+            case ComponentOptionKeys.CREATED:
                 options[LifecycleHooks.CREATED] = [options[LifecycleHooks.CREATED]]
                 break
-            case ComponentOptions.BEFORE_MOUNT:
+            case ComponentOptionKeys.BEFORE_MOUNT:
                 options[LifecycleHooks.BEFORE_MOUNT] = [options[LifecycleHooks.BEFORE_MOUNT]]
                 break
-            case ComponentOptions.MOUNTED:
+            case ComponentOptionKeys.MOUNTED:
                 options[LifecycleHooks.MOUNTED] = [options[LifecycleHooks.MOUNTED]]
                 break
-            case ComponentOptions.BEFORE_UNMOUNT:
+            case ComponentOptionKeys.BEFORE_UNMOUNT:
                 options[LifecycleHooks.BEFORE_UNMOUNT] = [options[LifecycleHooks.BEFORE_UNMOUNT]]
                 break
-            case ComponentOptions.UNMOUNTED:
+            case ComponentOptionKeys.UNMOUNTED:
                 options[LifecycleHooks.UNMOUNTED] = [options[LifecycleHooks.UNMOUNTED]]
                 break
-            case ComponentOptions.BEFORE_UPDATE:
+            case ComponentOptionKeys.BEFORE_UPDATE:
                 options[LifecycleHooks.BEFORE_UPDATE] = [options[LifecycleHooks.BEFORE_UPDATE]]
                 break
-            case ComponentOptions.UPDATED:
+            case ComponentOptionKeys.UPDATED:
                 options[LifecycleHooks.UPDATED] = [options[LifecycleHooks.UPDATED]]
                 break
-            case ComponentOptions.MIXINS:
-                options[ComponentOptions.MIXINS].forEach((mixin: any) => {
+            case ComponentOptionKeys.MIXINS:
+                options[ComponentOptionKeys.MIXINS].forEach((mixin: any) => {
                     initOptions(mixin, initTarget)
                 })
                 break
-            case ComponentOptions.COMPOENNTS:
+            case ComponentOptionKeys.COMPOENNTS:
                 break
-            case ComponentOptions.DIRECTIVES:
+            case ComponentOptionKeys.DIRECTIVES:
                 break
             default:
                 /*custom options*/

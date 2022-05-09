@@ -1366,23 +1366,23 @@ var Crush = (function (exports) {
         hooks.forEach((hook) => hook.apply(binding, args));
     }
 
-    exports.ComponentOptions = void 0;
-    (function (ComponentOptions) {
-        ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
-        ComponentOptions["CREATE"] = "create";
+    exports.ComponentOptionKeys = void 0;
+    (function (ComponentOptionKeys) {
+        ComponentOptionKeys["BEFORE_CREATE"] = "beforeCreate";
+        ComponentOptionKeys["CREATE"] = "create";
         // setup funcition
-        ComponentOptions["CREATED"] = "created";
-        ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
-        ComponentOptions["MOUNTED"] = "mounted";
-        ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
-        ComponentOptions["UPDATED"] = "updated";
-        ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
-        ComponentOptions["UNMOUNTED"] = "unmounted";
-        ComponentOptions["TEMPLATE"] = "template";
-        ComponentOptions["MIXINS"] = "mixins";
-        ComponentOptions["COMPOENNTS"] = "components";
-        ComponentOptions["DIRECTIVES"] = "directives";
-    })(exports.ComponentOptions || (exports.ComponentOptions = {}));
+        ComponentOptionKeys["CREATED"] = "created";
+        ComponentOptionKeys["BEFORE_MOUNT"] = "beforeMount";
+        ComponentOptionKeys["MOUNTED"] = "mounted";
+        ComponentOptionKeys["BEFORE_UPDATE"] = "beforeUpdate";
+        ComponentOptionKeys["UPDATED"] = "updated";
+        ComponentOptionKeys["BEFORE_UNMOUNT"] = "beforeUnmount";
+        ComponentOptionKeys["UNMOUNTED"] = "unmounted";
+        ComponentOptionKeys["TEMPLATE"] = "template";
+        ComponentOptionKeys["MIXINS"] = "mixins";
+        ComponentOptionKeys["COMPOENNTS"] = "components";
+        ComponentOptionKeys["DIRECTIVES"] = "directives";
+    })(exports.ComponentOptionKeys || (exports.ComponentOptionKeys = {}));
     const initOptions = (options, target = null) => {
         var initTarget, isMixin = false;
         if (target) {
@@ -1395,36 +1395,36 @@ var Crush = (function (exports) {
         for (let key in options) {
             switch (key) {
                 // root options only
-                case exports.ComponentOptions.TEMPLATE:
-                    initTarget.createRender = compile(options[exports.ComponentOptions.TEMPLATE]);
+                case exports.ComponentOptionKeys.TEMPLATE:
+                    initTarget.createRender = compile(options[exports.ComponentOptionKeys.TEMPLATE]);
                     console.log('RENDER_CREATOR', initTarget.createRender);
                     break;
-                case exports.ComponentOptions.CREATE:
+                case exports.ComponentOptionKeys.CREATE:
                     options["create" /* CREATE */] = [options["create" /* CREATE */]];
                     break;
-                case exports.ComponentOptions.CREATED:
+                case exports.ComponentOptionKeys.CREATED:
                     options["created" /* CREATED */] = [options["created" /* CREATED */]];
                     break;
-                case exports.ComponentOptions.BEFORE_MOUNT:
+                case exports.ComponentOptionKeys.BEFORE_MOUNT:
                     options["beforeMount" /* BEFORE_MOUNT */] = [options["beforeMount" /* BEFORE_MOUNT */]];
                     break;
-                case exports.ComponentOptions.MOUNTED:
+                case exports.ComponentOptionKeys.MOUNTED:
                     options["mounted" /* MOUNTED */] = [options["mounted" /* MOUNTED */]];
                     break;
-                case exports.ComponentOptions.BEFORE_UNMOUNT:
+                case exports.ComponentOptionKeys.BEFORE_UNMOUNT:
                     options["beforeUnmount" /* BEFORE_UNMOUNT */] = [options["beforeUnmount" /* BEFORE_UNMOUNT */]];
                     break;
-                case exports.ComponentOptions.UNMOUNTED:
+                case exports.ComponentOptionKeys.UNMOUNTED:
                     options["unmounted" /* UNMOUNTED */] = [options["unmounted" /* UNMOUNTED */]];
                     break;
-                case exports.ComponentOptions.BEFORE_UPDATE:
+                case exports.ComponentOptionKeys.BEFORE_UPDATE:
                     options["beforeUpdate" /* BEFORE_UPDATE */] = [options["beforeUpdate" /* BEFORE_UPDATE */]];
                     break;
-                case exports.ComponentOptions.UPDATED:
+                case exports.ComponentOptionKeys.UPDATED:
                     options["updated" /* UPDATED */] = [options["updated" /* UPDATED */]];
                     break;
-                case exports.ComponentOptions.MIXINS:
-                    options[exports.ComponentOptions.MIXINS].forEach((mixin) => {
+                case exports.ComponentOptionKeys.MIXINS:
+                    options[exports.ComponentOptionKeys.MIXINS].forEach((mixin) => {
                         initOptions(mixin, initTarget);
                     });
                     break;

@@ -34,6 +34,7 @@ function callHook(type: LifecycleHooks, target: any, binding: any = null, ...arg
 
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)
 
+// no beforeCreate
 const onCreated = createHook(LifecycleHooks.CREATED)
 const onBeforeMount =  createHook(LifecycleHooks.BEFORE_MOUNT)
 const onMounted = createHook(LifecycleHooks.MOUNTED)

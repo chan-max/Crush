@@ -27,19 +27,19 @@ import {
 } from '../common/processdom'
 import { initScope } from '../../instance/scope'
 
-function createCommonComponentInstance(options: any) {
+function createComponentInstance(options: any) {
     if (!options._isOptions) {
         initOptions(options)
     }
-    
+
     const instance: any = {
         uid: uid(),
         scope: reactive(initScope()),
         render: null,
         currentTree: null,
         createRender: options.createRender,
-        components: options.components ,
-        directives: options.directives ,
+        components: options.components,
+        directives: options.directives,
         // hooks will always be an array
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
         [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],
@@ -67,16 +67,11 @@ export function getCurrentScope() {
 }
 
 export const mountComponent = (vnode: any, container: Element) => {
-    var {
-        type,
-    } = vnode
+    var { type, app } = vnode
 
-    var instance: any = createCommonComponentInstance(type)
+    var instance: any = createComponentInstance(type)
 
-    const {
-        scope,
-        createRender,
-    } = instance;
+    const { scope, createRender, } = instance;
 
     // init instance , we only can use getCurrentInstance in create hook 
     setCurrentInstance(instance)

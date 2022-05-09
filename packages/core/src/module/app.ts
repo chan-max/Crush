@@ -23,70 +23,68 @@ import {
     mountComponent
 } from '../renderer/render/mountComponent'
 
-let currentApp: any = null
+export let currentApp: any = null
 export function getCurrentApp() {
     return currentApp
 }
 
-
-
-
 export class App {
-
-    el: Element | null = null
 
     isMounted = false
 
-    components = null
-
-    directives = null
-
     options: any = null
-
-    instance: any
-
-    mixins = null
 
     constructor(options: any) {
         this.options = options
         currentApp = this
     }
 
+    components = getEmptyMap()
+
     component(name: string, options: any) {
-        (this.components ||= getEmptyMap())[name] = options
+        this.components=[name] = options
     }
+
+    directives = getEmptyMap()
 
     directive(name: string, options: any) {
-        (this.directives ||= getEmptyMap())[name] = options
+        this.directives[name] = options
     }
 
-    mount(container: string | Element) {
-        var el
-        if (isString(container)) {
-            el = document.querySelector(container as string)
-        }
+    mixins: any[] = []
 
-        if (!el) {
-            error(` not a legal container `)
-            return
-        }
+    mixin(mixin: any) {
+        this.mixins.push(mixin)
+    }
+
+    instance: any
+    el: Element | null = null
+    container: null | Element = null
+
+    mount(container: string | Element) {
+        if (this.isMounted) return
+        const _container: Element = isString(container) ? document.querySelector(container as any) : container
+
+        this.container = _container
 
         var options = this.options
 
         if (!options.template) {
-            options.template = el.innerHTML
+            options.template = _container.innerHTML
         }
 
-        el.innerHTML = ''
-        var vnode: any = createComponent(options, {}, {})
+        _container.innerHTML = ''
+        var vnode: any = createComponent(options, null, null)
         vnode.app = this
-        var instance = mountComponent(vnode, el)
+        var instance = mountComponent(vnode, _container)
         this.instance = instance
-        this.el = el
         this.isMounted = true
         return instance
     }
 
+    unmount() {
+
+    }
 }
 
 

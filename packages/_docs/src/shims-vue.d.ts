@@ -1,6 +1,6 @@
 declare module '*.vue' {
-    import { ComponentOptions } from 'vue'
+    import { ComponentOptionKeys } from 'vue'
 
-    const componentOptions: ComponentOptions
-    export default componentOptions
+    const ComponentOptionKeys: ComponentOptionKeys
+    export default ComponentOptionKeys
   }

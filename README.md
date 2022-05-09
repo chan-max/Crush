@@ -222,7 +222,7 @@ hooks :
 
 ##### components register 
 
-    app.component(componentName,componentOptions)
+    app.component(componentName,ComponentOptionKeys)
 
 ##### directives register 
 
