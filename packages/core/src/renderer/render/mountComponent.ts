@@ -66,7 +66,7 @@ function createComponentInstance(options: any) {
 export var currentInstance: any = null
 export function setCurrentInstance(instance: any) {
     currentInstance = instance
-}
+}  
 export function getCurrentInstance() {
     return currentInstance
 }
@@ -75,11 +75,9 @@ export function getCurrentScope() {
 }
 
 export const mountComponent = (vnode: any, container: Element) => {
-    var { type, app } = vnode
+    var { type, app, props, children } = vnode
 
     var instance: any = createComponentInstance(type)
-
-    debugger
 
     const { scope, createRender, } = instance;
 
@@ -110,9 +108,11 @@ export const mountComponent = (vnode: any, container: Element) => {
 
         var nextTree = render()
 
+        
 
         // 处理fragment
         nextTree = processdom(nextTree)
+
 
         console.log('currentTree', currentTree);
         console.log('nextTree', nextTree);

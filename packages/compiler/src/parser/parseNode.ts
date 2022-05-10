@@ -67,7 +67,7 @@ const parseNodes = (
     })
 }
 
-function parseNode(node: Asb, ctx: any) {
+function parseNode(node: any, ctx: any) {
     const type = node.type
     if (type === Nodes.DOM_ELEMENT) {
         const tagType = tagTypeOf(node.tagName as string)
@@ -79,8 +79,8 @@ function parseNode(node: Asb, ctx: any) {
             case Nodes.COMPONENT:
                 processAttribute(node)
                 break
-            // case Nodes.SVG_ELEMENT:
-            //     break
+            case Nodes.SVG_ELEMENT:
+                break
             case Nodes.STYLE:
                 processAttribute(node)
                 var template = node.children?.[0].children
@@ -109,6 +109,9 @@ function parseNode(node: Asb, ctx: any) {
                 processAttribute(node)
                 break
             case Nodes.SLOT:
+                break
+            case Nodes.DEFINE_SLOT:
+                debugger
                 break
         }
     } else if (type === Nodes.TEXT) {

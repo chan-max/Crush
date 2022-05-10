@@ -34,8 +34,8 @@
     const getEmptyMap = () => Object.create(null);
     var id = 0;
     const uid = () => id++;
-    const ustringid = () => String(uid());
-    const uvar = () => `_${uid()}`;
+    const uStringId = () => String(uid());
+    const uVar = () => `_${uid()}`;
     const EMPTY_MAP = Object.freeze({});
     Object.freeze([]);
 
@@ -976,7 +976,7 @@
         });
         return children;
     }
-    const genFor = (target, iterator) => callFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, iterator.items), ustringid() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
+    const genFor = (target, iterator) => callFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
     const genIf = (target, condition) => ternaryExp(condition, target, 'null');
     function genForWithFragment(target, iterator) {
         return genFragment(genFor(target, iterator));
@@ -1034,7 +1034,7 @@
                 const tagName = toBackQuotes(node.tagName); // required
                 var children = node.children ? genChildrenString(node.children, context) : 'null';
                 const props = genProps(node);
-                var code = callFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid());
+                var code = callFn(renderMethodsNameMap.createElement, tagName, props, children, uStringId());
                 if (node.dirs) {
                     code = genDirectives(code, node.dirs);
                 }
@@ -1042,42 +1042,42 @@
             case Nodes.SVG_ELEMENT:
                 return callFn(renderMethodsNameMap.createSVGElement);
             case Nodes.COMPONENT:
-                var uVar = uvar();
+                var uVar = uVar();
                 context.pushNewLine(declare(uVar, callFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))));
                 return callFn(renderMethodsNameMap.createComponent, uVar);
             case Nodes.TEXT:
                 return genText(node.children);
             case Nodes.STYLE:
-                var code = callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid());
+                var code = callFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), uStringId());
                 if (node.dirs) {
                     code = genDirectives(code, node.dirs);
                 }
                 return code;
             case Nodes.STYLE_RULE:
-                return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)), ustringid());
+                return callFn(renderMethodsNameMap.createStyle, genSelector(node.selectors), toArray(genChildren(node.children, context)), uStringId());
             case Nodes.MEDIA_RULE:
                 const rules = toArray(genChildren(node.children, context));
-                return callFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, ustringid());
+                return callFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId());
             case Nodes.KEYFRAMES_RULE:
-                return callFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), toArray(genChildren(node.children, context)), ustringid());
+                return callFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), toArray(genChildren(node.children, context)), uStringId());
             case Nodes.KEYFRAME_RULE:
-                return callFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), toArray(genChildren(node.children, context)), ustringid());
+                return callFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), toArray(genChildren(node.children, context)), uStringId());
             case Nodes.SUPPORTS_RULE:
-                return callFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), ustringid());
+                return callFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), uStringId());
             case Nodes.DECLARATION_GROUP:
-                return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children), ustringid());
+                return callFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children), uStringId());
             default:
                 return '';
         }
     }
-    const genFragment = (code) => callFn(renderMethodsNameMap.createFragment, code, ustringid());
+    const genFragment = (code) => callFn(renderMethodsNameMap.createFragment, code, uStringId());
     const genTextContent = (texts) => {
         return texts.map((text) => {
             return text.isDynamic ? callFn(renderMethodsNameMap.display, text.content) : toBackQuotes(text.content);
         }).join('+');
     };
     const genText = (texts) => {
-        return callFn(renderMethodsNameMap.createText, genTextContent(texts), ustringid());
+        return callFn(renderMethodsNameMap.createText, genTextContent(texts), uStringId());
     };
     /*
         while there is unknown selectors
@@ -1227,7 +1227,7 @@
         };
         // input an expression and hoist to the context , and return the variable name
         hoistExpression = (expression) => {
-            var varname = uvar();
+            var varname = uVar();
             this.pushNewLine(declare(varname, expression));
             return varname;
         };

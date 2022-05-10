@@ -40,7 +40,7 @@ function unmountProp(propName: string, value: any, el: HTMLElement) {
 }
 
 export function updateProps(p: any, n: any, vnode: any) {
-    debugger
+
     var { ref } = vnode
     for (let key in n) {
 

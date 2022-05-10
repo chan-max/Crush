@@ -76,8 +76,8 @@ export const processAttribute = (node: any) => {
         var isDynamicProperty = l && r
         var isDynamicValue = flag === '$'
         var modifiers = modifierList && modifierList.split('.')
+        
         // process directive
-
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
             var dirName = camelize(property)

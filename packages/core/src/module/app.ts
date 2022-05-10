@@ -1,8 +1,4 @@
 
-import {
-    isBuiltInTag,
-    isBuiltInDirective
-} from '@crush/types'
 
 import {
     isString
@@ -22,6 +18,7 @@ import {
 import {
     mountComponent
 } from '../renderer/render/mountComponent'
+import { isFunction } from '@crush/common/src/dataType'
 
 export let currentApp: any = null
 export function getCurrentApp() {
@@ -42,7 +39,7 @@ export class App {
     components = getEmptyMap()
 
     component(name: string, options: any) {
-        this.components=[name] = options
+        this.components = [name] = options
     }
 
     directives = getEmptyMap()
@@ -84,6 +81,13 @@ export class App {
 
     unmount() {
 
+    }
+
+    installed = new Set()
+    use(plugin: any, ...options: any[]) {
+        if (!this.installed.has(plugin)) {
+            plugin(this, ...options)
+        }
     }
 }
 

@@ -31,15 +31,35 @@ import {
 import {
     updateProps
 } from './props'
+import { callHook, LifecycleHooks } from "../../instance/lifecycle";
 
 function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
-    n.ref = p.ref
+
+    var el = n.ref = p.ref
+
+    /* key相同时，会作为更新操作，key不同时，会视为一次卸载和挂载*/
+    var samePatchKey = p.patchKey === n.patchKey
+
+    if (samePatchKey) {
+        // 相同节点，钩子函数一定相同
+        callHook(LifecycleHooks.BEFORE_UPDATE, n, null, el)
+    } else {
+        callHook(LifecycleHooks.BEFORE_UNMOUNT, p, null, el)
+        callHook(LifecycleHooks.BEFORE_MOUNT, p, null, el)
+    }
+
     updateProps(p.props, n.props, n)
+    // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor)
+
+    if (samePatchKey) {
+        // 相同节点，钩子函数一定相同
+        callHook(LifecycleHooks.UPDATED, n, null, el)
+    } else {
+        callHook(LifecycleHooks.UNMOUNTED, p, null, el)
+        callHook(LifecycleHooks.MOUNTED, p, null, el)
+    }
 }
-
-
-
 
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {

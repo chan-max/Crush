@@ -16,29 +16,13 @@ import {
 
 export const patch = (current: any, next: any, container: any, anchor: any = null) => {
 
-    /*
-        both the current and next have there situations
-        null | false , as empty node
-        single node
-        array node
-    */
-
     if (!current) {
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor)
         } else {
             // nothing todo
         }
-    }
-
-
-    /*
-    ! 两组树均存在节点
-     两种都有的情况，并且两组节点都可能存在单个节点或数组节点 
-     所以当两组节点都只有一个元素时，即使类型相同，也会进入到diff环节
-    */
-
-    if (current) {
+    } else {
         if (!next) {
             // 卸载当前节点
             isArray(next) ? unmountChildren(current) : unmount(current, container, anchor)
@@ -49,6 +33,7 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
                 if (isArray(next)) {
                     updateChildren([current], next, container, anchor)
                 } else {
+                    // 两个单节点 ， 但key可能不同
                     if (current.type === next.type) {
                         // 类型相同，直接更新
                         update(current, next, container, anchor)
@@ -61,6 +46,4 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
             }
         }
     }
-
-    
 }

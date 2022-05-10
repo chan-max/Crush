@@ -56,7 +56,10 @@ export enum Nodes {
     BUILTIN_DIRECTIVE,
     CUSTOM_DIRECTIVE,
 
-    SLOT
+    // use slot
+    SLOT,
+    // define slot
+    DEFINE_SLOT
 }
 
 /*
@@ -77,7 +80,8 @@ export enum NodesMap {
     'style' = Nodes.STYLE,
     'class' = Nodes.CLASS,
     'template' = Nodes.TEMPLATE,
-    'slot' = Nodes.SLOT
+    'slot' = Nodes.SLOT,
+    'defineSlot' = Nodes.DEFINE_SLOT
 }
 
 import {

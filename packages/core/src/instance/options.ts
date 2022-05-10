@@ -59,6 +59,7 @@ export const initOptions = (options: ComponentOptions) => {
             // root options only
             case ComponentOptionKeys.TEMPLATE:
                 options.createRender = compile(options[ComponentOptionKeys.TEMPLATE] as string)
+                console.log(options.createRender);
                 break
             case ComponentOptionKeys.RENDER:
                 // todo

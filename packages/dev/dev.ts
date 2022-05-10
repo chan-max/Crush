@@ -5,20 +5,20 @@ import {
 
 var root = {
     template: `
-        <input --focus #app>
+        <hello>
+
+        </hello>
         `,
     create($: any) {
+        $.count = 0
+        $.add = () => $.count++
+    },
+    components:{
+        hello:{}
     }
 }
 
 const app = createApp(root)
-
-app.mixin({
-    mounted(){
-        debugger
-    }
-})
-
 
 console.log('app', app);
 const instance = app.mount('#app')

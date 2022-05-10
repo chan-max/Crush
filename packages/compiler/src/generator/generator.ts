@@ -10,13 +10,12 @@ import {
     dynamicMapKey,
     toBackQuotes,
     toTernaryExp,
-    toArray,
+    stringify,
     objectStringify,
     toArrowFunction,
     destructur,
     declare,
     NULL,
-    stringify,
     toCodeString
 } from './stringify'
 
@@ -25,7 +24,7 @@ import {
 } from '../parser/parseText'
 
 import {
-    ustringid
+    uStringId
 } from '@crush/common'
 
 // the code Entrance
@@ -39,7 +38,7 @@ export const genNodes = (nodes: any[], context: any): string => {
     } else if (children.length === 1) {
         return children[0]
     } else {
-        return genFragment(toArray(children), context)
+        return genFragment(stringify(children), context)
     }
 
 }
@@ -96,13 +95,13 @@ import {
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
 import { uid, isArray, isObject, throwError } from '@crush/common'
-import { uvar } from '@crush/common/src/value'
+import { uVar } from '@crush/common/src/value'
 import { createHandlerKey, isEventOptions } from '@crush/core'
 
 const genFor = (target: string, iterator: Iterator, context: any) => context.callRenderFn(
     renderMethodsNameMap.renderList,
     iterator.iterable, toArrowFunction(target, iterator.items),
-    ustringid() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
+    uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
 )
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
 
@@ -149,7 +148,7 @@ function genCustomDirectives(code: string, customDirs: any[], context: any): str
 }
 
 function genChildrenString(children: any, context: any) {
-    return toArray(genChildren(children, context))
+    return stringify(genChildren(children, context))
 }
 
 function genNode(node: any, context: any): any {
@@ -159,32 +158,31 @@ function genNode(node: any, context: any): any {
         case Nodes.ELSE:
             return genNodes(node.children as any[], context)
         case Nodes.FOR:
-            // use for tag not directive
+            // use the fragment , cause the iterator will set the u key in each node , 
             return genForWithFragment(genNodes(node.children, context), node.iterator, context)
         case Nodes.TEMPLATE:
             var code = genNodes(node.children as any[], context)
             if (node.dirs) { code = genDirectives(code, node.dirs, context) }
             return code
         case Nodes.SLOT:
-            var slotName = toBackQuotes(node.attributeMap.name || 'default')
+            var slotName = toBackQuotes(node.attributeMap?.name || 'default')
             var backup = genNodes(node.children, context)
             return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, backup)
         case Nodes.HTML_ELEMENT:
             const tagName = toBackQuotes(node.tagName) // required
             var children = node.children ? genChildrenString(node.children, context) : NULL
             const props = genProps(node, context)
-            var code: string = context.callRenderFn(renderMethodsNameMap.createElement, tagName, props, children, ustringid())
+            var code: string = context.callRenderFn(renderMethodsNameMap.createElement, tagName, props, children, uStringId())
             if (node.dirs) { code = genDirectives(code, node.dirs, context) }
             if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
             return code
         case Nodes.SVG_ELEMENT:
             debugger
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
-        case Nodes.COMPONENT:
-            var uVar = uvar()
+        case Nodes.COMPONENT: 
             context.pushNewLine(
                 declare(
-                    uVar,
+                    uVar(),
                     context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
                 )
             )
@@ -192,27 +190,27 @@ function genNode(node: any, context: any): any {
         case Nodes.TEXT:
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
-            var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, 'null', toArray(genChildren(node.children, context)), ustringid())
+            var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, 'null', stringify(genChildren(node.children, context)), uStringId())
             if (node.dirs) { code = genDirectives(code, node.dirs, context) }
             if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
             return code
         case Nodes.STYLE_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), toArray(genChildren(node.children, context)), ustringid())
+            return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.MEDIA_RULE:
-            const rules = toArray(genChildren(node.children, context))
-            return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, ustringid())
+            const rules = stringify(genChildren(node.children, context))
+            return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId())
         case Nodes.KEYFRAMES_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), toArray(genChildren(node.children, context)), ustringid())
+            return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.KEYFRAME_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), toArray(genChildren(node.children, context)), ustringid())
+            return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.SUPPORTS_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), toArray(genChildren(node.children, context)), ustringid())
+            return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.DECLARATION_GROUP:
-            return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), ustringid())
+            return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId())
     }
 }
 
-const genFragment = (code: string, context: any) => context.callRenderFn(renderMethodsNameMap.createFragment, code, ustringid())
+const genFragment = (code: string, context: any) => context.callRenderFn(renderMethodsNameMap.createFragment, code, uStringId())
 
 const genTextContent = (texts: Text[], context: any) => {
     return texts.map((text: Text) => {
@@ -224,7 +222,7 @@ const genText = (texts: Text[], context: any) => {
     return context.callRenderFn(
         renderMethodsNameMap.createText,
         genTextContent(texts, context),
-        ustringid()
+        uStringId()
     )
 }
 
@@ -345,7 +343,7 @@ function genProps(node: any, context: any) {
                 var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(options.map(toBackQuotes)))) : createHandlerKey(property, options)
                 var callback = isFunction ? value : toArrowFunction(value)
                 if (modifiers) {
-                    callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, toArray(modifiers.map(toBackQuotes)))
+                    callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)))
                 }
                 props[handlerKey] = callback
                 break

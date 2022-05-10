@@ -15,7 +15,7 @@ import {
 import {
     renderMethodsNameMap,
 } from './source'
-import { uvar } from '@crush/common/src/value'
+import { uVar } from '@crush/common/src/value'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
@@ -48,7 +48,7 @@ class CodeGenerator {
 
     // input an expression and hoist to the context , and return the variable name
     hoistExpression(expression: string): string {
-        var varname = uvar()
+        var varname = uVar()
         this.pushNewLine(declare(varname, expression))
         return varname
     }
@@ -83,15 +83,14 @@ export function compile(template: string, config = defaultCompilerConfig) {
     // 初始化所有渲染方法
 
     var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentScope))
-
     const renderCode = genNodes(ast as any[], context)
-
+    
     const content = `
         with(${SCOPE}){
             return ${toArrowFunction(renderCode)} // the return function is render function
         }    
     `
-
+    
     context.pushNewLine(content)
 
     /*  
