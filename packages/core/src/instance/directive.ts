@@ -5,7 +5,7 @@ import {
     injectHook, LifecycleHooks
 } from './lifecycle'
 
-export type CustomDirective = Function | Record<LifecycleHooks, Function>
+export type Directive = Function | Record<LifecycleHooks, Function>
 
 export function injectDirective(target: any, directive: any) {
     if (isFunction(directive)) {

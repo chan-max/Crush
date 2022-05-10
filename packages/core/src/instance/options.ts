@@ -1,9 +1,11 @@
+import { isArray } from "@crush/common";
 import { compile } from "../../../dev/node_modules/@crush/compiler"
+import { Directive } from "./directive";
 import {
     injectHook,
     LifecycleHooks
 } from './lifecycle'
-
+import { injectMixins } from "./mixin";
 
 export enum ComponentOptionKeys {
 
@@ -22,56 +24,62 @@ export enum ComponentOptionKeys {
     TEMPLATE = 'template',
     RENDER = 'render',
 
+    PROPS = 'props',
+
     MIXINS = 'mixins',
-
     COMPOENNTS = 'components',
-
     DIRECTIVES = 'directives'
 }
 
-export const initOptions = (options: any, target = null) => {
-    var initTarget: any, isMixin = false;
-    if (target) {
-        initTarget = target
-        isMixin = true
-    } else {
-        initTarget = options
-    }
+export interface ComponentOptions {
+    _isOptions?: boolean
+    createRender?: Function
+    [ComponentOptionKeys.TEMPLATE]?: string,
+    [ComponentOptionKeys.RENDER]?: Function,
+
+    [ComponentOptionKeys.DIRECTIVES]?: Record<string, Directive>,
+    [ComponentOptionKeys.COMPOENNTS]?: Record<string, ComponentOptions>,
+    [ComponentOptionKeys.MIXINS]?: ComponentOptions[],
+
+    [ComponentOptionKeys.BEFORE_CREATE]?: Function | Function[],
+    [ComponentOptionKeys.CREATE]?: Function | Function[],
+    [ComponentOptionKeys.CREATED]?: Function | Function[],
+    [ComponentOptionKeys.BEFORE_MOUNT]?: Function | Function[],
+    [ComponentOptionKeys.MOUNTED]?: Function | Function[],
+    [ComponentOptionKeys.BEFORE_UPDATE]?: Function | Function[],
+    [ComponentOptionKeys.UPDATED]?: Function | Function[],
+    [ComponentOptionKeys.BEFORE_UNMOUNT]?: Function | Function[],
+    [ComponentOptionKeys.UNMOUNTED]?: Function | Function[],
+}
+
+
+export const initOptions = (options: ComponentOptions) => {
     for (let key in options) {
         switch (key) {
             // root options only
             case ComponentOptionKeys.TEMPLATE:
-                initTarget.createRender = compile(options[ComponentOptionKeys.TEMPLATE])
-                console.log('RENDER_CREATOR', initTarget.createRender);
+                options.createRender = compile(options[ComponentOptionKeys.TEMPLATE] as string)
+                break
+            case ComponentOptionKeys.RENDER:
+                // todo
                 break
             case ComponentOptionKeys.CREATE:
-                options[LifecycleHooks.CREATE] = [options[LifecycleHooks.CREATE]]
-                break
             case ComponentOptionKeys.CREATED:
-                options[LifecycleHooks.CREATED] = [options[LifecycleHooks.CREATED]]
-                break
             case ComponentOptionKeys.BEFORE_MOUNT:
-                options[LifecycleHooks.BEFORE_MOUNT] = [options[LifecycleHooks.BEFORE_MOUNT]]
-                break
             case ComponentOptionKeys.MOUNTED:
-                options[LifecycleHooks.MOUNTED] = [options[LifecycleHooks.MOUNTED]]
-                break
-            case ComponentOptionKeys.BEFORE_UNMOUNT:
-                options[LifecycleHooks.BEFORE_UNMOUNT] = [options[LifecycleHooks.BEFORE_UNMOUNT]]
-                break
-            case ComponentOptionKeys.UNMOUNTED:
-                options[LifecycleHooks.UNMOUNTED] = [options[LifecycleHooks.UNMOUNTED]]
-                break
             case ComponentOptionKeys.BEFORE_UPDATE:
-                options[LifecycleHooks.BEFORE_UPDATE] = [options[LifecycleHooks.BEFORE_UPDATE]]
-                break
             case ComponentOptionKeys.UPDATED:
-                options[LifecycleHooks.UPDATED] = [options[LifecycleHooks.UPDATED]]
+            case ComponentOptionKeys.BEFORE_UNMOUNT:
+            case ComponentOptionKeys.UNMOUNTED:
+                var option = options[key]
+                // all lifecycle hooks should be an array in options or compoennt instance
+                if (option && !isArray(option)) {
+                    options[key] = [option]
+                }
                 break
             case ComponentOptionKeys.MIXINS:
-                options[ComponentOptionKeys.MIXINS].forEach((mixin: any) => {
-                    initOptions(mixin, initTarget)
-                })
+                var mixins = options[key]
+                injectMixins(options, mixins as any[])
                 break
             case ComponentOptionKeys.COMPOENNTS:
                 break
@@ -82,7 +90,5 @@ export const initOptions = (options: any, target = null) => {
                 break
         }
     }
-    if (!isMixin) {
-        options._isOptions = true
-    }
+    options._isOptions = true
 }

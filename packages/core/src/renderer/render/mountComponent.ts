@@ -26,8 +26,11 @@ import {
     processdom
 } from '../common/processdom'
 import { initScope } from '../../instance/scope'
+import { getCurrentApp } from '../../..'
+import { injectMixins } from '../../instance/mixin'
 
 function createComponentInstance(options: any) {
+    var app = getCurrentApp()
     if (!options._isOptions) {
         initOptions(options)
     }
@@ -41,6 +44,7 @@ function createComponentInstance(options: any) {
         components: options.components,
         directives: options.directives,
         // hooks will always be an array
+        [LifecycleHooks.BEFORE_CREATE]: options[LifecycleHooks.BEFORE_CREATE] && [...options[LifecycleHooks.BEFORE_CREATE]],
         [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
         [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],
         [LifecycleHooks.BEFORE_MOUNT]: options[LifecycleHooks.BEFORE_MOUNT] && [...options[LifecycleHooks.BEFORE_MOUNT]],
@@ -49,6 +53,10 @@ function createComponentInstance(options: any) {
         [LifecycleHooks.UNMOUNTED]: options[LifecycleHooks.UNMOUNTED] && [...options[LifecycleHooks.UNMOUNTED]],
         [LifecycleHooks.BEFORE_UPDATE]: options[LifecycleHooks.BEFORE_UPDATE] && [...options[LifecycleHooks.BEFORE_UPDATE]],
         [LifecycleHooks.UPDATED]: options[LifecycleHooks.UPDATED] && [...options[LifecycleHooks.UPDATED]]
+    }
+
+    if (app.mixins) {
+        injectMixins(instance, app.mixins)
     }
     return instance
 }
@@ -71,7 +79,11 @@ export const mountComponent = (vnode: any, container: Element) => {
 
     var instance: any = createComponentInstance(type)
 
+    debugger
+
     const { scope, createRender, } = instance;
+
+    callHook(LifecycleHooks.BEFORE_CREATE, instance, scope, scope)
 
     // init instance , we only can use getCurrentInstance in create hook 
     setCurrentInstance(instance)

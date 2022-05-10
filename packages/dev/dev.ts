@@ -3,20 +3,22 @@ import {
     createApp, onMounted
 } from '@crush/core'
 
-const app = createApp({
+var root = {
     template: `
         <input --focus #app>
         `,
     create($: any) {
-        $.count = 0
-        $.add = () => $.count++
-    },
-    directives: {
-        focus(el: HTMLElement) {
-            el.focus()
-        }
+    }
+}
+
+const app = createApp(root)
+
+app.mixin({
+    mounted(){
+        debugger
     }
 })
+
 
 console.log('app', app);
 const instance = app.mount('#app')

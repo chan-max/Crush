@@ -1,3 +1,4 @@
+import { isArray } from "@crush/common"
 import { getCurrentInstance } from "../.."
 
 /*
@@ -9,6 +10,7 @@ const enum LifecycleHooks {
 
     CREATE = 'create',
 
+    // those following hooks is also used for mixins and directives 
     CREATED = 'created',
     BEFORE_MOUNT = 'beforeMount',
     MOUNTED = 'mounted',
@@ -18,9 +20,19 @@ const enum LifecycleHooks {
     UNMOUNTED = 'unmounted',
 }
 
-function injectHook(type: LifecycleHooks, target: any, hook: Function) {
-    const hooks = (target[type] ||= [])
-    hooks.push(hook)
+function injectHook(type: LifecycleHooks, target: any, hook: Function | Function[]) {
+    var hooks = (target[type] ||= [])
+
+    if (!isArray(hooks)) {
+        target[type] = [target[type]]
+    }
+
+    // the input hooks supports array
+    if (isArray(hook)) {
+        hooks = hooks.concat(hook)
+    } else {
+        hooks.push(hook)
+    }
 }
 
 /*
@@ -36,7 +48,7 @@ const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, get
 
 // no beforeCreate
 const onCreated = createHook(LifecycleHooks.CREATED)
-const onBeforeMount =  createHook(LifecycleHooks.BEFORE_MOUNT)
+const onBeforeMount = createHook(LifecycleHooks.BEFORE_MOUNT)
 const onMounted = createHook(LifecycleHooks.MOUNTED)
 const onBeforeUpdate = createHook(LifecycleHooks.BEFORE_UPDATE)
 const onUpdated = createHook(LifecycleHooks.UPDATED)
