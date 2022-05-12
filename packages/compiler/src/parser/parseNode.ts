@@ -111,7 +111,6 @@ function parseNode(node: any, ctx: any) {
             case Nodes.SLOT:
                 break
             case Nodes.DEFINE_SLOT:
-                debugger
                 break
         }
     } else if (type === Nodes.TEXT) {

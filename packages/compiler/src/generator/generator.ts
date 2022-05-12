@@ -131,24 +131,34 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
                 var slotName = toBackQuotes(dir.value || 'default')
                 target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, target)
                 break
+            case Nodes.DEFINE_SLOT:
+                debugger
+                break
         }
         return genDirectives(target, dirs, context)
     }
 }
 
 function genCustomDirectives(code: string, customDirs: any[], context: any): string {
-
     // injectDirective
+
     var dirNames = customDirs.map((directive: any) => {
-        var { dirName, isDynamicProperty } = directive
-        var dirVar = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getDirective, toCodeString(dirName)))
+        var { property, isDynamicProperty } = directive
+        var dirVar = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getDirective, toCodeString(property)))
         return dirVar
     })
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirNames))
 }
 
 function genChildrenString(children: any, context: any) {
+    if (!children) return NULL
     return stringify(genChildren(children, context))
+}
+
+function genDirs(code: string, node: any, context: any) {
+    if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
+    if (node.dirs) { code = genDirectives(code, node.dirs, context) }
+    return code
 }
 
 function genNode(node: any, context: any): any {
@@ -168,25 +178,25 @@ function genNode(node: any, context: any): any {
             var slotName = toBackQuotes(node.attributeMap?.name || 'default')
             var backup = genNodes(node.children, context)
             return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, backup)
+        case Nodes.DEFINE_SLOT:
+            debugger
+            break
         case Nodes.HTML_ELEMENT:
-            const tagName = toBackQuotes(node.tagName) // required
-            var children = node.children ? genChildrenString(node.children, context) : NULL
-            const props = genProps(node, context)
-            var code: string = context.callRenderFn(renderMethodsNameMap.createElement, tagName, props, children, uStringId())
-            if (node.dirs) { code = genDirectives(code, node.dirs, context) }
-            if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
+            var code: string = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            code = genDirs(code, node, context)
             return code
         case Nodes.SVG_ELEMENT:
             debugger
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
-        case Nodes.COMPONENT: 
-            context.pushNewLine(
-                declare(
-                    uVar(),
-                    context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
-                )
-            )
-            return context.callRenderFn(renderMethodsNameMap.createComponent, uVar)
+        case Nodes.COMPONENT:
+            var code: string = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
+            var uv = context.hoistExpression(code)
+            var props = genProps(node, context)
+            // var slots = genChildren(node.children, context)
+            // debugger
+            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, NULL, uStringId())
+            code = genDirs(code, node, context)
+            return code
         case Nodes.TEXT:
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
@@ -321,6 +331,7 @@ function genProps(node: any, context: any) {
         type, attributes
     } = node
     if (!(attributes && attributes.length)) {
+        // attributes may be an empty array , becasue the directives
         return NULL
     }
     var props: any = {}
@@ -347,31 +358,13 @@ function genProps(node: any, context: any) {
                 }
                 props[handlerKey] = callback
                 break
-            /*
-                support mutiple class in one element 
-                <h1
-                    class="top"
-                    class="warn"
-                    $class="myCustomClass1"
-                    $class="myCustomClass2"
-                >
-            */
             case Nodes.CLASS:
-                var {
-                    isDynamicValue,
-                    value
-                } = attr
                 var _class = props.class ||= []
-                _class.push(value)
-
+                _class.push(attr.value)
                 break
             case Nodes.STYLE:
-                var {
-                    isDynamicValue,
-                    value
-                } = attr
                 var style = props.style ||= []
-                style.push(value)
+                style.push(attr.value)
                 break
             case Nodes.HTML_ATTRIBUTE:
                 // normal attributes

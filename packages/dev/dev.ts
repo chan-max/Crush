@@ -5,17 +5,12 @@ import {
 
 var root = {
     template: `
-        <hello>
-
-        </hello>
+        <h1 .a .b .c .btn>  111 </h1>
         `,
     create($: any) {
         $.count = 0
         $.add = () => $.count++
     },
-    components:{
-        hello:{}
-    }
 }
 
 const app = createApp(root)

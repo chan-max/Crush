@@ -54,7 +54,10 @@ export const findValueByattributes = (attrs: Asb[], attributes: string[]) => fin
 export const findValuesByattribute = (attrs: Asb[], attribute: string) => findAttr(attrs, (_attribute: string) => _attribute === attribute, true)
 export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => findAttr(attrs, (attribute: string) => attributes.includes(attribute), true)
 
-const extAttribute = /(@|\$|-{2})?(\()?([\w-]+)(\))?(?::(\w+))?(?:\.([\w\.]+))?/
+
+/*-----------------------------------------------------------------------------------------*/
+
+const extAttribute = /(@|\$|-{2}|\.|#)?(\()?([\w-]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?/
 
 var fnIsCalled = /.+\(.*\)$/
 
@@ -72,11 +75,16 @@ export const processAttribute = (node: any) => {
     for (let i = 0; i < attributes.length; i++) { // not destructur becasue keep the node
         const attr = attributes[i]
         var exResult = exec(attr.attribute as string, extAttribute) as string[];
-        var [flag, l, property, r, argument, modifierList]: any = exResult;
-        var isDynamicProperty = l && r
-        var isDynamicValue = flag === '$'
-        var modifiers = modifierList && modifierList.split('.')
-        
+        var [flag, l, property, r, argumentStr, modifierStr]: any = exResult;
+
+        attr.property = property
+        attr.value = attr.value
+        attr.isDynamicProperty = l && r
+        attr.isDynamicValue = flag === '$'
+        attr.modifiers = modifierStr && modifierStr.split('.')
+        attr.argument = argumentStr && argumentStr.split(':')
+
+
         // process directive
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
@@ -116,11 +124,11 @@ export const processAttribute = (node: any) => {
                 case Nodes.SLOT:
                     (node.dirs ||= []).push(attr)
                     break
+                case Nodes.DEFINE_SLOT:
+                    (node.dirs ||= []).push(attr)
+                    break
                 case Nodes.CUSTOM_DIRECTIVE:
-                    attr.dirName = dirName
-                    attr.argument = argument
-                    attr.modifiers = modifiers;
-                    attr.isDynamicProperty = isDynamicProperty;
+                    // 只有自定义指令支持动态指令
                     (node.customDirs ||= []).push(attr)
                     break
             }
@@ -133,41 +141,37 @@ export const processAttribute = (node: any) => {
             i--
             // 因为删除了数组中的元素，所以指针回退一步
         } else if (flag === NodesMap[Nodes.AT]) {
-            // the events attributeValue will always be dynamicMapKey
-            /*
-                support :
-                methods name : @click="login"
-                expression : @click="login = true" //此时需要包裹一层函数
-                function : @click="function(){ ... }"
-                arrow function : @click="() => { ... }"
-            */
             attr.type = Nodes.EVENT
-            attr.isDynamicValue = true
             attr.isFunction = !fnIsCalled.test(attr.value)
-            attr.argument = argument
-            attr.modifiers = modifiers
-            attr.isDynamicProperty = isDynamicProperty
-            attr.property = property
+        } else if (flag === '#') {
+            /*
+                #app => id="app"
+                #(x) => $id="x"
+            */
+            attr.value = attr.property
+            attr.property = 'id'
+            attr.isDynamicValue = attr.isDynamicProperty
+            attr.isDynamicProperty = false
+        } else if (flag === '.') {
+            attr.type = Nodes.CLASS
+            if (attr.isDynamicProperty) {
+                attr.value = attr.property
+            } else {
+                attr.value = parseInlineClass(attr.property)
+            }
         } else if (property === NodesMap[Nodes.CLASS]) {
             // contain dynamic class and static class
             attr.type = Nodes.CLASS
-            attr.isDynamicValue = isDynamicValue
-            if (!isDynamicValue) {
+            if (!attr.isDynamicValue) {
                 attr.value = parseInlineClass(attr.value)
             }
         } else if (property === NodesMap[Nodes.STYLE]) {
             attr.type = Nodes.STYLE
-            attr.isDynamicValue = isDynamicValue
-            if (!isDynamicValue) {
+            if (!attr.isDynamicValue) {
                 attr.value = parseInlineStyle(attr.value)
             }
         } else {
             //  normal attribute
-            attr.property = property
-            attr.argument = argument
-            attr.modifiers = modifiers
-            attr.isDynamicValue = isDynamicValue
-            attr.isDynamicProperty = isDynamicProperty
         }
     }
 }

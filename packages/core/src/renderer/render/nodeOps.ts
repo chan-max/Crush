@@ -4,6 +4,8 @@ import {
     IMPORTANT
 } from '../common/important'
 
+
+
 export const nodeOps = {
     insert: (child: Element | Text, parent: Element, anchor: Element | null = null) => {
 
@@ -26,4 +28,18 @@ export const nodeOps = {
     setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),
 
     deleteRule: (sheet: CSSStyleSheet, index: number) => sheet.deleteRule(index)
+}
+
+
+
+function addEventListener(el: any, event: any, handler: any, options: any) {
+    el.addEventListener(event, handler, options);
+}
+
+function removeEventListener(el: any, event: any, handler: any, options: any) {
+    el.removeEventListener(event, handler, options);
+}
+export {
+    addEventListener,
+    removeEventListener
 }

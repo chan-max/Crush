@@ -87,7 +87,6 @@ export const parseHTML = (source: string): Asb[] => {
                 (attributeMap ||= getEmptyMap())[attribute] = value;
             }
         } else { // text
-
             var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/
             var textToken, text
             if ((textToken = textEndsWithTag.exec(scanner.source))) {
