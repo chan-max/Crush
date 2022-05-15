@@ -1,6 +1,5 @@
 import { keys, removeFromArray } from "@crush/common"
 import { EMPTY_MAP } from "@crush/common/src/value"
-import { update } from "./update"
 
 
 export function updateClass(pClass: any, nClass: any, el: HTMLElement) {

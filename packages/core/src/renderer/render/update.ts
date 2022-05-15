@@ -48,7 +48,7 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
         callHook(LifecycleHooks.BEFORE_MOUNT, p, null, el)
     }
 
-    updateProps(p.props, n.props, n)
+    updateProps(p.props, n.props, el, n)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor)
 

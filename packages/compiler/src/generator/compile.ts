@@ -96,7 +96,6 @@ export function compile(template: string, config = defaultCompilerConfig) {
     /*  
         the dom template ast will alwways return an array
     */
-
     return createFunction(context.getCode(), RENDER_METHODS)
 }
 

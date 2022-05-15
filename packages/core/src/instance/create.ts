@@ -6,7 +6,7 @@ import {
 
 const stateIniterHandler = {
     get(initializer: any, key: string) {
-        
+
         switch (initializer.index) {
             case 0:
                 /* define state */
@@ -27,6 +27,7 @@ const stateIniterHandler = {
             case 2:
                 var scope = getCurrentScope()
                 function onChange(callback: any) {
+
                     watch(() => {
                         scope[initializer.stateName]
                     }, callback)

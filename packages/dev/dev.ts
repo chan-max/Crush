@@ -1,15 +1,23 @@
 
 import {
-    createApp, onMounted
+    createApp, onMounted, useState
 } from '@crush/core'
 
 var root = {
     template: `
-        <h1 .a .b .c .btn>  111 </h1>
+        <style>
+            button{
+                $color: count%2 === 0 ? 'red' : 'blue' ;
+            }
+        </style>
+        <button @click="setCount( count + 1 )"> {{ count }} </button>
         `,
     create($: any) {
-        $.count = 0
-        $.add = () => $.count++
+        const { count, setCount, onCountChange } = useState(0)
+        onCountChange(() => {
+            document.title = `count : ${$.count}`
+        })
+        
     },
 }
 
