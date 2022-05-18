@@ -17,7 +17,6 @@ var root = {
         onCountChange(() => {
             document.title = `count : ${$.count}`
         })
-        
     },
 }
 
