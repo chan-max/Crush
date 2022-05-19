@@ -84,9 +84,9 @@ export class App {
     }
 
     installed = new Set()
-    use(plugin: any, ...options: any[]) {
-        if (!this.installed.has(plugin)) {
-            plugin(this, ...options)
+    use(installer: any, ...options: any[]) {
+        if (!this.installed.has(installer)) {
+            installer(this, ...options)
         }
     }
 }

@@ -27,7 +27,6 @@ const stateIniterHandler = {
             case 2:
                 var scope = getCurrentScope()
                 function onChange(callback: any) {
-
                     watch(() => {
                         scope[initializer.stateName]
                     }, callback)

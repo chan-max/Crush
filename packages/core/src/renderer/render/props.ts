@@ -1,7 +1,5 @@
 import { keys, removeFromArray } from "@crush/common";
 import { EMPTY_MAP } from "@crush/common/src/value";
-import { Nodes, NodesMap } from "@crush/types";
-import viteConfig from "../../../../_docs/vite.config";
 import { isEvent, parseHandlerKey } from "../common/event";
 import { unmountClass, updateClass } from "./class";
 import { mountDeclaration, unmountDeclaration, updateDeclaration } from "./declaration";
