@@ -34,6 +34,9 @@ export class App {
     constructor(options: any) {
         this.options = options
         currentApp = this
+
+        /* 安装动画 */ 
+
     }
 
     components = getEmptyMap()

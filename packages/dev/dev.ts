@@ -5,9 +5,11 @@ import {
 
 var root = {
     template: `
-        <button @click="add"> add </button>
-        <button @click="sub"> sub </button>
-        <h1 --fade> {{ count }} </h1>
+        <style>
+            @keyframes bounce{
+                
+            }
+        </style>
         `,
     create($: any) {
         $.count = 0

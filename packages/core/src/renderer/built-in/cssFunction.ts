@@ -74,6 +74,12 @@ function radialGradient() {
 const max = (...items: string[]) => `max(${items.join(',')})`
 const min = (...items: string[]) => `min(${items.join(',')})`
 
+
+/* 对于单位固定的函数只需要 */
+function rotateY(deg: number) {
+    
+}
+
 export default {
     rgba,
     rgb,
