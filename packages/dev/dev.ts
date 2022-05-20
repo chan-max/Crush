@@ -5,19 +5,22 @@ import {
 
 var root = {
     template: `
-        <style>
-            button{
-                $color: count%2 === 0 ? 'red' : 'blue' ;
-            }
-        </style>
-        <button @click="setCount( count + 1 )"> {{ count }} </button>
+        <button @click="add"> add </button>
+        <button @click="sub"> sub </button>
+        <h1 --fade> {{ count }} </h1>
         `,
     create($: any) {
-        const { count, setCount, onCountChange } = useState(0)
-        onCountChange(() => {
-            document.title = `count : ${$.count}`
-        })
+        $.count = 0
+        $.add = () => $.count++
+        $.sub = () => $.count--
     },
+    directives: {
+        fade: {
+            created() {
+                console.log('created');
+            }
+        }
+    }
 }
 
 const app = createApp(root)
