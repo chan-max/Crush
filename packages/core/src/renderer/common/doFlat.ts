@@ -1,5 +1,5 @@
 import { flatRules } from './flatRules'
-import { Nodes } from '@crush/types'
+import { Nodes } from '../../node/nodes'
 import {
     createStyle
 } from '../vnode/vnode'
@@ -33,7 +33,7 @@ export function doFlat(
         rule.patchKey = patchKey
         rule.parent = parent
 
-        switch (rule.nodeType) {
+        switch (rule.type) {
             case Nodes.STYLE_RULE:
                 flattedRules.push(rule)
                 var _children = rule.children
@@ -46,15 +46,15 @@ export function doFlat(
                 if (!rule.parent) {
                     debugger
                     // 声明不再任何样式规则或媒体规则下时,应该报错
-                } else if (rule.parent.nodeType === Nodes.STYLE_RULE) {
+                } else if (rule.parent.type === Nodes.STYLE_RULE) {
                     (rule.parent.children ||= []).push(rule)
-                } else if (rule.parent.nodeType === Nodes.KEYFRAME_RULE) {
+                } else if (rule.parent.type === Nodes.KEYFRAME_RULE) {
                     (rule.parent.children ||= []).push(rule)
                 } else {
                     /*
                         当一条样式声明不时样式规则的子节点
                     */
-                    if (rule.parent.nodeType === Nodes.MEDIA_RULE) {
+                    if (rule.parent.type === Nodes.MEDIA_RULE) {
                         /* 
                             一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule 
                             此时和一直寻找parent的选择器

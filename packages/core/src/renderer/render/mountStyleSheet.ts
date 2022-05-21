@@ -3,9 +3,9 @@
     mountStyleSheet will create a style element
 */
 
-import { isNumber, isString } from "@crush/common"
+import { isArray, isNumber, isString } from "@crush/common"
 import { hyphenate } from "@crush/common/src/transformString"
-import { Nodes } from "@crush/types"
+import { Nodes } from "../../node/nodes"
 
 export const mountStyleSheet = (vnode: any, container: any) => {
     var ref = document.createElement('style')
@@ -23,7 +23,7 @@ function mountSheet(sheet: any, rules: any, vnode: any) {
 }
 
 export function mountRule(sheet: any, rule: any, vnode: any, index: number = sheet.cssRules.length) {
-    switch (rule.nodeType) {
+    switch (rule.type) {
         case Nodes.STYLE_RULE:
             mountStyleRule(sheet, rule, vnode, index)
             break
@@ -95,10 +95,22 @@ function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: numb
     mountSheet(newSheet, rules, vnode)
 }
 
+
+function normalizeKeyframe(keyframe: string | number | Array<string | number>): any {
+    if (isArray(keyframe)) {
+        return keyframe.map(normalizeKeyframe).join(',')
+    } else if (isNumber(Number(keyframe))) {
+        // 为数字或者数字字符串
+        return `${keyframe}%`
+    } else {
+        return keyframe
+    }
+}
+
 export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var { keyframe, children: declaration } = rule
 
-    keyframe = isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe // 关键帧支持数字的写法 
+    keyframe = normalizeKeyframe(keyframe)
 
     // appendRule wont return the index 
     sheet.appendRule(`${keyframe}{}`)
@@ -106,10 +118,11 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     const insertedRule: any = sheet.cssRules[index]
     rule.ref = insertedRule // set ref
     const insertedRuleStyle = insertedRule.style
-    Object.entries(declaration).forEach(([property, value]: [any, any]) => {
+
+    for (let property in declaration) {
         property = hyphenate(property) // the property shoule be uncamelized
-        var { value } = getDeclarationValue(value)
+        var { value } = getDeclarationValue(declaration[property])
         // keyframe 中不能设置important
         nodeOps.setProperty(insertedRuleStyle, property, value)
-    })
+    }
 }

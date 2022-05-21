@@ -20,6 +20,10 @@ import {
 } from '../renderer/render/mountComponent'
 import { isFunction } from '@crush/common/src/dataType'
 
+import {
+    installAnimation
+} from '../animate/installAnimation'
+
 export let currentApp: any = null
 export function getCurrentApp() {
     return currentApp
@@ -35,7 +39,8 @@ export class App {
         this.options = options
         currentApp = this
 
-        /* 安装动画 */ 
+        /* 安装动画 */
+        this.use(installAnimation)
 
     }
 

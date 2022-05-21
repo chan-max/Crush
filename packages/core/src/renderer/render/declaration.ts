@@ -1,4 +1,5 @@
 import {
+    isArray,
     isString, removeFromArray
 } from '@crush/common'
 import { EMPTY_MAP } from '@crush/common/src/value'
@@ -10,10 +11,9 @@ import {
 import { nodeOps } from './nodeOps'
 
 export function getDeclarationValue(rawValue: any) {
-    var value, important
-    if (!rawValue) {
-        value = null // 这里不能用空字符串，因为会进入下面的判断
-        important = false
+    var value, important = false
+    if (rawValue === undefined || rawValue === null) {
+        value = null
     } else if (rawValue[IMPORTANT_SYMBOL]) {
         value = rawValue.value
         important = true
@@ -26,6 +26,12 @@ export function getDeclarationValue(rawValue: any) {
         value = value.split(IMPORTANT_KEY)[0].trim()
         important = true
     }
+
+    // 支持数组
+    if (isArray(value)) {
+        value = value.join(' ')
+    }
+
     return {
         value,
         important

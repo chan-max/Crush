@@ -2,7 +2,7 @@ import { createScanner } from "./scanner"
 
 import {
     Nodes
-} from '@crush/types'
+} from '@crush/core'
 import {
     createAsb,
     Asb

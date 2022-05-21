@@ -1,4 +1,4 @@
-import { Nodes } from "@crush/types";
+import { Nodes } from "../../node/nodes";
 import { nodeOps } from './nodeOps'
 
 export function unmount(vnode: any, container: any, anchor: any) {

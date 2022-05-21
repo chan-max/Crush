@@ -1,5 +1,5 @@
 import { isArray } from "@crush/common"
-import { Nodes } from "@crush/types"
+import { Nodes } from "../../node/nodes"
 import {
     flatRules
 } from './flatRules'
@@ -21,7 +21,7 @@ export function processdom(node: any[], key: any = null): null | any[] {
 
     node.forEach((child: any) => {
         if (child) {
-            if (child.nodeType === Nodes.FRAGMENT) {
+            if (child.type === Nodes.FRAGMENT) {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
                 flattedNode = flattedNode.concat(processdom(child.children, child.key))
             } else {
@@ -31,12 +31,12 @@ export function processdom(node: any[], key: any = null): null | any[] {
                     child.patchKey = child.key
                 }
 
-                if (child.nodeType === Nodes.HTML_ELEMENT) {
+                if (child.type === Nodes.HTML_ELEMENT) {
                     // 子节点递归处理
                     child.children = processdom(child.children)
                 }
 
-                if (child.nodeType === Nodes.STYLE) {
+                if (child.type === Nodes.STYLE) {
                     child.children = flatRules(child.children, null, child.patchKey)
                 }
 

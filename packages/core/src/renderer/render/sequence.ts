@@ -56,7 +56,7 @@ export function diffChildren(p: any, n: any, isRules: any) {
         var node = n[i]
         var patchKey = node.patchKey
         var sameNode = pMap[patchKey]
-        if (sameNode && (isRules || (sameNode.node.type === node.type))) {
+        if (sameNode && (isRules || (sameNode.node.tag === node.tag))) {
             /*
                 the condition of reuse a vnode for dom is same patchkey and same type
                 for rules is just the same patchkey

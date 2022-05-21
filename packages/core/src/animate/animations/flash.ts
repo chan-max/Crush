@@ -1,5 +1,8 @@
+import {
+    keyframes, keyframe
+} from '../../renderer/vnode/h'
 
-export const bounce = keyframes(
+export const flash = keyframes(
     'flash',
     [
         keyframe([0, 50, 100], {

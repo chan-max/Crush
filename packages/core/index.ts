@@ -106,3 +106,10 @@ export {
     injectHook,
     onMounted
 } from './src/instance/lifecycle'
+
+export {
+    Nodes,
+    NodesMap,
+    directiveTypeOf,
+    tagTypeOf
+} from './src/node/nodes'

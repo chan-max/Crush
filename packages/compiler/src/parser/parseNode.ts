@@ -14,7 +14,7 @@ import {
 import {
     Nodes,
     tagTypeOf
-} from '@crush/types'
+} from '@crush/core'
 
 import {
     parseText,

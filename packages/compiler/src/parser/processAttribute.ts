@@ -1,5 +1,5 @@
 
-import { directiveTypeOf, Nodes, NodesMap, } from '@crush/types'
+import { directiveTypeOf, Nodes, NodesMap, } from '@crush/core'
 import {
 } from './parseNode'
 

@@ -1,4 +1,4 @@
-import { Nodes } from '@crush/types'
+import { Nodes } from '../../node/nodes'
 import { doFlat } from './doFlat'
 
 import {
@@ -18,7 +18,7 @@ function flatRules(
         stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
     */
     flatted.forEach((rule: any) => {
-        if (rule.nodeType === Nodes.STYLE_RULE) {
+        if (rule.type === Nodes.STYLE_RULE) {
             /*
                 children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                 并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,

@@ -35,7 +35,7 @@ const cssReservedWord = /^(if|else-if|else|for|elseIf)/
 
 import {
     Nodes, NodesMap
-} from '@crush/types'
+} from '@crush/core'
 
 
 import {

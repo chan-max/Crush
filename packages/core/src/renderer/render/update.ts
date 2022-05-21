@@ -1,5 +1,5 @@
 import { removeFromArray } from "@crush/common";
-import { Nodes } from "@crush/types";
+import { Nodes } from "../../node/nodes";
 import { patch } from "./patch";
 import { updateStyleSheet } from "./updateStyleSheet";
 

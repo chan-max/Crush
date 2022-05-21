@@ -1,4 +1,4 @@
-import { Nodes } from "@crush/types";
+import { Nodes } from "@crush/core";
 
 export interface Asb {
     type: Nodes | string

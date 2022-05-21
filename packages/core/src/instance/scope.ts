@@ -1,4 +1,4 @@
-import cssFunctions from '../renderer/built-in/cssFunction'
+import cssFunctions from '../renderer/built-in/cssFunctionExport'
 
 
 var proto = {

@@ -1,5 +1,5 @@
 
-import { Nodes } from "@crush/types"
+import { Nodes } from "../../node/nodes"
 
 export const updateStyleSheet = (p: any, n: any) => {
     var ref = n.ref = p.ref

@@ -6,10 +6,11 @@ import {
 var root = {
     template: `
         <style>
-            @keyframes bounce{
-                
+            .test{
+                animation: backInDown 1s;
             }
         </style>
+        <h1 class="test">I am flash</h1>
         `,
     create($: any) {
         $.count = 0

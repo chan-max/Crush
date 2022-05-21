@@ -1,13 +1,12 @@
-import { Nodes, NodesMap } from "@crush/types"
+import { Nodes, NodesMap } from "../../node/nodes"
 import { callHook, LifecycleHooks } from "../../instance/lifecycle"
 
 import {
     mountStyleSheet
 } from './mountStyleSheet'
 
-export function mount(vnode: any, container: any, anchor: any) {
-    const type = vnode.nodeType
-    switch (type) {
+export function mount(vnode: any, container: any, anchor: any = null) {
+    switch (vnode.type) {
         case Nodes.HTML_ELEMENT:
             mountHTMLElement(vnode, container, anchor)
             break
@@ -24,7 +23,7 @@ export function mount(vnode: any, container: any, anchor: any) {
 }
 
 function mountFragment(vnode: any, container: any, anchor: any) {
-    debugger
+    debugger // wont
     mountChildren(vnode.children, container, anchor)
 }
 
@@ -55,13 +54,9 @@ import { mountDeclaration } from "./declaration"
 import { mountProps } from "./props"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
-    const {
-        type,
-        props,
-        children
-    } = vnode
+    const { tag, props, children } = vnode
 
-    var el = document.createElement(type)
+    var el = document.createElement(tag)
     vnode.ref = el
 
     mountProps(vnode)

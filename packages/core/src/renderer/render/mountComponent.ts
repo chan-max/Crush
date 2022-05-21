@@ -75,9 +75,9 @@ export function getCurrentScope() {
 }
 
 export const mountComponent = (vnode: any, container: Element) => {
-    var { type, app, props, children } = vnode
+    var { tag, app, props, children } = vnode
 
-    var instance: any = createComponentInstance(type)
+    var instance: any = createComponentInstance(tag)
 
     const { scope, createRender, } = instance;
 

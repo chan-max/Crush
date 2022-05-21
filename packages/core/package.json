@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@crush/renderer": "^1.0.0",
-    "@crush/types": "^1.0.0",
+    "@crush/core": "^1.0.0",
     "@crush/compiler": "^1.0.0"
   }
 }

@@ -77,10 +77,22 @@ const min = (...items: string[]) => `min(${items.join(',')})`
 
 /* 对于单位固定的函数只需要 */
 function rotateY(deg: number) {
-    
+
 }
 
-export default {
+function translateX(t: string) {
+    return `translateX(${t})`
+}
+
+function translateY(t: string) {
+    return `translateY(${t})`
+}
+
+function scale(sx: number, sy?: number) {
+    return 'scale(' + sx + (sy ? `,${sy}` : '') + ')'
+}
+
+export  {
     rgba,
     rgb,
     hsl,
@@ -90,5 +102,8 @@ export default {
     calc,
     cubicBzier,
     max,
-    min
+    min,
+    translateX,
+    translateY,
+    scale
 }

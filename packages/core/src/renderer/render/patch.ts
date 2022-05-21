@@ -1,5 +1,5 @@
 import { isArray } from '@crush/common'
-import { Nodes } from '@crush/types'
+import { Nodes } from '../../node/nodes'
 import { empty } from '../vnode/vnode'
 import {
     mount
