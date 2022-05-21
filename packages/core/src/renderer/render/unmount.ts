@@ -2,7 +2,7 @@ import { Nodes } from "../../node/nodes";
 import { nodeOps } from './nodeOps'
 
 export function unmount(vnode: any, container: any, anchor: any) {
-    switch (vnode.nodeType) {
+    switch (vnode.type) {
         case Nodes.HTML_ELEMENT:
             if (vnode.children) {
                 unmountChildren(vnode.children)

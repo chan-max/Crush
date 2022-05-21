@@ -78,7 +78,6 @@ export {
     parseHandlerKey,
     createHandlerKey,
     createEvent,
-    isEventOptions
 } from './src/renderer/common/event'
 
 export {

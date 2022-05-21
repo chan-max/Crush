@@ -61,13 +61,23 @@ const extAttribute = /(@|\$|-{2}|\.|#)?(\()?([\w-]+)(\))?(?::([\w:]+))?(?:\.([\w
 
 var fnIsCalled = /.+\(.*\)$/
 
-function isFunctionExpression() {
-    /*
-        fn
-        () => ...
-        function(){}
-    */
+/*
+    如果是函数表达式，生成代码时不需要包裹一层函数
+*/
+
+// legal variable name
+var varRE = /^\w+$/
+// arrow function
+var arrowFnRE = /\([\w,\s]*\)\s*=>\s*.*/
+// normal function
+var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/
+// array
+var arrayRE = /\[.*\]/
+
+function isHandler(exp: string) {
+    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp)
 }
+
 
 export const processAttribute = (node: any) => {
     const { type, attributes } = node;
@@ -142,7 +152,8 @@ export const processAttribute = (node: any) => {
             // 因为删除了数组中的元素，所以指针回退一步
         } else if (flag === NodesMap[Nodes.AT]) {
             attr.type = Nodes.EVENT
-            attr.isFunction = !fnIsCalled.test(attr.value)
+            // 为 true时代表是一个合法的handler可以直接生成代码，否则需要套一层函数
+            attr.isHandler = isHandler(attr.value)
         } else if (flag === '#') {
             /*
                 #app => id="app"
@@ -153,6 +164,7 @@ export const processAttribute = (node: any) => {
             attr.isDynamicValue = attr.isDynamicProperty
             attr.isDynamicProperty = false
         } else if (flag === '.') {
+            // class 简写形式
             attr.type = Nodes.CLASS
             if (attr.isDynamicProperty) {
                 attr.value = attr.property

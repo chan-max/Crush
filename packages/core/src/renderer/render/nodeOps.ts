@@ -22,7 +22,9 @@ export const nodeOps = {
             parent.removeChild(el);
         }
     },
+    setText() {
 
+    },
 
     // style
     setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),

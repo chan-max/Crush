@@ -4,7 +4,7 @@ import { patch } from "./patch";
 import { updateStyleSheet } from "./updateStyleSheet";
 
 export function update(p: any, n: any, container: any, anchor: any) {
-    switch (n.nodeType) {
+    switch (n.type) {
         case Nodes.TEXT:
             var ref = n.ref = p.ref
             if (p.children !== n.children) {
@@ -13,9 +13,6 @@ export function update(p: any, n: any, container: any, anchor: any) {
             break
         case Nodes.HTML_ELEMENT:
             updateHTMLElement(p, n, container, anchor)
-            break
-        case Nodes.FRAGMENT:
-            updateChildren(p.children, n.children, container, anchor)
             break
         case Nodes.STYLE:
             updateStyleSheet(p, n)
@@ -66,6 +63,7 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
     var {
         p, n
     } = diffChildren(pChildren, nChildren, false)
+    
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
         patch(p[i], n[i], container, getAnchor(p, i + 1))

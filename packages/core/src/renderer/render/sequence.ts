@@ -75,8 +75,7 @@ export function diffChildren(p: any, n: any, isRules: any) {
             }
         }
     }
-
-    return {
+    return {    
         p, n
     }
 }

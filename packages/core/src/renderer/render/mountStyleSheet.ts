@@ -120,7 +120,6 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     const insertedRuleStyle = insertedRule.style
 
     for (let property in declaration) {
-        property = hyphenate(property) // the property shoule be uncamelized
         var { value } = getDeclarationValue(declaration[property])
         // keyframe 中不能设置important
         nodeOps.setProperty(insertedRuleStyle, property, value)

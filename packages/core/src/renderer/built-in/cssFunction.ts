@@ -4,8 +4,8 @@
 
 import { isNumber } from "@crush/common"
 
-function completionUnit(value: string | number, unit = '%') {
-    return isNumber(value) ? `${value}unit` : value
+function addUnit(value: string | number, unit: string) {
+    return isNumber(value) ? `${value + unit}` : value
 }
 
 function rgba(...rgba: number[]) {
@@ -21,8 +21,8 @@ const rgb = rgba
 function hsla(h: number, s: number | string, l: number | string, a: number = 1) {
     return `hsla(
         ${h},
-        ${completionUnit(s)},
-        ${completionUnit(l)},
+        ${addUnit(s, '%')},
+        ${addUnit(l, '%')},
         ${a}
         )`
 }
@@ -88,11 +88,23 @@ function translateY(t: string) {
     return `translateY(${t})`
 }
 
+function translate3d(x: string | number, y: string | number, z: string | number) {
+    return `translate3d(${x},${y},${z})`
+}
+
 function scale(sx: number, sy?: number) {
     return 'scale(' + sx + (sy ? `,${sy}` : '') + ')'
 }
 
-export  {
+function rotate3d(x: number, y: number, z: number, a: number | string) {
+    return `rotate3d(${x},${y},${z},${addUnit(a, 'deg')})`
+}
+
+function rotate(a: number | string) {
+    return `rotate(${addUnit(a, 'deg')})`
+}
+
+export {
     rgba,
     rgb,
     hsl,
@@ -105,5 +117,8 @@ export  {
     min,
     translateX,
     translateY,
-    scale
+    scale,
+    rotate3d,
+    translate3d,
+    rotate
 }

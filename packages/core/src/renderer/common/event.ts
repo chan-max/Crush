@@ -1,24 +1,20 @@
-import { capitalize, exec, makeMap } from "@crush/common"
+import { arrayToMap, capitalize, exec, makeMap } from "@crush/common"
 
 // for renderer
 
-export const isEventOptions = makeMap('capture,once,passive')
-
 const onRE = /^on[A-Z]/;
-const eventOptionsRE = /(Once|Passive|Passive)$/
 export const isEvent = (key: string) => onRE.test(key);
+
 export const parseHandlerKey = (handlerKey: string) => {
-    var options = null // just put the options into addEventListener
-    var result
-    while (result = exec(handlerKey, eventOptionsRE)) {
-        var option = result[0].toLowerCase();
-        (options ||= {})[option] = true
-        handlerKey = handlerKey.slice(0,handlerKey.length - option.length)
-        debugger
-    }
+    var keys = handlerKey.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
+    // remove on
+    keys.shift()
+    var event = keys[0]
+    // remove eventName
+    keys.shift()
     return {
-        event: handlerKey.split('on')[1].toLowerCase(),
-        options
+        event,
+        options: arrayToMap(keys)
     }
 }
 
