@@ -141,13 +141,27 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
 
 function genCustomDirectives(code: string, customDirs: any[], context: any): string {
     // injectDirective
-
-    var dirNames = customDirs.map((directive: any) => {
-        var { property, isDynamicProperty } = directive
-        var dirVar = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getDirective, toCodeString(property)))
-        return dirVar
+    var dirs = customDirs.map((directive: any) => {
+        var { property, value, isDynamicProperty, argument, modifiers } = directive
+        var content: any = []
+        var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toCodeString(property))
+        if (!isDynamicProperty) {
+            dir = context.hoistExpression(dir)
+        }
+        // 
+        content.push(dir)
+        if (value) {
+            content.push(value)
+        }
+        if (argument) {
+            content.push(argument.map(toCodeString))
+        }
+        if (modifiers) {
+            content.push(argument.map(toCodeString))
+        }
+        return content
     })
-    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirNames))
+    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
 }
 
 function genChildrenString(children: any, context: any) {

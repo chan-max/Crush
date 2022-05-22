@@ -23,7 +23,6 @@ export function installAnimation() {
                 backInDown,
                 backInLeft,
                 backInRight,
-
             ]),
         document.head,
     )

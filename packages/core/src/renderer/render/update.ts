@@ -2,17 +2,18 @@ import { removeFromArray } from "@crush/common";
 import { Nodes } from "../../node/nodes";
 import { patch } from "./patch";
 import { updateStyleSheet } from "./updateStyleSheet";
+import { updateComponent } from "./updateComponent";
 
 export function update(p: any, n: any, container: any, anchor: any) {
     switch (n.type) {
         case Nodes.TEXT:
-            var ref = n.ref = p.ref
-            if (p.children !== n.children) {
-                ref.textContent = n.children
-            }
+            updateText(p, n)
             break
         case Nodes.HTML_ELEMENT:
             updateHTMLElement(p, n, container, anchor)
+            break
+        case Nodes.COMPONENT:
+            updateComponent(p, n, container, anchor)
             break
         case Nodes.STYLE:
             updateStyleSheet(p, n)
@@ -24,6 +25,12 @@ import {
     diffChildren
 } from './sequence'
 
+function updateText(p: any, n: any) {
+    var ref = n.ref = p.ref
+    if (p.children !== n.children) {
+        ref.textContent = n.children
+    }
+}
 
 import {
     updateProps
@@ -63,7 +70,7 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
     var {
         p, n
     } = diffChildren(pChildren, nChildren, false)
-    
+
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
         patch(p[i], n[i], container, getAnchor(p, i + 1))

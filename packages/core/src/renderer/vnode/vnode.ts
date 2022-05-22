@@ -88,13 +88,13 @@ var createKeyframe = (keyframe: any, children: any, key: any = uid()) => {
     return node
 }
 
-const createComponent = (tag: any, props: any, children: any) => {
-    return {
-        type: Nodes.COMPONENT,
-        tag,
-        props,
-        children
-    }
+const createComponent = (tag: any, props: any, children: any, key: any = uid()) => {
+    var node = createNode(Nodes.COMPONENT)
+    node.tag = tag
+    node.props = props
+    node.children = children
+    node.key = key
+    return node
 }
 
 var createSupports = (supports: string, children: any, key: any) => ({

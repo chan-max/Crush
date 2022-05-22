@@ -3,39 +3,61 @@ import {
     createApp
 } from '@crush/core'
 
+const hello = {
+    template: `
+        <h1 @click="x++"> hello  {{ x }} </h1>
+    `,
+    create($){
+        $.x = 0
+    }
+}
+
+const world = {
+    template: `
+        <h1> static component </h1>
+    `
+}
+
 var root = {
     template: `
-            <h1 --x> 123456789 </h1>
-            <button @click="count++"> {{count}} </button>
+            <button @click="count++"> {{ count }} </button>
+            <hello --if="count%2 === 1">
+            <world --else>
         `,
     create($: any) {
         $.count = 0
         $.add = () => $.count++
         $.sub = () => $.count--
+        $.e = () => {
+            console.log(666);
+        }
+    },
+    components: {
+        hello,
+        world
     },
     directives: {
         x: {
             created() {
-                console.log('created');
                 debugger
             },
             beforeMount() {
-                debugger
+
             },
             mounted() {
-                debugger
+
             },
             beforeUpdate() {
-                debugger
+
             },
-            updated(){
-                debugger
+            updated() {
+
             },
-            beforeUnmount(){
-                debugger
+            beforeUnmount() {
+
             },
-            unmounted(){
-                debugger
+            unmounted() {
+
             }
         }
     }

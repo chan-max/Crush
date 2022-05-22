@@ -25,7 +25,7 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
     } else {
         if (!next) {
             // 卸载当前节点
-            isArray(next) ? unmountChildren(current) : unmount(current, container, anchor)
+            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor)
         } else {
             if (isArray(current)) {
                 updateChildren(current, isArray(next) ? next : [next], container, anchor)
@@ -33,8 +33,8 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
                 if (isArray(next)) {
                     updateChildren([current], next, container, anchor)
                 } else {
-                    // 两个单节点 ， 但key可能不同
-                    if (current.type === next.type) {
+                    // 两个单节点 ， 但key可能不同 
+                    if (current.tag === next.tag) {
                         // 类型相同，直接更新
                         update(current, next, container, anchor)
                     } else {

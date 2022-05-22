@@ -83,6 +83,7 @@ export const initOptions = (options: ComponentOptions) => {
                 injectMixins(options, mixins as any[])
                 break
             case ComponentOptionKeys.COMPOENNTS:
+                
                 break
             case ComponentOptionKeys.DIRECTIVES:
                 break

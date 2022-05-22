@@ -13,8 +13,8 @@ export function mount(vnode: any, container: any, anchor: any = null) {
         case Nodes.TEXT:
             mountText(vnode, container, anchor)
             break
-        case Nodes.FRAGMENT:
-            mountFragment(vnode, container, anchor)
+        case Nodes.COMPONENT:
+            mountComponent(vnode, container, anchor)
             break
         case Nodes.STYLE:
             mountStyleSheet(vnode, container)
@@ -45,13 +45,10 @@ function mountText(vnode: any, container: any, anchor: any) {
     nodeOps.insert(el, container, anchor)
 }
 
-import {
-    isEvent,
-    parseHandlerKey
-} from '../common/event'
 import { nodeOps } from "./nodeOps"
 import { mountDeclaration } from "./declaration"
 import { mountProps } from "./props"
+import { mountComponent } from "./mountComponent"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const { tag, props, children } = vnode

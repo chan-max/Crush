@@ -39,7 +39,7 @@ function createComponentInstance(options: any) {
         uid: uid(),
         scope: reactive(initScope()),
         render: null,
-        currentTree: null,
+        vnode: null,
         createRender: options.createRender,
         components: options.components,
         directives: options.directives,
@@ -66,7 +66,7 @@ function createComponentInstance(options: any) {
 export var currentInstance: any = null
 export function setCurrentInstance(instance: any) {
     currentInstance = instance
-}  
+}
 export function getCurrentInstance() {
     return currentInstance
 }
@@ -74,10 +74,12 @@ export function getCurrentScope() {
     return getCurrentInstance().scope
 }
 
-export const mountComponent = (vnode: any, container: Element) => {
-    var { tag, app, props, children } = vnode
+export const mountComponent = (vnode: any, container: Element, anchor: any = null) => {
+    var { tag, props, children } = vnode
 
     var instance: any = createComponentInstance(tag)
+
+    vnode.ref = instance
 
     const { scope, createRender, } = instance;
 
@@ -101,30 +103,28 @@ export const mountComponent = (vnode: any, container: Element) => {
     function update() {
         const {
             isMounted,
-            currentTree
+            vnode
         } = instance
 
         // 每次更新生成新树
 
         var nextTree = render()
 
-        
-
         // 处理fragment
         nextTree = processdom(nextTree)
 
 
-        console.log('currentTree', currentTree);
+        console.log('prevTree', vnode);
         console.log('nextTree', nextTree);
 
         // test hooks
 
         callHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, instance, scope, scope)
-        patch(currentTree, nextTree, container)
+        patch(vnode, nextTree, container)
         callHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, instance, scope, scope)
 
         instance.isMounted = true
-        instance.currentTree = nextTree
+        instance.vnode = nextTree
     }
 
     //  call at every update

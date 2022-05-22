@@ -7,9 +7,9 @@ import {
 } from '../renderer/render/mountComponent'
 
 export function getComponent(name: string) {
-    return (getCurrentInstance() || getCurrentApp())?.components[name]
+    return getCurrentInstance().components?.[name] || getCurrentApp().components[name]
 }
 
 export function getDirective(name: string) {
-    return (getCurrentInstance() || getCurrentApp())?.directives?.[name]
+    return getCurrentInstance().directives?.[name] || getCurrentApp().directives[name]
 }
