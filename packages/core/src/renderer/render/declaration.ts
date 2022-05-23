@@ -61,4 +61,4 @@ export function mountDeclaration(declaration: any, style: any, vnode: any) {
 
 export function unmountDeclaration(declaration: any, style: any, vnode: any) {
     updateDeclaration(declaration, EMPTY_MAP, style, vnode)
-}
+}   

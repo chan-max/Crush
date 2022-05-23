@@ -112,6 +112,18 @@ function perspective(l: string) {
     return `perspective(${l})`
 }
 
+function skewX(x: number | string) {
+    return `skewX(${addUnit(x, 'deg')})`
+}
+
+function skewY(y: number | string) {
+    return `skewX(${addUnit(y, 'deg')})`
+}
+
+function skew(x: number | string, y: number | string) {
+    return `skew(${addUnit(x, 'deg')},${addUnit(y, 'deg')})`
+}
+
 export {
     rgba,
     rgb,
@@ -130,5 +142,8 @@ export {
     translate3d,
     rotate,
     perspective,
-    scale3d
+    scale3d,
+    skew,
+    skewX,
+    skewY
 }

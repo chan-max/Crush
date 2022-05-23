@@ -142,24 +142,21 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
 function genCustomDirectives(code: string, customDirs: any[], context: any): string {
     // injectDirective
     var dirs = customDirs.map((directive: any) => {
-        var { property, value, isDynamicProperty, argument, modifiers } = directive
-        var content: any = []
+        var { property, value, isDynamicProperty, _arguments, modifiers } = directive
+
+        // 支持动态指令
         var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toCodeString(property))
         if (!isDynamicProperty) {
             dir = context.hoistExpression(dir)
         }
-        // 
-        content.push(dir)
-        if (value) {
-            content.push(value)
+
+        var dirInfos = {
+            value,
+            _arguments: _arguments && _arguments.map(toCodeString),
+            modifiers: modifiers.map(toCodeString)
         }
-        if (argument) {
-            content.push(argument.map(toCodeString))
-        }
-        if (modifiers) {
-            content.push(argument.map(toCodeString))
-        }
-        return content
+
+        return [dir,dirInfos]
     })
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
 }

@@ -4,25 +4,34 @@ import {
 } from '@crush/core'
 
 var root = {
+    directives: {
+        d1: {
+            mounted() {
+                console.log('d1 mounted');
+            },
+            updated() {
+                console.log('d1 updated');
+            },
+            unmounted() {
+                console.log('d1 unmounted');
+            }
+        },
+        d2: {
+            mounted() {
+                console.log('d2 mounted');
+            },
+            updated() {
+                console.log('d2 updated');
+            },
+            unmounted() {
+                console.log('d2 unmounted');
+            }
+        }
+    },
     template: `
-            <style>
-                html,body{
-                    padding:0;
-                    margin:0;
-                    height:100%;
-                }
-                body{
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                }
-                h1{
-                    animation : flip 1s infinite;
-                }
-            </style>
             <button @click="count++"> {{ count }} </button>
-            <h1 --if="count%2 === 0"> toggle title </h1>
+            <h1 --d1:a:b:c.x.y.z="count" --if="count%2===0"> 111 </h1>
+            <h1 --d2:a:b:c.x.y.z="count" --if="count%2===1"> 222 </h1>
         `,
     create($: any) {
         $.count = 0
@@ -30,31 +39,6 @@ var root = {
         $.sub = () => $.count--
         $.e = () => {
             console.log(666);
-        }
-    },
-    directives: {
-        x: {
-            created() {
-                debugger
-            },
-            beforeMount() {
-
-            },
-            mounted() {
-
-            },
-            beforeUpdate() {
-
-            },
-            updated() {
-
-            },
-            beforeUnmount() {
-
-            },
-            unmounted() {
-
-            }
         }
     }
 }

@@ -7,7 +7,6 @@ import {
 import {
     warn,
     error,
-    error,
     getEmptyMap
 } from '@crush/common'
 
@@ -21,10 +20,15 @@ import {
 import { isFunction } from '@crush/common/src/dataType'
 
 import {
-    installAnimation
-} from '../animate/installAnimation'
+    builtInDirectives,
+    builtInComponents
+} from '../builtIn/install'
 
-export let currentApp: any = null
+import {
+    installAnimation
+} from '../animate/install'
+
+export var currentApp: any = null
 export function getCurrentApp() {
     return currentApp
 }
@@ -44,13 +48,13 @@ export class App {
 
     }
 
-    components = getEmptyMap()
+    components = builtInComponents
 
     component(name: string, options: any) {
-        this.components = [name] = options
+        this.components[name] = options
     }
 
-    directives = getEmptyMap()
+    directives = builtInDirectives
 
     directive(name: string, options: any) {
         this.directives[name] = options

@@ -68,7 +68,7 @@ var fnIsCalled = /.+\(.*\)$/
 // legal variable name
 var varRE = /^\w+$/
 // arrow function
-var arrowFnRE = /\([\w,\s]*\)\s*=>\s*.*/
+var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/
 // normal function
 var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/
 // array
@@ -92,7 +92,7 @@ export const processAttribute = (node: any) => {
         attr.isDynamicProperty = l && r
         attr.isDynamicValue = flag === '$'
         attr.modifiers = modifierStr && modifierStr.split('.')
-        attr.argument = argumentStr && argumentStr.split(':')
+        attr._arguments = argumentStr && argumentStr.split(':')
 
 
         // process directive

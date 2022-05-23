@@ -44,12 +44,18 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
     /* key相同时，会作为更新操作，key不同时，会视为一次卸载和挂载*/
     var samePatchKey = p.patchKey === n.patchKey
 
+    /* think ?
+        存在html元素节点上的钩子一定是指令吗？
+    */
+
+    debugger
     if (samePatchKey) {
         // 相同节点，钩子函数一定相同
         callHook(LifecycleHooks.BEFORE_UPDATE, n, null, el)
     } else {
+        // 模拟卸载旧节点 ， 挂载新节点
         callHook(LifecycleHooks.BEFORE_UNMOUNT, p, null, el)
-        callHook(LifecycleHooks.BEFORE_MOUNT, p, null, el)
+        callHook(LifecycleHooks.BEFORE_MOUNT, n, null, el)
     }
 
     updateProps(p.props, n.props, el, n)
@@ -61,7 +67,7 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
         callHook(LifecycleHooks.UPDATED, n, null, el)
     } else {
         callHook(LifecycleHooks.UNMOUNTED, p, null, el)
-        callHook(LifecycleHooks.MOUNTED, p, null, el)
+        callHook(LifecycleHooks.MOUNTED, n, null, el)
     }
 }
 
