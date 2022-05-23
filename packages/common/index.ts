@@ -21,7 +21,6 @@ export {
 export {
     error,
     warn,
-    throwError
 } from './src/console'
 
 export {

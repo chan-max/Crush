@@ -3,26 +3,26 @@ import {
     createApp
 } from '@crush/core'
 
-const hello = {
-    template: `
-        <h1 @click="x++"> hello  {{ x }} </h1>
-    `,
-    create($){
-        $.x = 0
-    }
-}
-
-const world = {
-    template: `
-        <h1> static component </h1>
-    `
-}
-
 var root = {
     template: `
+            <style>
+                html,body{
+                    padding:0;
+                    margin:0;
+                    height:100%;
+                }
+                body{
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+                h1{
+                    animation : flip 1s infinite;
+                }
+            </style>
             <button @click="count++"> {{ count }} </button>
-            <hello --if="count%2 === 1">
-            <world --else>
+            <h1 --if="count%2 === 0"> toggle title </h1>
         `,
     create($: any) {
         $.count = 0
@@ -31,10 +31,6 @@ var root = {
         $.e = () => {
             console.log(666);
         }
-    },
-    components: {
-        hello,
-        world
     },
     directives: {
         x: {

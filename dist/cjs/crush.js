@@ -24,7 +24,7 @@ const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
 const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
 
 const warn = (...msg) => console.warn(...msg);
-const throwError = (...msg) => {
+const error = (...msg) => {
     throw new Error(...msg);
 };
 
@@ -2242,7 +2242,7 @@ key = null) {
                             parent = parent.parent;
                         }
                         if (!selector) {
-                            throwError('当前样式声明不存在选择器下');
+                            error('当前样式声明不存在选择器下');
                         }
                         else {
                             // reset the declaration to styleRule

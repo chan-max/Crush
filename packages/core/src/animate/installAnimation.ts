@@ -9,8 +9,11 @@ import {
 } from './animations/backEntrances'
 import {
     hinge,
-    jackInTheBox
+    jackInTheBox,
+    rollIn,
+    rollOut
 } from './animations/specials'
+import { flip, flipInX, flipInY, flipOutX, flipOutY } from './animations/flippers'
 
 export function installAnimation() {
     mount(
@@ -23,6 +26,13 @@ export function installAnimation() {
                 backInDown,
                 backInLeft,
                 backInRight,
+                rollIn,
+                rollOut,
+                flip,
+                flipInX,
+                flipInY,
+                flipOutX,
+                flipOutY
             ]),
         document.head,
     )

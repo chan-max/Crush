@@ -4,7 +4,7 @@ import {
 } from './parseHTML'
 
 import {
-    isArray, throwError
+    isArray, error
 } from '@crush/common'
 
 import {

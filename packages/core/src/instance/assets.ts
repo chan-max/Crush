@@ -1,4 +1,4 @@
-import { throwError } from "@crush/common"
+import { error } from "@crush/common"
 import {
     getCurrentApp
 } from '../module/app'

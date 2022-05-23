@@ -96,12 +96,20 @@ function scale(sx: number, sy?: number) {
     return 'scale(' + sx + (sy ? `,${sy}` : '') + ')'
 }
 
+function scale3d(sx: number, sy: number, sz: number) {
+    return `scale3d(${sx},${sy},${sz})`
+}
+
 function rotate3d(x: number, y: number, z: number, a: number | string) {
     return `rotate3d(${x},${y},${z},${addUnit(a, 'deg')})`
 }
 
 function rotate(a: number | string) {
     return `rotate(${addUnit(a, 'deg')})`
+}
+
+function perspective(l: string) {
+    return `perspective(${l})`
 }
 
 export {
@@ -120,5 +128,7 @@ export {
     scale,
     rotate3d,
     translate3d,
-    rotate
+    rotate,
+    perspective,
+    scale3d
 }

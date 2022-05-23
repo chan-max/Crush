@@ -3,7 +3,7 @@ import { Nodes } from '../../node/nodes'
 import {
     createStyle
 } from '../vnode/vnode'
-import { throwError } from '@crush/common'
+import { error } from '@crush/common'
 
 /* 
     不会出现条件分支或循环，但会出现fragment，
@@ -65,7 +65,7 @@ export function doFlat(
                             parent = parent.parent
                         }
                         if (!selector) {
-                            throwError('当前样式声明不存在选择器下')
+                            error('当前样式声明不存在选择器下')
                         } else {
                             // reset the declaration to styleRule
                             var newRule: any = createStyle(selector, rule.children, key)

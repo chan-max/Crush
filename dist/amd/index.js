@@ -22,7 +22,7 @@ define(['exports'], (function (exports) { 'use strict';
     const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
 
     const warn = (...msg) => console.warn(...msg);
-    const throwError = (...msg) => {
+    const error = (...msg) => {
         throw new Error(...msg);
     };
 
@@ -2240,7 +2240,7 @@ define(['exports'], (function (exports) { 'use strict';
                                 parent = parent.parent;
                             }
                             if (!selector) {
-                                throwError('当前样式声明不存在选择器下');
+                                error('当前样式声明不存在选择器下');
                             }
                             else {
                                 // reset the declaration to styleRule

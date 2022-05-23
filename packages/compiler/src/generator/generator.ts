@@ -94,7 +94,7 @@ import {
     Iterator
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { uid, isArray, isObject, throwError } from '@crush/common'
+import { uid, isArray, isObject, error } from '@crush/common'
 import { uVar } from '@crush/common/src/value'
 import { createHandlerKey, } from '@crush/core'
 

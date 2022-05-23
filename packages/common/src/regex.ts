@@ -1,5 +1,5 @@
 import {
-    throwError
+    error
 } from './console'
 
 const createRegex = () => {

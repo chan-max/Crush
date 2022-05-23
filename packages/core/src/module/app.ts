@@ -7,7 +7,7 @@ import {
 import {
     warn,
     error,
-    throwError,
+    error,
     getEmptyMap
 } from '@crush/common'
 

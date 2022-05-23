@@ -41,3 +41,24 @@ export const jackInTheBox = keyframes('jackInTheBox', [
         transform: scale(1),
     })
 ])
+
+export const rollIn = keyframes('rollIn', [
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d('-100%', 0, 0), rotate3d(0, 0, 1, -120)]
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
+])
+
+export const rollOut = keyframes('rollOut', [
+    keyframe(0, {
+        opacity: 1,
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform:  [translate3d('100%', 0, 0), rotate3d(0, 0, 1, 120)]
+    })
+])
