@@ -6,21 +6,21 @@ import {
 var root = {
     directives: {
         d1: {
-            mounted() {
-                console.log('d1 mounted');
+            mounted(el,dirInfo) {
+                console.log('mounted',el, dirInfo);
             },
             updated(el, dirInfo) {
-                console.log('d1 updated');
-                console.log(el, dirInfo);
+                console.log('updated',el, dirInfo);
             },
-            unmounted() {
-                console.log('d1 unmounted');
+            unmounted(el, dirInfo) {
+                console.log('unmounted',el, dirInfo);
             }
         }    
     },
     template: `
             <button @click="count++"> {{ count }} </button>
-            <h1 --d1:a:b:c.x.y.z="count"   > 111 </h1>
+            <h1 --d1="count"   --if="count%2===0"> 111 </h1>
+            <h1 --d1="count*10"   --else> 222 </h1>
         `,
     create($: any) {
         $.count = 0

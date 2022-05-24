@@ -87,12 +87,10 @@ function trigger(target: any, key: any) {
 
 var handler = {
     get(target: any, key: any) {
-        console.log('get');
         track(target, key)
         return target[key]
     },
     set(target: any, key: any, newValue: any) {
-        console.log('set');
         trigger(target, key)
         target[key] = newValue
         return true

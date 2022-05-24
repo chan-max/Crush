@@ -1,4 +1,5 @@
 import { isArray } from "@crush/common"
+import { EMPTY_MAP } from "@crush/common/src/value"
 import { getCurrentInstance } from "../.."
 
 /*
@@ -38,10 +39,22 @@ function injectHook(type: LifecycleHooks, target: any, hook: Function | Function
 /*
     binding is used for bind the callback context , it is necessary
 */
-function callHook(type: LifecycleHooks, target: any, binding: any = null, ...args: any[]) {
+function callHook(type: LifecycleHooks, target: any, options: any = null, ...args: any[]) {
     const hooks = target[type]
     if (!hooks) return
-    hooks.forEach((hook: Function) => hook.apply(binding, args))
+
+    var {
+        binding,
+        scheduler
+    } = options || EMPTY_MAP
+
+    hooks.forEach((hook: any) => {
+        if (scheduler) {
+            scheduler(hook, binding, ...args)
+        } else {
+            hook.apply(binding, args)
+        }
+    })
 }
 
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)

@@ -153,7 +153,7 @@ function genCustomDirectives(code: string, customDirs: any[], context: any): str
         var dirInfos = {
             value,
             _arguments: _arguments && _arguments.map(toCodeString),
-            modifiers: modifiers.map(toCodeString)
+            modifiers: modifiers && modifiers.map(toCodeString)
         }
 
         return [dir,dirInfos]
