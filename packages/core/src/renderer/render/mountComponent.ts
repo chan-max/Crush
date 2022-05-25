@@ -44,15 +44,15 @@ function createComponentInstance(options: any) {
         components: options.components,
         directives: options.directives,
         // hooks will always be an array
-        [LifecycleHooks.BEFORE_CREATE]: options[LifecycleHooks.BEFORE_CREATE] && [...options[LifecycleHooks.BEFORE_CREATE]],
-        [LifecycleHooks.CREATE]: options[LifecycleHooks.CREATE] && [...options[LifecycleHooks.CREATE]],
-        [LifecycleHooks.CREATED]: options[LifecycleHooks.CREATED] && [...options[LifecycleHooks.CREATED]],
-        [LifecycleHooks.BEFORE_MOUNT]: options[LifecycleHooks.BEFORE_MOUNT] && [...options[LifecycleHooks.BEFORE_MOUNT]],
-        [LifecycleHooks.MOUNTED]: options[LifecycleHooks.MOUNTED] && [...options[LifecycleHooks.MOUNTED]],
-        [LifecycleHooks.BEFORE_UNMOUNT]: options[LifecycleHooks.BEFORE_UNMOUNT] && [...options[LifecycleHooks.BEFORE_UNMOUNT]],
-        [LifecycleHooks.UNMOUNTED]: options[LifecycleHooks.UNMOUNTED] && [...options[LifecycleHooks.UNMOUNTED]],
-        [LifecycleHooks.BEFORE_UPDATE]: options[LifecycleHooks.BEFORE_UPDATE] && [...options[LifecycleHooks.BEFORE_UPDATE]],
-        [LifecycleHooks.UPDATED]: options[LifecycleHooks.UPDATED] && [...options[LifecycleHooks.UPDATED]]
+        beforeCreate: options.beforeCreate && [...options.beforeCreate],
+        create: options.create && [...options.create],
+        created: options.created && [...options.created],
+        beforeMount: options.beforeMount && [...options.beforeMount],
+        mounted: options.mounted && [...options.mounted],
+        beforeUnmount: options.beforeUnmount && [...options.beforeUnmount],
+        unmounted: options.unmounted && [...options.unmounted],
+        beforeUpdate: options.beforeUpdate && [...options.beforeUpdate],
+        updated: options.updated && [...options.updated]
     }
 
     if (app.mixins) {
@@ -76,6 +76,7 @@ export function getCurrentScope() {
 
 export const mountComponent = (vnode: any, container: Element, anchor: any = null) => {
     var { tag, props, children } = vnode
+
 
     var instance: any = createComponentInstance(tag)
 

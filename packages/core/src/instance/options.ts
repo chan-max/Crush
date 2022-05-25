@@ -1,6 +1,6 @@
 import { isArray } from "@crush/common";
 import { compile } from "../../../dev/node_modules/@crush/compiler"
-import { Directive } from "./directive";
+import { currentApp } from "../module/app";
 import {
     injectHook,
     LifecycleHooks
@@ -37,7 +37,7 @@ export interface ComponentOptions {
     [ComponentOptionKeys.TEMPLATE]?: string,
     [ComponentOptionKeys.RENDER]?: Function,
 
-    [ComponentOptionKeys.DIRECTIVES]?: Record<string, Directive>,
+    [ComponentOptionKeys.DIRECTIVES]?: Record<string, any>,
     [ComponentOptionKeys.COMPOENNTS]?: Record<string, ComponentOptions>,
     [ComponentOptionKeys.MIXINS]?: ComponentOptions[],
 
@@ -54,6 +54,7 @@ export interface ComponentOptions {
 
 
 export const initOptions = (options: ComponentOptions) => {
+
     for (let key in options) {
         switch (key) {
             // root options only
@@ -83,7 +84,6 @@ export const initOptions = (options: ComponentOptions) => {
                 injectMixins(options, mixins as any[])
                 break
             case ComponentOptionKeys.COMPOENNTS:
-                
                 break
             case ComponentOptionKeys.DIRECTIVES:
                 break

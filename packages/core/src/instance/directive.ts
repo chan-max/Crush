@@ -64,7 +64,7 @@ export function callElementHook(type: LifecycleHooks, p: any, n: any) {
                         // dirInfo 存在的话一定有 dirInfos
                         var dirInfo = n.dirInfos.get(hook.directive)
                         dirInfo.oldValue = p.dirInfos.get(hook.directive).value
-                        dirArgs.push(hook.dirInfo)
+                        dirArgs.push(dirInfo)
                     }
 
                     // 这里需要拿到旧的指令值
@@ -92,7 +92,7 @@ export function callElementHook(type: LifecycleHooks, p: any, n: any) {
         callHook(type, target, {
             scheduler(hook: any) {
                 // 挂载时不存在旧值
-                hook.apply(null, target.ref, target.dirInfos?.get(hook.directive))
+                hook.call(null, target.ref, target.dirInfos?.get(hook.directive))
             }
         })
     }

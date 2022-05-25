@@ -43,14 +43,6 @@ export const siteData = {
       ]
     },
     {
-      "title": "内置组件",
-      "frontmatter": {},
-      "regularPath": "/api/builtInComponent.html",
-      "relativePath": "api/builtInComponent.md",
-      "key": "v-872c37b2",
-      "path": "/api/builtInComponent.html"
-    },
-    {
       "title": "内置指令",
       "frontmatter": {},
       "regularPath": "/api/builtInDirective.html",
@@ -119,14 +111,6 @@ export const siteData = {
       ]
     },
     {
-      "title": "API",
-      "frontmatter": {},
-      "regularPath": "/api/",
-      "relativePath": "api/readme.md",
-      "key": "v-0830846c",
-      "path": "/api/"
-    },
-    {
       "title": "Home",
       "frontmatter": {
         "home": true,
@@ -155,6 +139,38 @@ export const siteData = {
       "path": "/en/guide/readme..html"
     },
     {
+      "title": "API",
+      "frontmatter": {},
+      "regularPath": "/api/",
+      "relativePath": "api/readme.md",
+      "key": "v-0830846c",
+      "path": "/api/"
+    },
+    {
+      "title": "内置组件",
+      "frontmatter": {},
+      "regularPath": "/api/builtInComponent.html",
+      "relativePath": "api/builtInComponent.md",
+      "key": "v-872c37b2",
+      "path": "/api/builtInComponent.html"
+    },
+    {
+      "title": "安装",
+      "frontmatter": {},
+      "regularPath": "/guide/install.html",
+      "relativePath": "guide/install.md",
+      "key": "v-dd242ece",
+      "path": "/guide/install.html"
+    },
+    {
+      "title": "了解crush",
+      "frontmatter": {},
+      "regularPath": "/guide/",
+      "relativePath": "guide/readme.md",
+      "key": "v-1728bbb0",
+      "path": "/guide/"
+    },
+    {
       "title": "Home",
       "frontmatter": {
         "home": true,
@@ -181,42 +197,6 @@ export const siteData = {
       "relativePath": "en/readme.md",
       "key": "v-6e7bad98",
       "path": "/en/"
-    },
-    {
-      "title": "安装",
-      "frontmatter": {},
-      "regularPath": "/guide/install.html",
-      "relativePath": "guide/install.md",
-      "key": "v-dd242ece",
-      "path": "/guide/install.html"
-    },
-    {
-      "title": "了解crush",
-      "frontmatter": {},
-      "regularPath": "/guide/",
-      "relativePath": "guide/readme.md",
-      "key": "v-1728bbb0",
-      "path": "/guide/"
-    },
-    {
-      "title": "介绍",
-      "frontmatter": {},
-      "regularPath": "/guide/intro.html",
-      "relativePath": "guide/intro.md",
-      "key": "v-18dbbf8e",
-      "path": "/guide/intro.html",
-      "headers": [
-        {
-          "level": 2,
-          "title": "crush 是什么 ？",
-          "slug": "crush-是什么"
-        },
-        {
-          "level": 2,
-          "title": "计数器例子",
-          "slug": "计数器例子"
-        }
-      ]
     },
     {
       "title": "Home",
@@ -288,6 +268,26 @@ export const siteData = {
       "relativePath": "tutorial/test.md",
       "key": "v-0e0d5b9a",
       "path": "/tutorial/test.html"
+    },
+    {
+      "title": "介绍",
+      "frontmatter": {},
+      "regularPath": "/guide/intro.html",
+      "relativePath": "guide/intro.md",
+      "key": "v-18dbbf8e",
+      "path": "/guide/intro.html",
+      "headers": [
+        {
+          "level": 2,
+          "title": "crush 是什么 ？",
+          "slug": "crush-是什么"
+        },
+        {
+          "level": 2,
+          "title": "计数器例子",
+          "slug": "计数器例子"
+        }
+      ]
     }
   ],
   "themeConfig": {

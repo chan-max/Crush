@@ -7,9 +7,19 @@ import {
 } from '../renderer/render/mountComponent'
 
 export function getComponent(name: string) {
-    return getCurrentInstance().components?.[name] || getCurrentApp().components[name]
+    var component = getCurrentInstance().components?.[name] || getCurrentApp().components[name]
+
+    if (!component) {
+        error(`cant find compnent ${name}`)
+    }
+
+    return component
 }
 
 export function getDirective(name: string) {
-    return getCurrentInstance().directives?.[name] || getCurrentApp().directives[name]
+    var directive = getCurrentInstance().directives?.[name] || getCurrentApp().directives[name]
+    if (!directive) {
+        error(`can't find directive ${name}`)
+    }
+    return directive
 }

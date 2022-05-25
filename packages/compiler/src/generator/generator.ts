@@ -127,7 +127,7 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
                 target = genForWithFragment(target, dir.iterator, context)
                 break
             case Nodes.SLOT:
-                // where there is a slot directive on a element or component , the target will be the backup content
+                // where there is a slot directive on a element or component , the target will be the fallback content
                 var slotName = toBackQuotes(dir.value || 'default')
                 target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, target)
                 break
@@ -156,7 +156,7 @@ function genCustomDirectives(code: string, customDirs: any[], context: any): str
             modifiers: modifiers && modifiers.map(toCodeString)
         }
 
-        return [dir,dirInfos]
+        return [dir, dirInfos]
     })
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
 }
@@ -170,6 +170,14 @@ function genDirs(code: string, node: any, context: any) {
     if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
     if (node.dirs) { code = genDirectives(code, node.dirs, context) }
     return code
+}
+
+function genSlotContent(node: any, context: any) {
+    var { children } = node
+    /*
+        关于插槽的定义
+    */
+    if (!children) return NULL
 }
 
 function genNode(node: any, context: any): any {
@@ -187,8 +195,8 @@ function genNode(node: any, context: any): any {
             return code
         case Nodes.SLOT:
             var slotName = toBackQuotes(node.attributeMap?.name || 'default')
-            var backup = genNodes(node.children, context)
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, backup)
+            var fallback = genNodes(node.children, context)
+            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback)
         case Nodes.DEFINE_SLOT:
             debugger
             break
@@ -203,9 +211,8 @@ function genNode(node: any, context: any): any {
             var code: string = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
             var uv = context.hoistExpression(code)
             var props = genProps(node, context)
-            // var slots = genChildren(node.children, context)
-            // debugger
-            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, NULL, uStringId())
+            var slots = genSlotContent(node, context)
+            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.TEXT:

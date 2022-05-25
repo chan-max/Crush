@@ -37,6 +37,7 @@ const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     return res;
 }, getEmptyMap());
 const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
+// from vue
 const makeMap = (str, delimiter = ',') => {
     var map = arrayToMap(str.split(delimiter));
     return (key) => !!map[key];
@@ -166,97 +167,99 @@ const tagTypeOf = (tagName) => {
             Nodes.SVG_ELEMENT : Nodes.COMPONENT);
 };
 
-(({
-    nodeType: Nodes.NULL,
-    type: Symbol('empty')
-}));
-var createElement = (type, props, children, key) => {
+function createNode(type) {
     return {
-        type,
+        type
+    };
+}
+(({
+    type: Nodes.NULL,
+    tag: Symbol('empty')
+}));
+var createElement = (tag, props, children, key) => {
+    return {
+        tag,
         props,
         children,
         key,
-        nodeType: Nodes.HTML_ELEMENT,
+        type: Nodes.HTML_ELEMENT,
     };
 };
 var Text = Symbol('Text');
 var createText = (children, key) => {
     return {
         key,
-        type: Text,
+        tag: Text,
         children,
-        nodeType: Nodes.TEXT
+        type: Nodes.TEXT
     };
 };
 var createSVGElement = () => { };
 var createComment = () => { };
 var createFragment = (children, key) => {
     return {
-        nodeType: Nodes.FRAGMENT,
+        type: Nodes.FRAGMENT,
         children,
         key
     };
 };
-var createStyleSheet = (props, children, key) => {
-    return {
-        type: 'style',
-        nodeType: Nodes.STYLE,
-        props,
-        children,
-        key
-    };
+var createStyleSheet = (props, children, key = uid()) => {
+    var node = createNode(Nodes.STYLE);
+    node.props = props;
+    node.children = children;
+    node.key = key;
+    node.tag = 'style'; // used for diff
+    return node;
 };
 var createStyle = (selector, children, key) => {
     return {
-        nodeType: Nodes.STYLE_RULE,
+        type: Nodes.STYLE_RULE,
         selector,
         children,
         key
     };
 };
 var createMedia = (media, children, key) => ({
-    nodeType: Nodes.MEDIA_RULE,
+    type: Nodes.MEDIA_RULE,
     media,
     children,
     key
 });
-var createKeyframes = (keyframes, children, key) => {
-    return {
-        nodeType: Nodes.KEYFRAMES_RULE,
-        keyframes,
-        children,
-        key
-    };
+var createKeyframes = (keyframes, children, key = uid()) => {
+    var node = createNode(Nodes.KEYFRAMES_RULE);
+    node.keyframes = keyframes;
+    node.children = children;
+    node.key = key;
+    return node;
 };
-var createKeyframe = (keyframe, children, key) => {
-    return {
-        nodeType: Nodes.KEYFRAME_RULE,
-        keyframe,
-        children,
-        key
-    };
+var createKeyframe = (keyframe, children, key = uid()) => {
+    var node = createNode(Nodes.KEYFRAME_RULE);
+    node.keyframe = keyframe;
+    node.children = children;
+    node.key = key;
+    return node;
 };
-const createComponent = (type, props, children) => {
-    return {
-        nodeType: Nodes.COMPONENT,
-        type,
-        props,
-        children
-    };
+const createComponent = (tag, props, children, key = uid()) => {
+    var node = createNode(Nodes.COMPONENT);
+    node.tag = tag;
+    node.props = props;
+    node.children = children;
+    node.key = key;
+    return node;
 };
 var createSupports = (supports, children, key) => ({
-    nodeType: Nodes.SUPPORTS_RULE,
+    type: Nodes.SUPPORTS_RULE,
     supports,
     children,
     key
 });
 var createDeclaration = (children, key) => {
     return {
-        nodeType: Nodes.DECLARATION,
+        type: Nodes.DECLARATION,
         /*
             render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
         */
-        //nodeType: Nodes.DECLARATION_GROUP,
+        //type: Nodes.DECLARATION_GROUP,
         children,
         key
     };
@@ -632,7 +635,20 @@ const parseInlineClass$1 = (classString) => stringToMap(classString, inlineClass
 
 /*-----------------------------------------------------------------------------------------*/
 const extAttribute = /(@|\$|-{2}|\.|#)?(\()?([\w-]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?/;
-var fnIsCalled = /.+\(.*\)$/;
+/*
+    如果是函数表达式，生成代码时不需要包裹一层函数
+*/
+// legal variable name
+var varRE = /^\w+$/;
+// arrow function
+var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
+// normal function
+var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
+// array
+var arrayRE = /\[.*\]/;
+function isHandler(exp) {
+    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
+}
 const processAttribute = (node) => {
     const { type, attributes } = node;
     if (!attributes)
@@ -646,7 +662,7 @@ const processAttribute = (node) => {
         attr.isDynamicProperty = l && r;
         attr.isDynamicValue = flag === '$';
         attr.modifiers = modifierStr && modifierStr.split('.');
-        attr.argument = argumentStr && argumentStr.split(':');
+        attr._arguments = argumentStr && argumentStr.split(':');
         // process directive
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
             // directive effect the root node
@@ -702,7 +718,8 @@ const processAttribute = (node) => {
         }
         else if (flag === NodesMap[Nodes.AT]) {
             attr.type = Nodes.EVENT;
-            attr.isFunction = !fnIsCalled.test(attr.value);
+            // 为 true时代表是一个合法的handler可以直接生成代码，否则需要套一层函数
+            attr.isHandler = isHandler(attr.value);
         }
         else if (flag === '#') {
             /*
@@ -715,6 +732,7 @@ const processAttribute = (node) => {
             attr.isDynamicProperty = false;
         }
         else if (flag === '.') {
+            // class 简写形式
             attr.type = Nodes.CLASS;
             if (attr.isDynamicProperty) {
                 attr.value = attr.property;
@@ -1009,12 +1027,21 @@ const genDirectives = (target, dirs, context) => {
 };
 function genCustomDirectives(code, customDirs, context) {
     // injectDirective
-    var dirNames = customDirs.map((directive) => {
-        var { property, isDynamicProperty } = directive;
-        var dirVar = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getDirective, toCodeString$1(property)));
-        return dirVar;
+    var dirs = customDirs.map((directive) => {
+        var { property, value, isDynamicProperty, _arguments, modifiers } = directive;
+        // 支持动态指令
+        var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toCodeString$1(property));
+        if (!isDynamicProperty) {
+            dir = context.hoistExpression(dir);
+        }
+        var dirInfos = {
+            value,
+            _arguments: _arguments && _arguments.map(toCodeString$1),
+            modifiers: modifiers && modifiers.map(toCodeString$1)
+        };
+        return [dir, dirInfos];
     });
-    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirNames));
+    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
 }
 function genChildrenString(children, context) {
     if (!children)
@@ -1194,14 +1221,11 @@ function genProps(node, context) {
     attributes.forEach((attr) => {
         switch (attr.type) {
             case Nodes.EVENT:
-                var { property, isDynamicProperty, value, isFunction, /* if function , just use it , or wrap an arrow function */ argument, modifiers } = attr;
-                var options;
-                if (modifiers) {
-                    options = modifiers.filter(isEventOptions);
-                    modifiers = modifiers.filter((modifier) => { !isEventOptions(modifier); });
-                }
-                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(options.map(toBackQuotes)))) : createHandlerKey(property, options);
-                var callback = isFunction ? value : toArrowFunction(value);
+                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ argument, modifiers } = attr;
+                var handlerKey = isDynamicProperty ?
+                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(argument.map(toBackQuotes)))) :
+                    createHandlerKey(property, argument);
+                var callback = isHandler ? value : toArrowFunction(value);
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
                 }
@@ -1366,12 +1390,10 @@ function trigger(target, key) {
 }
 var handler = {
     get(target, key) {
-        console.log('get');
         track(target, key);
         return target[key];
     },
     set(target, key, newValue) {
-        console.log('set');
         trigger(target, key);
         target[key] = newValue;
         return true;
@@ -1404,11 +1426,19 @@ function injectHook(type, target, hook) {
 /*
     binding is used for bind the callback context , it is necessary
 */
-function callHook(type, target, binding = null, ...args) {
+function callHook(type, target, options = null, ...args) {
     const hooks = target[type];
     if (!hooks)
         return;
-    hooks.forEach((hook) => hook.apply(binding, args));
+    var { binding, scheduler } = options || EMPTY_MAP;
+    hooks.forEach((hook) => {
+        if (scheduler) {
+            scheduler(hook, binding, ...args);
+        }
+        else {
+            hook.apply(binding, args);
+        }
+    });
 }
 const createHook = (type) => (hook) => injectHook(type, getCurrentInstance(), hook);
 const onMounted = createHook("mounted" /* MOUNTED */);
@@ -1545,16 +1575,17 @@ const nodeOps = {
             parent.removeChild(el);
         }
     },
+    setText() {
+    },
     // style
     setProperty: (style, property, value, important = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),
     deleteRule: (sheet, index) => sheet.deleteRule(index)
 };
 
 function getDeclarationValue(rawValue) {
-    var value, important;
-    if (!rawValue) {
-        value = null; // 这里不能用空字符串，因为会进入下面的判断
-        important = false;
+    var value, important = false;
+    if (rawValue === undefined || rawValue === null) {
+        value = null;
     }
     else if (rawValue[IMPORTANT_SYMBOL]) {
         value = rawValue.value;
@@ -1567,6 +1598,10 @@ function getDeclarationValue(rawValue) {
     if (isString(value) && value.endsWith(IMPORTANT_KEY)) {
         value = value.split(IMPORTANT_KEY)[0].trim();
         important = true;
+    }
+    // 支持数组
+    if (isArray(value)) {
+        value = value.join(' ');
     }
     return {
         value,
@@ -1612,7 +1647,7 @@ function mountSheet(sheet, rules, vnode) {
     });
 }
 function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
-    switch (rule.nodeType) {
+    switch (rule.type) {
         case Nodes.STYLE_RULE:
             mountStyleRule(sheet, rule, vnode, index);
             break;
@@ -1664,40 +1699,47 @@ function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.len
     var newSheet = sheet.cssRules[index];
     mountSheet(newSheet, rules, vnode);
 }
+function normalizeKeyframe$1(keyframe) {
+    if (isArray(keyframe)) {
+        return keyframe.map(normalizeKeyframe$1).join(',');
+    }
+    else if (isNumber(Number(keyframe))) {
+        // 为数字或者数字字符串
+        return `${keyframe}%`;
+    }
+    else {
+        return keyframe;
+    }
+}
 function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
     var { keyframe, children: declaration } = rule;
-    keyframe = isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe; // 关键帧支持数字的写法 
+    keyframe = normalizeKeyframe$1(keyframe);
     // appendRule wont return the index 
     sheet.appendRule(`${keyframe}{}`);
     var index = sheet.cssRules.length - 1;
     const insertedRule = sheet.cssRules[index];
     rule.ref = insertedRule; // set ref
     const insertedRuleStyle = insertedRule.style;
-    Object.entries(declaration).forEach(([property, value]) => {
-        property = hyphenate(property); // the property shoule be uncamelized
-        var { value } = getDeclarationValue(value);
+    for (let property in declaration) {
+        var { value } = getDeclarationValue(declaration[property]);
         // keyframe 中不能设置important
         nodeOps.setProperty(insertedRuleStyle, property, value);
-    });
+    }
 }
 
 // for renderer
-const isEventOptions = makeMap('capture,once,passive');
 const onRE = /^on[A-Z]/;
-const eventOptionsRE = /(Once|Passive|Passive)$/;
 const isEvent = (key) => onRE.test(key);
 const parseHandlerKey = (handlerKey) => {
-    var options = null; // just put the options into addEventListener
-    var result;
-    while (result = exec(handlerKey, eventOptionsRE)) {
-        var option = result[0].toLowerCase();
-        (options ||= {})[option] = true;
-        handlerKey = handlerKey.slice(0, handlerKey.length - option.length);
-        debugger;
-    }
+    var keys = handlerKey.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
+    // remove on
+    keys.shift();
+    var event = keys[0];
+    // remove eventName
+    keys.shift();
     return {
-        event: handlerKey.split('on')[1].toLowerCase(),
-        options
+        event,
+        options: arrayToMap(keys)
     };
 };
 // for compiler
@@ -1814,26 +1856,99 @@ function unmountProp(propName, value, el, vnode) {
     }
 }
 
-function mount(vnode, container, anchor) {
-    const type = vnode.nodeType;
-    switch (type) {
+function injectDirectives(target, directives) {
+    for (let directive of directives) {
+        injectDirective(target, directive);
+    }
+    return target;
+}
+function injectDirective(target, [rawDirective, info]) {
+    // 指令会携带信息 值 参数 修饰符
+    // 保存指令与指令携带信息之间的关系 ， 用于传递新旧节点的指令信息
+    var dirInfos = target.dirInfos ||= new Map();
+    dirInfos.set(rawDirective, info);
+    let directiveOptions = rawDirective;
+    if (isFunction(rawDirective)) {
+        directiveOptions = {
+            ["mounted" /* MOUNTED */]: rawDirective,
+            ["updated" /* UPDATED */]: rawDirective
+        };
+    }
+    for (let key in directiveOptions) {
+        var hook = directiveOptions[key];
+        // save the raw directive on this hook , so while the hook is calling , we can know the hook belong which directive
+        hook.directive = rawDirective;
+        // !hook.dirInfo = info 不应该在指令上钩子上直接保存指令信息，会存在覆盖问题
+        injectHook(key, target, hook);
+    }
+    // ! 
+    return target;
+}
+function callElementHook(type, p, n) {
+    // 不存在两个节点都不存在
+    if (p && n) {
+        // ! 只有更新时指令才能拿到 oldValue
+        // update 包括普通更新和假卸载和挂载的更新
+        var samePatchKey = p.patchKey === n.patchKey;
+        if (samePatchKey) {
+            // just update , beforeUpdate , updated 
+            callHook(type, n, {
+                scheduler(hook) {
+                    var dirArgs = [
+                        n.ref
+                    ];
+                    if (hook.directive) {
+                        // dirInfo 存在的话一定有 dirInfos
+                        var dirInfo = n.dirInfos.get(hook.directive);
+                        dirInfo.oldValue = p.dirInfos.get(hook.directive).value;
+                        dirArgs.push(hook.dirInfo);
+                    }
+                    // 这里需要拿到旧的指令值
+                    hook.apply(null, dirArgs);
+                }
+            });
+        }
+        else {
+            // 假挂载和假卸载 , 假卸载旧节点 ， 假挂载新节点 , 不需要指令旧值
+            callHook(type === "beforeUpdate" /* BEFORE_UPDATE */ ? "beforeUnmount" /* BEFORE_UNMOUNT */ : "unmounted" /* UNMOUNTED */, p, {
+                scheduler(hook) {
+                    hook.call(null, p.ref, p.dirInfos?.get(hook.directive));
+                }
+            });
+            callHook(type === "updated" /* UPDATED */ ? "mounted" /* MOUNTED */ : "beforeMount" /* BEFORE_MOUNT */, n, {
+                scheduler(hook) {
+                    hook.call(null, n.ref, n.dirInfos?.get(hook.directive));
+                }
+            });
+        }
+    }
+    else {
+        //  卸载和挂载
+        var target = p || n;
+        callHook(type, target, {
+            scheduler(hook) {
+                // 挂载时不存在旧值
+                hook.apply(null, target.ref, target.dirInfos?.get(hook.directive));
+            }
+        });
+    }
+}
+
+function mount(vnode, container, anchor = null) {
+    switch (vnode.type) {
         case Nodes.HTML_ELEMENT:
             mountHTMLElement(vnode, container, anchor);
             break;
         case Nodes.TEXT:
             mountText(vnode, container, anchor);
             break;
-        case Nodes.FRAGMENT:
-            mountFragment(vnode, container, anchor);
+        case Nodes.COMPONENT:
+            mountComponent(vnode, container, anchor);
             break;
         case Nodes.STYLE:
             mountStyleSheet(vnode, container);
             break;
     }
-}
-function mountFragment(vnode, container, anchor) {
-    debugger;
-    mountChildren(vnode.children, container, anchor);
 }
 function mountChildren(children, container, anchor) {
     children.forEach((child) => {
@@ -1852,35 +1967,49 @@ function mountText(vnode, container, anchor) {
     nodeOps.insert(el, container, anchor);
 }
 function mountHTMLElement(vnode, container, anchor) {
-    const { type, props, children } = vnode;
-    var el = document.createElement(type);
+    const { tag, props, children } = vnode;
+    var el = document.createElement(tag);
     vnode.ref = el;
+    callElementHook("created" /* CREATED */, null, vnode);
     mountProps(vnode);
-    callHook("created" /* CREATED */, vnode, null, el);
-    callHook("beforeMount" /* BEFORE_MOUNT */, vnode, null, el);
+    callElementHook("beforeMount" /* BEFORE_MOUNT */, null, vnode);
     nodeOps.insert(el, container, anchor);
-    callHook("mounted" /* MOUNTED */, vnode, null, el);
+    callElementHook("mounted" /* MOUNTED */, null, vnode);
     if (children) {
         mountChildren(children, el, anchor);
     }
 }
 
+function unmountComponent(vnode, container, anchor) {
+    var { ref: instance } = vnode;
+    var vnode = instance.vnode;
+    patch(vnode, null, container, anchor);
+}
+
 function unmount(vnode, container, anchor) {
-    switch (vnode.nodeType) {
+    switch (vnode.type) {
         case Nodes.HTML_ELEMENT:
-            if (vnode.children) {
-                unmountChildren(vnode.children);
-            }
-            nodeOps.remove(vnode.ref);
+            unmountElement(vnode);
             break;
         case Nodes.TEXT:
             nodeOps.remove(vnode.ref);
+            break;
+        case Nodes.COMPONENT:
+            unmountComponent(vnode, container, anchor);
             break;
     }
 }
 function unmountChildren(children) {
     // 卸载过程目前不需要锚点
     children.forEach(unmount);
+}
+function unmountElement(vnode) {
+    if (vnode.children) {
+        unmountChildren(vnode.children);
+    }
+    callElementHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode, null);
+    nodeOps.remove(vnode.ref);
+    callElementHook("unmounted" /* UNMOUNTED */, vnode, null);
 }
 
 const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
@@ -1932,7 +2061,7 @@ function diffChildren(p, n, isRules) {
         var node = n[i];
         var patchKey = node.patchKey;
         var sameNode = pMap[patchKey];
-        if (sameNode && (isRules || (sameNode.node.type === node.type))) {
+        if (sameNode && (isRules || (sameNode.node.tag === node.tag))) {
             /*
                 the condition of reuse a vnode for dom is same patchkey and same type
                 for rules is just the same patchkey
@@ -2075,47 +2204,38 @@ function updateKeyframesRule(pRule, nRule, vnode) {
 }
 
 function update(p, n, container, anchor) {
-    switch (n.nodeType) {
+    switch (n.type) {
         case Nodes.TEXT:
-            var ref = n.ref = p.ref;
-            if (p.children !== n.children) {
-                ref.textContent = n.children;
-            }
+            updateText(p, n);
             break;
         case Nodes.HTML_ELEMENT:
             updateHTMLElement(p, n, container);
             break;
-        case Nodes.FRAGMENT:
-            updateChildren(p.children, n.children, container);
+        case Nodes.COMPONENT:
             break;
         case Nodes.STYLE:
             updateStyleSheet(p, n);
             break;
     }
 }
+function updateText(p, n) {
+    var ref = n.ref = p.ref;
+    if (p.children !== n.children) {
+        ref.textContent = n.children;
+    }
+}
 function updateHTMLElement(p, n, container, anchor) {
     var el = n.ref = p.ref;
-    /* key相同时，会作为更新操作，key不同时，会视为一次卸载和挂载*/
-    var samePatchKey = p.patchKey === n.patchKey;
-    if (samePatchKey) {
-        // 相同节点，钩子函数一定相同
-        callHook("beforeUpdate" /* BEFORE_UPDATE */, n, null, el);
-    }
-    else {
-        callHook("beforeUnmount" /* BEFORE_UNMOUNT */, p, null, el);
-        callHook("beforeMount" /* BEFORE_MOUNT */, p, null, el);
-    }
+    /* think ?
+        存在html元素节点上的钩子一定是指令吗？
+        <input  b >
+    */
+    // 更新钩子仅针对元素与子节点无关
+    callElementHook("beforeUpdate" /* BEFORE_UPDATE */, p, n);
     updateProps(p.props, n.props, el);
+    callElementHook("updated" /* UPDATED */, p, n);
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container);
-    if (samePatchKey) {
-        // 相同节点，钩子函数一定相同
-        callHook("updated" /* UPDATED */, n, null, el);
-    }
-    else {
-        callHook("unmounted" /* UNMOUNTED */, p, null, el);
-        callHook("mounted" /* MOUNTED */, p, null, el);
-    }
 }
 function updateChildren(pChildren, nChildren, container, anchor) {
     var { p, n } = diffChildren(pChildren, nChildren, false);
@@ -2145,7 +2265,7 @@ const patch = (current, next, container, anchor = null) => {
     else {
         if (!next) {
             // 卸载当前节点
-            isArray(next) ? unmountChildren(current) : unmount(current);
+            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor);
         }
         else {
             if (isArray(current)) {
@@ -2156,14 +2276,14 @@ const patch = (current, next, container, anchor = null) => {
                     updateChildren([current], next, container);
                 }
                 else {
-                    // 两个单节点 ， 但key可能不同
-                    if (current.type === next.type) {
+                    // 两个单节点 ， 但key可能不同 
+                    if (current.tag === next.tag) {
                         // 类型相同，直接更新
                         update(current, next, container);
                     }
                     else {
                         // 类型不同。先卸载，在挂载
-                        unmount(current);
+                        unmount(current, container, anchor);
                         mount(next, container, anchor);
                     }
                 }
@@ -2203,7 +2323,7 @@ key = null) {
         var patchKey = key ? key + '_' + rule.key : rule.key;
         rule.patchKey = patchKey;
         rule.parent = parent;
-        switch (rule.nodeType) {
+        switch (rule.type) {
             case Nodes.STYLE_RULE:
                 flattedRules.push(rule);
                 var _children = rule.children;
@@ -2217,17 +2337,17 @@ key = null) {
                     debugger;
                     // 声明不再任何样式规则或媒体规则下时,应该报错
                 }
-                else if (rule.parent.nodeType === Nodes.STYLE_RULE) {
+                else if (rule.parent.type === Nodes.STYLE_RULE) {
                     (rule.parent.children ||= []).push(rule);
                 }
-                else if (rule.parent.nodeType === Nodes.KEYFRAME_RULE) {
+                else if (rule.parent.type === Nodes.KEYFRAME_RULE) {
                     (rule.parent.children ||= []).push(rule);
                 }
                 else {
                     /*
                         当一条样式声明不时样式规则的子节点
                     */
-                    if (rule.parent.nodeType === Nodes.MEDIA_RULE) {
+                    if (rule.parent.type === Nodes.MEDIA_RULE) {
                         /*
                             一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
                             此时和一直寻找parent的选择器
@@ -2295,7 +2415,7 @@ function flatRules(rules, parent = null, key = null
         stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
     */
     flatted.forEach((rule) => {
-        if (rule.nodeType === Nodes.STYLE_RULE) {
+        if (rule.type === Nodes.STYLE_RULE) {
             /*
                 children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                 并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
@@ -2323,7 +2443,7 @@ function processdom(node, key = null) {
     var flattedNode = [];
     node.forEach((child) => {
         if (child) {
-            if (child.nodeType === Nodes.FRAGMENT) {
+            if (child.type === Nodes.FRAGMENT) {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
                 flattedNode = flattedNode.concat(processdom(child.children, child.key));
             }
@@ -2334,11 +2454,11 @@ function processdom(node, key = null) {
                 else {
                     child.patchKey = child.key;
                 }
-                if (child.nodeType === Nodes.HTML_ELEMENT) {
+                if (child.type === Nodes.HTML_ELEMENT) {
                     // 子节点递归处理
                     child.children = processdom(child.children);
                 }
-                if (child.nodeType === Nodes.STYLE) {
+                if (child.type === Nodes.STYLE) {
                     child.children = flatRules(child.children, null, child.patchKey);
                 }
                 flattedNode.push(child);
@@ -2349,8 +2469,8 @@ function processdom(node, key = null) {
 }
 
 // if you are using css function with dynamic binding , use camelized function name 
-function completionUnit(value, unit = '%') {
-    return isNumber(value) ? `${value}unit` : value;
+function addUnit(value, unit) {
+    return isNumber(value) ? `${value + unit}` : value;
 }
 function rgba(...rgba) {
     return `rgba(${rgba.join(',')})`;
@@ -2362,8 +2482,8 @@ const rgb = rgba;
 function hsla(h, s, l, a = 1) {
     return `hsla(
         ${h},
-        ${completionUnit(s)},
-        ${completionUnit(l)},
+        ${addUnit(s, '%')},
+        ${addUnit(l, '%')},
         ${a}
         )`;
 }
@@ -2393,6 +2513,34 @@ function cubicBzier(x1, y1, x2, y2) {
 }
 const max = (...items) => `max(${items.join(',')})`;
 const min = (...items) => `min(${items.join(',')})`;
+function translateX(t) {
+    return `translateX(${t})`;
+}
+function translateY(t) {
+    return `translateY(${t})`;
+}
+function translate3d(x, y, z) {
+    return `translate3d(${x},${y},${z})`;
+}
+function scale(sx, sy) {
+    return 'scale(' + sx + (sy ? `,${sy}` : '') + ')';
+}
+function scale3d(sx, sy, sz) {
+    return `scale3d(${sx},${sy},${sz})`;
+}
+function rotate3d(x, y, z, a) {
+    return `rotate3d(${x},${y},${z},${addUnit(a, 'deg')})`;
+}
+function rotate(a) {
+    return `rotate(${addUnit(a, 'deg')})`;
+}
+function perspective(l) {
+    return `perspective(${l})`;
+}
+function skewX(x) {
+    return `skewX(${addUnit(x, 'deg')})`;
+}
+
 var cssFunctions = {
     rgba,
     rgb,
@@ -2403,7 +2551,10 @@ var cssFunctions = {
     calc,
     cubicBzier,
     max,
-    min
+    min,
+    translateX,
+    translateY,
+    scale
 };
 
 var proto = {
@@ -2420,7 +2571,7 @@ function createComponentInstance(options) {
         uid: uid(),
         scope: reactive(initScope()),
         render: null,
-        currentTree: null,
+        vnode: null,
         createRender: options.createRender,
         components: options.components,
         directives: options.directives,
@@ -2451,9 +2602,10 @@ function getCurrentInstance() {
 function getCurrentScope() {
     return getCurrentInstance().scope;
 }
-const mountComponent = (vnode, container) => {
-    var { type, app, props, children } = vnode;
-    var instance = createComponentInstance(type);
+const mountComponent = (vnode, container, anchor = null) => {
+    var { tag, props, children } = vnode;
+    var instance = createComponentInstance(tag);
+    vnode.ref = instance;
     const { scope, createRender, } = instance;
     callHook("beforeCreate" /* BEFORE_CREATE */, instance, scope, scope);
     // init instance , we only can use getCurrentInstance in create hook 
@@ -2468,19 +2620,19 @@ const mountComponent = (vnode, container) => {
     instance.render = render;
     // component update fn
     function update() {
-        const { isMounted, currentTree } = instance;
+        const { isMounted, vnode } = instance;
         // 每次更新生成新树
         var nextTree = render();
         // 处理fragment
         nextTree = processdom(nextTree);
-        console.log('currentTree', currentTree);
+        console.log('prevTree', vnode);
         console.log('nextTree', nextTree);
         // test hooks
         callHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, instance, scope, scope);
-        patch(currentTree, nextTree, container);
+        patch(vnode, nextTree, container);
         callHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, instance, scope, scope);
         instance.isMounted = true;
-        instance.currentTree = nextTree;
+        instance.vnode = nextTree;
     }
     //  call at every update
     instance.update = update;
@@ -2494,7 +2646,317 @@ const mountComponent = (vnode, container) => {
     return instance;
 };
 
-let currentApp = null;
+const show = {
+    mounted() {
+        debugger;
+    },
+    updated() {
+        debugger;
+    }
+};
+
+const builtInDirectives = {
+    show
+};
+const builtInComponents = {};
+
+function keyframes(name, keyframes) {
+    return createKeyframes(name, keyframes);
+}
+function keyframe(name, keyframes) {
+    return createKeyframe(name, keyframes);
+}
+
+const flash = keyframes('flash', [
+    keyframe([0, 50, 100], {
+        opacity: 1
+    }),
+    keyframe([25, 75], {
+        opacity: 0
+    })
+]);
+
+const backInDown = keyframes('backInDown', [
+    keyframe(0, {
+        transform: [translateY('-1200px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(80, {
+        transform: [translateY('0px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(100, {
+        transform: scale(1),
+        opacity: 1
+    }),
+]);
+const backInUp = keyframes('backInUp', [
+    keyframe(0, {
+        transform: [translateY('1200px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(80, {
+        transform: [translateY('0px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(100, {
+        transform: scale(1),
+        opacity: 1
+    }),
+]);
+const backInLeft = keyframes('backInLeft', [
+    keyframe(0, {
+        transform: [translateX('-2000px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(80, {
+        transform: [translateX('0px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(100, {
+        transform: scale(1),
+        opacity: 1
+    }),
+]);
+const backInRight = keyframes('backInRight', [
+    keyframe(0, {
+        transform: [translateX('2000px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(80, {
+        transform: [translateX('0px'), scale(0.7)],
+        opacity: 0.7
+    }),
+    keyframe(100, {
+        transform: scale(1),
+        opacity: 1
+    }),
+]);
+
+const hinge = keyframes('hinge', [
+    keyframe(0, {
+        animationTimingFunction: 'ease-in-out'
+    }),
+    keyframe([20, 60], {
+        animationTimingFunction: 'ease-in-out',
+        transform: rotate3d(0, 0, 1, 80)
+    }),
+    keyframe([40, 80], {
+        animationTimingFunction: 'ease-in-out',
+        transform: rotate3d(0, 0, 1, 60),
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: translate3d(0, '700px', 0),
+        opacity: 0
+    })
+]);
+const jackInTheBox = keyframes('jackInTheBox', [
+    keyframe(0, {
+        opacity: 0,
+        transform: [scale(0.1), rotate(30)],
+        transformOrigin: ['center', 'bottom']
+    }),
+    keyframe(50, {
+        transform: rotate(-10),
+    }),
+    keyframe(70, {
+        transform: rotate(3),
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: scale(1),
+    })
+]);
+const rollIn = keyframes('rollIn', [
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d('-100%', 0, 0), rotate3d(0, 0, 1, -120)]
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
+]);
+const rollOut = keyframes('rollOut', [
+    keyframe(0, {
+        opacity: 1,
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: [translate3d('100%', 0, 0), rotate3d(0, 0, 1, 120)]
+    })
+]);
+
+const flip = keyframes('flip', [
+    keyframe(0, {
+        transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, -360)],
+        animationTimingFunction: 'ease-out'
+    }),
+    keyframe(40, {
+        transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, '150px'), rotate3d(0, 1, 0, -190)],
+        animationTimingFunction: 'ease-out'
+    }),
+    keyframe(50, {
+        transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, '150px'), rotate3d(0, 1, 0, -170)],
+        animationTimingFunction: 'ease-in'
+    }),
+    keyframe(80, {
+        transform: [perspective('400px'), scale3d(0.95, 0.95, 0.95), translate3d(0, 0, 0), rotate3d(0, 1, 0, 0)],
+        animationTimingFunction: 'ease-in'
+    }),
+    keyframe(100, {
+        transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, 0)],
+        animationTimingFunction: 'ease-in'
+    })
+]);
+const flipInX = keyframes('flipInX', [
+    keyframe(0, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
+        animationTimingFunction: 'ease-in',
+        opacity: 0
+    }),
+    keyframe(40, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, -20)],
+        animationTimingFunction: 'ease-in'
+    }),
+    keyframe(60, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, 10)],
+        animationTimingFunction: 'ease-in',
+        opacity: 1
+    }),
+    keyframe(80, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, -5)],
+    }),
+    keyframe(100, {
+        transform: perspective('400px')
+    })
+]);
+const flipInY = keyframes('flipInY', [
+    keyframe(0, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
+        animationTimingFunction: 'ease-in',
+        opacity: 0
+    }),
+    keyframe(40, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, -20)],
+        animationTimingFunction: 'ease-in'
+    }),
+    keyframe(60, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, 10)],
+        animationTimingFunction: 'ease-in',
+        opacity: 1
+    }),
+    keyframe(80, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, -5)],
+    }),
+    keyframe(100, {
+        transform: perspective('400px')
+    })
+]);
+const flipOutX = keyframes('flipOutX', [
+    keyframe(0, {
+        transform: perspective('400px')
+    }),
+    keyframe(30, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, -20)],
+        opcaity: 1
+    }),
+    keyframe(100, {
+        transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
+        opcaity: 0
+    })
+]);
+const flipOutY = keyframes('flipOutY', [
+    keyframe(0, {
+        transform: perspective('400px')
+    }),
+    keyframe(30, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, -20)],
+        opcaity: 1
+    }),
+    keyframe(100, {
+        transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
+        opcaity: 0
+    })
+]);
+
+const lightSpeedInRight = keyframes('lightSpeedInRight', [
+    keyframe(0, {
+        transform: [translate3d('100%', 0, 0), skewX(-30)],
+        opacity: 0
+    }),
+    keyframe(60, {
+        transform: skewX(20),
+        opacity: 1
+    }),
+    keyframe(80, {
+        transform: skewX(-5)
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
+]);
+const lightSpeedInLeft = keyframes('lightSpeedInLeft', [
+    keyframe(0, {
+        transform: [translate3d('-100%', 0, 0), skewX(30)],
+        opacity: 0
+    }),
+    keyframe(60, {
+        transform: skewX(-20),
+        opacity: 1
+    }),
+    keyframe(80, {
+        transform: skewX(5)
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
+]);
+const lightSpeedOutRigt = keyframes('lightSpeedOutRight', [
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: [translate3d('100%', 0, 0), skewX(30)],
+        opacity: 0
+    }),
+]);
+const lightSpeedOutLeft = keyframes('lightSpeedOutLeft', [
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: [translate3d('-100%', 0, 0), skewX(-30)],
+        opacity: 0
+    }),
+]);
+
+var animations = [
+    jackInTheBox,
+    hinge,
+    flash,
+    backInUp,
+    backInDown,
+    backInLeft,
+    backInRight,
+    rollIn,
+    rollOut,
+    flip,
+    flipInX,
+    flipInY,
+    flipOutX,
+    flipOutY,
+    lightSpeedInLeft,
+    lightSpeedInRight,
+    lightSpeedOutLeft,
+    lightSpeedOutRigt
+];
+function installAnimation() {
+    mount(createStyleSheet(null, animations), document.head);
+}
+
+var currentApp = null;
 function getCurrentApp() {
     return currentApp;
 }
@@ -2504,12 +2966,14 @@ class App {
     constructor(options) {
         this.options = options;
         currentApp = this;
+        /* 安装动画 */
+        this.use(installAnimation);
     }
-    components = getEmptyMap();
+    components = builtInComponents;
     component(name, options) {
-        this.components = options;
+        this.components[name] = options;
     }
-    directives = getEmptyMap();
+    directives = builtInDirectives;
     directive(name, options) {
         this.directives[name] = options;
     }
@@ -2540,34 +3004,14 @@ class App {
     unmount() {
     }
     installed = new Set();
-    use(plugin, ...options) {
-        if (!this.installed.has(plugin)) {
-            plugin(this, ...options);
+    use(installer, ...options) {
+        if (!this.installed.has(installer)) {
+            installer(this, ...options);
         }
     }
 }
 
 const createApp = (options) => new App(options);
-
-function injectDirective(target, directive) {
-    if (isFunction(directive)) {
-        directive = {
-            ["mounted" /* MOUNTED */]: directive,
-            ["updated" /* UPDATED */]: directive
-        };
-    }
-    for (let key in directive) {
-        injectHook(key, target, directive[key]);
-    }
-    // ! 
-    return target;
-}
-function injectDirectives(target, directives) {
-    directives.forEach((directive) => {
-        injectDirective(target, directive);
-    });
-    return target;
-}
 
 function display(displayData) {
     return displayData;
@@ -2607,10 +3051,10 @@ function renderList(data, callee, key) {
 }
 
 function getComponent(name) {
-    return (getCurrentInstance() || getCurrentApp())?.components[name];
+    return getCurrentInstance().components?.[name] || getCurrentApp().components[name];
 }
 function getDirective(name) {
-    return (getCurrentInstance() || getCurrentApp())?.directives?.[name];
+    return getCurrentInstance().directives?.[name] || getCurrentApp().directives[name];
 }
 
 const toCodeString = (_) => "'" + _ + "'";
@@ -2750,4 +3194,4 @@ function useState(value) {
     }, stateIniterHandler);
 }
 
-export { ComponentOptionKeys, createApp, createComment, createComponent, createDeclaration, createElement, createEvent, createFragment, createHandlerKey, createKeyframe, createKeyframes, createMedia, createSVGElement, createStyle, createStyleSheet, createSupports, createText, display, effect, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, important, injectDirective, injectDirectives, injectHook, isEventOptions, mergeSelectors, mergeSplitedSelectorsAndJoin, mixin, mountComponent, nextTick, nextTickSingleWork, normalizeClass, normalizeStyle, onMounted, parseHandlerKey, reactive, renderList, renderSlot, setCurrentInstance, splitSelector, useState };
+export { ComponentOptionKeys, Nodes, NodesMap, createApp, createComment, createComponent, createDeclaration, createElement, createEvent, createFragment, createHandlerKey, createKeyframe, createKeyframes, createMedia, createSVGElement, createStyle, createStyleSheet, createSupports, createText, directiveTypeOf, display, effect, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, important, injectDirective, injectDirectives, injectHook, mergeSelectors, mergeSplitedSelectorsAndJoin, mixin, mountComponent, nextTick, nextTickSingleWork, normalizeClass, normalizeStyle, onMounted, parseHandlerKey, reactive, renderList, renderSlot, setCurrentInstance, splitSelector, tagTypeOf, useState };
