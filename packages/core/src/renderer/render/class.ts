@@ -1,10 +1,10 @@
 import { keys, removeFromArray } from "@crush/common"
-import { EMPTY_MAP } from "@crush/common/src/value"
+import { EMPTY_OBJ } from "@crush/common/src/value"
 
 
 export function updateClass(pClass: any, nClass: any, el: HTMLElement) {
-    pClass ||= EMPTY_MAP
-    nClass ||= EMPTY_MAP
+    pClass ||= EMPTY_OBJ
+    nClass ||= EMPTY_OBJ
     var classList = el.classList
     var removeKeys: any = keys(pClass)
     for (let className in nClass) {
@@ -25,7 +25,7 @@ export function updateClass(pClass: any, nClass: any, el: HTMLElement) {
 }
 
 export function mountClass(_class: any, el: HTMLElement) {
-    updateClass(EMPTY_MAP, _class, el)
+    updateClass(EMPTY_OBJ, _class, el)
 }
 
 export function unmountClass(el: HTMLElement) {

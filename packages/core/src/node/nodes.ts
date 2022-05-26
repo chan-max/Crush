@@ -59,7 +59,7 @@ export enum Nodes {
     // use slot
     SLOT,
     // define slot
-    DEFINE_SLOT
+    OUTLET
 }
 
 /*
@@ -81,7 +81,7 @@ export enum NodesMap {
     'class' = Nodes.CLASS,
     'template' = Nodes.TEMPLATE,
     'slot' = Nodes.SLOT,
-    'defineSlot' = Nodes.DEFINE_SLOT
+    'outlet' = Nodes.OUTLET
 }
 
 import {

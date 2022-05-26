@@ -7,7 +7,7 @@ import {
 /*
     处理结果返回始终是数组
 */
-export function processdom(node: any[], key: any = null): null | any[] {
+export function processdom(node: any, key: any = null): null | any[] {
 
     if (!node) {
         return null

@@ -2,7 +2,7 @@ import {
     isArray,
     isString, removeFromArray
 } from '@crush/common'
-import { EMPTY_MAP } from '@crush/common/src/value'
+import { EMPTY_OBJ } from '@crush/common/src/value'
 import {
     IMPORTANT_SYMBOL,
     IMPORTANT_KEY
@@ -40,7 +40,7 @@ export function getDeclarationValue(rawValue: any) {
 
 
 export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: CSSStyleDeclaration, vnode: any) {
-    var delList = Object.keys(pDeclaration ||= EMPTY_MAP)
+    var delList = Object.keys(pDeclaration ||= EMPTY_OBJ)
     for (let property in nDeclaration) {
         var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property])
         var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property])
@@ -56,9 +56,9 @@ export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: C
 }
 
 export function mountDeclaration(declaration: any, style: any, vnode: any) {
-    updateDeclaration(EMPTY_MAP, declaration, style, vnode)
+    updateDeclaration(EMPTY_OBJ, declaration, style, vnode)
 }
 
 export function unmountDeclaration(declaration: any, style: any, vnode: any) {
-    updateDeclaration(declaration, EMPTY_MAP, style, vnode)
+    updateDeclaration(declaration, EMPTY_OBJ, style, vnode)
 }   

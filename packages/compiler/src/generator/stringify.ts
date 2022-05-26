@@ -36,7 +36,7 @@ const stringify = (target: any): string => {
     }
 }
 
-const toArrowFunction = (returned: string, params: string[] = []) => {
+const toArrowFunction = (returned: string, ...params: string[]) => {
     return `(${params.join(',')})=>(${returned})`
 }
 

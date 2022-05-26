@@ -1,5 +1,5 @@
 import { keys, removeFromArray } from "@crush/common";
-import { EMPTY_MAP } from "@crush/common/src/value";
+import { EMPTY_OBJ } from "@crush/common/src/value";
 import { isEvent, parseHandlerKey } from "../common/event";
 import { unmountClass, updateClass } from "./class";
 import { mountDeclaration, unmountDeclaration, updateDeclaration } from "./declaration";
@@ -9,7 +9,7 @@ export function mountProps(vnode: any) {
     if (!props) {
         return
     } else {
-        updateProps(EMPTY_MAP, props, ref, vnode)
+        updateProps(EMPTY_OBJ, props, ref, vnode)
     }
 }
 

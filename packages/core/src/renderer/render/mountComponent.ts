@@ -28,6 +28,7 @@ import {
 import { initScope } from '../../instance/scope'
 import { getCurrentApp } from '../../..'
 import { injectMixins } from '../../instance/mixin'
+import { EMPTY_OBJ } from '@crush/common/src/value'
 
 function createComponentInstance(options: any) {
     var app = getCurrentApp()
@@ -40,6 +41,8 @@ function createComponentInstance(options: any) {
         scope: reactive(initScope()),
         render: null,
         vnode: null,
+        slots: null,
+        props: null,
         createRender: options.createRender,
         components: options.components,
         directives: options.directives,
@@ -77,10 +80,14 @@ export function getCurrentScope() {
 export const mountComponent = (vnode: any, container: Element, anchor: any = null) => {
     var { tag, props, children } = vnode
 
-
     var instance: any = createComponentInstance(tag)
 
-    vnode.ref = instance
+    instance.props = props || EMPTY_OBJ
+    instance.slots = children || EMPTY_OBJ
+
+    // 保存vnode上的组件实例
+    vnode.instance = instance
+
 
     const { scope, createRender, } = instance;
 
@@ -109,11 +116,12 @@ export const mountComponent = (vnode: any, container: Element, anchor: any = nul
 
         // 每次更新生成新树
 
+        setCurrentInstance(instance)
         var nextTree = render()
+        setCurrentInstance(null)
 
         // 处理fragment
         nextTree = processdom(nextTree)
-
 
         console.log('prevTree', vnode);
         console.log('nextTree', nextTree);

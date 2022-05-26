@@ -31,8 +31,8 @@ define(['exports'], (function (exports) { 'use strict';
     const uid = () => id++;
     const uStringId = () => String(uid());
     const uVar = () => `_${uid()}`;
-    const EMPTY_MAP = Object.freeze({});
-    const EMPTY_LIST = Object.freeze([]);
+    const EMPTY_OBJ = Object.freeze({});
+    const EMPTY_ARR = Object.freeze([]);
 
     const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
         res[item] = mapValue;
@@ -69,7 +69,7 @@ define(['exports'], (function (exports) { 'use strict';
     };
     const extend$1 = Object.assign;
 
-    const keys = (value) => value ? Object.keys(value) : EMPTY_LIST;
+    const keys = (value) => value ? Object.keys(value) : EMPTY_ARR;
 
     const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
         'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
@@ -1432,7 +1432,7 @@ define(['exports'], (function (exports) { 'use strict';
         const hooks = target[type];
         if (!hooks)
             return;
-        var { binding, scheduler } = options || EMPTY_MAP;
+        var { binding, scheduler } = options || EMPTY_OBJ;
         hooks.forEach((hook) => {
             if (scheduler) {
                 scheduler(hook, binding, ...args);
@@ -1611,7 +1611,7 @@ define(['exports'], (function (exports) { 'use strict';
         };
     }
     function updateDeclaration(pDeclaration, nDeclaration, style, vnode) {
-        var delList = Object.keys(pDeclaration ||= EMPTY_MAP);
+        var delList = Object.keys(pDeclaration ||= EMPTY_OBJ);
         for (let property in nDeclaration) {
             var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property]);
             var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property]);
@@ -1626,10 +1626,10 @@ define(['exports'], (function (exports) { 'use strict';
         delList.forEach((property) => nodeOps.setProperty(style, property, '')); // 清空旧的属性
     }
     function mountDeclaration(declaration, style, vnode) {
-        updateDeclaration(EMPTY_MAP, declaration, style);
+        updateDeclaration(EMPTY_OBJ, declaration, style);
     }
     function unmountDeclaration(declaration, style, vnode) {
-        updateDeclaration(declaration, EMPTY_MAP, style);
+        updateDeclaration(declaration, EMPTY_OBJ, style);
     }
 
     /*
@@ -1779,8 +1779,8 @@ define(['exports'], (function (exports) { 'use strict';
     }
 
     function updateClass(pClass, nClass, el) {
-        pClass ||= EMPTY_MAP;
-        nClass ||= EMPTY_MAP;
+        pClass ||= EMPTY_OBJ;
+        nClass ||= EMPTY_OBJ;
         var classList = el.classList;
         var removeKeys = keys(pClass);
         for (let className in nClass) {
@@ -1810,7 +1810,7 @@ define(['exports'], (function (exports) { 'use strict';
             return;
         }
         else {
-            updateProps(EMPTY_MAP, props, ref);
+            updateProps(EMPTY_OBJ, props, ref);
         }
     }
     function updateProps(p, n, el, vnode) {

@@ -5,9 +5,9 @@ import {
 
 var hello = {
     template: `
-        <h1>
-            66666666666666
-        </h1>
+        <header>
+            <slot>
+        </header>
     `
 }
 
@@ -31,12 +31,8 @@ var root = {
     template: `
             <button @click="count++"> {{ count }} </button>
             <hello>
-                <template  #header >
-                    666666
-                </template>
-                <template  #footer >
-                    666666
-                </template>
+                <h1> 我是slot1 {{ count }} </h1>
+                <h2> 我是slot2 {{ count }} </h2>
             </hello>
         `,
     create($: any) {

@@ -110,7 +110,11 @@ function parseNode(node: any, ctx: any) {
                 break
             case Nodes.SLOT:
                 break
-            case Nodes.DEFINE_SLOT:
+            case Nodes.OUTLET:
+                node.outlet = {
+                    name: node.attributeMap?.['name'],
+                    scope: node.attributeMap?.['scope']
+                }
                 break
         }
     } else if (type === Nodes.TEXT) {

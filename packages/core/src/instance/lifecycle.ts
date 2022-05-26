@@ -1,5 +1,5 @@
 import { isArray } from "@crush/common"
-import { EMPTY_MAP } from "@crush/common/src/value"
+import { EMPTY_OBJ } from "@crush/common/src/value"
 import { getCurrentInstance } from "../.."
 
 /*
@@ -46,7 +46,7 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
     var {
         binding,
         scheduler
-    } = options || EMPTY_MAP
+    } = options || EMPTY_OBJ
 
     hooks.forEach((hook: any) => {
         if (scheduler) {

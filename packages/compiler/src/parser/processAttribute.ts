@@ -59,12 +59,6 @@ export const findValuesByattributes = (attrs: Asb[], attributes: string[]) => fi
 
 const extAttribute = /(@|\$|-{2}|\.|#)?(\()?([\w-]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?/
 
-var fnIsCalled = /.+\(.*\)$/
-
-/*
-    如果是函数表达式，生成代码时不需要包裹一层函数
-*/
-
 // legal variable name
 var varRE = /^\w+$/
 // arrow function
@@ -134,8 +128,12 @@ export const processAttribute = (node: any) => {
                 case Nodes.SLOT:
                     (node.dirs ||= []).push(attr)
                     break
-                case Nodes.DEFINE_SLOT:
-                    (node.dirs ||= []).push(attr)
+                case Nodes.OUTLET:
+                    // define slot
+                    node.outlet = {
+                        name: attr._arguments[0], // 默认第一个参数为插槽名称
+                        scope: attr.value
+                    }
                     break
                 case Nodes.CUSTOM_DIRECTIVE:
                     // 只有自定义指令支持动态指令

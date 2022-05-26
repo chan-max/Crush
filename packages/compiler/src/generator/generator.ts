@@ -95,12 +95,12 @@ import {
 } from '../parser/parseIterator'
 import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
 import { uid, isArray, isObject, error } from '@crush/common'
-import { uVar } from '@crush/common/src/value'
+import { EMPTY_OBJ, uVar } from '@crush/common/src/value'
 import { createHandlerKey, } from '@crush/core'
 
 const genFor = (target: string, iterator: Iterator, context: any) => context.callRenderFn(
     renderMethodsNameMap.renderList,
-    iterator.iterable, toArrowFunction(target, iterator.items),
+    iterator.iterable, toArrowFunction(target, ...iterator.items),
     uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
 )
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
@@ -129,10 +129,11 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
             case Nodes.SLOT:
                 // where there is a slot directive on a element or component , the target will be the fallback content
                 var slotName = toBackQuotes(dir.value || 'default')
-                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, target)
+                // 指令插槽的渲染无法携带作用域信息
+                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, toArrowFunction(target), NULL, uid())
                 break
-            case Nodes.DEFINE_SLOT:
-                debugger
+            case Nodes.OUTLET:
+                // 不在此处处理outlet
                 break
         }
         return genDirectives(target, dirs, context)
@@ -175,9 +176,28 @@ function genDirs(code: string, node: any, context: any) {
 function genSlotContent(node: any, context: any) {
     var { children } = node
     /*
-        关于插槽的定义
+        关于插槽的定义 , 
+        插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
+        如 <template --slot:header=""> ,
+        暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
     */
     if (!children) return NULL
+    var _default: any
+    var slots: Record<string, string> = {}
+
+    children.forEach((child: any) => {
+        var { name, scope } = child.outlet || EMPTY_OBJ
+        if (name) {
+            slots[name] = toArrowFunction(genNode(child, context), scope)
+        } else {
+            (_default ||= []).push(child)
+        }
+    });
+
+    if (_default) {
+        slots.default = toArrowFunction(genNodes(_default, context))
+    }
+    return stringify(slots)
 }
 
 function genNode(node: any, context: any): any {
@@ -195,11 +215,11 @@ function genNode(node: any, context: any): any {
             return code
         case Nodes.SLOT:
             var slotName = toBackQuotes(node.attributeMap?.name || 'default')
-            var fallback = genNodes(node.children, context)
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback)
-        case Nodes.DEFINE_SLOT:
-            debugger
-            break
+            var fallback = toArrowFunction(genNodes(node.children, context))
+            // todo 插槽作用域
+            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid())
+        case Nodes.OUTLET:
+            return genNodes(node.children as any[], context)
         case Nodes.HTML_ELEMENT:
             var code: string = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
             code = genDirs(code, node, context)
