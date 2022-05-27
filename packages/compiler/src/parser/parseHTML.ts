@@ -99,7 +99,7 @@ export const parseHTML = (source: string): Asb[] => {
             }
 
             var asb = createAsb(Nodes.TEXT)
-            asb.children = text
+            asb.children = text.trim()
             ast.push(asb)
         }
     }

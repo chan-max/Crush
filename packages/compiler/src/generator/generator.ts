@@ -130,7 +130,7 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
                 // where there is a slot directive on a element or component , the target will be the fallback content
                 var slotName = toBackQuotes(dir.value || 'default')
                 // 指令插槽的渲染无法携带作用域信息
-                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, toArrowFunction(target), NULL, uid())
+                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, toArrowFunction(target), uid())
                 break
             case Nodes.OUTLET:
                 // 不在此处处理outlet
@@ -220,6 +220,16 @@ function genNode(node: any, context: any): any {
             return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid())
         case Nodes.OUTLET:
             return genNodes(node.children as any[], context)
+        case Nodes.DYNAMIC_ELEMENT:
+            var { value, isDynamicValue } = node.attrMap['is']
+            var code: string = context.callRenderFn(
+                renderMethodsNameMap.createElement,
+                isDynamicValue ? value : toCodeString(value),
+                genProps(node, context),
+                genChildrenString(node.children, context),
+                uStringId())
+            code = genDirs(code, node, context)
+            return code
         case Nodes.HTML_ELEMENT:
             var code: string = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
             code = genDirs(code, node, context)
@@ -227,6 +237,15 @@ function genNode(node: any, context: any): any {
         case Nodes.SVG_ELEMENT:
             debugger
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
+        case Nodes.DYNAMIC_COMPONENT:
+            var { value, isDynamicValue } = node.attrMap['is']
+            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent,isDynamicValue ? value : toCodeString(value),)
+            // 动态组件不会提升
+            var props = genProps(node, context)
+            var slots = genSlotContent(node, context)
+            code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId())
+            code = genDirs(code, node, context)
+            return code
         case Nodes.COMPONENT:
             var code: string = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
             var uv = context.hoistExpression(code)
@@ -238,9 +257,9 @@ function genNode(node: any, context: any): any {
         case Nodes.TEXT:
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
-            var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, 'null', stringify(genChildren(node.children, context)), uStringId())
-            if (node.dirs) { code = genDirectives(code, node.dirs, context) }
-            if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
+            var props = genProps(node, context)
+            var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId())
+            code = genDirs(code, node, context)
             return code
         case Nodes.STYLE_RULE:
             return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())

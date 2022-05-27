@@ -37,59 +37,39 @@ import {
     processRules
 } from './processRules'
 
-import {
-    warn
-} from '@crush/common'
-import { Asb } from './ast'
 
-type ParseContext = {
-    ignoreChildren: boolean // shoudle parse the children
-}
+
 
 export const parseTemplate = (template: string) => {
     var htmlAst = parseHTML(template)
-    parseNodes(htmlAst)
+    processNodes(htmlAst)
     return htmlAst
 }
 
-const parseNodes = (
-    nodes: Asb[],
-    ctx: ParseContext = {
-        ignoreChildren: false,
-    }) => {
-    nodes.forEach((node) => {
-        parseNode(node, ctx)
-        if (isArray(node.children) && !ctx.ignoreChildren) {
-            parseNodes(node.children as Asb[], ctx)
-        }
-        // reset status
-        ctx.ignoreChildren = false
-    })
-}
 
-function parseNode(node: any, ctx: any) {
+// need to rewrite
+const processNodes = (node: any) => {
+    if (isArray(node)) {
+        node.forEach(processNodes)
+        return
+    }
+    
+    // 正常处理节点
+    let ignoreChildren = false
     const type = node.type
     if (type === Nodes.DOM_ELEMENT) {
         const tagType = tagTypeOf(node.tagName as string)
         node.type = tagType
+        processAttribute(node)
         switch (tagType) {
-            case Nodes.HTML_ELEMENT:
-                processAttribute(node)
-                break
-            case Nodes.COMPONENT:
-                processAttribute(node)
-                break
-            case Nodes.SVG_ELEMENT:
-                break
             case Nodes.STYLE:
-                processAttribute(node)
                 var template = node.children?.[0].children
                 if (template) {
                     var styleAst = parseCSS(template)
                     processRules(styleAst)
                     node.children = styleAst
-                    ctx.ignoreChildren = true
                 }
+                ignoreChildren = true
                 break
             case Nodes.IF:
                 node.condition = node.attributeMap['condition']
@@ -105,11 +85,6 @@ function parseNode(node: any, ctx: any) {
             case Nodes.FOR:
                 node.iterator = parseIterator(node.attributeMap['iterator'])
                 break
-            case Nodes.TEMPLATE:
-                processAttribute(node)
-                break
-            case Nodes.SLOT:
-                break
             case Nodes.OUTLET:
                 node.outlet = {
                     name: node.attributeMap?.['name'],
@@ -119,9 +94,14 @@ function parseNode(node: any, ctx: any) {
         }
     } else if (type === Nodes.TEXT) {
         node.children = parseText(node.children as string)
-        ctx.ignoreChildren = true
+        ignoreChildren = true
         return
     } else if (type === Nodes.HTML_COMMENT) {
         // todo
     }
+
+    if(!ignoreChildren && node.children){
+        processNodes(node.children)
+    }
+
 }

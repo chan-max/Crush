@@ -28,7 +28,9 @@ import {
     normalizeStyle,
     renderSlot,
     injectDirective,
-    injectDirectives
+    injectDirectives,
+    injectMapHooks,
+    injectReservedProps
 } from '@crush/core'
 
 export var renderMethods = {
@@ -60,7 +62,8 @@ export var renderMethods = {
     normalizeStyle,
     renderSlot,
     injectDirective,
-    injectDirectives
+    injectDirectives,
+    injectReservedProps
 }
 
 export const renderMethodsNameMap = Object.entries(renderMethods).reduce((res: Record<string, string>, [name, method]: [string, Function]) => {

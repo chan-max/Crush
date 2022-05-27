@@ -30,7 +30,8 @@ export {
 
 export {
     injectDirective,
-    injectDirectives
+    injectDirectives,
+    injectReservedProps
 } from './src/instance/directive'
 
 export {
@@ -103,7 +104,8 @@ export {
 
 export {
     injectHook,
-    onMounted
+    injectMapHooks,
+    onMounted,
 } from './src/instance/lifecycle'
 
 export {

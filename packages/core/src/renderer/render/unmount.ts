@@ -1,4 +1,4 @@
-import { callElementHook } from "../../instance/directive";
+import { processHook } from "../../instance/directive";
 import { callHook, LifecycleHooks } from "../../instance/lifecycle";
 import { Nodes } from "../../node/nodes";
 import { nodeOps } from './nodeOps'
@@ -27,7 +27,7 @@ function unmountElement(vnode: any) {
     if (vnode.children) {
         unmountChildren(vnode.children)
     }
-    callElementHook(LifecycleHooks.BEFORE_UNMOUNT, vnode, null)
+    processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode, null)
     nodeOps.remove(vnode.ref)
-    callElementHook(LifecycleHooks.UNMOUNTED, vnode, null)
+    processHook(LifecycleHooks.UNMOUNTED, vnode, null)
 }

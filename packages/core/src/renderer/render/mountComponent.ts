@@ -118,6 +118,7 @@ export const mountComponent = (vnode: any, container: Element, anchor: any = nul
 
         setCurrentInstance(instance)
         var nextTree = render()
+        console.log('unprocessTree', nextTree);
         setCurrentInstance(null)
 
         // 处理fragment

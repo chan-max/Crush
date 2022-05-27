@@ -1,10 +1,9 @@
-
 import { hyphenate } from '@crush/common';
 import {
     IMPORTANT
 } from '../common/important'
 
-
+const svgNS = 'http://www.w3.org/2000/svg';
 
 export const nodeOps = {
     insert: (child: Element | Text, parent: Element, anchor: Element | null = null) => {
@@ -28,7 +27,6 @@ export const nodeOps = {
 
     // style
     setProperty: (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),
-
     deleteRule: (sheet: CSSStyleSheet, index: number) => sheet.deleteRule(index)
 }
 

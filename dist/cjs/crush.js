@@ -1888,7 +1888,7 @@ function injectDirective(target, [rawDirective, info]) {
     // ! 
     return target;
 }
-function callElementHook(type, p, n) {
+function processHook(type, p, n) {
     // 不存在两个节点都不存在
     if (p && n) {
         // ! 只有更新时指令才能拿到 oldValue
@@ -1974,11 +1974,11 @@ function mountHTMLElement(vnode, container, anchor) {
     const { tag, props, children } = vnode;
     var el = document.createElement(tag);
     vnode.ref = el;
-    callElementHook("created" /* CREATED */, null, vnode);
+    processHook("created" /* CREATED */, null, vnode);
     mountProps(vnode);
-    callElementHook("beforeMount" /* BEFORE_MOUNT */, null, vnode);
+    processHook("beforeMount" /* BEFORE_MOUNT */, null, vnode);
     nodeOps.insert(el, container, anchor);
-    callElementHook("mounted" /* MOUNTED */, null, vnode);
+    processHook("mounted" /* MOUNTED */, null, vnode);
     if (children) {
         mountChildren(children, el, anchor);
     }
@@ -2011,9 +2011,9 @@ function unmountElement(vnode) {
     if (vnode.children) {
         unmountChildren(vnode.children);
     }
-    callElementHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode, null);
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode, null);
     nodeOps.remove(vnode.ref);
-    callElementHook("unmounted" /* UNMOUNTED */, vnode, null);
+    processHook("unmounted" /* UNMOUNTED */, vnode, null);
 }
 
 const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
@@ -2235,9 +2235,9 @@ function updateHTMLElement(p, n, container, anchor) {
         <input  b >
     */
     // 更新钩子仅针对元素与子节点无关
-    callElementHook("beforeUpdate" /* BEFORE_UPDATE */, p, n);
+    processHook("beforeUpdate" /* BEFORE_UPDATE */, p, n);
     updateProps(p.props, n.props, el);
-    callElementHook("updated" /* UPDATED */, p, n);
+    processHook("updated" /* UPDATED */, p, n);
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container);
 }

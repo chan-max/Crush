@@ -3,38 +3,24 @@ import {
     createApp
 } from '@crush/core'
 
-var hello = {
-    template: `
-        <header>
-            <slot>
-        </header>
-    `
-}
-
 var root = {
-    components: {
-        hello
-    },
     directives: {
-        d1: {
-            mounted(el, dirInfo) {
-                console.log('mounted', el, dirInfo);
+        x: {
+            mounted(el,info){
+                console.log('mounted');
             },
-            updated(el, dirInfo) {
-                console.log('updated', el, dirInfo);
+            unmounted(){
+                console.log('unmounted');
             },
-            unmounted(el, dirInfo) {
-                console.log('unmounted', el, dirInfo);
+            updated(el,info){
+                console.log('updated',el,info);
             }
         }
     },
     template: `
-            <button @click="count++"> {{ count }} </button>
-            <hello>
-                <h1> 我是slot1 {{ count }} </h1>
-                <h2> 我是slot2 {{ count }} </h2>
-            </hello>
-        `,
+            <button @click="count++"> {{count}} </button>
+            <input --model="count">
+        `,    
     create($: any) {
         $.count = 0
         $.add = () => $.count++
@@ -42,6 +28,7 @@ var root = {
         $.e = () => {
             console.log(666);
         }
+        console.log(this);
     }
 }
 

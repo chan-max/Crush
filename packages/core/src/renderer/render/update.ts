@@ -36,7 +36,7 @@ import {
     updateProps
 } from './props'
 import { callHook, LifecycleHooks } from "../../instance/lifecycle";
-import { callElementHook } from "../../instance/directive";
+import { processHook } from "../../instance/directive";
 
 function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
 
@@ -49,9 +49,9 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
     */
 
     // 更新钩子仅针对元素与子节点无关
-    callElementHook(LifecycleHooks.BEFORE_UPDATE, p, n)
+    processHook(LifecycleHooks.BEFORE_UPDATE, p, n)
     updateProps(p.props, n.props, el, n)
-    callElementHook(LifecycleHooks.UPDATED, p, n)
+    processHook(LifecycleHooks.UPDATED, p, n)
 
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor)

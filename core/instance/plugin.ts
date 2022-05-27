@@ -1,0 +1,2 @@
+
+export type PluginType = Function

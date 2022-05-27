@@ -49,7 +49,7 @@ import { nodeOps } from "./nodeOps"
 import { mountDeclaration } from "./declaration"
 import { mountProps } from "./props"
 import { mountComponent } from "./mountComponent"
-import { callElementHook } from "../../instance/directive"
+import { processHook } from "../../instance/directive"
 
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const { tag, props, children } = vnode
@@ -57,15 +57,15 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
     var el = document.createElement(tag)
     vnode.ref = el
 
-    callElementHook(LifecycleHooks.CREATED, null, vnode)
+    processHook(LifecycleHooks.CREATED, null, vnode)
 
     mountProps(vnode)
 
-    callElementHook(LifecycleHooks.BEFORE_MOUNT, null, vnode)
+    processHook(LifecycleHooks.BEFORE_MOUNT, null, vnode)
 
     nodeOps.insert(el, container, anchor)
 
-    callElementHook(LifecycleHooks.MOUNTED, null, vnode)
+    processHook(LifecycleHooks.MOUNTED, null, vnode)
 
     if (children) {
         mountChildren(children, el, anchor)

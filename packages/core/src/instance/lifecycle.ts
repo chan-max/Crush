@@ -36,6 +36,17 @@ function injectHook(type: LifecycleHooks, target: any, hook: Function | Function
     }
 }
 
+
+function injectMapHooks(target: any, mapHooks: any) {
+    for (let type in mapHooks) {
+        injectHook(type as LifecycleHooks, target, mapHooks[type])
+    }
+    return target
+}
+
+
+
+
 /*
     binding is used for bind the callback context , it is necessary
 */
@@ -79,4 +90,5 @@ export {
     onMounted,
     onUnmounted,
     onUpdated,
+    injectMapHooks
 }

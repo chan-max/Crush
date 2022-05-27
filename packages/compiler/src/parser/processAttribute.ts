@@ -74,7 +74,7 @@ function isHandler(exp: string) {
 
 
 export const processAttribute = (node: any) => {
-    const { type, attributes } = node;
+    const { attributes } = node;
     if (!attributes) return
     for (let i = 0; i < attributes.length; i++) { // not destructur becasue keep the node
         const attr = attributes[i]
@@ -85,9 +85,11 @@ export const processAttribute = (node: any) => {
         attr.value = attr.value
         attr.isDynamicProperty = l && r
         attr.isDynamicValue = flag === '$'
-        attr.modifiers = modifierStr && modifierStr.split('.')
         attr._arguments = argumentStr && argumentStr.split(':')
+        attr.modifiers = modifierStr && modifierStr.split('.');
 
+
+        (node.attrMap ||= {})[property] = attr
 
         // process directive
         if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
@@ -134,6 +136,13 @@ export const processAttribute = (node: any) => {
                         name: attr._arguments[0], // 默认第一个参数为插槽名称
                         scope: attr.value
                     }
+                    break
+                case Nodes.MODEL:
+                    (node.reservedProps ||= []).push({
+                        property: 'modelValueAssign',
+                        value: ''
+                    });     
+                    (node.customDirs ||= []).push(attr)
                     break
                 case Nodes.CUSTOM_DIRECTIVE:
                     // 只有自定义指令支持动态指令
@@ -182,6 +191,7 @@ export const processAttribute = (node: any) => {
             }
         } else {
             //  normal attribute
+            debugger
         }
     }
 }
