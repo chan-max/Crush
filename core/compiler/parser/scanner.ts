@@ -7,8 +7,7 @@ export const createScanner = (source: string) => new Scanner(source)
 class Scanner {
     source
     constructor(source: string) {
-        this.source = source
-        this.move(0)
+        this.source = source.trim()
     }
     move(step: number) {
         this.source = this.source.slice(step).trimLeft()
@@ -24,8 +23,13 @@ class Scanner {
         return this.source.startsWith(expect)
     }
     exec(extractor: RegExp,) {
-        var [_, ...groups] = exec(this.source, extractor) as string[]
-        this.move(_.length)
-        return groups
+        var res = exec(this.source, extractor) as string[]
+        if (!res) {
+            return null
+        } else {
+            var [_, ...groups] = res
+            this.move(_.length)
+            return groups
+        }
     }
 }

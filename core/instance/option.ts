@@ -1,5 +1,11 @@
 import { isArray } from "../common/type";
 import { ComponentType } from "./component";
+import {
+    injectMixins
+} from './mixin'
+import {
+    compile
+} from '../compiler/generator/compiler'
 
 export enum ComponentOptions {
 
@@ -29,7 +35,7 @@ export function initOptions(options: ComponentType) {
     for (let key in options) {
         switch (key) {
             case ComponentOptions.TEMPLATE:
-                options.createRender = () => { }
+                options.createRender = compile(options[key] as string)
                 break
             case ComponentOptions.RENDER:
                 // todo

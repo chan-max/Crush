@@ -112,5 +112,7 @@ export {
     Nodes,
     NodesMap,
     directiveTypeOf,
-    tagTypeOf
+    tagTypeOf,
+    isReservedProp,
+    toReservedProp
 } from './src/node/nodes'

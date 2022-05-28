@@ -12,3 +12,7 @@ export const makeMap = (str: string, delimiter: string = ',') => {
     var map: Record<string, boolean> = arrayToMap(str.split(delimiter))
     return (key: string) => !!map[key]
 }
+
+export function setArrayKey() {
+
+}

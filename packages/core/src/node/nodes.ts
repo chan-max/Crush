@@ -8,11 +8,13 @@ export enum Nodes {
     TEMPLATE, /* the built-in tag template */
 
     IF,
-    ELSE_IF,
+    ELSE_IF,   
     ELSE,
     FOR,
-
+    
     HTML_ATTRIBUTE,
+
+    RESERVED_PROP,
 
     DOM_ELEMENT,
 
@@ -66,7 +68,7 @@ export enum Nodes {
     OUTLET,
 
     // form binding
-    MODEL 
+    MODEL
 }
 
 /*
@@ -90,10 +92,11 @@ export enum NodesMap {
     'class' = Nodes.CLASS,
     'template' = Nodes.TEMPLATE,
     'element' = Nodes.DYNAMIC_ELEMENT,
-    'component' = Nodes.DYNAMIC_COMPONENT , 
+    'component' = Nodes.DYNAMIC_COMPONENT,
     'model' = Nodes.MODEL
 }
 
+import { makeMap } from '@crush/common'
 import {
     isHTMLTag, isSVGTag
 } from './const'
@@ -112,4 +115,12 @@ export const tagTypeOf = (tagName: string) => {
             Nodes.HTML_ELEMENT : isSVGTag(tagName) ?
                 Nodes.SVG_ELEMENT : Nodes.COMPONENT)
 }
+
+// 保留属性
+export function toReservedProp(name: string) {
+    return `_${name}`
+}
+
+
+export const isReservedProp = makeMap('created,beforeMount,mounted,beforeUpdate,updated,beforeUnmount,unmounted,')
 

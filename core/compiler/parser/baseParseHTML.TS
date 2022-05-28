@@ -1,8 +1,9 @@
 import { getEmptyObj } from "../../common/value";
+import { parseAttribute } from "./parseAttribute";
 import { createScanner } from "./scanner";
 
-const openTagRE = /^<([\w-]+)(?:\:([\w\:]+))?/
-var closeTagRE = /^<\/([\w-]+)(?:\:\w+)?\s*>/
+const openTagRE = /^<([\w-]+)(?:\.([\w\.]+))?/
+var closeTagRE = /^<\/([\w-]+)(?:\.[\w\.]+)?\s*>/
 const htmlCommentRE = /<!--((.|[\r\n])*?)-->/
 const attributeRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/
 
@@ -10,7 +11,7 @@ export function baseParseHTML(template: string) {
     var scanner = createScanner(template)
     var ast: any = [],
         attributes,
-        attributeMap,
+        attributeMap, //! duplicate names will be overwritten
         inOpen,
         tag,
         modifiers;
@@ -61,8 +62,9 @@ export function baseParseHTML(template: string) {
             } else {
                 /* catch attribute */
                 var [attribute, _, value] = scanner.exec(attributeRE);
-                (attributes ||= []).push({ attribute, value });
-                (attributeMap ||= getEmptyObj())[attribute] = value;
+                const _attribute: any = parseAttribute(attribute, value);
+                (attributeMap ||= getEmptyObj())[_attribute.property] = _attribute;
+                (attributes ||= []).push(_attribute);
             }
         } else {
             var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/

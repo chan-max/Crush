@@ -4,19 +4,6 @@ import {
 } from '@crush/core'
 
 var root = {
-    directives: {
-        x: {
-            mounted(el,info){
-                console.log('mounted');
-            },
-            unmounted(){
-                console.log('unmounted');
-            },
-            updated(el,info){
-                console.log('updated',el,info);
-            }
-        }
-    },
     template: `
             <button @click="count++"> {{count}} </button>
             <input --model="count">

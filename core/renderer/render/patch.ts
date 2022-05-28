@@ -1,19 +1,16 @@
-import { isArray } from '@crush/common'
 import {
-    mount
+    isArray
+} from '../../common/type'
+
+import {
+    mount, mountChildren
 } from './mount'
 import {
     unmount, unmountChildren
 } from './unmount'
-import {
-    update, updateChildren
-} from './update'
-import {
-    mountChildren
-} from './mount'
+import { update, updateChildren } from './update'
 
 export const patch = (current: any, next: any, container: any, anchor: any = null) => {
-
     if (!current) {
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor)
@@ -32,7 +29,7 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
                     updateChildren([current], next, container, anchor)
                 } else {
                     // 两个单节点 ， 但key可能不同 
-                    if (current.tag === next.tag) {
+                    if (current.type === next.type) {
                         // 类型相同，直接更新
                         update(current, next, container, anchor)
                     } else {

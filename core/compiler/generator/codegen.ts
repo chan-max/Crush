@@ -1,5 +1,4 @@
-
-import { Nodes, toReservedProp } from '@crush/core'
+import { Nodes } from '../../const/node'
 import {
     renderMethodsNameMap
 } from './source'
@@ -16,16 +15,18 @@ import {
     destructur,
     declare,
     NULL,
-    toCodeString
-} from './stringify'
+    toSingleQuotes,
+    toReservedProp
+} from '../stringify'
+
 
 import {
-    Text
-} from '../parser/parseText'
-
-import {
+    EMPTY_OBJ,
+    uid,
     uStringId
-} from '@crush/common'
+} from '../../common/value'
+import { isArray, isObject } from '../../common/type'
+
 
 // the code Entrance
 export const genNodes = (nodes: any[], context: any): string => {
@@ -93,17 +94,13 @@ function genChildren(nodes: any[], context: any): string[] {
 import {
     Iterator
 } from '../parser/parseIterator'
-import { joinSelector, mergeSplitedSelector, splitSelector } from '@crush/core/src/renderer/common/mergeSelector'
-import { uid, isArray, isObject, error } from '@crush/common'
-import { EMPTY_OBJ, uVar } from '@crush/common/src/value'
-import { createHandlerKey, } from '@crush/core'
 
 const genFor = (target: string, iterator: Iterator, context: any) => context.callRenderFn(
     renderMethodsNameMap.renderList,
     iterator.iterable, toArrowFunction(target, ...iterator.items),
     uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
 )
-const genIf = (target: string, condition: string) => ternaryExp(condition, target, 'null')
+const genIf = (target: string, condition: string) => ternaryExp(condition, target, NULL)
 
 function genForWithFragment(target: string, iterator: Iterator, context: any) {
     return genFragment(genFor(target, iterator, context), context)
@@ -140,21 +137,21 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
     }
 }
 
-function genCustomDirectives(code: string, customDirs: any[], context: any): string {
+function genCustomDirectives(code: string, customDirectives: any[], context: any): string {
     // injectDirective
-    var dirs = customDirs.map((directive: any) => {
+    var dirs = customDirectives.map((directive: any) => {
         var { property, value, isDynamicProperty, _arguments, modifiers } = directive
 
         // 支持动态指令
-        var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toCodeString(property))
+        var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
         if (!isDynamicProperty) {
             dir = context.hoistExpression(dir)
         }
 
         var dirInfos = {
             value,
-            _arguments: _arguments && _arguments.map(toCodeString),
-            modifiers: modifiers && modifiers.map(toCodeString)
+            _arguments: _arguments && _arguments.map(toSingleQuotes),
+            modifiers: modifiers && modifiers.map(toSingleQuotes)
         }
 
         return [dir, dirInfos]
@@ -168,8 +165,8 @@ function genChildrenString(children: any, context: any) {
 }
 
 function genDirs(code: string, node: any, context: any) {
-    if (node.customDirs) { code = genCustomDirectives(code, node.customDirs, context) }
-    if (node.dirs) { code = genDirectives(code, node.dirs, context) }
+    if (node.customDirectives) { code = genCustomDirectives(code, node.customDirectives, context) }
+    if (node.directives) { code = genDirectives(code, node.directives, context) }
     return code
 }
 
@@ -221,10 +218,10 @@ function genNode(node: any, context: any): any {
         case Nodes.OUTLET:
             return genNodes(node.children as any[], context)
         case Nodes.DYNAMIC_ELEMENT:
-            var { value, isDynamicValue } = node.attrMap['is']
+            var { value, isDynamicValue } = node.attributeMap['is']
             var code: string = context.callRenderFn(
                 renderMethodsNameMap.createElement,
-                isDynamicValue ? value : toCodeString(value),
+                isDynamicValue ? value : toSingleQuotes(value),
                 genProps(node, context),
                 genChildrenString(node.children, context),
                 uStringId())
@@ -239,7 +236,7 @@ function genNode(node: any, context: any): any {
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
         case Nodes.DYNAMIC_COMPONENT:
             var { value, isDynamicValue } = node.attrMap['is']
-            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent,isDynamicValue ? value : toCodeString(value),)
+            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicValue ? value : toSingleQuotes(value),)
             // 动态组件不会提升
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
@@ -279,8 +276,8 @@ function genNode(node: any, context: any): any {
 
 const genFragment = (code: string, context: any) => context.callRenderFn(renderMethodsNameMap.createFragment, code, uStringId())
 
-const genTextContent = (texts: Text[], context: any) => {
-    return texts.map((text: Text) => {
+const genTextContent = (texts: any, context: any) => {
+    return texts.map((text: any) => {
         return text.isDynamic ? context.callRenderFn(renderMethodsNameMap.display, text.content) : toBackQuotes(text.content)
     }).join('+')
 }
@@ -298,6 +295,11 @@ const genText = (texts: Text[], context: any) => {
     while there is unknown selectors
     header,footer ? h1,h2
 */
+import {
+    splitSelector,
+    mergeSplitedSelector,
+    joinSelector
+} from '../../renderer/common/mergeSelector'
 
 function genSelector(selectors: Array<any>, context: any) {
     /*
@@ -382,15 +384,13 @@ function genDeclartion(declarationGroup: any[], context: any) {
     }
 }
 
+import {
+    createHandlerKey
+} from '../../renderer/common/event'
 
 function genProps(node: any, context: any) {
-    var {
-        type, attributes
-    } = node
-    if (!(attributes && attributes.length)) {
-        // attributes may be an empty array , becasue the directives
-        return NULL
-    }
+    var { type, attributes } = node
+    if (!attributes) { return NULL }
     var props: any = {}
     attributes.forEach((attr: any) => {
         switch (attr.type) {
@@ -400,14 +400,11 @@ function genProps(node: any, context: any) {
                     isDynamicProperty,
                     value,
                     isHandler, /* if true , just use it , or wrap an arrow function */
-                    argument,
+                    _arguments,
                     modifiers
                 } = attr
-
                 var handlerKey = isDynamicProperty ?
-                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(argument.map(toBackQuotes)))) :
-                    createHandlerKey(property, argument)
-
+                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(_arguments.map(toBackQuotes)))) : createHandlerKey(property, _arguments)
                 var callback = isHandler ? value : toArrowFunction(value)
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)))
@@ -422,7 +419,7 @@ function genProps(node: any, context: any) {
                 var style = props.style ||= []
                 style.push(attr.value)
                 break
-            case Nodes.HTML_ATTRIBUTE:
+            case Nodes.ATTRIBUTE:
                 // normal attributes
                 var {
                     property,
@@ -453,5 +450,6 @@ function genProps(node: any, context: any) {
         props.style = context.callRenderFn(renderMethodsNameMap.normalizeStyle, stringify(props.style))
     }
 
-    return stringify(props)
+    return stringify(props) === '{}' ? NULL : stringify(props)
 }
+

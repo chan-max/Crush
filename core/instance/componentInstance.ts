@@ -7,9 +7,7 @@ import { reactive } from "../reactivity/reactive";
 import { initScope } from "./scope";
 
 
-export type ComponentInstanceType = {
-
-}
+export type ComponentInstanceType = any
 
 export function createComponentInstance(options: ComponentType): ComponentInstanceType {
     if (!options._isOptions) {

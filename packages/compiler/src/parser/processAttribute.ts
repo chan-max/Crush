@@ -1,5 +1,5 @@
 
-import { directiveTypeOf, Nodes, NodesMap, } from '@crush/core'
+import { directiveTypeOf, isReservedProp, Nodes, NodesMap, } from '@crush/core'
 import {
 } from './parseNode'
 
@@ -22,6 +22,7 @@ import {
 import {
     parseInlineClass, parseInlineStyle
 } from './specialAttr'
+import { declare, toArrowFunction } from '../generator/stringify'
 
 /*
     find the value of attribute list
@@ -138,11 +139,13 @@ export const processAttribute = (node: any) => {
                     }
                     break
                 case Nodes.MODEL:
-                    (node.reservedProps ||= []).push({
-                        property: 'modelValueAssign',
-                        value: ''
-                    });     
-                    (node.customDirs ||= []).push(attr)
+                    node.attributes.unshift({
+                        type: Nodes.RESERVED_PROP,
+                        property: 'assign',
+                        value: toArrowFunction(`${attr.value}=_`,'_')
+                    }); 
+                    i++;
+                    (node.customDirs ||= []).push(attr);
                     break
                 case Nodes.CUSTOM_DIRECTIVE:
                     // 只有自定义指令支持动态指令
@@ -191,7 +194,9 @@ export const processAttribute = (node: any) => {
             }
         } else {
             //  normal attribute
-            debugger
+            if (isReservedProp(attr.property)) {
+                attr.type = Nodes.RESERVED_PROP
+            }
         }
     }
 }
