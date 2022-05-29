@@ -169,6 +169,12 @@ var reservedTagMap: Record<string, Nodes> = {
     'style': Nodes.STYLE
 }
 
+/*
+    tips 
+    why should devide the componet and element tag
+    bcause the children is different
+*/
+
 
 
 export function processAst(ast: any) {

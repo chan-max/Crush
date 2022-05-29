@@ -4,15 +4,24 @@ import {
 
 var root = {
     template: `
-        <element --for="i in count" @click="count++" $is="'h'+ i"> 66666 </element>
+        <style>
+             .test{
+                height:200px;
+                width:200px;
+                background-color:red;
+                animation : bounce 1s infinite;
+            }
+        </style>
+        <button @click="count++"> {{count}} </button>
+        <div class="test"></div>
     `,
-    create($:any){
+    create($: any) {
         $.count = 1
     }
 }
 
 var app = createApp(root)
-console.log('app',app);
+console.log('app', app);
 var instance = app.mount('#app')
-console.log('instance',instance);
+console.log('instance', instance);
 

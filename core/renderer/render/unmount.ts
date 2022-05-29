@@ -1,11 +1,13 @@
 import { Nodes } from "../../const/node"
+import { processHook } from "../../instance/directive"
+import { LifecycleHooks } from "../../instance/lifecycle"
 import {
     nodeOps
 } from './nodeOps'
 
 
 export function unmount(vnode: any, container: any, anchor: any) {
-    switch (vnode.type) {
+    switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
             unmountElement(vnode)
             break
@@ -24,5 +26,7 @@ function unmountElement(vnode: any) {
     if (vnode.children) {
         unmountChildren(vnode.children)
     }
+    processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
     nodeOps.remove(vnode.ref)
+    processHook(LifecycleHooks.UNMOUNTED, vnode)
 }

@@ -6,12 +6,16 @@ import { DirectiveType } from "../instance/directive"
 import { MixinType } from "../instance/mixin"
 import { PluginType } from "../instance/plugin"
 import { mountComponent } from "../renderer/render/mountComponent"
-import { createComponent } from "../renderer/vnode/vnode"
+import { createComponent } from "../renderer/vnode/dom"
 
+import {installAnimation} from '../animate/install'
 
 var currentApp: AppInstance
 
 export function getCurrentApp(): AppInstance {
+    if(!currentApp){
+        debugger
+    }
     return currentApp
 }
 
@@ -50,6 +54,7 @@ export class App implements AppInstance {
 
     constructor(rootComponent: ComponentType) {
         this.rootComponent = rootComponent
+        this.use(installAnimation)
         currentApp = this as AppInstance
     }
 

@@ -2512,7 +2512,7 @@ function attr(attrName) {
 function calc(exp) {
     return `calc(${exp})`;
 }
-function cubicBzier(x1, y1, x2, y2) {
+function cubicBezier(x1, y1, x2, y2) {
     return `cubic-bezier(${x1},${y1},${x2},${y2})`;
 }
 const max = (...items) => `max(${items.join(',')})`;
@@ -2553,7 +2553,7 @@ var cssFunctions = {
     $var,
     attr,
     calc,
-    cubicBzier,
+    cubicBezier,
     max,
     min,
     translateX,

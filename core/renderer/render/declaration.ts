@@ -10,7 +10,8 @@ import {
 
 import { nodeOps } from './nodeOps'
 
-import { removeFromArray } from '../../common/operate'
+
+import { unionKeys } from "./common";
 
 export function getDeclarationValue(rawValue: any) {
     var value, important = false
@@ -42,19 +43,15 @@ export function getDeclarationValue(rawValue: any) {
 
 
 export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any, nDeclaration: any) {
-    var delList = Object.keys(pDeclaration ||= EMPTY_OBJ)
-    for (let property in nDeclaration) {
-        var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property])
-        var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property])
-        if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
-            /*
-                目前处理值只能处理字符串的属性值
-            */
-            nodeOps.setProperty(style, property, nValue, nImportant)
+    pDeclaration ||= EMPTY_OBJ
+    nDeclaration ||= EMPTY_OBJ
+    for (let propName of unionKeys(pDeclaration, nDeclaration)) {
+        var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[propName])
+        var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[propName])
+        if (pValue !== nValue || pImportant !== nImportant) {
+            nodeOps.setProperty(style, propName, nValue, nImportant)
         }
-        removeFromArray(delList, property)
     }
-    delList.forEach((property: string) => nodeOps.setProperty(style, property, '')) // 清空旧的属性
 }
 
 export function mountDeclaration(style: any, declaration: any) {

@@ -1,4 +1,4 @@
-import { Vnode } from "../vnode/vnode";
+import { Vnode } from "../vnode/dom";
 import { Nodes } from "../../const/node";
 import { mountComponent } from "./mountComponent";
 import {
@@ -18,7 +18,7 @@ export function mount(vnode: Vnode, container: any, anchor: any = null) {
             mountComponent(vnode, container, anchor)
             break
         case Nodes.STYLE:
-            // mountStyleSheet(vnode, container)
+            mountStyleSheet(vnode, container,anchor)
             break
     }
 }
@@ -29,15 +29,22 @@ export function mountChildren(children: any, container: any, anchor: any) {
     });
 }
 
+import { processHook } from '../../instance/directive'
+import { LifecycleHooks } from "../../instance/lifecycle";
+import { mountStyleSheet } from "./mountStyleSheet";
+
 function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode
-
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
     var el = nodeOps.createElement(type)
     vnode.ref = el
     mountAttributes(el, props)
-    
+    processHook(LifecycleHooks.CREATED, vnode)
+
+    processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     nodeOps.insert(el, container, anchor)
+    processHook(LifecycleHooks.MOUNTED, vnode)
     if (children) {
         mountChildren(children, el, anchor)
     }

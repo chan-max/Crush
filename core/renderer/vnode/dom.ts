@@ -10,7 +10,7 @@ export type Vnode = {
     key: any
 }
 
-function createVnode(nodeType: Nodes): Vnode {
+function createNode(nodeType: Nodes): any{
     return {
         key: null,
         nodeType,
@@ -21,7 +21,7 @@ function createVnode(nodeType: Nodes): Vnode {
 }
 
 function createComponent(type: ComponentType, props: any, slots: any, key: any = uid()): Vnode {
-    var component = createVnode(Nodes.COMPONENT)
+    var component = createNode(Nodes.COMPONENT)
     component.type = type
     component.props = props
     component.children = slots
@@ -30,7 +30,7 @@ function createComponent(type: ComponentType, props: any, slots: any, key: any =
 }
 
 function createElement(tagName: string, props: any, children: any, key: any = uid()) {
-    var node = createVnode(Nodes.HTML_ELEMENT)
+    var node = createNode(Nodes.HTML_ELEMENT)
     node.type = tagName
     node.props = props
     node.children = children
@@ -42,19 +42,13 @@ function createSVGElement() {
 
 }
 
-function createStyleSheet() {
 
-}
-
-function createStyle() {
-
-}
 
 const SYMBOL_TEXT = Symbol('Text')
 const SYMBOL_COMMENT = Symbol('Comment')
 // the key is for other node
 function createText(text: any, key = uid()) {
-    var node = createVnode(Nodes.TEXT)
+    var node = createNode(Nodes.TEXT)
     node.type = SYMBOL_TEXT
     node.children = text
     node.key = key
@@ -62,16 +56,17 @@ function createText(text: any, key = uid()) {
 }
 
 function createFragment(children: any, key = uid()) {
-    const f = createVnode(Nodes.FRAGMENT)
+    const f = createNode(Nodes.FRAGMENT)
     f.children = children
     f.key = key
     return f
 }
 
+
 export {
     createComponent,
-    createStyle,
     createElement,
     createText,
-    createFragment
+    createFragment,
+    createNode
 }

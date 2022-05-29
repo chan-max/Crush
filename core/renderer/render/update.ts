@@ -1,4 +1,7 @@
 import { Nodes } from "../../const/node"
+import { processHook } from "../../instance/directive"
+import { LifecycleHooks } from "../../instance/lifecycle"
+import { updateAttributes } from "./attribute"
 import { patch } from "./patch"
 
 export function update(p: any, n: any, container: any, anchor: any) {
@@ -9,6 +12,9 @@ export function update(p: any, n: any, container: any, anchor: any) {
         case Nodes.HTML_ELEMENT:
             updateHTMLElement(p, n, container, anchor)
             break
+        case Nodes.STYLE:
+            updateStyleSheet(p, n,)
+            break
     }
 }
 
@@ -16,6 +22,7 @@ export function update(p: any, n: any, container: any, anchor: any) {
 import {
     diffChildren
 } from './sequence'
+import { updateStyleSheet } from "./updateStyleSheet"
 
 function updateText(p: any, n: any) {
     var el = n.ref = p.ref
@@ -24,12 +31,14 @@ function updateText(p: any, n: any) {
     }
 }
 
-import { callHook, LifecycleHooks } from "../../instance/lifecycle";
 
 function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
 
     var el = n.ref = p.ref
 
+    processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
+    updateAttributes(el, p.props, n.props)
+    processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor)
 }

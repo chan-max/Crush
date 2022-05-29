@@ -2,7 +2,7 @@
 
 // if you are using css function with dynamic binding , use camelized function name 
 
-import { isNumber } from "@crush/common"
+import { isNumber } from "../../common/type"
 
 function addUnit(value: string | number, unit: string) {
     return isNumber(value) ? `${value + unit}` : value
@@ -75,9 +75,9 @@ const max = (...items: string[]) => `max(${items.join(',')})`
 const min = (...items: string[]) => `min(${items.join(',')})`
 
 
-/* 对于单位固定的函数只需要 */
-function rotateY(deg: number) {
 
+function rotateY(deg: number) {
+    return `rotateY(${addUnit(deg, 'deg')})`
 }
 
 function translateX(t: string) {
@@ -124,6 +124,10 @@ function skew(x: number | string, y: number | string) {
     return `skew(${addUnit(x, 'deg')},${addUnit(y, 'deg')})`
 }
 
+function scaleY(n: number) {
+    return `scaleY(${n})`
+}
+
 export {
     rgba,
     rgb,
@@ -145,5 +149,7 @@ export {
     scale3d,
     skew,
     skewX,
-    skewY
+    skewY,
+    scaleY,
+    rotateY
 }

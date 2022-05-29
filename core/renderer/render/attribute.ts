@@ -3,7 +3,11 @@ import { EMPTY_OBJ } from "../../common/value";
 import { keyOf } from "../../const/node";
 import { nodeOps } from "./nodeOps";
 
+import { unionKeys } from "./common";
+
 export function updateClass(el: any, pClass: any, nClass: any,) {
+    pClass ||= EMPTY_OBJ
+    nClass ||= EMPTY_OBJ
     for (let className of unionKeys(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
@@ -32,19 +36,13 @@ import {
 import { getReservedProp, isReservedProp } from "./common";
 import { updateDeclaration } from "./declaration";
 
-function unionKeys(...maps: Record<string, any>[]): string[] {
-    var _: Record<string, any> = {}
-    for (let i in maps || EMPTY_OBJ) {
-        for (let key in maps[i]) {
-            _[key] = true
-        }
-    }
-    return Object.keys(_)
-}
+
 export function mountAttributes(el: any, props: any) {
     updateAttributes(el, EMPTY_OBJ, props)
 }
 export function updateAttributes(el: any, pProps: any, nProps: any) {
+    pProps ||= EMPTY_OBJ
+    nProps ||= EMPTY_OBJ
     for (let propName of unionKeys(pProps, nProps)) {
         var pValue = pProps[propName]
         var nValue = nProps[propName]

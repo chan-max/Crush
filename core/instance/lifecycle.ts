@@ -66,6 +66,8 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
     })
 }
 
+import { getCurrentInstance } from "../renderer/render/mountComponent"
+
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)
 
 // no beforeCreate

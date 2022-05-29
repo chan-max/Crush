@@ -1,3 +1,11 @@
+import {
+    keyframes,
+    keyframe
+} from '../../renderer/vnode/h'
+
+import {
+    rotate3d
+} from '../../renderer/built-in/cssFunction'
 
 export const swing = keyframes('swing', [
     keyframe(20, { transform: rotate3d(0, 0, 1, '15deg') }),

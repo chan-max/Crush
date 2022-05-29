@@ -1,4 +1,11 @@
+import {
+    keyframes,
+    keyframe
+} from '../../renderer/vnode/h'
 
+import {
+    scale3d
+} from '../../renderer/built-in/cssFunction'
 
 
 export const pulse = keyframes(

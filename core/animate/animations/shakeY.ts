@@ -1,3 +1,11 @@
+import {
+    keyframes,
+    keyframe
+} from '../../renderer/vnode/h'
+
+import {
+    translate3d
+} from '../../renderer/built-in/cssFunction'
 
 export const shakeY = keyframes('shakeY', [
     keyframe([0, 100], { transform: translate3d(0, 0, 0) }),

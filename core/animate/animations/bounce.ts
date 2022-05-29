@@ -1,5 +1,15 @@
+import {
+    keyframes,
+    keyframe
+} from '../../renderer/vnode/h'
 
-export const bounce = keyframes(
+import {
+    cubicBezier,
+    translate3d,
+    scaleY
+} from '../../renderer/built-in/cssFunction'
+
+export const bounce = keyframes(  
     'bounce',
     [
         keyframe(
@@ -15,7 +25,7 @@ export const bounce = keyframes(
         keyframe(
             70, {
             animationTimingFunction: cubicBezier(0.755, 0.05, 0.855, 0.06),
-            transform: [ranslate3d(0, '-15px', 0), scaleY(1.05)]
+            transform: [translate3d(0, '-15px', 0), scaleY(1.05)]
         }),
         keyframe(
             80, {
