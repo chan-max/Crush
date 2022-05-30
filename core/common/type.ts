@@ -3,9 +3,11 @@ function isNumber(value: any) {
     return typeof value === 'number' && value !== NaN
 }
 
-function isString(value:any){
-    return typeof value === 'string' 
+function isString(value: any) {
+    return typeof value === 'string'
 }
+
+const isNumberString = (value: any) => isNumber(Number(value))
 
 const isObject = (value: any) => objectToString.call(value) === '[object Object]'
 const isUndefined = (value: any) => typeof value === 'undefined'
@@ -28,5 +30,6 @@ export {
     isFunction,
     isUndefined,
     isObject,
-    typeOf
+    typeOf,
+    isNumberString
 }

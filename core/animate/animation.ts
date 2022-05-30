@@ -1,12 +1,12 @@
+import { hyphenate } from "../common/transformString"
 
 
-function addClass(el: Element, className: string) {
-    el.classList.add(className)
+export function getComputedStyle(el: Element, prop?: any) {
+    var style = window.getComputedStyle(el)
+    return prop ? style.getPropertyValue(hyphenate(prop)) : style
 }
 
-function removeClass(el: Element, className: string) {
-    el.classList.remove(className)
-}
+
 
 /*  think ? 
 
@@ -23,6 +23,6 @@ export const enum Animation {
     DIRECTION = 'animationDirection'
 }
 
-function doAnimation(el: Element) {
+function doAnimation(el: Element, animationOptions: Record<Animation, any>) {
 
 }

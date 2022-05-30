@@ -2,8 +2,8 @@ import { Vnode } from "../vnode/dom";
 import { Nodes } from "../../const/node";
 import { mountComponent } from "./mountComponent";
 import {
-    nodeOps
-} from './nodeOps'
+    docCreateElement, docCreateText, insertElement
+} from '../dom'
 import { mountAttributes } from "./attribute"
 
 export function mount(vnode: Vnode, container: any, anchor: any = null) {
@@ -18,7 +18,7 @@ export function mount(vnode: Vnode, container: any, anchor: any = null) {
             mountComponent(vnode, container, anchor)
             break
         case Nodes.STYLE:
-            mountStyleSheet(vnode, container,anchor)
+            mountStyleSheet(vnode, container, anchor)
             break
     }
 }
@@ -37,13 +37,13 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
-    var el = nodeOps.createElement(type)
+    var el = docCreateElement(type)
     vnode.ref = el
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
 
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
-    nodeOps.insert(el, container, anchor)
+    insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)
     if (children) {
         mountChildren(children, el, anchor)
@@ -51,7 +51,7 @@ function mountHTMLElement(vnode: any, container: any, anchor: any) {
 }
 
 function mountText(vnode: any, container: any, anchor: any) {
-    var el = nodeOps.createText(vnode.children)
+    var el = docCreateText(vnode.children)
     vnode.ref = el
-    nodeOps.insert(el, container, anchor)
+    insertElement(el, container, anchor)
 }

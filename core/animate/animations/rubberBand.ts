@@ -5,7 +5,7 @@ import {
 
 import {
     scale3d
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const rubberBand = keyframes('rubberBand', [
     keyframe(0, { transform: scale3d(1, 1, 1) }),

@@ -1,4 +1,4 @@
-import { skewX, translate3d } from "../../renderer/built-in/cssFunction"
+import { skewX, translate3d } from "../../renderer/builtIn/cssFunction"
 import { keyframe, keyframes } from "../../renderer/vnode/h"
 
 export const lightSpeedInRight = keyframes('lightSpeedInRight', [

@@ -7,7 +7,7 @@ import {
     cubicBezier,
     translate3d,
     scaleY
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const bounce = keyframes(  
     'bounce',

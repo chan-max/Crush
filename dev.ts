@@ -8,8 +8,9 @@ var root = {
              .test{
                 height:200px;
                 width:200px;
-                background-color:red;
-                animation : bounce 1s infinite;
+                if(count%2 === 0 ){
+                    background-color:red;
+                }
             }
         </style>
         <button @click="count++"> {{count}} </button>
@@ -24,4 +25,17 @@ var app = createApp(root)
 console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
+
+import { getComputedStyle } from './core/animate/animation'
+import { setStyleDeclaration, getStyleDeclaration } from './core/renderer/render/declaration'
+
+
+var el = document.querySelector('#app')
+
+
+
+
+
+
+
 

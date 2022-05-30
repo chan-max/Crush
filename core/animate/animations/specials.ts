@@ -2,7 +2,7 @@ import { keyframe, keyframes } from "../../renderer/vnode/h";
 import {
     rotate,
     rotate3d, scale, translate3d
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const hinge = keyframes('hinge', [
     keyframe(0, {

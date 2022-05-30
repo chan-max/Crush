@@ -1702,9 +1702,9 @@ var Crush = (function (exports) {
         var newSheet = sheet.cssRules[index];
         mountSheet(newSheet, rules, vnode);
     }
-    function normalizeKeyframe$1(keyframe) {
+    function normalizeKeyText$1(keyframe) {
         if (isArray(keyframe)) {
-            return keyframe.map(normalizeKeyframe$1).join(',');
+            return keyframe.map(normalizeKeyText$1).join(',');
         }
         else if (isNumber(Number(keyframe))) {
             // 为数字或者数字字符串
@@ -1716,7 +1716,7 @@ var Crush = (function (exports) {
     }
     function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
         var { keyframe, children: declaration } = rule;
-        keyframe = normalizeKeyframe$1(keyframe);
+        keyframe = normalizeKeyText$1(keyframe);
         // appendRule wont return the index 
         sheet.appendRule(`${keyframe}{}`);
         var index = sheet.cssRules.length - 1;
@@ -2016,7 +2016,7 @@ var Crush = (function (exports) {
     }
 
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
-    const normalizeKeyframe = (keyframe) => isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe;
+    const normalizeKeyText = (keyframe) => isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe;
 
     /*
         diff the dom children and rules children
@@ -2190,7 +2190,7 @@ var Crush = (function (exports) {
                 mountKeyframeRule(keyframesRef, nk);
             }
             else if (!nk) {
-                keyframesRef.deleteRule(normalizeKeyframe(pk.keyframe));
+                keyframesRef.deleteRule(normalizeKeyText(pk.keyframe));
             }
             else {
                 var { keyframe: pKeyframe, children: pDeclaration } = pk;

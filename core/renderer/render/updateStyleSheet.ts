@@ -25,7 +25,7 @@ import {
     mountRule
 } from './mountStyleSheet'
 
-function updateSheet(pRules: any, nRules: any, sheet: CSSStyleSheet | CSSMediaRule, vnode: any) {
+function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
     /*
         与更新dom元素不同，规则中只要patchKey相同就一定会复用,
         更新过程依赖patchkey  
@@ -56,11 +56,11 @@ function updateSheet(pRules: any, nRules: any, sheet: CSSStyleSheet | CSSMediaRu
             cursor++
         } else if (!nRule) {
             // unmount
-            sheet.deleteRule(cursor)
+            deleteRule(sheet, cursor)
             cursor--
         } else if (pRule.nodeType !== nRule.nodeType) {
             // 当节点类型不同时，先卸载，再挂载 
-            sheet.deleteRule(cursor)
+            deleteRule(sheet, cursor)
             mountRule(sheet, nRule, vnode, cursor)
         } else {
             // update
@@ -89,7 +89,7 @@ function updateStyleRule(pRule: any, nRule: any, vnode: any) {
     var { selector: pSelector, children: pDeclaration } = pRule
     var { selector: nSelector, children: nDeclaration } = nRule
     if (pSelector !== nSelector) {
-        ref.selectorText = nSelector
+        setSelector(ref, nSelector)
     }
     var style = ref.style
     updateDeclaration(style, pDeclaration, nDeclaration,)
@@ -112,7 +112,7 @@ function updateMediaRule(pRule: any, nRule: any, vnode: any) {
 
 
 import { mountKeyframeRule } from './mountStyleSheet'
-import { normalizeKeyframe } from './common'
+import { deleteKeyframe, deleteRule, normalizeKeyText, setKeyframesName, setKeyText, setSelector } from '../style'
 
 function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
     var keyframesRef: CSSKeyframesRule = nRule.ref = pRule.ref
@@ -120,7 +120,7 @@ function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
     var { keyframes: nKeyframes, children: nRules } = nRule
 
     if (pKeyframes !== nKeyframes) {
-        keyframesRef.name = nKeyframes
+        setKeyframesName(keyframesRef, nKeyframes)
     }
 
     var maxLength = Math.max(pRules.length, nRules.length)
@@ -134,14 +134,14 @@ function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
         if (!pk) {
             mountKeyframeRule(keyframesRef, nk, vnode)
         } else if (!nk) {
-            keyframesRef.deleteRule(normalizeKeyframe(pk.keyframe))
+            deleteKeyframe(keyframesRef, pk.keyframe)
         } else {
             var { keyframe: pKeyframe, children: pDeclaration } = pk
             var { keyframe: nKeyframe, children: nDeclaration } = nk
             let keyframeRef = nk.ref = pk.ref
             var style = keyframeRef.style
             if (pKeyframe !== nKeyframe) {
-                keyframeRef.keyText = nKeyframe
+                setKeyText(keyframeRef, nKeyframe)
             }
             updateDeclaration(style, pDeclaration, nDeclaration)
         }

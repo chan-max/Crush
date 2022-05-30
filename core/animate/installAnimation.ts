@@ -17,7 +17,7 @@ import { flip, flipInX, flipInY, flipOutX, flipOutY } from './animations/flipper
 import { lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt } from './animations/lightsspeed'
 import { bounce } from './animations/bounce'
 
-var animations = [
+var animations = {
     bounce,
     jackInTheBox,
     hinge,
@@ -37,11 +37,8 @@ var animations = [
     lightSpeedInRight,
     lightSpeedOutLeft,
     lightSpeedOutRigt
-]
-
-console.log(animations);
-
-
-export function installAnimation() {
-    mount(createStyleSheet(null, animations), document.head,)
 }
+
+export const checkBuiltInAnimations = () => Object.keys(animations)
+
+export const installAnimation = () => mount(createStyleSheet(null, Object.values(animations)), document.head)

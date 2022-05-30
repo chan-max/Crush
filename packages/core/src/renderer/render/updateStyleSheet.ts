@@ -113,7 +113,7 @@ function updateMediaRule(pRule: any, nRule: any, vnode: any) {
 
 
 import { mountKeyframeRule } from './mountStyleSheet'
-import { normalizeKeyframe } from './common'
+import { normalizeKeyText } from './common'
 
 function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
     var keyframesRef: CSSKeyframesRule = nRule.ref = pRule.ref
@@ -135,7 +135,7 @@ function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
         if (!pk) {
             mountKeyframeRule(keyframesRef, nk, vnode)
         } else if (!nk) {
-            keyframesRef.deleteRule(normalizeKeyframe(pk.keyframe))
+            keyframesRef.deleteRule(normalizeKeyText(pk.keyframe))
         } else {
             var { keyframe: pKeyframe, children: pDeclaration } = pk
             var { keyframe: nKeyframe, children: nDeclaration } = nk

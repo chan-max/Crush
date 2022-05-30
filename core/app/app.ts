@@ -8,7 +8,7 @@ import { PluginType } from "../instance/plugin"
 import { mountComponent } from "../renderer/render/mountComponent"
 import { createComponent } from "../renderer/vnode/dom"
 
-import {installAnimation} from '../animate/install'
+import {installAnimation} from '../animate/installAnimation'
 
 var currentApp: AppInstance
 

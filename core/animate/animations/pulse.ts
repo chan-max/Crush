@@ -5,7 +5,7 @@ import {
 
 import {
     scale3d
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 
 export const pulse = keyframes(

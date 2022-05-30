@@ -6,20 +6,18 @@
 import { isArray, isNumber, isString } from "../../common/type"
 import { hyphenate } from "../../common/transformString"
 import { Nodes } from "../../const/node"
-import { nodeOps } from "./nodeOps"
+import { docCreateElement, insertElement } from "../dom"
 
 export const mountStyleSheet = (vnode: any, container: any, anchor: any) => {
-    var ref = document.createElement('style')
+    var ref: any = docCreateElement('style')
     vnode.ref = ref
-
-    nodeOps.insert(ref, container, anchor)
-
+    insertElement(ref, container, anchor)
     var sheet = ref.sheet
     const rules = vnode.children
     mountSheet(sheet, rules, vnode)
 }
 
-function mountSheet(sheet: any, rules: any, vnode: any) {
+function mountSheet(sheet: CSSStyleSheet, rules: any, vnode: any) {
     rules.forEach((rule: any) => {
         mountRule(sheet, rule, vnode)
     })
@@ -50,6 +48,7 @@ import {
     getDeclarationValue,
     mountDeclaration
 } from './declaration'
+import { insertKeyframe, insertKeyframes, insertMedia, insertStyle, insertSupports, normalizeKeyText, setStyleProperty } from "../style"
 
 export function mountStyleRule(
     sheet: any,
@@ -62,7 +61,7 @@ export function mountStyleRule(
         children: declaration
     } = rule
     if (!declaration) return
-    const index = sheet.insertRule(`${selector}{}`, insertIndex)
+    const index = insertStyle(sheet, selector, insertIndex)
     const insertedRule = sheet.cssRules[index]
     rule.ref = insertedRule // set ref
     const insertedRuleStyle = insertedRule.style
@@ -72,7 +71,7 @@ export function mountStyleRule(
 function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var media = rule.media
     var rules = rule.children
-    var index = sheet.insertRule(`@media ${media}{}`, insertIndex)
+    var index = insertMedia(sheet, media, insertIndex)
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }
@@ -80,7 +79,7 @@ function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number =
 function mountSupportsRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var supports = rule.supports
     var rules = rule.children
-    var index = sheet.insertRule(`@supports ${supports}{}`, insertIndex)
+    var index = insertSupports(sheet, supports, insertIndex)
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }
@@ -88,30 +87,20 @@ function mountSupportsRule(sheet: any, rule: any, vnode: any, insertIndex: numbe
 function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var keyframes = rule.keyframes
     var rules = rule.children
-    var index = sheet.insertRule(`@keyframes ${keyframes}{}`, insertIndex)
+    var index = insertKeyframes(sheet, keyframes, insertIndex)
     rule.ref = sheet.cssRules[insertIndex]
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }
 
 
-function normalizeKeyframe(keyframe: string | number | Array<string | number>): any {
-    if (isArray(keyframe)) {
-        return keyframe.map(normalizeKeyframe).join(',')
-    } else if (isNumber(Number(keyframe))) {
-        // 为数字或者数字字符串
-        return `${keyframe}%`
-    } else {
-        return keyframe
-    }
-}
+
 
 export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var { keyframe, children: declaration } = rule
 
-    keyframe = normalizeKeyframe(keyframe)
+    insertKeyframe(sheet, keyframe)
 
-    // appendRule wont return the index 
     sheet.appendRule(`${keyframe}{}`)
     var index = sheet.cssRules.length - 1
     const insertedRule: any = sheet.cssRules[index]
@@ -121,6 +110,6 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     for (let property in declaration) {
         var { value } = getDeclarationValue(declaration[property])
         // keyframe 中不能设置important
-        nodeOps.setProperty(insertedRuleStyle, property, value)
+        setStyleProperty(insertedRuleStyle, property, value)
     }
 }

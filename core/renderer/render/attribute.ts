@@ -1,7 +1,7 @@
 import { Nodes } from "../../const/node";
 import { EMPTY_OBJ } from "../../common/value";
 import { keyOf } from "../../const/node";
-import { nodeOps } from "./nodeOps";
+import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
 
 import { unionKeys } from "./common";
 
@@ -12,9 +12,9 @@ export function updateClass(el: any, pClass: any, nClass: any,) {
         var p = pClass[className]
         var n = nClass[className]
         p ? (
-            n || nodeOps.removeClass(el, className)
+            n || removeClass(el, className)
         ) : (
-            n && nodeOps.addClass(el, className)
+            n && addClass(el, className)
         )
     }
 }
@@ -49,9 +49,9 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
         if (isEvent(propName)) {
             if (pValue !== nValue) {
                 var { event, options } = parseHandlerKey(propName)
-                nodeOps.removeEventListener(el, event, pValue, options)
+                removeEventListener(el, event, pValue, options)
                 if (nValue) {
-                    nodeOps.addEventListener(el, event, nValue, options)
+                    addEventListener(el, event, nValue, options)
                 }
             }
         } else if (propName === keyOf(Nodes.STYLE)) {
@@ -62,7 +62,7 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
             debugger
         } else {
             // attribute
-            (pValue !== nValue) && nValue ? nodeOps.setAttribute(el, propName, nValue) : nodeOps.removeAttribute(el, propName)
+            (pValue !== nValue) && nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName)
         }
     }
 }

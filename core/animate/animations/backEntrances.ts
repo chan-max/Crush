@@ -7,7 +7,7 @@ import {
     translateX,
     translateY,
     scale
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const backInDown = keyframes('backInDown', [
     keyframe(0, {

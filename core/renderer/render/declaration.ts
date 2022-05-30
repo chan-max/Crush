@@ -8,10 +8,10 @@ import {
     IMPORTANT_KEY
 } from '../common/important'
 
-import { nodeOps } from './nodeOps'
-
+import { } from '../dom'
 
 import { unionKeys } from "./common";
+import { camelize, hyphenate, isObject } from '@crush/common';
 
 export function getDeclarationValue(rawValue: any) {
     var value, important = false
@@ -49,15 +49,39 @@ export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any,
         var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[propName])
         var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[propName])
         if (pValue !== nValue || pImportant !== nImportant) {
-            nodeOps.setProperty(style, propName, nValue, nImportant)
+            setStyleProperty(style, propName, nValue, nImportant)
         }
     }
 }
 
-export function mountDeclaration(style: any, declaration: any) {
+export function mountDeclaration(style: CSSStyleDeclaration, declaration: any) {
     updateDeclaration(style, EMPTY_OBJ, declaration)
 }
 
-export function unmountDeclaration(style: any, declaration: any) {
+export function unmountDeclaration(style: CSSStyleDeclaration, declaration: any) {
     updateDeclaration(style, declaration, EMPTY_OBJ)
-}   
+}
+
+// export 
+
+export const setStyleDeclaration = (el: HTMLElement, declaration: Record<string, any>) => mountDeclaration(el.style, declaration)
+
+import {
+    important
+} from '../common/important'
+import { setStyleProperty } from '../style';
+
+export function getStyleDeclaration(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
+    if (isObject(getter)) {
+        getter = Object.keys(getter)
+    }
+    var style = el.style
+    var declaration: Record<string, any> = {}
+    for (let key of getter as string[]) {
+        var property = hyphenate(key)
+        var value = style.getPropertyValue(property)
+        var isImportant = !!style.getPropertyPriority(property);
+        declaration[camelize(property)] = isImportant ? important(value) : value
+    }
+    return declaration
+}

@@ -96,9 +96,9 @@ function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: numb
 }
 
 
-function normalizeKeyframe(keyframe: string | number | Array<string | number>): any {
+function normalizeKeyText(keyframe: string | number | Array<string | number>): any {
     if (isArray(keyframe)) {
-        return keyframe.map(normalizeKeyframe).join(',')
+        return keyframe.map(normalizeKeyText).join(',')
     } else if (isNumber(Number(keyframe))) {
         // 为数字或者数字字符串
         return `${keyframe}%`
@@ -110,7 +110,7 @@ function normalizeKeyframe(keyframe: string | number | Array<string | number>): 
 export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var { keyframe, children: declaration } = rule
 
-    keyframe = normalizeKeyframe(keyframe)
+    keyframe = normalizeKeyText(keyframe)
 
     // appendRule wont return the index 
     sheet.appendRule(`${keyframe}{}`)

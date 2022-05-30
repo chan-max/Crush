@@ -1,4 +1,4 @@
-import { perspective, rotate3d, scale3d, translate3d } from "../../renderer/built-in/cssFunction";
+import { perspective, rotate3d, scale3d, translate3d } from "../../renderer/builtIn/cssFunction";
 import { keyframe, keyframes } from "../../renderer/vnode/h";
 
 export const flip = keyframes('flip', [

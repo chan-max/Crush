@@ -1,9 +1,7 @@
 import { Nodes } from "../../const/node"
 import { processHook } from "../../instance/directive"
 import { LifecycleHooks } from "../../instance/lifecycle"
-import {
-    nodeOps
-} from './nodeOps'
+import { removeElement } from '../dom'
 
 
 export function unmount(vnode: any, container: any, anchor: any) {
@@ -12,7 +10,7 @@ export function unmount(vnode: any, container: any, anchor: any) {
             unmountElement(vnode)
             break
         case Nodes.TEXT:
-            nodeOps.remove(vnode.ref)
+            removeElement(vnode.ref)
             break
     }
 }
@@ -27,6 +25,6 @@ function unmountElement(vnode: any) {
         unmountChildren(vnode.children)
     }
     processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
-    nodeOps.remove(vnode.ref)
+    removeElement(vnode.ref)
     processHook(LifecycleHooks.UNMOUNTED, vnode)
 }

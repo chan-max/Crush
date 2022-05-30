@@ -5,7 +5,7 @@ import {
 
 import {
     translate3d
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const shakeX = keyframes('shakeX', [
     keyframe([0, 100], { transform: translate3d(0, 0, 0) }),
