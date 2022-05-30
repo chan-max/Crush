@@ -3,7 +3,7 @@ import {
     IMPORTANT
 } from './common/important'
 import { hyphenate } from "../common/transformString"
-import { keyframes } from "./vnode/h"
+
 
 // support number
 export function normalizeKeyText(keyframe: string | number | Array<string | number>): string {
@@ -16,6 +16,7 @@ export function normalizeKeyText(keyframe: string | number | Array<string | numb
     }
     return `${keyframe}`
 }
+
 export const setKeyText = (keyframe: CSSKeyframeRule, key: string | number) => keyframe.keyText = normalizeKeyText(key)
 
 export const insertRule = (sheet: CSSStyleSheet, rule: string, index: number = sheet.cssRules.length): number => sheet.insertRule(rule, index)

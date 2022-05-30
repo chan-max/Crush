@@ -8,12 +8,18 @@ import {
     IMPORTANT_KEY
 } from '../common/important'
 
-import { } from '../dom'
+
 
 import { unionKeys } from "./common";
 import { camelize, hyphenate, isObject } from '@crush/common';
 
-export function getDeclarationValue(rawValue: any) {
+
+export type StyleValue = {
+    value: string
+    important: boolean
+}
+
+export function getStyleValue(rawValue: any): StyleValue {
     var value, important = false
     if (rawValue === undefined || rawValue === null) {
         value = null
@@ -46,8 +52,8 @@ export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any,
     pDeclaration ||= EMPTY_OBJ
     nDeclaration ||= EMPTY_OBJ
     for (let propName of unionKeys(pDeclaration, nDeclaration)) {
-        var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[propName])
-        var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[propName])
+        var { value: pValue, important: pImportant } = getStyleValue(pDeclaration[propName])
+        var { value: nValue, important: nImportant } = getStyleValue(nDeclaration[propName])
         if (pValue !== nValue || pImportant !== nImportant) {
             setStyleProperty(style, propName, nValue, nImportant)
         }
@@ -71,11 +77,14 @@ import {
 } from '../common/important'
 import { setStyleProperty } from '../style';
 
-export function getStyleDeclaration(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
+
+
+// ready for animation and transition
+
+export function getStyle(style: CSSStyleDeclaration, getter: Record<string, any> | string[]): Record<string, any> {
     if (isObject(getter)) {
         getter = Object.keys(getter)
     }
-    var style = el.style
     var declaration: Record<string, any> = {}
     for (let key of getter as string[]) {
         var property = hyphenate(key)
@@ -84,4 +93,12 @@ export function getStyleDeclaration(el: HTMLElement, getter: Record<string, any>
         declaration[camelize(property)] = isImportant ? important(value) : value
     }
     return declaration
+}
+
+export function getElementStyle(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
+    return getStyle(el.style, getter)
+}
+
+export function getElementComputedStyle(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
+    return getStyle(window.getComputedStyle(el), getter)
 }

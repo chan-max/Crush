@@ -1585,7 +1585,7 @@ var Crush = (function (exports) {
         deleteRule: (sheet, index) => sheet.deleteRule(index)
     };
 
-    function getDeclarationValue(rawValue) {
+    function getStyleValue(rawValue) {
         var value, important = false;
         if (rawValue === undefined || rawValue === null) {
             value = null;
@@ -1614,8 +1614,8 @@ var Crush = (function (exports) {
     function updateDeclaration(pDeclaration, nDeclaration, style, vnode) {
         var delList = Object.keys(pDeclaration ||= EMPTY_OBJ);
         for (let property in nDeclaration) {
-            var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property]);
-            var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property]);
+            var { value: pValue, important: pImportant } = getStyleValue(pDeclaration[property]);
+            var { value: nValue, important: nImportant } = getStyleValue(nDeclaration[property]);
             if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
                 /*
                     目前处理值只能处理字符串的属性值
@@ -1724,7 +1724,7 @@ var Crush = (function (exports) {
         rule.ref = insertedRule; // set ref
         const insertedRuleStyle = insertedRule.style;
         for (let property in declaration) {
-            var { value } = getDeclarationValue(declaration[property]);
+            var { value } = getStyleValue(declaration[property]);
             // keyframe 中不能设置important
             nodeOps.setProperty(insertedRuleStyle, property, value);
         }

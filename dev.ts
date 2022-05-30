@@ -26,8 +26,6 @@ console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
-import { getComputedStyle } from './core/animate/animation'
-import { setStyleDeclaration, getStyleDeclaration } from './core/renderer/render/declaration'
 
 
 var el = document.querySelector('#app')

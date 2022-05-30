@@ -45,7 +45,7 @@ export function mountRule(sheet: any, rule: any, vnode: any, index: number = she
 
 
 import {
-    getDeclarationValue,
+    getStyleValue,
     mountDeclaration
 } from './declaration'
 import { insertKeyframe, insertKeyframes, insertMedia, insertStyle, insertSupports, normalizeKeyText, setStyleProperty } from "../style"
@@ -108,7 +108,7 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     const insertedRuleStyle = insertedRule.style
 
     for (let property in declaration) {
-        var { value } = getDeclarationValue(declaration[property])
+        var { value } = getStyleValue(declaration[property])
         // keyframe 中不能设置important
         setStyleProperty(insertedRuleStyle, property, value)
     }

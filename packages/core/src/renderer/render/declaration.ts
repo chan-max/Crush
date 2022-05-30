@@ -10,7 +10,7 @@ import {
 
 import { nodeOps } from './nodeOps'
 
-export function getDeclarationValue(rawValue: any) {
+export function getStyleValue(rawValue: any) {
     var value, important = false
     if (rawValue === undefined || rawValue === null) {
         value = null
@@ -42,8 +42,8 @@ export function getDeclarationValue(rawValue: any) {
 export function updateDeclaration(pDeclaration: any, nDeclaration: any, style: CSSStyleDeclaration, vnode: any) {
     var delList = Object.keys(pDeclaration ||= EMPTY_OBJ)
     for (let property in nDeclaration) {
-        var { value: pValue, important: pImportant } = getDeclarationValue(pDeclaration[property])
-        var { value: nValue, important: nImportant } = getDeclarationValue(nDeclaration[property])
+        var { value: pValue, important: pImportant } = getStyleValue(pDeclaration[property])
+        var { value: nValue, important: nImportant } = getStyleValue(nDeclaration[property])
         if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
             /*
                 目前处理值只能处理字符串的属性值
