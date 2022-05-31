@@ -41,7 +41,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     component.instance = instance
 
 
-    const { scope, createRender, } = instance;
+    const { scope, createRender } = instance;
 
     // init instance , we only can use getCurrentInstance in create hook 
     setCurrentInstance(instance)

@@ -5,3 +5,4 @@ export const enum Transition {
     DELAY = 'transitionDelay',
     TIMING_FUNCTION = 'transitionTimingFunction'
 }
+

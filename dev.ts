@@ -13,7 +13,7 @@ var root = {
             }
             #box{
                 width : 200px;
-                height:200px;
+                height : 200px;
                 background-color : var(--main);
             }
         </style>
@@ -32,6 +32,7 @@ var instance = app.mount('#app')
 console.log('instance', instance);
 
 import { getElementStyle, getElementComputedStyle, getStyle } from './core/renderer/render/declaration';
+
 var box = document.querySelector('#box')
 
 
