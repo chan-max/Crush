@@ -33,9 +33,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
         其次为nodetype,
         !还是假设key相同的节点顺序一定不会变，
     */
-    var {
-        p, n
-    } = diffChildren(pRules, nRules, true)
+    var { p, n } = diffChildren(pRules, nRules, true)
 
     /* 
         经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
@@ -72,7 +70,9 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
                     updateMediaRule(pRule, nRule, vnode)
                     break
                 case Nodes.SUPPORTS_RULE:
-                    // supports cant update , 
+                    // supports can't update 
+                    deleteRule(sheet, cursor)
+                    mountRule(sheet, nRule, vnode, cursor)
                     break
                 case Nodes.KEYFRAMES_RULE:
                     updateKeyframesRule(pRule, nRule, vnode)
@@ -92,19 +92,34 @@ function updateStyleRule(pRule: any, nRule: any, vnode: any) {
         setSelector(ref, nSelector)
     }
     var style = ref.style
-    updateDeclaration(style, pDeclaration, nDeclaration,)
+    updateDeclaration(style, pDeclaration, nDeclaration)
+}
+
+
+// same as selector delimiter
+const mediumDelimiter = /\s*,\s*/
+const normalizeMedium = (medium: string | string[]) => isArray(medium) ? medium : medium.trim().split(mediumDelimiter)
+
+function updateMedium(mediaRule: CSSMediaRule, pMediaum: string | string[], nMediaum: string | string[]) {
+    pMediaum = normalizeMedium(pMediaum)
+    nMediaum = normalizeMedium(nMediaum)
+    pMediaum.forEach((m: string) => {
+        if (!nMediaum.includes(m)) {
+            deleteMedium(mediaRule, m)
+        }
+    })
+    nMediaum.forEach((m: string) => {
+        if (!pMediaum.includes(m)) {
+            appendMedium(mediaRule, m)
+        }
+    })
 }
 
 function updateMediaRule(pRule: any, nRule: any, vnode: any) {
     var ref: CSSMediaRule = nRule.ref = pRule.ref
     var { media: pMedia, children: pRules } = pRule
     var { media: nMedia, children: nRules } = nRule
-
-    /* while not the same media condition */
-    if (pMedia !== nMedia) {
-        debugger
-    }
-
+    updateMedium(ref, pMedia, nMedia)
     updateSheet(pRules, nRules, ref, vnode)
 }
 
@@ -112,7 +127,8 @@ function updateMediaRule(pRule: any, nRule: any, vnode: any) {
 
 
 import { mountKeyframeRule } from './mountStyleSheet'
-import { deleteKeyframe, deleteRule, normalizeKeyText, setKeyframesName, setKeyText, setSelector } from '../style'
+import { deleteKeyframe, deleteRule, setKeyframesName, setKeyText, appendMedium, deleteMedium, setSelector } from '../style'
+import { isArray, isString } from "@crush/common"
 
 function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
     var keyframesRef: CSSKeyframesRule = nRule.ref = pRule.ref

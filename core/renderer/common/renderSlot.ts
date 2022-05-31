@@ -1,4 +1,3 @@
-import { EMPTY_OBJ } from "@crush/common/src/value";
 import { getCurrentInstance } from "../render/mountComponent";
 import { processdom } from "./processdom";
 

@@ -8,6 +8,8 @@ import {
     createFragment
 } from './vnode/dom'
 
+import { important } from './common/important'
+
 import {
     createStyleSheet,
     createStyle,
@@ -42,7 +44,9 @@ import {
     normalizeStyle
 } from './common/normalizeStyle'
 
+
 export default {
+    important,
     getCurrentScope,
     createElement,
     createText,

@@ -9,7 +9,6 @@ import { parseCSS } from "./parseCSS"
 import { processRules } from "./processRules"
 import { parseIterator } from "./parseIterator"
 import { parseText } from "./parseText"
-import { attr } from "../../../packages/compiler/node_modules/@crush/core/src/renderer/built-in/cssFunction"
 import { parseInlineClass, parseInlineStyle } from "./specialAttr"
 
 // legal variable name
@@ -20,6 +19,8 @@ var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/
 var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/
 // array
 var arrayRE = /\[.*\]/
+
+
 
 function isHandler(exp: string) {
     return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp)

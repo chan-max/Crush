@@ -1,7 +1,9 @@
 import { cache } from "./cache";
 
-const camelizeRE = /-(\w)/g;
-const camelize = cache((str: string): string => str.replace(camelizeRE, (_, $) => $.toUpperCase()))
+const camelizeRE = /(\w)-(\w)/g;
+const camelize = cache((str: string): string => str.replace(camelizeRE, (_, l, r) => {
+    return l + r.toUpperCase()
+}))
 
 const hyphenateRE = /\B([A-Z])/g;
 const hyphenate = cache((str: string) => str.replace(hyphenateRE, '-$1').toLowerCase());

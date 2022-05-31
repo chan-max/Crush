@@ -3,12 +3,12 @@ import { EMPTY_OBJ } from "../../common/value";
 import { keyOf } from "../../const/node";
 import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
 
-import { unionKeys } from "./common";
+import { getUnionkeysFromMaps } from "./common";
 
 export function updateClass(el: any, pClass: any, nClass: any,) {
     pClass ||= EMPTY_OBJ
     nClass ||= EMPTY_OBJ
-    for (let className of unionKeys(pClass, nClass)) {
+    for (let className of getUnionkeysFromMaps(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
         p ? (
@@ -43,7 +43,7 @@ export function mountAttributes(el: any, props: any) {
 export function updateAttributes(el: any, pProps: any, nProps: any) {
     pProps ||= EMPTY_OBJ
     nProps ||= EMPTY_OBJ
-    for (let propName of unionKeys(pProps, nProps)) {
+    for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
         var pValue = pProps[propName]
         var nValue = nProps[propName]
         if (isEvent(propName)) {
@@ -55,14 +55,14 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
                 }
             }
         } else if (propName === keyOf(Nodes.STYLE)) {
-            updateDeclaration(el, pValue, nValue)
+            updateDeclaration(el.style, pValue, nValue)
         } else if (propName === keyOf(Nodes.CLASS)) {
             updateClass(el, pValue, nValue)
         } else if (isReservedProp(propName)) {
             debugger
         } else {
             // attribute
-            (pValue !== nValue) && nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName)
+            (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
         }
     }
 }

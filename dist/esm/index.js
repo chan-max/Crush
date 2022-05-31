@@ -1582,7 +1582,7 @@ const nodeOps = {
     deleteRule: (sheet, index) => sheet.deleteRule(index)
 };
 
-function getStyleValue(rawValue) {
+function parseStyleValue(rawValue) {
     var value, important = false;
     if (rawValue === undefined || rawValue === null) {
         value = null;
@@ -1611,8 +1611,8 @@ function getStyleValue(rawValue) {
 function updateDeclaration(pDeclaration, nDeclaration, style, vnode) {
     var delList = Object.keys(pDeclaration ||= EMPTY_OBJ);
     for (let property in nDeclaration) {
-        var { value: pValue, important: pImportant } = getStyleValue(pDeclaration[property]);
-        var { value: nValue, important: nImportant } = getStyleValue(nDeclaration[property]);
+        var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[property]);
+        var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[property]);
         if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
             /*
                 目前处理值只能处理字符串的属性值
@@ -1721,7 +1721,7 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
     rule.ref = insertedRule; // set ref
     const insertedRuleStyle = insertedRule.style;
     for (let property in declaration) {
-        var { value } = getStyleValue(declaration[property]);
+        var { value } = parseStyleValue(declaration[property]);
         // keyframe 中不能设置important
         nodeOps.setProperty(insertedRuleStyle, property, value);
     }

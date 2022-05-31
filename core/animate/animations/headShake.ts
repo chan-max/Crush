@@ -6,7 +6,7 @@ import {
 import {
     translateX,
     rotateY
-} from '../../renderer/built-in/cssFunction'
+} from '../../renderer/builtIn/cssFunction'
 
 export const headShake = keyframes('headShake', [
     keyframe(0, { transform: translateX('0px') }),

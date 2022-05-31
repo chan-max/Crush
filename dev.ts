@@ -2,19 +2,24 @@ import {
     createApp
 } from './core/app/createApp'
 
+
+
+
 var root = {
     template: `
         <style>
-             .test{
+            :root{
+                $--main : count%2 === 0 ?  'blue' : 'red' ; 
+            }
+            #box{
+                width : 200px;
                 height:200px;
-                width:200px;
-                if(count%2 === 0 ){
-                    background-color:red;
-                }
+                background-color : var(--main);
             }
         </style>
-        <button @click="count++"> {{count}} </button>
-        <div class="test"></div>
+        <button @click="count++"> {{ count }} </button>
+        <div id="box">
+        </div>
     `,
     create($: any) {
         $.count = 1
@@ -26,9 +31,9 @@ console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
+import { getElementStyle, getElementComputedStyle, getStyle } from './core/renderer/render/declaration';
+var box = document.querySelector('#box')
 
-
-var el = document.querySelector('#app')
 
 
 

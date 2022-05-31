@@ -1,9 +1,9 @@
-import { camelize } from "@crush/common"
+import { camelize } from "../../common/transformString"
 import { error } from "../../common/console"
 import { execCaptureGroups } from "../../common/regexp"
 import { isUndefined } from "../../common/type"
 
-const extAttributeRE = /(@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/
+const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/
 
 // both for html attribute and css declaration
 export function parseAttribute(attribute: string, value: string) {
@@ -24,9 +24,9 @@ export function parseAttribute(attribute: string, value: string) {
     return {
         isBooleanProperty,
         property,
-        isDynamicProperty,
-        value,
+        isDynamicProperty, 
         isDynamicValue,
+        value,
         flag,
         endFlag,
         left,

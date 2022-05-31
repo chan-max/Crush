@@ -47,7 +47,7 @@ import {
 } from '../common/important'
 
 import {
-    getStyleValue,
+    parseStyleValue,
     mountDeclaration
 } from './declaration'
 import { nodeOps } from "./nodeOps"
@@ -120,7 +120,7 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     const insertedRuleStyle = insertedRule.style
 
     for (let property in declaration) {
-        var { value } = getStyleValue(declaration[property])
+        var { value } = parseStyleValue(declaration[property])
         // keyframe 中不能设置important
         nodeOps.setProperty(insertedRuleStyle, property, value)
     }

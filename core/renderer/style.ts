@@ -5,7 +5,7 @@ import {
 import { hyphenate } from "../common/transformString"
 
 
-// support number
+// support number , from , to
 export function normalizeKeyText(keyframe: string | number | Array<string | number>): string {
     if (isArray(keyframe)) {
         return keyframe.map(normalizeKeyText).join(',')
@@ -38,7 +38,10 @@ export const deleteKeyframe = (keyframes: CSSKeyframesRule, keyText: string | nu
 
 // update
 export const setSelector = (styleRule: CSSStyleRule, selector: string) => styleRule.selectorText = selector
-export const setKeyframesName = (keyframes: CSSKeyframesRule, name: string) => keyframes.name = name
+export const setKeyframesName = (keyframesRule: CSSKeyframesRule, name: string) => keyframesRule.name = name
+
+export const deleteMedium = (mediaRule:CSSMediaRule,medium:string) => mediaRule.media.deleteMedium(medium)
+export const appendMedium = (mediaRule:CSSMediaRule,medium:string) => mediaRule.media.appendMedium(medium)
 
 export const setStyleProperty = (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '')
 

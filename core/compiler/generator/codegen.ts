@@ -357,17 +357,33 @@ function genDeclartion(declarationGroup: any[], context: any) {
                 res.push(target)
                 lastIsDeclaration = true
             }
-            const {
+            var {
                 property,
                 value,
                 isDynamicProperty,
                 isDynamicValue,
-                isImportant
+                isImportant,
+                illegalKey
             } = declaration.declaration
-            const _property = isDynamicProperty ? dynamicMapKey(property) : property
-            const _value = isDynamicValue ? value : toBackQuotes(value)
-            const __value = isImportant ? context.callRenderFn(renderMethodsNameMap.important, _value) : _value
-            target[_property] = __value
+
+            if (isDynamicProperty) {
+                // 动态的key不存在不合法情况
+                property = dynamicMapKey(property)
+            } else {
+                if (illegalKey) {
+                    property = dynamicMapKey(toSingleQuotes(property))
+                }
+            }
+
+            if (!isDynamicValue) {
+                value = toBackQuotes(value)
+            }
+
+            if (isImportant) {
+                value = context.callRenderFn(renderMethodsNameMap.important, value)
+            }
+
+            target[property] = value
         }
     })
 

@@ -10,7 +10,7 @@ import {
 
 
 
-import { unionKeys } from "./common";
+import { getUnionkeysFromMaps } from "./common";
 import { camelize, hyphenate, isObject } from '@crush/common';
 
 
@@ -19,7 +19,7 @@ export type StyleValue = {
     important: boolean
 }
 
-export function getStyleValue(rawValue: any): StyleValue {
+export function parseStyleValue(rawValue: any): StyleValue {
     var value, important = false
     if (rawValue === undefined || rawValue === null) {
         value = null
@@ -51,9 +51,9 @@ export function getStyleValue(rawValue: any): StyleValue {
 export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any, nDeclaration: any) {
     pDeclaration ||= EMPTY_OBJ
     nDeclaration ||= EMPTY_OBJ
-    for (let propName of unionKeys(pDeclaration, nDeclaration)) {
-        var { value: pValue, important: pImportant } = getStyleValue(pDeclaration[propName])
-        var { value: nValue, important: nImportant } = getStyleValue(nDeclaration[propName])
+    for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
+        var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName])
+        var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName])
         if (pValue !== nValue || pImportant !== nImportant) {
             setStyleProperty(style, propName, nValue, nImportant)
         }
@@ -61,16 +61,17 @@ export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any,
 }
 
 export function mountDeclaration(style: CSSStyleDeclaration, declaration: any) {
-    updateDeclaration(style, EMPTY_OBJ, declaration)
+    return updateDeclaration(style, EMPTY_OBJ, declaration)
 }
 
 export function unmountDeclaration(style: CSSStyleDeclaration, declaration: any) {
-    updateDeclaration(style, declaration, EMPTY_OBJ)
+    return updateDeclaration(style, declaration, EMPTY_OBJ)
 }
 
 // export 
 
-export const setStyleDeclaration = (el: HTMLElement, declaration: Record<string, any>) => mountDeclaration(el.style, declaration)
+export const setElementStyleDeclaration = (el: HTMLElement, declaration: Record<string, any>) => mountDeclaration(el.style, declaration)
+
 
 import {
     important
@@ -81,16 +82,24 @@ import { setStyleProperty } from '../style';
 
 // ready for animation and transition
 
+export function getStyleValue(style: CSSStyleDeclaration, key: string) {
+    var property = hyphenate(key)
+    var value = style.getPropertyValue(property)
+    var isImportant = !!style.getPropertyPriority(property);
+    return isImportant ? important(value) : value
+}
+
+export function getElementStyleValue(el: HTMLElement, key: string) {
+    return getStyleValue(el.style, key)
+}
+
 export function getStyle(style: CSSStyleDeclaration, getter: Record<string, any> | string[]): Record<string, any> {
     if (isObject(getter)) {
         getter = Object.keys(getter)
     }
     var declaration: Record<string, any> = {}
     for (let key of getter as string[]) {
-        var property = hyphenate(key)
-        var value = style.getPropertyValue(property)
-        var isImportant = !!style.getPropertyPriority(property);
-        declaration[camelize(property)] = isImportant ? important(value) : value
+        declaration[camelize(key)] = getStyleValue(style, key)
     }
     return declaration
 }

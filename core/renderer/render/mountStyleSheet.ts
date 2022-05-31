@@ -9,12 +9,13 @@ import { Nodes } from "../../const/node"
 import { docCreateElement, insertElement } from "../dom"
 
 export const mountStyleSheet = (vnode: any, container: any, anchor: any) => {
+    const { props, children } = vnode
     var ref: any = docCreateElement('style')
+    mountAttributes(ref, props)
     vnode.ref = ref
     insertElement(ref, container, anchor)
     var sheet = ref.sheet
-    const rules = vnode.children
-    mountSheet(sheet, rules, vnode)
+    mountSheet(sheet, children, vnode)
 }
 
 function mountSheet(sheet: CSSStyleSheet, rules: any, vnode: any) {
@@ -45,10 +46,11 @@ export function mountRule(sheet: any, rule: any, vnode: any, index: number = she
 
 
 import {
-    getStyleValue,
+    parseStyleValue,
     mountDeclaration
 } from './declaration'
 import { insertKeyframe, insertKeyframes, insertMedia, insertStyle, insertSupports, normalizeKeyText, setStyleProperty } from "../style"
+import { mountAttributes } from "./attribute"
 
 export function mountStyleRule(
     sheet: any,
@@ -71,8 +73,14 @@ export function mountStyleRule(
 function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
     var media = rule.media
     var rules = rule.children
+
+    if (isArray(media)) {
+        media = media.join(',')
+    }
+
     var index = insertMedia(sheet, media, insertIndex)
     var newSheet = sheet.cssRules[index]
+    rule.ref = newSheet
     mountSheet(newSheet, rules, vnode)
 }
 
@@ -108,7 +116,7 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     const insertedRuleStyle = insertedRule.style
 
     for (let property in declaration) {
-        var { value } = getStyleValue(declaration[property])
+        var { value } = parseStyleValue(declaration[property])
         // keyframe 中不能设置important
         setStyleProperty(insertedRuleStyle, property, value)
     }

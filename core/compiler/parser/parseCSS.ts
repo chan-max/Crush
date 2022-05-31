@@ -70,7 +70,7 @@ export const parseCSS = (source: string): any => {
         } else if (scanner.expect('/*')) {
             /* comment continue */
         } else if (scanner.startsWith(keyOf(Nodes.MIXIN))) {
-            var [mixin]:any = scanner.exec(mixinRE);
+            var [mixin]: any = scanner.exec(mixinRE);
             var m = {
                 type: Nodes.MIXIN,
                 mixin
@@ -113,9 +113,27 @@ export const parseCSS = (source: string): any => {
             /*
                 the last declaration must end with  " ; "
             */
-            var declaration:any = parseAttribute(exResult[0], exResult[1]);
+            var declaration: any = parseAttribute(exResult[0], exResult[1]);
+
+            var {
+                property,
+                flag,
+                endFlag
+            } = declaration
+
+            if (flag === '$') {
+                declaration.isDynamicValue = true
+            } else if (flag === '$--') {
+                declaration.isDynamicValue = true
+                declaration.property = '--' + property
+                declaration.illegalKey = true
+            } else if (flag === '--') {
+                declaration.property = '--' + property
+                declaration.illegalKey = true
+            }
             //! important
-            declaration.isImportant = declaration.endFlag === '!';
+            declaration.isImportant = endFlag === '!';
+            
             (declarationGroup ||= []).push({
                 declaration,
                 type: Nodes.DECLARATION
