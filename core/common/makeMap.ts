@@ -13,6 +13,5 @@ export const makeMap = (str: string, delimiter: string = ',') => {
     return (key: string) => !!map[key]
 }
 
-export function setArrayKey() {
 
-}
+

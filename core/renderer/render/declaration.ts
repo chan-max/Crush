@@ -1,6 +1,7 @@
 import {
     isArray,
     isString,
+    isObject
 } from '../../common/type'
 import { EMPTY_OBJ } from '../../common/value'
 import {
@@ -11,7 +12,7 @@ import {
 
 
 import { getUnionkeysFromMaps } from "./common";
-import { camelize, hyphenate, isObject } from '@crush/common';
+import { camelize, hyphenate, } from '../../common/transformString';
 
 
 export type StyleValue = {
@@ -48,6 +49,7 @@ export function parseStyleValue(rawValue: any): StyleValue {
 }
 
 
+
 export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any, nDeclaration: any) {
     pDeclaration ||= EMPTY_OBJ
     nDeclaration ||= EMPTY_OBJ
@@ -64,13 +66,14 @@ export function mountDeclaration(style: CSSStyleDeclaration, declaration: any) {
     return updateDeclaration(style, EMPTY_OBJ, declaration)
 }
 
+// export 
+export const setElementStyleDeclaration = (el: HTMLElement, declaration: Record<string, any>) => mountDeclaration(el.style, declaration)
+
+
 export function unmountDeclaration(style: CSSStyleDeclaration, declaration: any) {
     return updateDeclaration(style, declaration, EMPTY_OBJ)
 }
 
-// export 
-
-export const setElementStyleDeclaration = (el: HTMLElement, declaration: Record<string, any>) => mountDeclaration(el.style, declaration)
 
 
 import {
@@ -93,21 +96,23 @@ export function getElementStyleValue(el: HTMLElement, key: string) {
     return getStyleValue(el.style, key)
 }
 
-export function getStyle(style: CSSStyleDeclaration, getter: Record<string, any> | string[]): Record<string, any> {
-    if (isObject(getter)) {
-        getter = Object.keys(getter)
+export function getStyle(style: CSSStyleDeclaration, keys: Record<string, any> | string[] | string): Record<string, any> {
+    if (isObject(keys)) {
+        keys = Object.keys(keys)
+    } else if (isString(keys)) {
+        keys = (keys as string).split(',')
     }
     var declaration: Record<string, any> = {}
-    for (let key of getter as string[]) {
+    for (let key of keys as string[]) {
         declaration[camelize(key)] = getStyleValue(style, key)
     }
     return declaration
 }
 
-export function getElementStyle(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
-    return getStyle(el.style, getter)
+export function getElementStyle(el: HTMLElement, keys: Record<string, any> | string[] | string): Record<string, any> {
+    return getStyle(el.style, keys)
 }
 
-export function getElementComputedStyle(el: HTMLElement, getter: Record<string, any> | string[]): Record<string, any> {
-    return getStyle(window.getComputedStyle(el), getter)
+export function getElementComputedStyle(el: HTMLElement, keys: Record<string, any> | string[] | string): Record<string, any> {
+    return getStyle(window.getComputedStyle(el), keys)
 }

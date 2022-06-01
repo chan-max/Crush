@@ -31,10 +31,16 @@ export const removeElement = (el: Element) => {
 export const setAttribute = (el: Element, attribute: string, value: string) => el.setAttribute(attribute, value)
 export const removeAttribute = (el: Element, attribute: string) => el.removeAttribute(attribute)
 
-export const addEventListener = (el: Element, event: string, handler: any, options: any) => el.addEventListener(event, handler, options);
-export const removeEventListener = (el: Element, event: string, handler: any, options: any) => el.removeEventListener(event, handler, options);
+export const addEventListener = (el: Element, event: string, handler: any, options: any = null) => el.addEventListener(event, handler, options);
+export const removeEventListener = (el: Element, event: string, handler: any, options: any = null) => el.removeEventListener(event, handler, options);
 
-
+export function onceListener(el: Element, event: string, handler: Function, options: any = null) {
+    var onceHandler = () => {
+        handler()
+        removeEventListener(el, event, onceHandler,options)
+    }
+    addEventListener(el, event, onceHandler, options)
+}
 
 
 

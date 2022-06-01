@@ -1,5 +1,5 @@
 import { builtInComponents, builtInDirectives } from "../builtIn/export"
-import { error } from "../common/console"
+import { error, warn } from "../common/console"
 import { isString } from "../common/type"
 import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
@@ -8,12 +8,12 @@ import { PluginType } from "../instance/plugin"
 import { mountComponent } from "../renderer/render/mountComponent"
 import { createComponent } from "../renderer/vnode/dom"
 
-import {installAnimation} from '../animate/installAnimation'
+import { installAnimation } from '../animate/installAnimation'
 
 var currentApp: AppInstance
 
 export function getCurrentApp(): AppInstance {
-    if(!currentApp){
+    if (!currentApp) {
         debugger
     }
     return currentApp
@@ -60,11 +60,17 @@ export class App implements AppInstance {
 
     components: Record<string, ComponentType> = builtInComponents
     component(name: string, component: ComponentType) {
+        if (this.directives[name]) {
+            return warn('component is already exist')
+        }
         this.components[name] = component
     }
 
     directives: Record<string, DirectiveType> = builtInDirectives
     directive(name: string, directive: DirectiveType) {
+        if (this.directives[name]) {
+           return warn('directive is already exist')
+        }
         this.directives[name] = directive
     }
 

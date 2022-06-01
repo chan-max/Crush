@@ -3,7 +3,7 @@ function isNumber(value: any) {
     return typeof value === 'number' && value !== NaN
 }
 
-function isString(value: any) {
+function isString(value: any):boolean {
     return typeof value === 'string'
 }
 
