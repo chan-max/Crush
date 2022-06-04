@@ -1,8 +1,8 @@
 import { Nodes } from "@crush/const"
-import { processHook,LifecycleHooks } from "@crush/core"
+import { processHook, LifecycleHooks } from "@crush/core"
 
 import { removeElement } from '../dom'
-
+import { unmountComponent } from './unmountComponent'
 
 export function unmount(vnode: any, container: any, anchor: any) {
     switch (vnode.nodeType) {
@@ -12,7 +12,10 @@ export function unmount(vnode: any, container: any, anchor: any) {
         case Nodes.STYLE:
             unmountElement(vnode, true)
         case Nodes.TEXT:
-            removeElement(vnode.ref)
+            removeElement(vnode.el)
+            break
+        case Nodes.COMPONENT:
+            unmountComponent(vnode, container, anchor)
             break
     }
 }
@@ -27,6 +30,6 @@ function unmountElement(vnode: any, isStyle: boolean = false) {
         unmountChildren(vnode.children)
     }
     processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
-    removeElement(vnode.ref)
+    removeElement(vnode.el)
     processHook(LifecycleHooks.UNMOUNTED, vnode)
 }

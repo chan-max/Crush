@@ -5,7 +5,8 @@ import {
 import {
     createElement,
     createText,
-    createFragment
+    createFragment,
+    createComponent
 } from './vnode/dom'
 
 import { important } from './common/important'
@@ -44,6 +45,7 @@ import {
     normalizeStyle
 } from './common/normalizeStyle'
 
+import {renderSlot} from './common/renderSlot'
 
 export default {
     important,
@@ -65,5 +67,7 @@ export default {
     createSupports,
     mixin,
     normalizeClass,
-    normalizeStyle
+    normalizeStyle,
+    createComponent,
+    renderSlot
 }

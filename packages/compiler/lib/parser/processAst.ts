@@ -120,7 +120,8 @@ function processAttribute(ast: any) {
                         break
                 }
             }
-        } else {
+        } else {            
+            // 其他属性
             var type = reservedAttributeMap[attribute.property]
             if (attribute.flag === '#') {
                 // id shorthand
@@ -149,7 +150,9 @@ function processAttribute(ast: any) {
                         attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineClass(attribute.value)
                         break
                     default:
+                        // 自定义保留属性，不对外开放
                         attribute.type = Nodes.RESERVED_PROP
+                        
                 }
             }
         }

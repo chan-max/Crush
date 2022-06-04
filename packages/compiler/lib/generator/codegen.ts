@@ -216,7 +216,7 @@ function genNode(node: any, context: any): any {
             var slotName = toBackQuotes(node.attributeMap?.name || 'default')
             var fallback = toArrowFunction(genNodes(node.children, context))
             // todo 插槽作用域
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid())
+            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, fallback, uid())
         case Nodes.OUTLET:
             return genNodes(node.children as any[], context)
         case Nodes.DYNAMIC_ELEMENT:

@@ -1,8 +1,9 @@
 import { Nodes } from "@crush/const"
-import { processHook , LifecycleHooks} from "@crush/core"
+import { processHook, LifecycleHooks } from "@crush/core"
 
 import { updateAttributes } from "./attribute"
 import { patch } from "./patch"
+import { updateComponent } from './updateComponent'
 
 export function update(p: any, n: any, container: any, anchor: any) {
     switch (n.nodeType) {
@@ -15,6 +16,8 @@ export function update(p: any, n: any, container: any, anchor: any) {
         case Nodes.STYLE:
             updateStyleSheet(p, n,)
             break
+        case Nodes.COMPONENT:
+            updateComponent(p, n, container, anchor)
     }
 }
 
@@ -25,7 +28,7 @@ import {
 import { updateStyleSheet } from "./updateStyleSheet"
 
 function updateText(p: any, n: any) {
-    var el = n.ref = p.ref
+    var el = n.el = p.el
     if (p.children !== n.children) {
         el.textContent = n.children
     }
@@ -34,7 +37,7 @@ function updateText(p: any, n: any) {
 
 function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
 
-    var el = n.ref = p.ref
+    var el = n.el = p.el
 
     processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
     updateAttributes(el, p.props, n.props)

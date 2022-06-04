@@ -38,7 +38,7 @@ function mountElement(vnode: any, container: any, anchor: any) {
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
     var el = docCreateElement(type)
-    vnode.ref = el
+    vnode.el = el
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
 
@@ -52,6 +52,6 @@ function mountElement(vnode: any, container: any, anchor: any) {
 
 function mountText(vnode: any, container: any, anchor: any) {
     var el = docCreateText(vnode.children)
-    vnode.ref = el
+    vnode.el = el
     insertElement(el, container, anchor)
 }

@@ -2,8 +2,8 @@
 import { Nodes } from "@crush/const"
 
 export const updateStyleSheet = (p: any, n: any) => {
-    var ref = n.ref = p.ref
-    var sheet = ref.sheet
+    var el = n.el = p.el
+    var sheet = el.sheet
     /*
         更新style元素的props，并且处理特殊属性如，unit,url 等
     */
