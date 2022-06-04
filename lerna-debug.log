@@ -1,0 +1,11 @@
+0 silly argv {
+0 silly argv   _: [ 'add' ],
+0 silly argv   globs: [],
+0 silly argv   lernaVersion: '4.0.0',
+0 silly argv   '$0': 'C:\\Users\\Administrator\\AppData\\Roaming\\npm\\node_modules\\lerna\\cli.js',
+0 silly argv   pkg: '@crush/builtIn'
+0 silly argv }
+1 notice cli v4.0.0
+2 verbose rootPath E:\phpstudy_pro\WWW\Crush
+3 error HttpErrorGeneral: 404 Not Found - GET https://registry.npmjs.org/@crush%2fbuiltIn - Not found
+3 error     at E:\phpstudy_pro\WWW\Crush\node_modules\pacote\node_modules\npm-registry-fetch\check-response.js:95:15

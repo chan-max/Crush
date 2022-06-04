@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "description": "",
-  "private": false,
+  "private": true,
   "scripts": {
     "dev": "vite",
     "test": "jest",

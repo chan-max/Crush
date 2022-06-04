@@ -1,0 +1,28 @@
+import { hyphenate } from "@crush/common"
+
+
+export function getComputedStyle(el: Element, prop?: any) {
+    var style = window.getComputedStyle(el)
+    return prop ? style.getPropertyValue(hyphenate(prop)) : style
+}
+
+
+
+/*  think ? 
+
+*/
+
+export const enum Animation {
+    NAME = 'animationName',
+    DURATION = 'animationDuration',
+    TIMING_FUNCTION = 'animationTimingFunction',
+    DELAY = 'animationDelay',
+    PLAY_STATE = 'animationPlayState',
+    ITERATION_COUNT = 'animationIterationCount',
+    FILL_MODE = 'animationFillMode',
+    DIRECTION = 'animationDirection'
+}
+
+function doAnimation(el: Element, animationOptions: Record<Animation, any>) {
+
+}

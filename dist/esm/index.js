@@ -1,9 +1,49 @@
-const isNumber = (value) => (!isNaN(value)) && (typeof value === 'number');
-const isString = (value) => typeof value === 'string';
-const isArray = Array.isArray;
-const isObject = (value) => objectToString.call(value) === '[object Object]';
-const isFunction = (value) => typeof value === 'function';
-var objectToString = Object.prototype.toString;
+function setDisplay(el, show) {
+    if (show) {
+        el.style.display = el._display;
+    }
+    else {
+        el.style.display = 'none';
+    }
+}
+const show = {
+    beforeMount(el, { value }) {
+        el._display = el.style.display;
+        setDisplay(el, value);
+    },
+    updated(el, { value, oldValue }) {
+        if (!value !== !oldValue) {
+            setDisplay(el, value);
+        }
+    }
+};
+
+const model = {
+    beforeCreate() {
+    },
+    created() {
+    },
+    beforeMount() {
+    },
+    mounted() {
+    },
+    beforeUpdate(el, infos, vnode) {
+        vnode.props._assigner;
+        debugger;
+    },
+    updated() {
+    },
+    beforeUnmount() {
+    },
+    unmounted() {
+    }
+};
+
+const builtInComponents = {};
+const builtInDirectives = {
+    show,
+    model
+};
 
 const cache = (fn) => {
     const cache = Object.create(null);
@@ -13,18 +53,14 @@ const cache = (fn) => {
     });
 };
 
-const camelizeRE = /-(\w)/g;
-const camelize = cache((str) => str.replace(camelizeRE, (_, $) => $.toUpperCase()));
-const hyphenateRE = /\B([A-Z])/g;
-const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
-const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
-
 const warn = (...msg) => console.warn(...msg);
-const error = (...msg) => {
-    throw new Error(...msg);
+const error = (msg) => {
+    throw `${msg}`;
 };
 
-const getEmptyMap = () => Object.create(null);
+function getEmptyObj() {
+    return Object.create(null);
+}
 var id = 0;
 const uid = () => id++;
 const uStringId = () => String(uid());
@@ -35,7 +71,7 @@ const EMPTY_ARR = Object.freeze([]);
 const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     res[item] = mapValue;
     return res;
-}, getEmptyMap());
+}, getEmptyObj());
 const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
 // from vue
 const makeMap = (str, delimiter = ',') => {
@@ -43,21 +79,6 @@ const makeMap = (str, delimiter = ',') => {
     return (key) => !!map[key];
 };
 
-/*
-    use exec to extract the captureGroups
-*/
-const exec = (target, extractor) => {
-    var res = extractor.exec(target);
-    if (res) {
-        var [_, ...captureGroups] = res;
-        return captureGroups;
-    }
-    return null;
-};
-
-/*
-    remove an element from array , if not exist return false , or return true
-*/
 const removeFromArray = (arr, item) => {
     var index = arr.indexOf(item);
     if (index < 0)
@@ -65,9 +86,159 @@ const removeFromArray = (arr, item) => {
     arr.splice(index, 1);
     return true;
 };
-const extend$1 = Object.assign;
 
-const keys = (value) => value ? Object.keys(value) : EMPTY_ARR;
+function exec(target, extractor) {
+    return extractor.exec(target);
+}
+function execCaptureGroups(target, extractor) {
+    var res = exec(target, extractor);
+    if (!res) {
+        return null;
+    }
+    else {
+        var [_, ...captureGroups] = res;
+        return captureGroups;
+    }
+}
+
+function isNumber(value) {
+    return typeof value === 'number' && value !== NaN;
+}
+function isString(value) {
+    return typeof value === 'string';
+}
+const isNumberString = (value) => isNumber(Number(value));
+const isObject = (value) => objectToString.call(value) === '[object Object]';
+const isUndefined = (value) => typeof value === 'undefined';
+const isFunction = (value) => typeof value === 'function';
+const objectToString = Object.prototype.toString;
+function typeOf(value) {
+    // ! do not toLowerCase
+    return objectToString.call(value).slice(8, -1);
+}
+const isArray = Array.isArray;
+
+const camelizeRE = /(\w)-(\w)/g;
+const camelize = cache((str) => str.replace(camelizeRE, (_, l, r) => {
+    return l + r.toUpperCase();
+}));
+const hyphenateRE = /\B([A-Z])/g;
+const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
+const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
+
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+const hasOwn = (target, key) => hasOwnProperty.call(target, key);
+
+const svgNS = 'http://www.w3.org/2000/svg';
+const addClass = (el, className) => el.classList.add(className);
+const removeClass = (el, className) => el.classList.remove(className);
+const docCreateElement = (tagName, isSVG = false) => isSVG ? document.createElementNS(svgNS, tagName) : document.createElement(tagName);
+const docCreateComment = (text) => document.createComment(text);
+const docCreateText = (text) => document.createTextNode(text);
+const setText = (textEl, text) => textEl.nodeValue = text;
+const insertElement = (child, parent, anchor = null) => {
+    /* 可能传入不合理的anchor */
+    if (anchor && anchor.parentElement !== parent) {
+        anchor = null;
+    }
+    parent.insertBefore(child, anchor);
+};
+const removeElement = (el) => {
+    const parent = el.parentNode;
+    if (parent) {
+        parent.removeChild(el);
+    }
+};
+const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value);
+const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
+const addEventListener = (el, event, handler, options = null) => el.addEventListener(event, handler, options);
+const removeEventListener = (el, event, handler, options = null) => el.removeEventListener(event, handler, options);
+function onceListener(el, event, handler, options = null) {
+    var onceHandler = () => {
+        handler();
+        removeEventListener(el, event, onceHandler, options);
+    };
+    addEventListener(el, event, onceHandler, options);
+}
+
+var Nodes;
+(function (Nodes) {
+    Nodes[Nodes["NULL"] = 0] = "NULL";
+    Nodes[Nodes["FRAGMENT"] = 1] = "FRAGMENT";
+    Nodes[Nodes["TEMPLATE"] = 2] = "TEMPLATE";
+    Nodes[Nodes["IF"] = 3] = "IF";
+    Nodes[Nodes["ELSE_IF"] = 4] = "ELSE_IF";
+    Nodes[Nodes["ELSE"] = 5] = "ELSE";
+    Nodes[Nodes["FOR"] = 6] = "FOR";
+    Nodes[Nodes["ATTRIBUTE"] = 7] = "ATTRIBUTE";
+    Nodes[Nodes["DOM_ELEMENT"] = 8] = "DOM_ELEMENT";
+    Nodes[Nodes["SVG_ELEMENT"] = 9] = "SVG_ELEMENT";
+    Nodes[Nodes["HTML_COMMENT"] = 10] = "HTML_COMMENT";
+    Nodes[Nodes["DYNAMIC_ELEMENT"] = 11] = "DYNAMIC_ELEMENT";
+    Nodes[Nodes["TEXT"] = 12] = "TEXT";
+    Nodes[Nodes["HTML_ELEMENT"] = 13] = "HTML_ELEMENT";
+    Nodes[Nodes["COMPONENT"] = 14] = "COMPONENT";
+    Nodes[Nodes["DYNAMIC_COMPONENT"] = 15] = "DYNAMIC_COMPONENT";
+    Nodes[Nodes["STYLE"] = 16] = "STYLE";
+    // class contain dynamic class and static class
+    Nodes[Nodes["CLASS"] = 17] = "CLASS";
+    Nodes[Nodes["DYNAMIC_CLASS"] = 18] = "DYNAMIC_CLASS";
+    Nodes[Nodes["STATIC_CLASS"] = 19] = "STATIC_CLASS";
+    Nodes[Nodes["AT"] = 20] = "AT";
+    Nodes[Nodes["MEDIA_RULE"] = 21] = "MEDIA_RULE";
+    Nodes[Nodes["SUPPORTS_RULE"] = 22] = "SUPPORTS_RULE";
+    Nodes[Nodes["KEYFRAMES_RULE"] = 23] = "KEYFRAMES_RULE";
+    Nodes[Nodes["EVENT"] = 24] = "EVENT";
+    Nodes[Nodes["STYLE_RULE"] = 25] = "STYLE_RULE";
+    Nodes[Nodes["KEYFRAME_RULE"] = 26] = "KEYFRAME_RULE";
+    /*
+     declarationGroup is contain declaratin and mixin
+    */
+    Nodes[Nodes["DECLARATION_GROUP"] = 27] = "DECLARATION_GROUP";
+    Nodes[Nodes["DECLARATION"] = 28] = "DECLARATION";
+    Nodes[Nodes["MIXIN"] = 29] = "MIXIN";
+    Nodes[Nodes["UNKNOWN"] = 30] = "UNKNOWN";
+    Nodes[Nodes["DIRECTIVE_FLAG"] = 31] = "DIRECTIVE_FLAG";
+    Nodes[Nodes["BUILTIN_DIRECTIVE"] = 32] = "BUILTIN_DIRECTIVE";
+    Nodes[Nodes["CUSTOM_DIRECTIVE"] = 33] = "CUSTOM_DIRECTIVE";
+    // use slot
+    Nodes[Nodes["SLOT"] = 34] = "SLOT";
+    // define slot
+    Nodes[Nodes["OUTLET"] = 35] = "OUTLET";
+    // form binding
+    Nodes[Nodes["MODEL"] = 36] = "MODEL";
+    Nodes[Nodes["RESERVED_PROP"] = 37] = "RESERVED_PROP";
+})(Nodes || (Nodes = {}));
+/*
+    input nodeType return nodeKeyword
+    input nodeKeyword return nodeType
+*/
+var NodesMap;
+(function (NodesMap) {
+    NodesMap[NodesMap["if"] = 3] = "if";
+    NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
+    NodesMap[NodesMap["else"] = 5] = "else";
+    NodesMap[NodesMap["for"] = 6] = "for";
+    NodesMap[NodesMap["slot"] = 34] = "slot";
+    NodesMap[NodesMap["outlet"] = 35] = "outlet";
+    NodesMap[NodesMap["..."] = 29] = "...";
+    NodesMap[NodesMap["@"] = 20] = "@";
+    NodesMap[NodesMap["--"] = 31] = "--";
+    NodesMap[NodesMap["media"] = 21] = "media";
+    NodesMap[NodesMap["keyframes"] = 23] = "keyframes";
+    NodesMap[NodesMap["supports"] = 22] = "supports";
+    NodesMap[NodesMap["style"] = 16] = "style";
+    NodesMap[NodesMap["class"] = 17] = "class";
+    NodesMap[NodesMap["template"] = 2] = "template";
+    NodesMap[NodesMap["element"] = 11] = "element";
+    NodesMap[NodesMap["component"] = 15] = "component";
+    NodesMap[NodesMap["model"] = 36] = "model";
+})(NodesMap || (NodesMap = {}));
+function keyOf(nodeType) {
+    return NodesMap[nodeType];
+}
+
+const SYMBOL_ITERATOR$1 = Symbol.iterator;
 
 const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
     'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
@@ -91,136 +262,65 @@ const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,col
     'text,textPath,title,tspan,unknown,use,view';
 const isSVGTag = makeMap(SVG_TAGS);
 
-// all is nodes
-var Nodes;
-(function (Nodes) {
-    Nodes[Nodes["NULL"] = 0] = "NULL";
-    Nodes[Nodes["FRAGMENT"] = 1] = "FRAGMENT";
-    Nodes[Nodes["TEMPLATE"] = 2] = "TEMPLATE";
-    Nodes[Nodes["IF"] = 3] = "IF";
-    Nodes[Nodes["ELSE_IF"] = 4] = "ELSE_IF";
-    Nodes[Nodes["ELSE"] = 5] = "ELSE";
-    Nodes[Nodes["FOR"] = 6] = "FOR";
-    Nodes[Nodes["HTML_ATTRIBUTE"] = 7] = "HTML_ATTRIBUTE";
-    Nodes[Nodes["DOM_ELEMENT"] = 8] = "DOM_ELEMENT";
-    Nodes[Nodes["SVG_ELEMENT"] = 9] = "SVG_ELEMENT";
-    Nodes[Nodes["HTML_COMMENT"] = 10] = "HTML_COMMENT";
-    Nodes[Nodes["TEXT"] = 11] = "TEXT";
-    Nodes[Nodes["HTML_ELEMENT"] = 12] = "HTML_ELEMENT";
-    Nodes[Nodes["COMPONENT"] = 13] = "COMPONENT";
-    Nodes[Nodes["STYLE"] = 14] = "STYLE";
-    // class contain dynamic class and static class
-    Nodes[Nodes["CLASS"] = 15] = "CLASS";
-    Nodes[Nodes["DYNAMIC_CLASS"] = 16] = "DYNAMIC_CLASS";
-    Nodes[Nodes["STATIC_CLASS"] = 17] = "STATIC_CLASS";
-    Nodes[Nodes["AT"] = 18] = "AT";
-    Nodes[Nodes["MEDIA_RULE"] = 19] = "MEDIA_RULE";
-    Nodes[Nodes["SUPPORTS_RULE"] = 20] = "SUPPORTS_RULE";
-    Nodes[Nodes["KEYFRAMES_RULE"] = 21] = "KEYFRAMES_RULE";
-    Nodes[Nodes["EVENT"] = 22] = "EVENT";
-    Nodes[Nodes["STYLE_RULE"] = 23] = "STYLE_RULE";
-    Nodes[Nodes["KEYFRAME_RULE"] = 24] = "KEYFRAME_RULE";
-    /*
-     declarationGroup is contain declaratin and mixin
-    */
-    Nodes[Nodes["DECLARATION_GROUP"] = 25] = "DECLARATION_GROUP";
-    Nodes[Nodes["DECLARATION"] = 26] = "DECLARATION";
-    Nodes[Nodes["MIXIN"] = 27] = "MIXIN";
-    Nodes[Nodes["UNKNOWN"] = 28] = "UNKNOWN";
-    Nodes[Nodes["DIRECTIVE_FLAG"] = 29] = "DIRECTIVE_FLAG";
-    Nodes[Nodes["BUILTIN_DIRECTIVE"] = 30] = "BUILTIN_DIRECTIVE";
-    Nodes[Nodes["CUSTOM_DIRECTIVE"] = 31] = "CUSTOM_DIRECTIVE";
-    // use slot
-    Nodes[Nodes["SLOT"] = 32] = "SLOT";
-    // define slot
-    Nodes[Nodes["DEFINE_SLOT"] = 33] = "DEFINE_SLOT";
-})(Nodes || (Nodes = {}));
-/*
-    input nodeType return nodeKeyword
-    input nodeKeyword return nodeType
-*/
-var NodesMap;
-(function (NodesMap) {
-    NodesMap[NodesMap["if"] = 3] = "if";
-    NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
-    NodesMap[NodesMap["else"] = 5] = "else";
-    NodesMap[NodesMap["for"] = 6] = "for";
-    NodesMap[NodesMap["..."] = 27] = "...";
-    NodesMap[NodesMap["@"] = 18] = "@";
-    NodesMap[NodesMap["--"] = 29] = "--";
-    NodesMap[NodesMap["media"] = 19] = "media";
-    NodesMap[NodesMap["keyframes"] = 21] = "keyframes";
-    NodesMap[NodesMap["supports"] = 20] = "supports";
-    NodesMap[NodesMap["style"] = 14] = "style";
-    NodesMap[NodesMap["class"] = 15] = "class";
-    NodesMap[NodesMap["template"] = 2] = "template";
-    NodesMap[NodesMap["slot"] = 32] = "slot";
-    NodesMap[NodesMap["defineSlot"] = 33] = "defineSlot";
-})(NodesMap || (NodesMap = {}));
-const directiveTypeOf = (dirName) => {
-    return NodesMap[dirName] || Nodes.CUSTOM_DIRECTIVE;
-};
-const tagTypeOf = (tagName) => {
-    return NodesMap[tagName] ||
-        (isHTMLTag(tagName) ?
-            Nodes.HTML_ELEMENT : isSVGTag(tagName) ?
-            Nodes.SVG_ELEMENT : Nodes.COMPONENT);
-};
-
-function createNode(type) {
+function createNode(nodeType) {
     return {
-        type
+        key: null,
+        nodeType,
+        type: null,
+        props: null,
+        children: null
     };
 }
-(({
-    type: Nodes.NULL,
-    tag: Symbol('empty')
-}));
-var createElement = (tag, props, children, key) => {
-    return {
-        tag,
-        props,
-        children,
-        key,
-        type: Nodes.HTML_ELEMENT,
-    };
-};
-var Text = Symbol('Text');
-var createText = (children, key) => {
-    return {
-        key,
-        tag: Text,
-        children,
-        type: Nodes.TEXT
-    };
-};
-var createSVGElement = () => { };
-var createComment = () => { };
-var createFragment = (children, key) => {
-    return {
-        type: Nodes.FRAGMENT,
-        children,
-        key
-    };
-};
+function createComponent(type, props, slots, key = uid()) {
+    var component = createNode(Nodes.COMPONENT);
+    component.type = type;
+    component.props = props;
+    component.children = slots;
+    component.key = key;
+    return component;
+}
+function createElement(tagName, props, children, key = uid()) {
+    var node = createNode(Nodes.HTML_ELEMENT);
+    node.type = tagName;
+    node.props = props;
+    node.children = children;
+    node.key = key;
+    return node;
+}
+const SYMBOL_TEXT = Symbol('Text');
+// the key is for other node
+function createText(text, key = uid()) {
+    var node = createNode(Nodes.TEXT);
+    node.type = SYMBOL_TEXT;
+    node.children = text;
+    node.key = key;
+    return node;
+}
+function createFragment(children, key = uid()) {
+    const f = createNode(Nodes.FRAGMENT);
+    f.children = children;
+    f.key = key;
+    return f;
+}
+
 var createStyleSheet = (props, children, key = uid()) => {
     var node = createNode(Nodes.STYLE);
     node.props = props;
     node.children = children;
     node.key = key;
-    node.tag = 'style'; // used for diff
+    node.type = 'style'; // used for diff
     return node;
 };
 var createStyle = (selector, children, key) => {
     return {
-        type: Nodes.STYLE_RULE,
+        nodeType: Nodes.STYLE_RULE,
         selector,
         children,
         key
     };
 };
 var createMedia = (media, children, key) => ({
-    type: Nodes.MEDIA_RULE,
+    nodeType: Nodes.MEDIA_RULE,
     media,
     children,
     key
@@ -239,23 +339,15 @@ var createKeyframe = (keyframe, children, key = uid()) => {
     node.key = key;
     return node;
 };
-const createComponent = (tag, props, children, key = uid()) => {
-    var node = createNode(Nodes.COMPONENT);
-    node.tag = tag;
-    node.props = props;
-    node.children = children;
-    node.key = key;
-    return node;
-};
 var createSupports = (supports, children, key) => ({
-    type: Nodes.SUPPORTS_RULE,
+    nodeType: Nodes.SUPPORTS_RULE,
     supports,
     children,
     key
 });
 var createDeclaration = (children, key) => {
     return {
-        type: Nodes.DECLARATION,
+        nodeType: Nodes.DECLARATION,
         /*
             render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
         */
@@ -265,322 +357,1443 @@ var createDeclaration = (children, key) => {
     };
 };
 
-// compiler helper
-class Scanner {
-    constructor(source) {
-        this.source = source;
-        this.move(0); // cut the space
+function mixin(...sources) {
+    return Object.assign(...sources);
+}
+
+function doFlat(rules, flattedRules, parent = null, // 保存parent的作用主要是当遍历到declaration时
+key = null) {
+    for (let i = 0; i < rules.length; i++) {
+        var rule = rules[i];
+        if (!rule) {
+            continue;
+        }
+        // 使用传来的key生成唯一的key
+        var patchKey = key ? key + '_' + rule.key : rule.key;
+        rule.patchKey = patchKey;
+        rule.parent = parent;
+        switch (rule.nodeType) {
+            case Nodes.STYLE_RULE:
+                flattedRules.push(rule);
+                var _children = rule.children;
+                rule.children = null;
+                if (_children) {
+                    doFlat(_children, flattedRules, rule);
+                }
+                break;
+            case Nodes.DECLARATION:
+                if (!rule.parent) {
+                    debugger;
+                    // 声明不再任何样式规则或媒体规则下时,应该报错
+                }
+                else if (rule.parent.nodeType === Nodes.STYLE_RULE) {
+                    (rule.parent.children ||= []).push(rule);
+                }
+                else if (rule.parent.nodeType === Nodes.KEYFRAME_RULE) {
+                    (rule.parent.children ||= []).push(rule);
+                }
+                else {
+                    /*
+                        当一条样式声明不时样式规则的子节点
+                    */
+                    if (rule.parent.nodeType === Nodes.MEDIA_RULE) {
+                        /*
+                            一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
+                            此时和一直寻找parent的选择器
+                        */
+                        var selector, parent = rule.parent;
+                        while (!selector && parent) { /* 当选择器没被找到，并且parent存在时才会继续寻找 */
+                            selector = parent.selector;
+                            parent = parent.parent;
+                        }
+                        if (!selector) {
+                            debugger;
+                        }
+                        else {
+                            // reset the declaration to styleRule
+                            var newRule = createStyle(selector, rule.children, key);
+                            newRule.patchKey = patchKey;
+                            flattedRules.push(newRule);
+                        }
+                    }
+                }
+                continue;
+            case Nodes.MEDIA_RULE:
+                rule.children = flatRules(rule.children, rule);
+                flattedRules.push(rule);
+                break;
+            case Nodes.SUPPORTS_RULE:
+                rule.children = flatRules(rule.children);
+                flattedRules.push(rule);
+                break;
+            case Nodes.KEYFRAMES_RULE:
+                rule.children = flatRules(rule.children);
+                /*
+                    在此处需要把动画下的每一帧的样式处理成对象形式
+                */
+                rule.children.forEach((keyframe) => {
+                    const children = keyframe.children.map((r) => r.children);
+                    keyframe.children = mixin(...children);
+                });
+                flattedRules.push(rule);
+                break;
+            case Nodes.KEYFRAME_RULE:
+                /* 需要和styleRule处理方式一样 */
+                flattedRules.push(rule);
+                var _children = rule.children;
+                rule.children = null;
+                if (_children) {
+                    doFlat(_children, flattedRules, rule);
+                }
+                break;
+            case Nodes.FRAGMENT:
+                // fragment wont be a parent
+                doFlat(rule.children, flattedRules, rule.parent, rule.patchKey);
+                break;
+        }
     }
-    source;
-    move(step) {
-        this.source = this.source.slice(step).trimLeft();
+    return flattedRules;
+}
+
+function flatRules(rules, parent = null, key = null
+/* 这里传入的key是为了避免由循环产生节点中，当第一层是fragment时，无法为子节点设置上唯一的key  */
+) {
+    const flatted = doFlat(rules, [], parent, key);
+    /*
+        当一层平铺结束后 ， 处理declaration
+        stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
+    */
+    flatted.forEach((rule) => {
+        if (rule.nodeType === Nodes.STYLE_RULE) {
+            /*
+                children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
+                并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
+                仅需要处理数组结构
+            */
+            if (isArray(rule.children)) {
+                const children = rule.children.map((r) => r.children);
+                rule.children = (rule.children.length === 0 ? null : mixin(...children));
+            }
+        }
+    });
+    return flatted;
+}
+
+/*
+    处理结果返回始终是数组
+*/
+function processdom(node, key = null) {
+    if (!node) {
+        return null;
     }
-    expect(expect, index = 0) {
-        return this.source.slice(index, expect.length + index) === expect;
+    if (!isArray(node)) {
+        node = [node];
     }
-    startsWith(expect) {
-        // same as use expect without the second arg
-        return this.source.startsWith(expect);
-    }
-    exec(extractor) {
-        var res = extractor.exec(this.source);
-        if (!res) {
-            return false;
+    var flattedNode = [];
+    node.forEach((child) => {
+        if (!child)
+            return; // 空节点筛除  
+        if (child.nodeType === Nodes.FRAGMENT) {
+            /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
+            flattedNode = flattedNode.concat(processdom(child.children, child.key));
         }
         else {
-            var [{ length }, ...token] = res;
-            this.move(length);
-            return token;
+            if (key) {
+                child.patchKey = key + '_' + child.key;
+            }
+            else {
+                child.patchKey = child.key;
+            }
+            if (child.nodeType === Nodes.HTML_ELEMENT) {
+                // 子节点递归处理
+                child.children = processdom(child.children);
+            }
+            if (child.nodeType === Nodes.STYLE) {
+                child.children = flatRules(child.children, null, child.patchKey);
+            }
+            flattedNode.push(child);
+        }
+    });
+    return flattedNode;
+}
+
+const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
+const isReservedProp = (key) => key.startsWith(`_${key}`);
+const getReservedProp = (key) => key.slice(1);
+function getUnionkeysFromMaps(...maps) {
+    var _ = {};
+    for (let i in maps || EMPTY_OBJ) {
+        for (let key in maps[i]) {
+            _[key] = true;
+        }
+    }
+    return Object.keys(_);
+}
+/*
+    用于 props 的diff 算法 输入两个map类型，
+    返回一个map ， 一个key 对应两个value
+    例如：
+    {
+        key1 : [1,2] ,
+        key2 : [3,4]
+    }
+*/
+function createMapEntries(...maps) {
+    var res = {};
+    for (let i in maps) {
+        var map = maps[i];
+        if (!map)
+            continue;
+        for (let key in map) {
+            var value = map[key];
+            var collection = res[key] ||= [];
+            collection[i] = value;
+        }
+    }
+    return res;
+}
+
+// for renderer
+const onRE = /^on[A-Z]/;
+const isEvent = (key) => onRE.test(key);
+const parseHandlerKey = (handlerKey) => {
+    var keys = handlerKey.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
+    // remove on
+    keys.shift();
+    var event = keys[0];
+    // remove eventName
+    keys.shift();
+    return {
+        event,
+        options: arrayToMap(keys)
+    };
+};
+// for compiler
+function createHandlerKey(eventName, options) {
+    var handlerKey = `on${capitalize(eventName)}`;
+    if (options && options.length !== 0) {
+        handlerKey += options.map(capitalize).join(''); // join default with ,
+    }
+    return handlerKey;
+}
+const modifierGuards = {
+    stop: (e) => e.stopPropagation(),
+    prevent: (e) => e.preventDefault(),
+    self: (e) => e.target !== e.currentTarget,
+    ctrl: (e) => !e.ctrlKey,
+    shift: (e) => !e.shiftKey,
+    alt: (e) => !e.altKey,
+    meta: (e) => !e.metaKey,
+    left: (e) => 'button' in e && e.button !== 0,
+    middle: (e) => 'button' in e && e.button !== 1,
+    right: (e) => 'button' in e && e.button !== 2,
+};
+/*
+    使用修饰符后每次都会创建一个新的函数
+*/
+function createEvent(fn, modifiers) {
+    return (event, ...args) => {
+        for (let i = 0; i < modifiers.length; i++) {
+            const guard = modifierGuards[modifiers[i]];
+            if (guard && guard(event, modifiers))
+                return;
+        }
+        return fn(event, ...args);
+    };
+}
+
+const IMPORTANT_SYMBOL = Symbol('Important');
+const IMPORTANT_KEY = '!important';
+const IMPORTANT = 'important';
+function important(value) {
+    return {
+        value,
+        [IMPORTANT_SYMBOL]: true
+    };
+}
+
+// support number , from , to
+function normalizeKeyText(keyframe) {
+    if (isArray(keyframe)) {
+        return keyframe.map(normalizeKeyText).join(',');
+    }
+    if (isNumberString(keyframe)) {
+        // 为数字或者数字字符串
+        return `${keyframe}%`;
+    }
+    return `${keyframe}`;
+}
+const setKeyText = (keyframe, key) => keyframe.keyText = normalizeKeyText(key);
+const insertRule = (sheet, rule, index = sheet.cssRules.length) => sheet.insertRule(rule, index);
+const insertStyle = (sheet, selector, index) => insertRule(sheet, `${selector}{}`, index);
+const insertMedia = (sheet, media, index) => insertRule(sheet, `@media ${media}{}`, index);
+const insertSupports = (sheet, supports, index) => insertRule(sheet, `@supports ${supports}{}`, index);
+const insertKeyframes = (sheet, keyframes, index) => insertRule(sheet, `@keyframes ${keyframes}{}`, index);
+// appendRule wont return the index 
+const insertKeyframe = (sheet, keyText) => sheet.appendRule(`${normalizeKeyText(keyText)}{}`);
+const deleteRule = (sheet, index) => sheet.deleteRule(index);
+const deleteKeyframe = (keyframes, keyText) => keyframes.deleteRule(normalizeKeyText(keyText));
+// update
+const setSelector = (styleRule, selector) => styleRule.selectorText = selector;
+const setKeyframesName = (keyframesRule, name) => keyframesRule.name = name;
+const deleteMedium = (mediaRule, medium) => mediaRule.media.deleteMedium(medium);
+const appendMedium = (mediaRule, medium) => mediaRule.media.appendMedium(medium);
+const setStyleProperty = (style, property, value, important = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '');
+
+function parseStyleValue(rawValue) {
+    var value, important = false;
+    if (rawValue === undefined || rawValue === null) {
+        value = null;
+    }
+    else if (rawValue[IMPORTANT_SYMBOL]) {
+        value = rawValue.value;
+        important = true;
+    }
+    else {
+        value = rawValue;
+        important = false;
+    }
+    if (isString(value) && value.endsWith(IMPORTANT_KEY)) {
+        value = value.split(IMPORTANT_KEY)[0].trim();
+        important = true;
+    }
+    // 支持数组
+    if (isArray(value)) {
+        value = value.join(' ');
+    }
+    return {
+        value,
+        important
+    };
+}
+function updateDeclaration(style, pDeclaration, nDeclaration) {
+    pDeclaration ||= EMPTY_OBJ;
+    nDeclaration ||= EMPTY_OBJ;
+    for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
+        var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName]);
+        var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName]);
+        if (pValue !== nValue || pImportant !== nImportant) {
+            setStyleProperty(style, propName, nValue, nImportant);
         }
     }
 }
-const createScanner = (source) => new Scanner(source);
+function mountDeclaration(style, declaration) {
+    return updateDeclaration(style, EMPTY_OBJ, declaration);
+}
+// export 
+const setElementStyleDeclaration = (el, declaration) => mountDeclaration(el.style, declaration);
+function unmountDeclaration(style, declaration) {
+    return updateDeclaration(style, declaration, EMPTY_OBJ);
+}
+// ready for animation and transition
+function getStyleValue(style, key) {
+    var property = hyphenate(key);
+    var value = style.getPropertyValue(property);
+    var isImportant = !!style.getPropertyPriority(property);
+    return isImportant ? important(value) : value;
+}
+function getElementStyleValue(el, key) {
+    return getStyleValue(el.style, key);
+}
+function getStyle(style, keys) {
+    if (isObject(keys)) {
+        keys = Object.keys(keys);
+    }
+    else if (isString(keys)) {
+        keys = keys.split(',');
+    }
+    var declaration = {};
+    for (let key of keys) {
+        declaration[camelize(key)] = getStyleValue(style, key);
+    }
+    return declaration;
+}
+function getElementStyle(el, keys) {
+    return getStyle(el.style, keys);
+}
+function getElementComputedStyle(el, keys) {
+    return getStyle(window.getComputedStyle(el), keys);
+}
 
-const createAsb = (type) => ({ type });
+function updateClass(el, pClass, nClass) {
+    pClass ||= EMPTY_OBJ;
+    nClass ||= EMPTY_OBJ;
+    for (let className of getUnionkeysFromMaps(pClass, nClass)) {
+        var p = pClass[className];
+        var n = nClass[className];
+        p ? (n || removeClass(el, className)) : (n && addClass(el, className));
+    }
+}
+function mountClass(_class, el) {
+    updateClass(EMPTY_OBJ, _class, el);
+}
+function unmountClass(el) {
+    el.className = '';
+}
+function mountAttributes(el, props) {
+    updateAttributes(el, EMPTY_OBJ, props);
+}
+function updateAttributes(el, pProps, nProps) {
+    pProps ||= EMPTY_OBJ;
+    nProps ||= EMPTY_OBJ;
+    for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
+        var pValue = pProps[propName];
+        var nValue = nProps[propName];
+        if (isEvent(propName)) {
+            if (pValue !== nValue) {
+                var { event, options } = parseHandlerKey(propName);
+                removeEventListener(el, event, pValue, options);
+                if (nValue) {
+                    addEventListener(el, event, nValue, options);
+                }
+            }
+        }
+        else if (propName === keyOf(Nodes.STYLE)) {
+            updateDeclaration(el.style, pValue, nValue);
+        }
+        else if (propName === keyOf(Nodes.CLASS)) {
+            updateClass(el, pValue, nValue);
+        }
+        else if (isReservedProp(propName)) {
+            debugger;
+        }
+        else {
+            // attribute
+            (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
+        }
+    }
+}
+// unmountAttribute
 
-const openTag = /^<([\w-]+)(?:\:(\w+))?/;
 /*
-    return the tagName and the modifier,
-    tips: when use inline-template, the endtag must contain the same modifier as open , or it will throw a compile error,
+    mountStyleSheet will create a style element
 */
-const closeTagEx = /^<\/([\w-]+)(?:\:\w+)?\s*>/;
-const comment = /<!--((.|[\r\n])*?)-->/;
-// capture the mushache first 
-const baseAttr = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/;
-/* there is always return an array of the astTree, althrough only one root node */
-const parseHTML = (source) => {
-    var scanner = createScanner(source);
-    var ast = [], attributes, attributeMap, inOpen = false, tag, modifier; /* extend feature */
-    while (scanner.source) {
-        if (scanner.expect('<')) {
-            if (scanner.expect('/', 1)) {
-                var closeTag = scanner.exec(closeTagEx)[0];
-                for (var i = ast.length - 1; i >= 0; i--) {
-                    if (ast[i].closed)
-                        continue;
-                    if (ast[i].tag === closeTag) {
-                        ast[i].closed = true;
-                        var children = ast.splice(i + 1);
-                        if (children.length) {
-                            ast[i].children = children;
-                        }
-                        break;
+const mountStyleSheet = (vnode, container, anchor) => {
+    const { props, children } = vnode;
+    var ref = docCreateElement('style');
+    mountAttributes(ref, props);
+    vnode.ref = ref;
+    insertElement(ref, container, anchor);
+    var sheet = ref.sheet;
+    mountSheet(sheet, children, vnode);
+};
+function mountSheet(sheet, rules, vnode) {
+    rules.forEach((rule) => {
+        mountRule(sheet, rule, vnode);
+    });
+}
+function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
+    switch (rule.nodeType) {
+        case Nodes.STYLE_RULE:
+            mountStyleRule(sheet, rule, vnode, index);
+            break;
+        case Nodes.MEDIA_RULE:
+            mountMediaRule(sheet, rule, vnode, index);
+            break;
+        case Nodes.SUPPORTS_RULE:
+            mountSupportsRule(sheet, rule, vnode, index);
+            break;
+        case Nodes.KEYFRAMES_RULE:
+            mountKeyframesRule(sheet, rule, vnode, index);
+            break;
+        case Nodes.KEYFRAME_RULE:
+            mountKeyframeRule(sheet, rule, vnode, index);
+            break;
+    }
+}
+function mountStyleRule(sheet, rule, vnode, // this is style vnode, it carry the special attrs for rendering
+insertIndex = sheet.cssRules.length) {
+    const { selector, children: declaration } = rule;
+    if (!declaration)
+        return;
+    const index = insertStyle(sheet, selector, insertIndex);
+    const insertedRule = sheet.cssRules[index];
+    rule.ref = insertedRule; // set ref
+    const insertedRuleStyle = insertedRule.style;
+    mountDeclaration(insertedRuleStyle, declaration);
+}
+function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    var media = rule.media;
+    var rules = rule.children;
+    if (isArray(media)) {
+        media = media.join(',');
+    }
+    var index = insertMedia(sheet, media, insertIndex);
+    var newSheet = sheet.cssRules[index];
+    rule.ref = newSheet;
+    mountSheet(newSheet, rules, vnode);
+}
+function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    var supports = rule.supports;
+    var rules = rule.children;
+    var index = insertSupports(sheet, supports, insertIndex);
+    var newSheet = sheet.cssRules[index];
+    mountSheet(newSheet, rules, vnode);
+}
+function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    var keyframes = rule.keyframes;
+    var rules = rule.children;
+    var index = insertKeyframes(sheet, keyframes, insertIndex);
+    rule.ref = sheet.cssRules[insertIndex];
+    var newSheet = sheet.cssRules[index];
+    mountSheet(newSheet, rules, vnode);
+}
+function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    var { keyframe, children: declaration } = rule;
+    insertKeyframe(sheet, keyframe);
+    sheet.appendRule(`${keyframe}{}`);
+    var index = sheet.cssRules.length - 1;
+    const insertedRule = sheet.cssRules[index];
+    rule.ref = insertedRule; // set ref
+    const insertedRuleStyle = insertedRule.style;
+    for (let property in declaration) {
+        var { value } = parseStyleValue(declaration[property]);
+        // keyframe 中不能设置important
+        setStyleProperty(insertedRuleStyle, property, value);
+    }
+}
+
+function mount(vnode, container, anchor = null) {
+    switch (vnode.nodeType) {
+        case Nodes.HTML_ELEMENT:
+            mountElement(vnode, container, anchor);
+            break;
+        case Nodes.TEXT:
+            mountText(vnode, container, anchor);
+            break;
+        case Nodes.COMPONENT:
+            mountComponent(vnode, container, anchor);
+            break;
+        case Nodes.STYLE:
+            mountStyleSheet(vnode, container, anchor);
+            break;
+    }
+}
+function mountChildren(children, container, anchor) {
+    children.forEach((child) => {
+        mount(child, container, anchor);
+    });
+}
+function mountElement(vnode, container, anchor) {
+    const { type, props, children } = vnode;
+    processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
+    // create 
+    var el = docCreateElement(type);
+    vnode.ref = el;
+    mountAttributes(el, props);
+    processHook("created" /* CREATED */, vnode);
+    processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
+    insertElement(el, container, anchor);
+    processHook("mounted" /* MOUNTED */, vnode);
+    if (children) {
+        mountChildren(children, el, anchor);
+    }
+}
+function mountText(vnode, container, anchor) {
+    var el = docCreateText(vnode.children);
+    vnode.ref = el;
+    insertElement(el, container, anchor);
+}
+
+function unmount(vnode, container, anchor) {
+    switch (vnode.nodeType) {
+        case Nodes.HTML_ELEMENT:
+            unmountElement(vnode);
+            break;
+        case Nodes.STYLE:
+            unmountElement(vnode, true);
+        case Nodes.TEXT:
+            removeElement(vnode.ref);
+            break;
+    }
+}
+function unmountChildren(children) {
+    // 卸载过程目前不需要锚点
+    children.forEach(unmount);
+}
+function unmountElement(vnode, isStyle = false) {
+    if (vnode.children && !isStyle) {
+        unmountChildren(vnode.children);
+    }
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
+    removeElement(vnode.ref);
+    processHook("unmounted" /* UNMOUNTED */, vnode);
+}
+
+/*
+    diff the dom children and rules children
+
+    the dom vnodes will be reused with the same patchKey and the same type ,
+    so , we can make the reused vnodes stay in the same index , this is the first step
+    and then , the unsame keyed vnodes , we can reuse them if they have the same type , its the second step,
+    apon the process , we get the same length children ,
+    and the same type and same key vnodes are in the same index , the same type , not same key nodes also in the same index ,
+    so the only things we need todo is loop the chidren each the patch operate,
+
+    but the rules is something different ,
+    the same nodeType and same key we can reuse ,
+    others can be rsused while they have the same nodeType
+
+    ! something interesting  , the key order will not change
+*/
+function createMapAndList(children) {
+    var map = {};
+    var list = children.map((child, index) => {
+        var patchKey = child.patchKey;
+        var token = {
+            node: child,
+            patchKey,
+            index
+        };
+        map[patchKey] = token;
+        return token;
+    });
+    return {
+        map, list
+    };
+}
+function diffChildren(p, n, isRules) {
+    // copy
+    p = [...p || []];
+    n = [...n || []];
+    var nLength = n.length;
+    var { map: pMap } = createMapAndList(p);
+    var pMoved = 0;
+    for (let i = 0; i < nLength; i++) {
+        /*
+            此次循环用于将两组规则的相同key对应到相同的索引下
+        */
+        var node = n[i];
+        var patchKey = node.patchKey;
+        var sameNode = pMap[patchKey];
+        if (sameNode && (isRules || (sameNode.node.type === node.type))) {
+            /*
+                the condition of reuse a vnode for dom is same patchkey and same type
+                for rules is just the same patchkey
+            */
+            var sameNodeIndex = sameNode.index + pMoved;
+            var diff = i - sameNodeIndex;
+            var diffLength = Math.abs(diff);
+            if (diff < 0) {
+                /* 说明该接点在p中的位置较远，需要再n中条南充元素 */
+                insertNull(n, i, diffLength);
+                i += diffLength;
+                nLength += diffLength;
+            }
+            else {
+                insertNull(p, sameNodeIndex, diffLength);
+                pMoved += diffLength;
+            }
+        }
+    }
+    return {
+        p, n
+    };
+}
+
+const updateStyleSheet = (p, n) => {
+    var ref = n.ref = p.ref;
+    var sheet = ref.sheet;
+    /*
+        更新style元素的props，并且处理特殊属性如，unit,url 等
+    */
+    updateSheet(p.children, n.children, sheet, n);
+};
+function updateSheet(pRules, nRules, sheet, vnode) {
+    /*
+        与更新dom元素不同，规则中只要patchKey相同就一定会复用,
+        更新过程依赖patchkey
+        patchkey 作为第一优先级
+        其次为nodetype,
+        !还是假设key相同的节点顺序一定不会变，
+    */
+    var { p, n } = diffChildren(pRules, nRules, true);
+    /*
+        经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
+        抛出同一索引下节点类型不相同的情况
+    */
+    var max = Math.max(p.length, n.length);
+    var cursor = 0;
+    for (let i = 0; i < max; i++) {
+        var pRule = p[i];
+        var nRule = n[i];
+        /*
+            不存在两个对应位置都为空的情况
+        */
+        if (!pRule) {
+            mountRule(sheet, nRule, vnode, cursor);
+            cursor++;
+        }
+        else if (!nRule) {
+            // unmount
+            deleteRule(sheet, cursor);
+            cursor--;
+        }
+        else if (pRule.nodeType !== nRule.nodeType) {
+            // 当节点类型不同时，先卸载，再挂载 
+            deleteRule(sheet, cursor);
+            mountRule(sheet, nRule, vnode, cursor);
+        }
+        else {
+            // update
+            switch (nRule.nodeType) {
+                case Nodes.STYLE_RULE:
+                    updateStyleRule(pRule, nRule);
+                    break;
+                case Nodes.MEDIA_RULE:
+                    updateMediaRule(pRule, nRule, vnode);
+                    break;
+                case Nodes.SUPPORTS_RULE:
+                    // supports can't update 
+                    deleteRule(sheet, cursor);
+                    mountRule(sheet, nRule, vnode, cursor);
+                    break;
+                case Nodes.KEYFRAMES_RULE:
+                    updateKeyframesRule(pRule, nRule);
+                    break;
+            }
+        }
+        cursor++;
+    }
+}
+function updateStyleRule(pRule, nRule, vnode) {
+    var ref = nRule.ref = pRule.ref;
+    var { selector: pSelector, children: pDeclaration } = pRule;
+    var { selector: nSelector, children: nDeclaration } = nRule;
+    if (pSelector !== nSelector) {
+        setSelector(ref, nSelector);
+    }
+    var style = ref.style;
+    updateDeclaration(style, pDeclaration, nDeclaration);
+}
+// same as selector delimiter
+const mediumDelimiter = /\s*,\s*/;
+const normalizeMedium = (medium) => isArray(medium) ? medium : medium.trim().split(mediumDelimiter);
+function updateMedium(mediaRule, pMediaum, nMediaum) {
+    pMediaum = normalizeMedium(pMediaum);
+    nMediaum = normalizeMedium(nMediaum);
+    pMediaum.forEach((m) => {
+        if (!nMediaum.includes(m)) {
+            deleteMedium(mediaRule, m);
+        }
+    });
+    nMediaum.forEach((m) => {
+        if (!pMediaum.includes(m)) {
+            appendMedium(mediaRule, m);
+        }
+    });
+}
+function updateMediaRule(pRule, nRule, vnode) {
+    var ref = nRule.ref = pRule.ref;
+    var { media: pMedia, children: pRules } = pRule;
+    var { media: nMedia, children: nRules } = nRule;
+    updateMedium(ref, pMedia, nMedia);
+    updateSheet(pRules, nRules, ref, vnode);
+}
+function updateKeyframesRule(pRule, nRule, vnode) {
+    var keyframesRef = nRule.ref = pRule.ref;
+    var { keyframes: pKeyframes, children: pRules } = pRule;
+    var { keyframes: nKeyframes, children: nRules } = nRule;
+    if (pKeyframes !== nKeyframes) {
+        setKeyframesName(keyframesRef, nKeyframes);
+    }
+    var maxLength = Math.max(pRules.length, nRules.length);
+    /*
+        最简单的更新策略，只存在keyframe，并且可以设置keyText
+    */
+    for (let i = 0; i < maxLength; i++) {
+        var pk = pRules[i];
+        var nk = nRules[i];
+        if (!pk) {
+            mountKeyframeRule(keyframesRef, nk);
+        }
+        else if (!nk) {
+            deleteKeyframe(keyframesRef, pk.keyframe);
+        }
+        else {
+            var { keyframe: pKeyframe, children: pDeclaration } = pk;
+            var { keyframe: nKeyframe, children: nDeclaration } = nk;
+            let keyframeRef = nk.ref = pk.ref;
+            var style = keyframeRef.style;
+            if (pKeyframe !== nKeyframe) {
+                setKeyText(keyframeRef, nKeyframe);
+            }
+            updateDeclaration(style, pDeclaration, nDeclaration);
+        }
+        // 不存在两个都没有的情况
+    }
+}
+
+function update(p, n, container, anchor) {
+    switch (n.nodeType) {
+        case Nodes.TEXT:
+            updateText(p, n);
+            break;
+        case Nodes.HTML_ELEMENT:
+            updateHTMLElement(p, n, container);
+            break;
+        case Nodes.STYLE:
+            updateStyleSheet(p, n);
+            break;
+    }
+}
+function updateText(p, n) {
+    var el = n.ref = p.ref;
+    if (p.children !== n.children) {
+        el.textContent = n.children;
+    }
+}
+function updateHTMLElement(p, n, container, anchor) {
+    var el = n.ref = p.ref;
+    processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
+    updateAttributes(el, p.props, n.props);
+    processHook("updated" /* UPDATED */, n, p);
+    // updated hooks should be called here ? or after children update
+    updateChildren(p.children, n.children, container);
+}
+function updateChildren(pChildren, nChildren, container, anchor) {
+    var { p, n } = diffChildren(pChildren, nChildren, false);
+    var max = Math.max(p.length, n.length);
+    for (let i = 0; i < max; i++) {
+        patch(p[i], n[i], container, getAnchor(p, i + 1));
+    }
+}
+/*
+    在已经挂载的vnodes中获取anchor
+*/
+function getAnchor(vnodes, index) {
+    for (let i = index; i < vnodes.length; i++) {
+        var ref = vnodes[i]?.ref;
+        if (ref) {
+            return ref;
+        }
+    }
+}
+
+const patch = (current, next, container, anchor = null) => {
+    if (!current) {
+        if (next) {
+            isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor);
+        }
+    }
+    else {
+        if (!next) {
+            // 卸载当前节点
+            isArray(current) ? unmountChildren(current) : unmount(current);
+        }
+        else {
+            if (isArray(current)) {
+                updateChildren(current, isArray(next) ? next : [next], container);
+            }
+            else {
+                if (isArray(next)) {
+                    updateChildren([current], next, container);
+                }
+                else {
+                    // 两个单节点 ， 但key可能不同 
+                    if (current.type === next.type) {
+                        // 类型相同，直接更新
+                        update(current, next, container);
+                    }
+                    else {
+                        // 类型不同。先卸载，在挂载
+                        unmount(current);
+                        mount(next, container, anchor);
                     }
                 }
             }
-            else if (scanner.expect('!', 1)) {
-                var asb = createAsb(Nodes.HTML_COMMENT);
-                asb.children = scanner.exec(comment)[0];
-                ast.push(createAsb(Nodes.HTML_COMMENT));
-            }
-            else {
-                [tag, modifier] = scanner.exec(openTag);
-                inOpen = true;
-            }
-        }
-        else if (inOpen) {
-            if (scanner.expect('/')) {
-                /* there is not must for decide a opentag is close or not by '/', so just forget it */
-                scanner.move(1);
-            }
-            else if (scanner.expect('>')) {
-                var asb = createAsb(Nodes.DOM_ELEMENT);
-                asb.tag = tag;
-                asb.tagName = camelize(tag);
-                asb.modifier = modifier;
-                asb.closed = false;
-                asb.attributes = attributes;
-                asb.attributeMap = attributeMap;
-                ast.push(asb);
-                attributes = null;
-                attributeMap = null;
-                inOpen = false;
-                scanner.move(1);
-            }
-            else {
-                /* catch attribute */
-                var [attribute, _, value] = scanner.exec(baseAttr);
-                var asb = createAsb(Nodes.HTML_ATTRIBUTE);
-                asb.attribute = attribute;
-                asb.value = value;
-                (attributes ||= []).push(asb);
-                (attributeMap ||= getEmptyMap())[attribute] = value;
-            }
-        }
-        else { // text
-            var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/;
-            var textToken, text;
-            if ((textToken = textEndsWithTag.exec(scanner.source))) {
-                text = textToken[1];
-                scanner.move(text.length);
-            }
-            else {
-                // text为结尾 , 直接读取所有内容，并清空
-                text = scanner.source;
-                scanner.source = '';
-            }
-            var asb = createAsb(Nodes.TEXT);
-            asb.children = text;
-            ast.push(asb);
         }
     }
-    return ast;
 };
 
-// we can use $(exp) as a dynamic content
-var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
-function parseSelector(selector) {
-    var isDynamic = false;
-    return {
-        selectorText: selector.replace(extractDynamicSelector, (_, content) => {
-            isDynamic = true;
-            return '${' + content + '}';
-        }),
-        isDynamic
+var activeEffect = null;
+var shouldTrack = false;
+var effectStack = [];
+var targetMap = new WeakMap();
+const SYMBOL_WITH = Symbol.unscopables;
+class ReactiveEffect {
+    fn = null;
+    deps = [];
+    scheduler = null;
+    constructor(fn, options) {
+        this.fn = fn;
+        this.scheduler = options.scheduler;
+    }
+    cleanDeps() {
+        this.deps.forEach((deps) => {
+            deps.delete(this);
+        });
+        this.deps = [];
+    }
+    run() {
+        effectStack.push(this);
+        activeEffect = this;
+        shouldTrack = true;
+        this.cleanDeps();
+        var res = this.fn();
+        effectStack.pop();
+        activeEffect = effectStack[effectStack.length - 1];
+        return res;
+    }
+}
+function effect(fn, options = {}) {
+    var _effect = new ReactiveEffect(fn, options);
+    if (!options.lazy) {
+        _effect.run();
+    }
+    return _effect;
+}
+function track$1(target, key) {
+    if (key === SYMBOL_WITH)
+        return;
+    if (!shouldTrack)
+        return;
+    if (!activeEffect)
+        return;
+    let depsMap = targetMap.get(target);
+    if (!depsMap) {
+        depsMap = new Map();
+        targetMap.set(target, depsMap);
+    }
+    let deps = depsMap.get(key);
+    if (!deps) {
+        deps = new Set();
+        depsMap.set(key, deps);
+    }
+    deps.add(activeEffect);
+    activeEffect.deps.push(deps);
+}
+function trigger$1(target, key) {
+    if (key === SYMBOL_WITH)
+        return;
+    const depsMap = targetMap.get(target);
+    if (!depsMap)
+        return;
+    var deps = depsMap.get(key);
+    if (!deps)
+        return;
+    // 克隆一份，防止死循环
+    deps = new Set(deps);
+    deps.forEach((e) => {
+        if (e === activeEffect)
+            return;
+        if (e.scheduler) {
+            e.scheduler(e);
+        }
+        else {
+            e.run();
+        }
+    });
+}
+var handler = {
+    get(target, key) {
+        track$1(target, key);
+        return target[key];
+    },
+    set(target, key, newValue) {
+        trigger$1(target, key);
+        target[key] = newValue;
+        return true;
+    }
+};
+function reactive$1(target) {
+    return new Proxy(target, handler);
+}
+function computed(getter) {
+    var value;
+    var dirty = true;
+    var _effect = effect(getter, {
+        scheduler: () => {
+        },
+        lazy: true
+    });
+    var res = {
+        get value() {
+            return dirty ? _effect.run() : value;
+        }
     };
+    return res;
+}
+function watch(visitor, callback) {
+    effect(visitor, {
+        scheduler: () => {
+            callback();
+        }
+    });
 }
 
-/*
-    color : red ;
-    color!:red; important
-    $color : variable ; support string,array,number
-    (variable) : red ;
-    $(variable) : variable ;
-*/
-const extractDeclarationProperty = /(\$)?(\()?([\w-]+)(\))?(!)?/;
-const parseDeclaration = (rawProperty, value) => {
-    var [_, isDynamicValue, l, property, r, isImportant] = extractDeclarationProperty.exec(rawProperty);
-    return {
-        //property: camelize(property), setProperty must use - , so no need to camelize
-        // property, 
-        property: camelize(property),
-        value,
-        isDynamicValue,
-        isDynamicProperty: l && r,
-        isImportant
-    };
-};
+var ReactiveTypes;
+(function (ReactiveTypes) {
+    ReactiveTypes["OBJECT"] = "Object";
+    ReactiveTypes["ARRAY"] = "Array";
+    ReactiveTypes["MAP"] = "Map";
+    ReactiveTypes["SET"] = "Set";
+    ReactiveTypes["WEAK_MAP"] = "WeakMap";
+    ReactiveTypes["WEAK_SET"] = "WeakSet";
+})(ReactiveTypes || (ReactiveTypes = {}));
+function toRaw(reactiveData) {
+    return reactiveData["raw" /* RAW */];
+}
+function isReactive(value) {
+    return value["isReactive" /* IS_REACTIVE */];
+}
+function isShallow(value) {
+    return value["isShallow" /* IS_SHALLOW */];
+}
+function isRef(value) {
+    return value["isRef" /* IS_REF */];
+}
 
-const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
-const parseIterator = (expression) => {
-    const [_, items, iterable] = extIteratorExp.exec(expression);
-    return {
-        iterable,
-        items: items.split(',')
-    };
-};
+function track(...args) {
+}
+function trigger(...args) {
+}
 
-const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
-const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
-const AtRule = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/;
-const mixinEx = /\.\.\.([^;]+);/;
-const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
-/*
-    判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
-*/
-const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
-const parseCSS = (source) => {
-    var scanner = createScanner(source);
-    var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
-    while (scanner.source) {
-        if (scanner.startsWith('}')) {
-            closing = true;
-        }
-        else if (scanner.startsWith(NodesMap[Nodes.AT])) {
-            /*
-                media conditions
-            */
-            var [type, content] = scanner.exec(AtRule);
-            const nodeType = NodesMap[type];
-            var asb = createAsb(nodeType);
-            if (nodeType === Nodes.MEDIA_RULE) {
-                asb.media = content;
-            }
-            else if (nodeType === Nodes.KEYFRAMES_RULE) {
-                asb.keyframes = content;
-            }
-            else if (nodeType === Nodes.SUPPORTS_RULE) {
-                asb.supports = content;
-            }
-            current = asb;
-        }
-        else if (scanner.expect('/*')) ;
-        else if (scanner.startsWith(NodesMap[Nodes.MIXIN])) {
-            var [mixin] = scanner.exec(mixinEx);
-            var asb = createAsb(Nodes.MIXIN);
-            asb.mixin = mixin;
-            (declarationGroup ||= []).push(asb);
-            continue;
-        }
-        else if (cssReservedWord.test(scanner.source)) {
-            /*
-                处理指令，指令不再需要通过标识符去判断
-            */
-            var [dir, content] = scanner.exec(CSSDir);
-            var dirType = NodesMap[camelize(dir)];
-            var asb = createAsb(dirType);
-            switch (dirType) {
-                case Nodes.FOR:
-                    asb.iterator = parseIterator(content);
-                    break;
-                case Nodes.IF:
-                    asb.condition = content;
-                    asb.isBranchStart = true;
-                    break;
-                case Nodes.ELSE_IF:
-                    asb.condition = content;
-                    asb.isBranch = true;
-                    break;
-                case Nodes.ELSE:
-                    asb.isBranch = true;
-                    break;
-            }
-            current = asb;
-        }
-        else if (exResult = scanner.exec(selectorRE)) {
-            /*
-                try to get the selector
-            */
-            var asb = createAsb(Nodes.STYLE_RULE);
-            asb.selector = parseSelector(exResult[0]);
-            current = asb;
-        }
-        else if (exResult = scanner.exec(declarationRE)) {
-            /*
-                the last declaration must end with  " ; "
-            */
-            var declaration = parseDeclaration(exResult[0], exResult[1]);
-            var asb = createAsb(Nodes.DECLARATION);
-            asb.declaration = declaration;
-            (declarationGroup ||= []).push(asb);
-            continue;
-        }
-        else {
-            /* error */
-            debugger;
-        }
-        /* process the relation , with cascading struct */
-        if (declarationGroup) {
-            var asb = createAsb(Nodes.DECLARATION_GROUP);
-            asb.children = declarationGroup;
-            asb.parent = parent;
-            (parent.children ||= []).push(asb);
-            declarationGroup = null;
-        }
-        if (closing) {
-            stack.pop();
-            parent = stack[stack.length - 1];
-            scanner.move(1);
-            closing = false;
-            continue;
-        }
-        if (!parent) {
-            // while there is no parent , the currentDeclaration is meaningless
-            ast.push(current);
-        }
-        else {
-            var children = parent.children ||= [];
-            current.parent = parent;
-            children.push(current);
-        }
-        stack.push(current);
-        parent = current;
+const createReactiveObject = (value) => new Proxy(value, reactiveHandler);
+const createReadonlyObject = (value) => new Proxy(value, readonlyHandler);
+const createShallowReactiveObject = (value) => new Proxy(value, shallowReactiveHandler);
+const createShallowReadonlyObject = (value) => new Proxy(value, shallowReadonlyHandler);
+const createReactiveCollection = (value) => new Proxy(value, reactiveCollectionHandler);
+const createReadonlyCollection = (value) => new Proxy(value, readonlyCollectionHandler);
+const createShallowReactiveCollection = (value) => new Proxy(value, shallowReactiveCollectionHandler);
+const createShallowReadonlyCollection = (value) => new Proxy(value, shallowReadonlyCollectionHandler);
+function createProxy(value, isReadonly, isShallow) {
+    switch (typeOf(value)) {
+        case ReactiveTypes.OBJECT:
+        case ReactiveTypes.ARRAY:
+            return isReadonly ?
+                (isShallow ? createShallowReadonlyObject(value) : createReadonlyObject(value)) :
+                (isShallow ? createShallowReactiveObject(value) : createReactiveObject(value));
+        case ReactiveTypes.MAP:
+        case ReactiveTypes.WEAK_MAP:
+        case ReactiveTypes.SET:
+        case ReactiveTypes.WEAK_SET:
+            return isReadonly ?
+                (isShallow ? createShallowReadonlyCollection(value) : createReadonlyCollection(value)) :
+                (isShallow ? createShallowReactiveCollection(value) : createReactiveCollection(value));
+        default:
+            return value;
     }
-    return ast;
+}
+function reactive(value) {
+    return createProxy(value, false, false);
+}
+function readonly(value) {
+    return createProxy(value, true, false);
+}
+
+// global state
+let _isReadonly = false;
+let _isShallow = false;
+let _target;
+let _key;
+const getLastVisitTarget = () => _target;
+const getLastVisitKey = () => _key;
+const collectionHandlers = {
+    add(value) {
+        var target = toRaw(this);
+        if (_isReadonly) {
+            return console.warn(target, 'is readonly , cant add');
+        }
+        var result = target.add(value);
+        console.warn('trigger add');
+        // 返回set对象本身
+        return result;
+    },
+    // map set
+    clear() {
+        var target = toRaw(this);
+        if (_isReadonly) {
+            return console.warn(target, 'is readonly cant clear');
+        }
+        target.clear();
+        console.warn('trigger clear');
+        return;
+    },
+    // map weakmap set weakset
+    delete(key) {
+        var target = toRaw(this);
+        if (_isReadonly) {
+            return console.warn(target, 'is readonly cant delete');
+        }
+        const result = target.delete(key);
+        if (result) { // 返回为 true 为删除成功
+            console.warn('trigger');
+        }
+        return result;
+    },
+    // map set
+    entries() {
+        var target = toRaw(this);
+        console.warn('track');
+        return target.entries();
+    },
+    // map set
+    forEach(fn) {
+        var target = toRaw(this);
+        console.warn('track');
+        return target.forEach(fn);
+    },
+    // set map weakset weakmap
+    has(key) {
+        var target = toRaw(this);
+        console.warn('track');
+        return target.has(key);
+    },
+    // map set
+    keys() {
+        var target = toRaw(this);
+        console.warn('track');
+        return target.keys();
+    },
+    // map set
+    values() {
+        var target = toRaw(this);
+        console.warn('track');
+        return target.values();
+    },
+    // map weakmap
+    set(key, value) {
+        var target = toRaw(this);
+        if (_isReadonly) {
+            return console.warn(target, 'is readonly , cant set');
+        }
+        var result = target.set(key, value);
+        console.warn('trigger');
+        return result;
+    },
+    // map weakmap
+    get(key) {
+        var target = toRaw(this);
+        if (!_isReadonly) {
+            console.warn('track');
+        }
+        var value = target.get(key);
+        return _isShallow ? value : reactive(value);
+    }
+};
+function arrayHandlerWithTrack(...args) {
+    if (!_isReadonly) { // 非只读才会收集
+        console.warn('ARRAY track');
+    }
+    let result = _target[_key](...args);
+    return result;
+}
+function arrayHandlerWithTrigger(...args) {
+    if (_isReadonly) {
+        return console.error('readonly');
+    }
+    let result = _target[_key](...args);
+    console.warn('trigger');
+    return result;
+}
+const arrayHandlers = {
+    // should track
+    includes: arrayHandlerWithTrack,
+    indexOf: arrayHandlerWithTrack,
+    lastIndexOf: arrayHandlerWithTrack,
+    // should trigger
+    push: arrayHandlerWithTrigger,
+    pop: arrayHandlerWithTrigger,
+    shift: arrayHandlerWithTrigger,
+    unshift: arrayHandlerWithTrigger,
+    splice: arrayHandlerWithTrigger
+};
+const SYMBOL_ITERATOR = Symbol.iterator;
+const specialKeyHandler = {
+    [SYMBOL_ITERATOR]: (value) => {
+        // should track ?
+        return value.bind(_target);
+    }
+};
+function createGetter(isReadonly, isShallow, isCollection) {
+    return (target, key, receiver) => {
+        // cache global state
+        _isReadonly = isReadonly;
+        _isShallow = isShallow;
+        _target = target;
+        _key = key;
+        // reserved keys
+        if (key === "raw" /* RAW */) {
+            return target;
+        }
+        else if (key === "isReactive" /* IS_REACTIVE */) {
+            return !isReadonly;
+        }
+        else if (key === "isShallow" /* IS_SHALLOW */) {
+            return isShallow;
+        }
+        else if (key === "isReadonly" /* IS_READONLY */) {
+            return isReadonly;
+        }
+        if (isCollection) {
+            if (key === 'size') {
+                return target.size;
+            }
+            if (hasOwn(collectionHandlers, key) && key in target) {
+                // collection methods reset
+                return collectionHandlers[key];
+            }
+        }
+        else if (hasOwn(target, key)) {
+            var value = Reflect.get(target, key, receiver);
+            if (isShallow) {
+                //! readonly 和 shallowreadonly 都不会收集 , 直接返回原始值
+                return value;
+            }
+            return isReadonly ? readonly(value) : reactive(value);
+        }
+        else if (isArray(target) && hasOwn(arrayHandlers, key)) {
+            // 数组重写方法
+            return arrayHandlers[key];
+        }
+        var value = Reflect.get(target, key, receiver);
+        // 特殊key处理器
+        if (hasOwn(specialKeyHandler, key)) {
+            value = specialKeyHandler[key](value);
+        }
+        return value;
+    };
+}
+function createSetter(isReadonly = false, isShallow = false) {
+    return (target, key, newValue, receiver) => {
+        // 返回 false 时会报错
+        if (isReadonly) {
+            return true;
+        }
+        if (hasOwn(target, key)) {
+            // 不允许设置非自身属性
+            Reflect.set(target, key, newValue, receiver);
+            console.warn('trigger set', target, key);
+        }
+        return true;
+    };
+}
+function has(target, key) {
+    /*
+        has 包括非自身的key
+    */
+    if (hasOwn(target, key)) {
+        console.warn('track has', target, key);
+    }
+    return Reflect.has(target, key);
+}
+function ownKeys(target) {
+    console.warn('track ownKeys', target);
+    return Reflect.ownKeys(target);
+}
+function deleteProperty(target, key) {
+    // 为 true 表示删除成功
+    const result = Reflect.deleteProperty(target, key);
+    if (result && hasOwn(target, key)) {
+        target[key];
+        console.warn('trigger deleteProperty');
+    }
+    return result;
+}
+function readonlyDeleteProperty(target, key) {
+    console.warn('readonly cant delete');
+}
+// object handlers
+const reactiveHandler = {
+    get: createGetter(false, false, false),
+    set: createSetter(false, false),
+    ownKeys,
+    deleteProperty,
+    has
+};
+const shallowReactiveHandler = {
+    get: createGetter(false, true, false),
+    set: createSetter(false, true),
+    ownKeys,
+    deleteProperty,
+    has
+};
+const readonlyHandler = {
+    get: createGetter(true, false, false),
+    set: createSetter(true, false),
+    deleteProperty: readonlyDeleteProperty
+};
+const shallowReadonlyHandler = {
+    get: createGetter(true, true, false),
+    set: createSetter(true, true),
+    deleteProperty: readonlyDeleteProperty
+};
+// collection handlers
+const reactiveCollectionHandler = {
+    get: createGetter(false, false, true)
+};
+const readonlyCollectionHandler = {
+    get: createGetter(true, false, true)
+};
+const shallowReactiveCollectionHandler = {
+    get: createGetter(false, true, true)
+};
+const shallowReadonlyCollectionHandler = {
+    get: createGetter(true, true, true)
+};
+/*
+    todo
+    shallowReactiveDeepReadonly
+    shallowReadonlyDeepReactive
+*/
+
+function ref(value) {
+    return new Ref(value);
+}
+class Ref {
+    ["isRef" /* IS_REF */] = true;
+    _value;
+    constructor(value) {
+        this._value = value;
+    }
+    get value() {
+        // track
+        console.warn('ref track');
+        return this._value;
+    }
+    set value(newValue) {
+        if (this._value === newValue) {
+            return;
+        }
+        this._value = newValue;
+        // trigger
+        console.warn('ref trigger');
+    }
+}
+
+var nextTick = (fn, args = undefined) => {
+    var p = Promise.resolve(args);
+    p.then(fn.bind(null));
 };
 
-var mustache = /\{\{(.*?)\}\}/g;
-var parseText = (text) => {
-    var texts = [];
-    var cursor = 0;
-    var execArr;
-    while (execArr = mustache.exec(text)) {
-        if (execArr.index > cursor) {
-            texts.push({
-                content: text.slice(cursor, execArr.index),
-                isDynamic: false
-            });
-        }
-        if (execArr[1]) {
-            texts.push({
-                content: execArr[1],
-                isDynamic: true
-            });
-        }
-        cursor = execArr[0].length + execArr.index;
-    }
-    if (cursor < text.length) {
-        texts.push({
-            content: text.slice(cursor),
-            isDynamic: false
+var currentWork = null;
+function nextTickSingleWork(work) {
+    if (!currentWork) {
+        currentWork = work;
+        nextTick(() => {
+            currentWork();
+            currentWork = null;
         });
     }
-    return texts;
-};
+}
+
+// rendering instance and creating instance
+var currentInstance = null;
+function setCurrentInstance(instance) {
+    currentInstance = instance;
+}
+function getCurrentInstance() {
+    return currentInstance;
+}
+function getCurrentScope() {
+    return getCurrentInstance().scope;
+}
+function mountComponent(component, container, anchor = null) {
+    var { type, props, children } = component;
+    const instance = createComponentInstance(type);
+    instance.props = props || EMPTY_OBJ;
+    instance.slots = children || EMPTY_OBJ;
+    // 保存vnode上的组件实例
+    component.instance = instance;
+    const { scope, createRender } = instance;
+    // init instance , we only can use getCurrentInstance in create hook 
+    setCurrentInstance(instance);
+    callHook("create" /* CREATE */, instance, scope, scope);
+    setCurrentInstance(null);
+    // render function  
+    setCurrentInstance(instance);
+    const render = createRender(renderMethods);
+    setCurrentInstance(null);
+    instance.render = render;
+    // component update fn
+    function update() {
+        const { isMounted, vnode } = instance;
+        // 每次更新生成新树
+        setCurrentInstance(instance);
+        var nextTree = render();
+        console.log('unprocessTree', nextTree);
+        setCurrentInstance(null);
+        // 处理fragment
+        nextTree = processdom(nextTree);
+        console.log('prevTree', vnode);
+        console.log('nextTree', nextTree);
+        // test hooks
+        patch(vnode, nextTree, container);
+        instance.isMounted = true;
+        instance.vnode = nextTree;
+    }
+    //  call at every update
+    instance.update = update;
+    effect(() => {
+        update();
+    }, {
+        scheduler: (effect) => {
+            nextTickSingleWork(effect.fn);
+        }
+    });
+    return instance;
+}
+
+var iterableFlag = Symbol.iterator;
+var isIterableData = (data) => !!data[iterableFlag];
+function renderList(data, callee, key) {
+    if (!isIterableData(data)) {
+        if (isNumber(data)) {
+            var from = [];
+            for (var j = 0; j < data; j++) {
+                from[j] = j + 1;
+            }
+            data = from;
+        }
+        else if (isObject(data)) {
+            data = Object.entries(data);
+        }
+    }
+    var i = 0;
+    var results = [];
+    for (var item of data) {
+        var res = isArray(item) ? callee(...item, i) : callee(item, i);
+        if (res) {
+            results.push(res);
+            /* set ukey for diff */
+            res.key = key + '_' + i;
+            // i++
+        }
+        i++;
+        /*
+            需要在循环外部 i++ ，这样保证即使有空元素被排出后，索引位置也是正确的
+        */
+    }
+    return results;
+}
+
+function display(displayData) {
+    return displayData;
+}
+
+function getComponent(name) {
+    var component = getCurrentInstance().components?.[name] || getCurrentApp().components[name];
+    if (!component) {
+        error(`cant find compnent ${name}`);
+    }
+    return component;
+}
+function getDirective(name) {
+    var directive = getCurrentInstance().directives?.[name] || getCurrentApp().directives[name];
+    if (!directive) {
+        error(`can't find directive ${name}`);
+    }
+    return directive;
+}
+
+function setScopeExp(exp) {
+    return exp;
+}
 
 const NULL = 'null';
 const toBackQuotes = (_) => '`' + _ + '`';
-const toCodeString$1 = (_) => "'" + _ + "'";
+const toSingleQuotes = (_) => "'" + _ + "'";
 /*  use JSON.stringify will fill the " in every propertynames */
 const objectStringify = (target) => {
     return '{' +
@@ -607,9 +1820,11 @@ const stringify = (target) => {
         return String(target);
     }
 };
-const toArrowFunction = (returned, params = []) => {
+const toArrowFunction = (returned, ...params) => {
     return `(${params.join(',')})=>(${returned})`;
 };
+/* to ternary expression */
+const toTernaryExp = (condition, ifTrue, ifFalse) => `${condition}?${ifTrue}:${ifFalse}`;
 const toArray = (items) => `[${items.join(',')}]`;
 const dynamicMapKey = (key) => `[${key}]`;
 const callFn = (fnName, ...params) => `${fnName}(${params.join(',')})`;
@@ -617,145 +1832,327 @@ const ternaryExp = (condition, ifTrue, ifFalse) => `${condition}?(${ifTrue}):(${
 function ternaryChains(conditions, returns, falseDefault = 'undefined', index = 0) {
     return ternaryExp(conditions[index], returns[index], index < conditions.length - 1 ? ternaryChains(conditions, returns, falseDefault, ++index) : (returns[index + 1] || falseDefault));
 }
+const destructur = (target) => `...${target}`;
 var declare = (name, value) => `const ${name} = ${value} ;`;
+const toReservedProp = (prop) => `_${prop}`;
 
-const inlineStyleDelimiter$1 = /\s*[:;]\s*/;
-function parseInlineStyle$1(styleString) {
-    var chips = styleString.split(inlineStyleDelimiter$1).filter(Boolean);
-    var l = chips.length;
-    var styleMap = {};
-    while (l) {
-        styleMap[camelize(chips[l - 2])] = toCodeString$1(chips[l - 1]);
-        l -= 2;
-    }
-    return styleMap;
-}
-const inlineClassDelimiter$1 = /\s+/;
-const parseInlineClass$1 = (classString) => stringToMap(classString, inlineClassDelimiter$1);
-
-/*-----------------------------------------------------------------------------------------*/
-const extAttribute = /(@|\$|-{2}|\.|#)?(\()?([\w-]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?/;
-/*
-    如果是函数表达式，生成代码时不需要包裹一层函数
-*/
-// legal variable name
-var varRE = /^\w+$/;
-// arrow function
-var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
-// normal function
-var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
-// array
-var arrayRE = /\[.*\]/;
-function isHandler(exp) {
-    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
-}
-const processAttribute = (node) => {
-    const { type, attributes } = node;
-    if (!attributes)
+const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/;
+// both for html attribute and css declaration
+function parseAttribute(attribute, value) {
+    var res = execCaptureGroups(attribute, extAttributeRE);
+    if (!res) {
+        error(`${attribute} is not legal attribute`);
         return;
-    for (let i = 0; i < attributes.length; i++) { // not destructur becasue keep the node
-        const attr = attributes[i];
-        var exResult = exec(attr.attribute, extAttribute);
-        var [flag, l, property, r, argumentStr, modifierStr] = exResult;
-        attr.property = property;
-        attr.value = attr.value;
-        attr.isDynamicProperty = l && r;
-        attr.isDynamicValue = flag === '$';
-        attr.modifiers = modifierStr && modifierStr.split('.');
-        attr._arguments = argumentStr && argumentStr.split(':');
-        // process directive
-        if (flag === NodesMap[Nodes.DIRECTIVE_FLAG]) {
-            // directive effect the root node
-            var dirName = camelize(property);
-            const dirType = directiveTypeOf(dirName);
-            attr.type = dirType;
-            switch (dirType) {
-                case Nodes.IF:
-                    if (!node.dirs) {
-                        //  此时为元素的第一个指令为if ， 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
-                        node.condition = attr.value;
-                        node.isBranchStart = true;
+    }
+    var [flag, left, property, right, argumentStr, modifierStr, endFlag] = res;
+    var isBooleanProperty = isUndefined(value);
+    var isDynamicProperty = !!(left && right);
+    var isDynamicValue = flag === '$';
+    var _arguments = argumentStr && argumentStr.split(':');
+    var modifiers = modifierStr && modifierStr.split('.');
+    if (!isDynamicProperty) {
+        property = camelize(property);
+    }
+    return {
+        isBooleanProperty,
+        property,
+        isDynamicProperty,
+        isDynamicValue,
+        value,
+        flag,
+        endFlag,
+        left,
+        right,
+        _arguments,
+        modifiers
+    };
+}
+
+const createScanner = (source) => new Scanner(source);
+// operate the string template
+class Scanner {
+    source;
+    constructor(source) {
+        this.source = source.trim();
+    }
+    move(step) {
+        this.source = this.source.slice(step).trimLeft();
+    }
+    at(index) {
+        return this.source[index];
+    }
+    expect(expect, index = 0) {
+        return this.source.slice(index, expect.length + index) === expect;
+    }
+    startsWith(expect) {
+        // same as use expect without the second arg
+        return this.source.startsWith(expect);
+    }
+    exec(extractor) {
+        var res = exec(this.source, extractor);
+        if (!res) {
+            return null;
+        }
+        else {
+            var [_, ...groups] = res;
+            this.move(_.length);
+            return groups;
+        }
+    }
+}
+
+const openTagRE = /^<([\w-]+)(?:\.([\w\.]+))?/;
+var closeTagRE = /^<\/([\w-]+)(?:\.[\w\.]+)?\s*>/;
+const htmlCommentRE = /<!--((.|[\r\n])*?)-->/;
+const attributeRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/;
+function baseParseHTML(template) {
+    var scanner = createScanner(template);
+    var ast = [], attributes, attributeMap, //! duplicate names will be overwritten
+    inOpen, tag, modifiers;
+    while (scanner.source) {
+        if (scanner.startsWith('<')) {
+            if (scanner.at(1) === '/') {
+                // tag close
+                var exRes = scanner.exec(closeTagRE);
+                var closeTag = exRes[0];
+                for (let i = ast.length - 1; i >= 0; i--) {
+                    if (ast[i].closed)
+                        continue;
+                    if (ast[i].tag === closeTag) {
+                        ast[i].closed = true;
+                        var children = ast.splice(i + 1);
+                        if (children.length) {
+                            ast[i].children = children;
+                        }
+                        break;
                     }
-                    else {
-                        attr.condition = attr.value;
-                        node.dirs.push(attr);
-                    }
-                    break;
-                case Nodes.ELSE_IF:
-                    if (!node.dirs) {
-                        node.condition = attr.value;
-                        node.isBranch = true;
-                    }
-                    break;
-                case Nodes.ELSE:
-                    if (!node.dirs) {
-                        node.isBranch = true;
-                    }
-                    break;
-                case Nodes.FOR:
-                    attr.iterator = parseIterator(attr.value);
-                    (node.dirs ||= []).push(attr);
-                    break;
-                case Nodes.SLOT:
-                    (node.dirs ||= []).push(attr);
-                    break;
-                case Nodes.DEFINE_SLOT:
-                    (node.dirs ||= []).push(attr);
-                    break;
-                case Nodes.CUSTOM_DIRECTIVE:
-                    // 只有自定义指令支持动态指令
-                    (node.customDirs ||= []).push(attr);
-                    break;
+                }
             }
-            /*
-                attributes 中的内置和自定义指令都会被移出
-                编译时指令放在dirs中，
-                内置或自定义指令放在customDirs中
-            */
-            removeFromArray(attributes, attr);
-            i--;
-            // 因为删除了数组中的元素，所以指针回退一步
-        }
-        else if (flag === NodesMap[Nodes.AT]) {
-            attr.type = Nodes.EVENT;
-            // 为 true时代表是一个合法的handler可以直接生成代码，否则需要套一层函数
-            attr.isHandler = isHandler(attr.value);
-        }
-        else if (flag === '#') {
-            /*
-                #app => id="app"
-                #(x) => $id="x"
-            */
-            attr.value = attr.property;
-            attr.property = 'id';
-            attr.isDynamicValue = attr.isDynamicProperty;
-            attr.isDynamicProperty = false;
-        }
-        else if (flag === '.') {
-            // class 简写形式
-            attr.type = Nodes.CLASS;
-            if (attr.isDynamicProperty) {
-                attr.value = attr.property;
+            else if (scanner.at(1) === '!') {
+                var exRes = scanner.exec(htmlCommentRE);
+                ast.push({
+                    tag: '!',
+                    children: exRes[0]
+                });
             }
             else {
-                attr.value = parseInlineClass$1(attr.property);
+                var exRes = scanner.exec(openTagRE);
+                tag = exRes[0];
+                modifiers = exRes[1];
+                inOpen = true;
             }
         }
-        else if (property === NodesMap[Nodes.CLASS]) {
-            // contain dynamic class and static class
-            attr.type = Nodes.CLASS;
-            if (!attr.isDynamicValue) {
-                attr.value = parseInlineClass$1(attr.value);
+        else if (inOpen) {
+            if (scanner.startsWith('/')) {
+                scanner.move(1); // ignore
+            }
+            else if (scanner.startsWith('>')) {
+                // open tag close
+                ast.push({
+                    tag,
+                    closed: false,
+                    attributes,
+                    attributeMap,
+                    children: null,
+                    modifiers: modifiers && modifiers.split(':')
+                });
+                tag = null;
+                modifiers = null;
+                attributes = null;
+                attributeMap = null;
+                inOpen = false;
+                scanner.move(1);
+            }
+            else {
+                /* catch attribute */
+                var exRes = scanner.exec(attributeRE);
+                var attribute = exRes[0];
+                var value = exRes[2];
+                const _attribute = parseAttribute(attribute, value);
+                (attributeMap ||= getEmptyObj())[_attribute.property] = _attribute;
+                (attributes ||= []).push(_attribute);
             }
         }
-        else if (property === NodesMap[Nodes.STYLE]) {
-            attr.type = Nodes.STYLE;
-            if (!attr.isDynamicValue) {
-                attr.value = parseInlineStyle$1(attr.value);
+        else {
+            var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/;
+            var textToken, text;
+            if ((textToken = textEndsWithTag.exec(scanner.source))) {
+                text = textToken[1];
+                scanner.move(text.length);
             }
+            else {
+                // text为结尾 , 直接读取所有内容，并清空
+                text = scanner.source;
+                scanner.source = '';
+            }
+            ast.push({
+                tag: '',
+                children: text.trim()
+            });
         }
-        else ;
     }
+    return ast;
+}
+
+// we can use $(exp) as a dynamic content
+var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
+function parseSelector(selector) {
+    var isDynamic = false;
+    return {
+        selectorText: selector.replace(extractDynamicSelector, (_, content) => {
+            isDynamic = true;
+            return '${' + content + '}';
+        }),
+        isDynamic
+    };
+}
+
+const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
+function parseIterator(expression) {
+    const [_, items, iterable] = extIteratorExp.exec(expression);
+    return {
+        iterable,
+        items: items.split(',')
+    };
+}
+
+const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
+const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
+const AtRuleRE = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/;
+const mixinRE = /\.\.\.([^;]+);/;
+const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
+/*
+    判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
+*/
+const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
+const parseCSS = (source) => {
+    var scanner = createScanner(source);
+    var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
+    while (scanner.source) {
+        if (scanner.startsWith('}')) {
+            closing = true;
+        }
+        else if (scanner.startsWith(keyOf(Nodes.AT))) {
+            /*
+                media conditions
+            */
+            var [key, content] = scanner.exec(AtRuleRE);
+            var type = NodesMap[key];
+            current = {
+                type
+            };
+            if (type === Nodes.MEDIA_RULE) {
+                current.media = content;
+            }
+            else if (type === Nodes.KEYFRAMES_RULE) {
+                current.keyframes = content;
+            }
+            else if (type === Nodes.SUPPORTS_RULE) {
+                current.supports = content;
+            }
+        }
+        else if (scanner.expect('/*')) ;
+        else if (scanner.startsWith(keyOf(Nodes.MIXIN))) {
+            var [mixin] = scanner.exec(mixinRE);
+            var m = {
+                type: Nodes.MIXIN,
+                mixin
+            };
+            (declarationGroup ||= []).push(m);
+            continue;
+        }
+        else if (cssReservedWord.test(scanner.source)) {
+            /*
+                处理指令，指令不再需要通过标识符去判断
+            */
+            var [dir, content] = scanner.exec(CSSDir);
+            var type = keyOf(dir);
+            var d = { type };
+            switch (type) {
+                case Nodes.FOR:
+                    d.iterator = parseIterator(content);
+                    break;
+                case Nodes.IF:
+                    d.condition = content;
+                    d.isBranchStart = true;
+                    break;
+                case Nodes.ELSE_IF:
+                    d.condition = content;
+                    d.isBranch = true;
+                    break;
+                case Nodes.ELSE:
+                    d.isBranch = true;
+                    break;
+            }
+            current = d;
+        }
+        else if (exResult = scanner.exec(selectorRE)) {
+            /*
+                try to get the selector
+            */
+            current = {
+                type: Nodes.STYLE_RULE,
+                selector: parseSelector(exResult[0])
+            };
+        }
+        else if (exResult = scanner.exec(declarationRE)) {
+            /*
+                the last declaration must end with  " ; "
+            */
+            var declaration = parseAttribute(exResult[0], exResult[1]);
+            var { property, flag, endFlag } = declaration;
+            if (flag === '$') {
+                declaration.isDynamicValue = true;
+            }
+            else if (flag === '$--') {
+                declaration.isDynamicValue = true;
+                declaration.property = '--' + property;
+                declaration.illegalKey = true;
+            }
+            else if (flag === '--') {
+                declaration.property = '--' + property;
+                declaration.illegalKey = true;
+            }
+            //! important
+            declaration.isImportant = endFlag === '!';
+            (declarationGroup ||= []).push({
+                declaration,
+                type: Nodes.DECLARATION
+            });
+            continue;
+        }
+        else {
+            /* error */
+            debugger;
+        }
+        /* process the relation , with cascading struct */
+        if (declarationGroup) {
+            var asb = { type: Nodes.DECLARATION_GROUP };
+            asb.children = declarationGroup;
+            asb.parent = parent;
+            (parent.children ||= []).push(asb);
+            declarationGroup = null;
+        }
+        if (closing) {
+            stack.pop();
+            parent = stack[stack.length - 1];
+            scanner.move(1);
+            closing = false;
+            continue;
+        }
+        if (!parent) {
+            // while there is no parent , the currentDeclaration is meaningless
+            ast.push(current);
+        }
+        else {
+            var children = parent.children ||= [];
+            current.parent = parent;
+            children.push(current);
+        }
+        stack.push(current);
+        parent = current;
+    }
+    return ast;
 };
 
 /*
@@ -797,139 +2194,289 @@ const processRules = (rules, isKeyframe = false) => {
     });
 };
 
-const parseTemplate = (template) => {
-    var htmlAst = parseHTML(template);
-    parseNodes(htmlAst);
-    return htmlAst;
-};
-const parseNodes = (nodes, ctx = {
-    ignoreChildren: false,
-}) => {
-    nodes.forEach((node) => {
-        parseNode(node, ctx);
-        if (isArray(node.children) && !ctx.ignoreChildren) {
-            parseNodes(node.children, ctx);
+var mustache = /\{\{(.*?)\}\}/g;
+var parseText = (text) => {
+    var texts = [];
+    var cursor = 0;
+    var execArr;
+    while (execArr = mustache.exec(text)) {
+        if (execArr.index > cursor) {
+            texts.push({
+                content: text.slice(cursor, execArr.index),
+                isDynamic: false
+            });
         }
-        // reset status
-        ctx.ignoreChildren = false;
-    });
+        if (execArr[1]) {
+            texts.push({
+                content: execArr[1],
+                isDynamic: true
+            });
+        }
+        cursor = execArr[0].length + execArr.index;
+    }
+    if (cursor < text.length) {
+        texts.push({
+            content: text.slice(cursor),
+            isDynamic: false
+        });
+    }
+    return texts;
 };
-function parseNode(node, ctx) {
-    const type = node.type;
-    if (type === Nodes.DOM_ELEMENT) {
-        const tagType = tagTypeOf(node.tagName);
-        node.type = tagType;
-        switch (tagType) {
-            case Nodes.HTML_ELEMENT:
-                processAttribute(node);
+
+const inlineStyleDelimiter = /\s*[:;]\s*/;
+function parseInlineStyle(styleString) {
+    var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
+    var l = chips.length;
+    var styleMap = {};
+    while (l) {
+        styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1]);
+        l -= 2;
+    }
+    return styleMap;
+}
+const inlineClassDelimiter = /\s+/;
+const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
+
+// parse for codegen 
+// legal variable name
+var varRE = /^\w+$/;
+// arrow function
+var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
+// normal function
+var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
+// array
+var arrayRE = /\[.*\]/;
+function isHandler(exp) {
+    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
+}
+var reservedDirMap = {
+    if: Nodes.IF,
+    elseIf: Nodes.ELSE_IF,
+    else: Nodes.ELSE,
+    for: Nodes.FOR,
+    slot: Nodes.SLOT,
+    outlet: Nodes.OUTLET,
+    model: Nodes.MODEL
+};
+const reservedAttributeMap = {
+    style: Nodes.STYLE,
+    class: Nodes.CLASS,
+    created: true,
+    beforeMount: true,
+    mounted: true,
+    beforeUpdate: true,
+    updated: true,
+    beforeUnmount: true,
+    unmounted: true
+};
+function processAttribute(ast) {
+    var attributes = ast.attributes;
+    if (!attributes)
+        return;
+    for (let i = 0; i < attributes.length; i++) {
+        var attribute = attributes[i];
+        var { flag } = attribute;
+        if (flag === '@') {
+            // event
+            attribute.type = Nodes.EVENT;
+            attribute.isHandler = isHandler(attribute.value);
+        }
+        else if (flag === '--') {
+            // direvtive
+            const type = reservedDirMap[attribute.property];
+            const isCustomDirective = attribute.isDynamicProperty || !type;
+            if (isCustomDirective) {
+                (ast.customDirectives ||= []).push(attribute);
+            }
+            else {
+                // reserved directive
+                var directives = ast.directives ||= [];
+                switch (attribute.type = type) {
+                    case Nodes.IF:
+                        if (!directives.length) {
+                            //  此时为元素的第一个指令为if ， 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
+                            ast.condition = attribute.value;
+                            ast.isBranchStart = true;
+                        }
+                        else {
+                            directives.push(attribute);
+                        }
+                        break;
+                    case Nodes.ELSE_IF:
+                        if (!directives.length) {
+                            ast.isBranch = true;
+                        }
+                        else {
+                            debugger;
+                            //! else-if 指令只会在第一个指令出现 error
+                        }
+                        break;
+                    case Nodes.ELSE:
+                        if (!directives.length) {
+                            ast.isBranch = true;
+                        }
+                        else {
+                            debugger;
+                            // else-if 指令只会在第一个指令出现
+                        }
+                        break;
+                    case Nodes.FOR:
+                        attribute.iterator = parseIterator(attribute.value);
+                        directives.push(attribute);
+                        break;
+                    case Nodes.SLOT:
+                        directives.push(attribute);
+                        break;
+                    case Nodes.OUTLET:
+                        // define slot
+                        ast.outlet = {
+                            name: attribute._arguments[0],
+                            scope: attribute.value
+                        };
+                        break;
+                    case Nodes.MODEL:
+                        ast.tagName;
+                        ast.attributes.unshift({
+                            type: Nodes.RESERVED_PROP,
+                            property: 'assigner',
+                            isDynamicValue: true,
+                            value: toArrowFunction(`${attribute.value}=_`, '_')
+                        });
+                        i++;
+                        (ast.customDirectives ||= []).push(attribute);
+                        break;
+                }
+            }
+        }
+        else {
+            var type = reservedAttributeMap[attribute.property];
+            if (attribute.flag === '#') {
+                // id shorthand
+                attribute.type = Nodes.ATTRIBUTE;
+                attribute.value = attribute.property;
+                attribute.property = 'id';
+                attribute.isDynamicValue = attribute.isDynamicProperty;
+                attribute.isDynamicProperty = false;
+            }
+            else if (attribute.flag === '.') {
+                // class shourthand
+                attribute.type = Nodes.CLASS;
+                attribute.value = attribute.property;
+                attribute.property = 'class';
+                attribute.isDynamicValue = attribute.isDynamicProperty;
+                attribute.isDynamicProperty = false;
+            }
+            else if (!type || attribute.isDynamicProperty) {
+                attribute.type = Nodes.ATTRIBUTE;
+            }
+            else {
+                switch (type) {
+                    case Nodes.STYLE:
+                        attribute.type = Nodes.STYLE;
+                        attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineStyle(attribute.value);
+                        break;
+                    case Nodes.CLASS:
+                        attribute.type = Nodes.CLASS;
+                        attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineClass(attribute.value);
+                        break;
+                    default:
+                        attribute.type = Nodes.RESERVED_PROP;
+                }
+            }
+        }
+    }
+}
+var reservedTagMap = {
+    if: Nodes.IF,
+    elseIf: Nodes.ELSE_IF,
+    else: Nodes.ELSE,
+    for: Nodes.FOR,
+    slot: Nodes.SLOT,
+    outlet: Nodes.OUTLET,
+    '': Nodes.TEXT,
+    '!': Nodes.HTML_COMMENT,
+    'template': Nodes.TEMPLATE,
+    'component': Nodes.DYNAMIC_COMPONENT,
+    'element': Nodes.DYNAMIC_ELEMENT,
+    'style': Nodes.STYLE
+};
+/*
+    tips
+    why should devide the componet and element tag
+    bcause the children is different
+*/
+function processAst(ast) {
+    if (isArray(ast)) {
+        ast.forEach(processAst);
+        return;
+    }
+    const tag = ast.tag;
+    const tagName = camelize(tag);
+    ast.tagName = tagName;
+    processAttribute(ast);
+    let ignoreChildren = false;
+    const type = reservedTagMap[tagName];
+    if (type) {
+        // reserved tag
+        switch (ast.type = type) {
+            case Nodes.HTML_COMMENT:
                 break;
-            case Nodes.COMPONENT:
-                processAttribute(node);
-                break;
-            case Nodes.SVG_ELEMENT:
+            case Nodes.TEXT:
+                ast.children = parseText(ast.children);
+                ignoreChildren = true;
                 break;
             case Nodes.STYLE:
-                processAttribute(node);
-                var template = node.children?.[0].children;
+                var template = ast.children?.[0].children;
                 if (template) {
                     var styleAst = parseCSS(template);
                     processRules(styleAst);
-                    node.children = styleAst;
-                    ctx.ignoreChildren = true;
+                    ast.children = styleAst;
                 }
+                ignoreChildren = true;
                 break;
             case Nodes.IF:
-                node.condition = node.attributeMap['condition'];
-                node.isBranchStart = true;
+                ast.condition = ast.attributeMap['condition'];
+                ast.isBranchStart = true;
                 break;
             case Nodes.ELSE_IF:
-                node.condition = node.attributeMap['condition'];
-                node.isBranch = true;
+                ast.condition = ast.attributeMap['condition'];
+                ast.isBranch = true;
                 break;
             case Nodes.ELSE:
-                node.isBranch = true;
+                ast.isBranch = true;
                 break;
             case Nodes.FOR:
-                node.iterator = parseIterator(node.attributeMap['iterator']);
+                ast.iterator = parseIterator(ast.attributeMap['iterator']);
                 break;
-            case Nodes.TEMPLATE:
-                processAttribute(node);
+            case Nodes.OUTLET:
+                ast.outlet = {
+                    name: ast.attributeMap?.['name'],
+                    scope: ast.attributeMap?.['scope']
+                };
                 break;
-            case Nodes.SLOT:
-                break;
-            case Nodes.DEFINE_SLOT:
+            case Nodes.DYNAMIC_ELEMENT:
                 break;
         }
     }
-    else if (type === Nodes.TEXT) {
-        node.children = parseText(node.children);
-        ctx.ignoreChildren = true;
-        return;
+    else if (isHTMLTag(tagName)) {
+        ast.type = Nodes.HTML_ELEMENT;
     }
-    else if (type === Nodes.HTML_COMMENT) ;
+    else if (isSVGTag(tagName)) {
+        ast.type = Nodes.SVG_ELEMENT;
+    }
+    else {
+        ast.type = Nodes.COMPONENT;
+    }
+    if (!ignoreChildren && ast.children) {
+        processAst(ast.children);
+    }
 }
 
-var renderMethods$1 = {
-    createComment,
-    createElement,
-    createFragment,
-    createKeyframe,
-    createKeyframes,
-    createMedia,
-    createSVGElement,
-    createStyleSheet,
-    createStyle,
-    createText,
-    renderList,
-    mergeSelectors,
-    display,
-    createDeclaration,
-    mixin,
-    important,
-    createSupports,
-    flatRules,
-    createComponent,
-    getComponent,
-    getDirective,
-    getCurrentScope,
-    createEvent,
-    createHandlerKey,
-    normalizeClass,
-    normalizeStyle,
-    renderSlot,
-    injectDirective,
-    injectDirectives
-};
-const renderMethodsNameMap = Object.entries(renderMethods$1).reduce((res, [name, method]) => {
-    res[name] = method.name;
+const renderMethodsNameMap = Object.entries(renderMethods).reduce((res, [name, method]) => {
+    res[name] = res[name].name;
+    //res[name] = method.name
     return res;
 }, {});
-
-// rebuilding
-const groupSelectorDelimiter = /\s*,\s*/;
-const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
-const joinSelector = (splitedSelector) => splitedSelector.join(',');
-function mergeSelector(p, c) {
-    var ref = false; // is using & 
-    var merged = c.replace('&', () => {
-        ref = true;
-        return p;
-    });
-    return ref ? merged : p + ' ' + c; // default merge
-}
-/*
-    ['header','footer'] , ['h1','h2'] ===> ['header h1' , 'header h2' , 'footer h1' , 'footer h2']
-*/
-function mergeSplitedSelector(parent, children) {
-    return parent.map((p) => {
-        return children.map((c) => mergeSelector(p, c));
-    }).reduce((x, y) => x.concat(y));
-}
-const mergeSplitedSelectors = (...selectors) => selectors.reduce(mergeSplitedSelector);
-const mergeSplitedSelectorsAndJoin = (...selectors) => joinSelector(mergeSplitedSelectors(...selectors));
-function mergeSelectors(...selectors) {
-    return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
-}
 
 // the code Entrance
 const genNodes = (nodes, context) => {
@@ -990,8 +2537,8 @@ function genChildren(nodes, context) {
     });
     return children;
 }
-const genFor = (target, iterator, context) => context.callRenderFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
-const genIf = (target, condition) => ternaryExp(condition, target, 'null');
+const genFor = (target, iterator, context) => context.callRenderFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
+const genIf = (target, condition) => ternaryExp(condition, target, NULL);
 function genForWithFragment(target, iterator, context) {
     return genFragment(genFor(target, iterator, context), context);
 }
@@ -1014,32 +2561,34 @@ const genDirectives = (target, dirs, context) => {
                 target = genForWithFragment(target, dir.iterator, context);
                 break;
             case Nodes.SLOT:
-                // where there is a slot directive on a element or component , the target will be the backup content
+                // where there is a slot directive on a element or component , the target will be the fallback content
                 var slotName = toBackQuotes(dir.value || 'default');
-                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, target);
+                // 指令插槽的渲染无法携带作用域信息
+                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, toArrowFunction(target), uid());
                 break;
-            case Nodes.DEFINE_SLOT:
-                debugger;
+            case Nodes.OUTLET:
+                // 不在此处处理outlet
                 break;
         }
         return genDirectives(target, dirs, context);
     }
 };
-function genCustomDirectives(code, customDirs, context) {
+function genCustomDirectives(code, customDirectives, context) {
     // injectDirective
-    var dirs = customDirs.map((directive) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers } = directive;
+    var dirs = customDirectives.map((rawDir) => {
+        var { property, value, isDynamicProperty, _arguments, modifiers } = rawDir;
         // 支持动态指令
-        var dir = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toCodeString$1(property));
+        var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property));
         if (!isDynamicProperty) {
-            dir = context.hoistExpression(dir);
+            directive = context.hoistExpression(directive);
         }
-        var dirInfos = {
+        var dirInfos = [
+            directive,
             value,
-            _arguments: _arguments && _arguments.map(toCodeString$1),
-            modifiers: modifiers && modifiers.map(toCodeString$1)
-        };
-        return [dir, dirInfos];
+            _arguments && _arguments.map(toSingleQuotes),
+            modifiers && modifiers.map(toSingleQuotes)
+        ];
+        return dirInfos;
     });
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
 }
@@ -1049,13 +2598,39 @@ function genChildrenString(children, context) {
     return stringify(genChildren(children, context));
 }
 function genDirs(code, node, context) {
-    if (node.customDirs) {
-        code = genCustomDirectives(code, node.customDirs, context);
+    if (node.customDirectives) {
+        code = genCustomDirectives(code, node.customDirectives, context);
     }
-    if (node.dirs) {
-        code = genDirectives(code, node.dirs, context);
+    if (node.directives) {
+        code = genDirectives(code, node.directives, context);
     }
     return code;
+}
+function genSlotContent(node, context) {
+    var { children } = node;
+    /*
+        关于插槽的定义 ,
+        插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
+        如 <template --slot:header=""> ,
+        暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
+    */
+    if (!children)
+        return NULL;
+    var _default;
+    var slots = {};
+    children.forEach((child) => {
+        var { name, scope } = child.outlet || EMPTY_OBJ;
+        if (name) {
+            slots[name] = toArrowFunction(genNode(child, context), scope);
+        }
+        else {
+            (_default ||= []).push(child);
+        }
+    });
+    if (_default) {
+        slots.default = toArrowFunction(genNodes(_default, context));
+    }
+    return stringify(slots);
 }
 function genNode(node, context) {
     switch (node.type) {
@@ -1074,11 +2649,16 @@ function genNode(node, context) {
             return code;
         case Nodes.SLOT:
             var slotName = toBackQuotes(node.attributeMap?.name || 'default');
-            var backup = genNodes(node.children, context);
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, backup);
-        case Nodes.DEFINE_SLOT:
-            debugger;
-            break;
+            var fallback = toArrowFunction(genNodes(node.children, context));
+            // todo 插槽作用域
+            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid());
+        case Nodes.OUTLET:
+            return genNodes(node.children, context);
+        case Nodes.DYNAMIC_ELEMENT:
+            var { value, isDynamicValue } = node.attributeMap['is'];
+            var code = context.callRenderFn(renderMethodsNameMap.createElement, isDynamicValue ? value : toSingleQuotes(value), genProps(node, context), genChildrenString(node.children, context), uStringId());
+            code = genDirs(code, node, context);
+            return code;
         case Nodes.HTML_ELEMENT:
             var code = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
             code = genDirs(code, node, context);
@@ -1086,25 +2666,29 @@ function genNode(node, context) {
         case Nodes.SVG_ELEMENT:
             debugger;
             return context.callRenderFn(renderMethodsNameMap.createSVGElement);
+        case Nodes.DYNAMIC_COMPONENT:
+            var { value, isDynamicValue } = node.attrMap['is'];
+            var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicValue ? value : toSingleQuotes(value));
+            // 动态组件不会提升
+            var props = genProps(node, context);
+            var slots = genSlotContent(node, context);
+            code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId());
+            code = genDirs(code, node, context);
+            return code;
         case Nodes.COMPONENT:
             var code = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName));
             var uv = context.hoistExpression(code);
             var props = genProps(node, context);
-            // var slots = genChildren(node.children, context)
-            // debugger
-            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, NULL, uStringId());
+            var slots = genSlotContent(node, context);
+            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId());
             code = genDirs(code, node, context);
             return code;
         case Nodes.TEXT:
             return genText(node.children, context);
         case Nodes.STYLE:
-            var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, 'null', stringify(genChildren(node.children, context)), uStringId());
-            if (node.dirs) {
-                code = genDirectives(code, node.dirs, context);
-            }
-            if (node.customDirs) {
-                code = genCustomDirectives(code, node.customDirs, context);
-            }
+            var props = genProps(node, context);
+            var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId());
+            code = genDirs(code, node, context);
             return code;
         case Nodes.STYLE_RULE:
             return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
@@ -1130,10 +2714,6 @@ const genTextContent = (texts, context) => {
 const genText = (texts, context) => {
     return context.callRenderFn(renderMethodsNameMap.createText, genTextContent(texts, context), uStringId());
 };
-/*
-    while there is unknown selectors
-    header,footer ? h1,h2
-*/
 function genSelector(selectors, context) {
     /*
         先保留数组形式,再进行处理
@@ -1189,11 +2769,23 @@ function genDeclartion(declarationGroup, context) {
                 res.push(target);
                 lastIsDeclaration = true;
             }
-            const { property, value, isDynamicProperty, isDynamicValue, isImportant } = declaration.declaration;
-            const _property = isDynamicProperty ? dynamicMapKey(property) : property;
-            const _value = isDynamicValue ? value : toBackQuotes(value);
-            const __value = isImportant ? context.callRenderFn(renderMethodsNameMap.important, _value) : _value;
-            target[_property] = __value;
+            var { property, value, isDynamicProperty, isDynamicValue, isImportant, illegalKey } = declaration.declaration;
+            if (isDynamicProperty) {
+                // 动态的key不存在不合法情况
+                property = dynamicMapKey(property);
+            }
+            else {
+                if (illegalKey) {
+                    property = dynamicMapKey(toSingleQuotes(property));
+                }
+            }
+            if (!isDynamicValue) {
+                value = toBackQuotes(value);
+            }
+            if (isImportant) {
+                value = context.callRenderFn(renderMethodsNameMap.important, value);
+            }
+            target[property] = value;
         }
     });
     const _res = res.map((item) => {
@@ -1213,18 +2805,16 @@ function genDeclartion(declarationGroup, context) {
 }
 function genProps(node, context) {
     var { type, attributes } = node;
-    if (!(attributes && attributes.length)) {
-        // attributes may be an empty array , becasue the directives
+    if (!attributes) {
         return NULL;
     }
     var props = {};
     attributes.forEach((attr) => {
         switch (attr.type) {
             case Nodes.EVENT:
-                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ argument, modifiers } = attr;
+                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                 var handlerKey = isDynamicProperty ?
-                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(argument.map(toBackQuotes)))) :
-                    createHandlerKey(property, argument);
+                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(_arguments.map(toBackQuotes)))) : createHandlerKey(property, _arguments);
                 var callback = isHandler ? value : toArrowFunction(value);
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
@@ -1239,10 +2829,15 @@ function genProps(node, context) {
                 var style = props.style ||= [];
                 style.push(attr.value);
                 break;
-            case Nodes.HTML_ATTRIBUTE:
+            case Nodes.ATTRIBUTE:
                 // normal attributes
                 var { property, value, isDynamicProperty, isDynamicValue, } = attr;
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
+                break;
+            case Nodes.RESERVED_PROP:
+                // 当确定是保留属性时，一定是非动态属性名
+                var { property, value, isDynamicValue, } = attr;
+                props[toReservedProp(property)] = isDynamicValue ? value : toBackQuotes(value);
                 break;
         }
     });
@@ -1253,7 +2848,7 @@ function genProps(node, context) {
     if (props.style) {
         props.style = context.callRenderFn(renderMethodsNameMap.normalizeStyle, stringify(props.style));
     }
-    return stringify(props);
+    return stringify(props) === '{}' ? NULL : stringify(props);
 }
 
 const createFunction = (content, ...params) => new Function(...params, `${content}`);
@@ -1288,10 +2883,9 @@ class CodeGenerator {
     }
 }
 const RENDER_METHODS = 'renderMethods';
-const defaultCompilerConfig = {};
-function compile(template, config = defaultCompilerConfig) {
-    config &&= extend$1(defaultCompilerConfig, config);
-    var ast = parseTemplate(template);
+function compile(template) {
+    var ast = baseParseHTML(template);
+    processAst(ast);
     console.log('nodeast', ast);
     var context = new CodeGenerator();
     // 初始化所有渲染方法
@@ -1306,1167 +2900,75 @@ function compile(template, config = defaultCompilerConfig) {
     /*
         the dom template ast will alwways return an array
     */
-    return createFunction(context.getCode(), RENDER_METHODS);
+    var rf = createFunction(context.getCode(), RENDER_METHODS);
+    console.log(rf);
+    return rf;
 }
 
-var activeEffect = null;
-var shouldTrack = false;
-var effectStack = [];
-var targetMap = new WeakMap();
-const SYMBOL_WITH = Symbol.unscopables;
-class ReactiveEffect {
-    fn = null;
-    deps = [];
-    scheduler = null;
-    constructor(fn, options) {
-        this.fn = fn;
-        this.scheduler = options.scheduler;
-    }
-    cleanDeps() {
-        this.deps.forEach((deps) => {
-            deps.delete(this);
-        });
-        this.deps = [];
-    }
-    run() {
-        effectStack.push(this);
-        activeEffect = this;
-        shouldTrack = true;
-        this.cleanDeps();
-        var res = this.fn();
-        effectStack.pop();
-        activeEffect = effectStack[effectStack.length - 1];
-        return res;
-    }
-}
-function effect(fn, options = {}) {
-    var _effect = new ReactiveEffect(fn, options);
-    if (!options.lazy) {
-        _effect.run();
-    }
-    return _effect;
-}
-function track(target, key) {
-    if (key === SYMBOL_WITH)
-        return;
-    if (!shouldTrack)
-        return;
-    if (!activeEffect)
-        return;
-    let depsMap = targetMap.get(target);
-    if (!depsMap) {
-        depsMap = new Map();
-        targetMap.set(target, depsMap);
-    }
-    let deps = depsMap.get(key);
-    if (!deps) {
-        deps = new Set();
-        depsMap.set(key, deps);
-    }
-    deps.add(activeEffect);
-    activeEffect.deps.push(deps);
-}
-function trigger(target, key) {
-    if (key === SYMBOL_WITH)
-        return;
-    const depsMap = targetMap.get(target);
-    if (!depsMap)
-        return;
-    var deps = depsMap.get(key);
-    if (!deps)
-        return;
-    // 克隆一份，防止死循环
-    deps = new Set(deps);
-    deps.forEach((e) => {
-        if (e === activeEffect)
-            return;
-        if (e.scheduler) {
-            e.scheduler(e);
-        }
-        else {
-            e.run();
-        }
-    });
-}
-var handler = {
-    get(target, key) {
-        track(target, key);
-        return target[key];
-    },
-    set(target, key, newValue) {
-        trigger(target, key);
-        target[key] = newValue;
-        return true;
-    }
-};
-function reactive(target) {
-    return new Proxy(target, handler);
-}
-function watch(visitor, callback) {
-    effect(visitor, {
-        scheduler: () => {
-            callback();
-        }
-    });
-}
+/* object extend */
+const extend = Object.assign;
 
-function injectHook(type, target, hook) {
-    var hooks = (target[type] ||= []);
-    if (!isArray(hooks)) {
-        target[type] = [target[type]];
-    }
-    // the input hooks supports array
-    if (isArray(hook)) {
-        hooks = hooks.concat(hook);
-    }
-    else {
-        hooks.push(hook);
-    }
-}
-/*
-    binding is used for bind the callback context , it is necessary
-*/
-function callHook(type, target, options = null, ...args) {
-    const hooks = target[type];
-    if (!hooks)
-        return;
-    var { binding, scheduler } = options || EMPTY_OBJ;
-    hooks.forEach((hook) => {
-        if (scheduler) {
-            scheduler(hook, binding, ...args);
-        }
-        else {
-            hook.apply(binding, args);
-        }
-    });
-}
-const createHook = (type) => (hook) => injectHook(type, getCurrentInstance(), hook);
-const onMounted = createHook("mounted" /* MOUNTED */);
-
-/*
-    mixin supports
-    ---
-    same as directive
-
-    mixin nesting
-
-*/
-function injectMixin(options, mixin) {
-    for (let key in mixin) {
-        switch (key) {
-            case ComponentOptionKeys.MIXINS:
-                injectMixins(options, options[key]);
-                break;
-            case ComponentOptionKeys.BEFORE_CREATE:
-            case ComponentOptionKeys.CREATE:
-            case ComponentOptionKeys.CREATED:
-            case ComponentOptionKeys.BEFORE_MOUNT:
-            case ComponentOptionKeys.MOUNTED:
-            case ComponentOptionKeys.BEFORE_UPDATE:
-            case ComponentOptionKeys.UPDATED:
-            case ComponentOptionKeys.BEFORE_UNMOUNT:
-            case ComponentOptionKeys.UNMOUNTED:
-                injectHook(key, options, mixin[key]);
-                break;
-            default:
-                debugger;
-        }
-    }
-    // ! 
-    return options;
-}
-function injectMixins(target, mixins) {
-    mixins.forEach((mixin) => {
-        injectMixin(target, mixin);
-    });
-    return target;
-}
-
-var ComponentOptionKeys;
-(function (ComponentOptionKeys) {
-    ComponentOptionKeys["BEFORE_CREATE"] = "beforeCreate";
-    ComponentOptionKeys["CREATE"] = "create";
-    // setup funcition
-    ComponentOptionKeys["CREATED"] = "created";
-    ComponentOptionKeys["BEFORE_MOUNT"] = "beforeMount";
-    ComponentOptionKeys["MOUNTED"] = "mounted";
-    ComponentOptionKeys["BEFORE_UPDATE"] = "beforeUpdate";
-    ComponentOptionKeys["UPDATED"] = "updated";
-    ComponentOptionKeys["BEFORE_UNMOUNT"] = "beforeUnmount";
-    ComponentOptionKeys["UNMOUNTED"] = "unmounted";
-    ComponentOptionKeys["TEMPLATE"] = "template";
-    ComponentOptionKeys["RENDER"] = "render";
-    ComponentOptionKeys["PROPS"] = "props";
-    ComponentOptionKeys["MIXINS"] = "mixins";
-    ComponentOptionKeys["COMPOENNTS"] = "components";
-    ComponentOptionKeys["DIRECTIVES"] = "directives";
-})(ComponentOptionKeys || (ComponentOptionKeys = {}));
-const initOptions = (options) => {
-    for (let key in options) {
-        switch (key) {
-            // root options only
-            case ComponentOptionKeys.TEMPLATE:
-                options.createRender = compile(options[ComponentOptionKeys.TEMPLATE]);
-                console.log(options.createRender);
-                break;
-            case ComponentOptionKeys.RENDER:
-                // todo
-                break;
-            case ComponentOptionKeys.CREATE:
-            case ComponentOptionKeys.CREATED:
-            case ComponentOptionKeys.BEFORE_MOUNT:
-            case ComponentOptionKeys.MOUNTED:
-            case ComponentOptionKeys.BEFORE_UPDATE:
-            case ComponentOptionKeys.UPDATED:
-            case ComponentOptionKeys.BEFORE_UNMOUNT:
-            case ComponentOptionKeys.UNMOUNTED:
-                var option = options[key];
-                // all lifecycle hooks should be an array in options or compoennt instance
-                if (option && !isArray(option)) {
-                    options[key] = [option];
-                }
-                break;
-            case ComponentOptionKeys.MIXINS:
-                var mixins = options[key];
-                injectMixins(options, mixins);
-                break;
-            case ComponentOptionKeys.COMPOENNTS:
-                break;
-            case ComponentOptionKeys.DIRECTIVES:
-                break;
-        }
-    }
-    options._isOptions = true;
-};
-
-const IMPORTANT_SYMBOL = Symbol('important');
-const IMPORTANT_KEY = '!important';
-const IMPORTANT = 'important';
-/*
-    input a value and return the important version ,
-    so we can do this while useing dynamic binding
-    body{
-        $background-color : bg;
-    }
-    --- js
-    bg = important('red')
-    the same as
-    bg = 'red !important'
-    used for when use javascript stylesheet , we can set the declaration important
-*/
-function important(value) {
-    return {
-        value,
-        [IMPORTANT_SYMBOL]: true
-    };
-}
-
-const nodeOps = {
-    insert: (child, parent, anchor = null) => {
-        /* 可能传入不合理的anchor */
-        if (anchor && anchor.parentElement !== parent) {
-            anchor = null;
-        }
-        parent.insertBefore(child, anchor);
-    },
-    remove: (el) => {
-        const parent = el.parentNode;
-        if (parent) {
-            parent.removeChild(el);
-        }
-    },
-    setText() {
-    },
-    // style
-    setProperty: (style, property, value, important = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : ''),
-    deleteRule: (sheet, index) => sheet.deleteRule(index)
-};
-
-function parseStyleValue(rawValue) {
-    var value, important = false;
-    if (rawValue === undefined || rawValue === null) {
-        value = null;
-    }
-    else if (rawValue[IMPORTANT_SYMBOL]) {
-        value = rawValue.value;
-        important = true;
-    }
-    else {
-        value = rawValue;
-        important = false;
-    }
-    if (isString(value) && value.endsWith(IMPORTANT_KEY)) {
-        value = value.split(IMPORTANT_KEY)[0].trim();
-        important = true;
-    }
-    // 支持数组
-    if (isArray(value)) {
-        value = value.join(' ');
-    }
-    return {
-        value,
-        important
-    };
-}
-function updateDeclaration(pDeclaration, nDeclaration, style, vnode) {
-    var delList = Object.keys(pDeclaration ||= EMPTY_OBJ);
-    for (let property in nDeclaration) {
-        var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[property]);
-        var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[property]);
-        if (pValue !== nValue || pImportant !== nImportant) { /* 当属性值不同并且important不同时均需要更新 */
-            /*
-                目前处理值只能处理字符串的属性值
-            */
-            nodeOps.setProperty(style, property, nValue, nImportant);
-        }
-        removeFromArray(delList, property);
-    }
-    delList.forEach((property) => nodeOps.setProperty(style, property, '')); // 清空旧的属性
-}
-function mountDeclaration(declaration, style, vnode) {
-    updateDeclaration(EMPTY_OBJ, declaration, style);
-}
-function unmountDeclaration(declaration, style, vnode) {
-    updateDeclaration(declaration, EMPTY_OBJ, style);
-}
-
-/*
-    mountStyleSheet will create a style element
-*/
-const mountStyleSheet = (vnode, container) => {
-    var ref = document.createElement('style');
-    vnode.ref = ref;
-    container.appendChild(ref);
-    var sheet = ref.sheet;
-    const rules = vnode.children;
-    mountSheet(sheet, rules, vnode);
-};
-function mountSheet(sheet, rules, vnode) {
-    rules.forEach((rule) => {
-        mountRule(sheet, rule, vnode);
-    });
-}
-function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
-    switch (rule.type) {
-        case Nodes.STYLE_RULE:
-            mountStyleRule(sheet, rule, vnode, index);
-            break;
-        case Nodes.MEDIA_RULE:
-            mountMediaRule(sheet, rule, vnode, index);
-            break;
-        case Nodes.SUPPORTS_RULE:
-            mountSupportsRule(sheet, rule, vnode, index);
-            break;
-        case Nodes.KEYFRAMES_RULE:
-            mountKeyframesRule(sheet, rule, vnode, index);
-            break;
-        case Nodes.KEYFRAME_RULE:
-            mountKeyframeRule(sheet, rule, vnode, index);
-            break;
-    }
-}
-function mountStyleRule(sheet, rule, vnode, // this is style vnode, it carry the special attrs for rendering
-insertIndex = sheet.cssRules.length) {
-    const { selector, children: declaration // rename
-     } = rule;
-    if (!declaration)
-        return;
-    const index = sheet.insertRule(`${selector}{}`, insertIndex);
-    const insertedRule = sheet.cssRules[index];
-    rule.ref = insertedRule; // set ref
-    const insertedRuleStyle = insertedRule.style;
-    mountDeclaration(declaration, insertedRuleStyle);
-}
-function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
-    var media = rule.media;
-    var rules = rule.children;
-    var index = sheet.insertRule(`@media ${media}{}`, insertIndex);
-    var newSheet = sheet.cssRules[index];
-    mountSheet(newSheet, rules, vnode);
-}
-function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
-    var supports = rule.supports;
-    var rules = rule.children;
-    var index = sheet.insertRule(`@supports ${supports}{}`, insertIndex);
-    var newSheet = sheet.cssRules[index];
-    mountSheet(newSheet, rules, vnode);
-}
-function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
-    var keyframes = rule.keyframes;
-    var rules = rule.children;
-    var index = sheet.insertRule(`@keyframes ${keyframes}{}`, insertIndex);
-    rule.ref = sheet.cssRules[insertIndex];
-    var newSheet = sheet.cssRules[index];
-    mountSheet(newSheet, rules, vnode);
-}
-function normalizeKeyText$1(keyframe) {
-    if (isArray(keyframe)) {
-        return keyframe.map(normalizeKeyText$1).join(',');
-    }
-    else if (isNumber(Number(keyframe))) {
-        // 为数字或者数字字符串
-        return `${keyframe}%`;
-    }
-    else {
-        return keyframe;
-    }
-}
-function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
-    var { keyframe, children: declaration } = rule;
-    keyframe = normalizeKeyText$1(keyframe);
-    // appendRule wont return the index 
-    sheet.appendRule(`${keyframe}{}`);
-    var index = sheet.cssRules.length - 1;
-    const insertedRule = sheet.cssRules[index];
-    rule.ref = insertedRule; // set ref
-    const insertedRuleStyle = insertedRule.style;
-    for (let property in declaration) {
-        var { value } = parseStyleValue(declaration[property]);
-        // keyframe 中不能设置important
-        nodeOps.setProperty(insertedRuleStyle, property, value);
-    }
-}
-
-// for renderer
-const onRE = /^on[A-Z]/;
-const isEvent = (key) => onRE.test(key);
-const parseHandlerKey = (handlerKey) => {
-    var keys = handlerKey.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
-    // remove on
-    keys.shift();
-    var event = keys[0];
-    // remove eventName
-    keys.shift();
-    return {
-        event,
-        options: arrayToMap(keys)
-    };
-};
-// for compiler
-function createHandlerKey(eventName, options) {
-    var handlerKey = `on${capitalize(eventName)}`;
-    if (options && options.length !== 0) {
-        handlerKey += options.map(capitalize).join(''); // join default with ,
-    }
-    return handlerKey;
-}
-const modifierGuards = {
-    stop: (e) => e.stopPropagation(),
-    prevent: (e) => e.preventDefault(),
-    self: (e) => e.target !== e.currentTarget,
-    ctrl: (e) => !e.ctrlKey,
-    shift: (e) => !e.shiftKey,
-    alt: (e) => !e.altKey,
-    meta: (e) => !e.metaKey,
-    left: (e) => 'button' in e && e.button !== 0,
-    middle: (e) => 'button' in e && e.button !== 1,
-    right: (e) => 'button' in e && e.button !== 2,
-};
-/*
-    使用修饰符后每次都会创建一个新的函数
-*/
-function createEvent(fn, modifiers) {
-    return (event, ...args) => {
-        for (let i = 0; i < modifiers.length; i++) {
-            const guard = modifierGuards[modifiers[i]];
-            if (guard && guard(event, modifiers))
-                return;
-        }
-        return fn(event, ...args);
-    };
-}
-
-function updateClass(pClass, nClass, el) {
-    pClass ||= EMPTY_OBJ;
-    nClass ||= EMPTY_OBJ;
-    var classList = el.classList;
-    var removeKeys = keys(pClass);
-    for (let className in nClass) {
-        var pC = pClass[className];
-        var nC = nClass[className];
-        if (pC && !nC) {
-            // remove
-            classList.remove(className);
-        }
-        else if (!pC && nC) {
-            // add
-            classList.add(className);
-        }
-        removeFromArray(removeKeys, className);
-    }
-    removeKeys.forEach((className) => {
-        classList.remove(className);
-    });
-}
-function unmountClass(el) {
-    el.className = '';
-}
-
-function mountProps(vnode) {
-    var { ref, props } = vnode;
-    if (!props) {
-        return;
-    }
-    else {
-        updateProps(EMPTY_OBJ, props, ref);
-    }
-}
-function updateProps(p, n, el, vnode) {
-    var removeList = keys(p);
-    for (let key in n) {
-        var pValue = p[key];
-        var nValue = n[key];
-        if (key === 'style') {
-            updateDeclaration(pValue, nValue, el.style);
-        }
-        else if (key === 'class') {
-            updateClass(pValue, nValue, el);
-        }
-        else if (isEvent(key)) {
-            if (pValue !== nValue) {
-                var { event, options } = parseHandlerKey(key);
-                el.removeEventListener(event, pValue);
-                el.addEventListener(event, nValue, options);
-            }
-        }
-        else {
-            if (p[key] == n[key]) {
-                el.setAttribute(key, n[key]);
-            }
-        }
-        removeFromArray(removeList, key);
-    }
-    removeList.forEach((key) => {
-        unmountProp(key, p[key], el);
-    });
-}
-function unmountProp(propName, value, el, vnode) {
-    if (propName === 'style') {
-        unmountDeclaration(value, el.style);
-    }
-    else if (propName === 'class') {
-        unmountClass(el);
-    }
-    else if (isEvent(propName)) {
-        var { event, options } = parseHandlerKey(propName);
-        el.removeEventListener(event, value, options);
-    }
-    else {
-        el.removeAttribute(propName);
-    }
-}
-
-function injectDirectives(target, directives) {
-    for (let directive of directives) {
-        injectDirective(target, directive);
-    }
-    return target;
-}
-function injectDirective(target, [rawDirective, info]) {
-    // 指令会携带信息 值 参数 修饰符
-    // 保存指令与指令携带信息之间的关系 ， 用于传递新旧节点的指令信息
-    var dirInfos = target.dirInfos ||= new Map();
-    dirInfos.set(rawDirective, info);
-    let directiveOptions = rawDirective;
-    if (isFunction(rawDirective)) {
-        directiveOptions = {
-            ["mounted" /* MOUNTED */]: rawDirective,
-            ["updated" /* UPDATED */]: rawDirective
-        };
-    }
-    for (let key in directiveOptions) {
-        var hook = directiveOptions[key];
-        // save the raw directive on this hook , so while the hook is calling , we can know the hook belong which directive
-        hook.directive = rawDirective;
-        // !hook.dirInfo = info 不应该在指令上钩子上直接保存指令信息，会存在覆盖问题
-        injectHook(key, target, hook);
-    }
-    // ! 
-    return target;
-}
-function processHook(type, p, n) {
-    // 不存在两个节点都不存在
-    if (p && n) {
-        // ! 只有更新时指令才能拿到 oldValue
-        // update 包括普通更新和假卸载和挂载的更新
-        var samePatchKey = p.patchKey === n.patchKey;
-        if (samePatchKey) {
-            // just update , beforeUpdate , updated 
-            callHook(type, n, {
-                scheduler(hook) {
-                    var dirArgs = [
-                        n.ref
-                    ];
-                    if (hook.directive) {
-                        // dirInfo 存在的话一定有 dirInfos
-                        var dirInfo = n.dirInfos.get(hook.directive);
-                        dirInfo.oldValue = p.dirInfos.get(hook.directive).value;
-                        dirArgs.push(hook.dirInfo);
-                    }
-                    // 这里需要拿到旧的指令值
-                    hook.apply(null, dirArgs);
-                }
-            });
-        }
-        else {
-            // 假挂载和假卸载 , 假卸载旧节点 ， 假挂载新节点 , 不需要指令旧值
-            callHook(type === "beforeUpdate" /* BEFORE_UPDATE */ ? "beforeUnmount" /* BEFORE_UNMOUNT */ : "unmounted" /* UNMOUNTED */, p, {
-                scheduler(hook) {
-                    hook.call(null, p.ref, p.dirInfos?.get(hook.directive));
-                }
-            });
-            callHook(type === "updated" /* UPDATED */ ? "mounted" /* MOUNTED */ : "beforeMount" /* BEFORE_MOUNT */, n, {
-                scheduler(hook) {
-                    hook.call(null, n.ref, n.dirInfos?.get(hook.directive));
-                }
-            });
-        }
-    }
-    else {
-        //  卸载和挂载
-        var target = p || n;
-        callHook(type, target, {
-            scheduler(hook) {
-                // 挂载时不存在旧值
-                hook.apply(null, target.ref, target.dirInfos?.get(hook.directive));
-            }
-        });
-    }
-}
-
-function mount(vnode, container, anchor = null) {
-    switch (vnode.type) {
-        case Nodes.HTML_ELEMENT:
-            mountHTMLElement(vnode, container, anchor);
-            break;
-        case Nodes.TEXT:
-            mountText(vnode, container, anchor);
-            break;
-        case Nodes.COMPONENT:
-            mountComponent(vnode, container, anchor);
-            break;
-        case Nodes.STYLE:
-            mountStyleSheet(vnode, container);
-            break;
-    }
-}
-function mountChildren(children, container, anchor) {
-    children.forEach((child) => {
-        /*
-            会出现由于分支产生的 空节点
-        */
-        if (child) {
-            mount(child, container, anchor);
-        }
-    });
-}
-function mountText(vnode, container, anchor) {
-    var textContent = vnode.children;
-    var el = document.createTextNode(textContent);
-    vnode.ref = el;
-    nodeOps.insert(el, container, anchor);
-}
-function mountHTMLElement(vnode, container, anchor) {
-    const { tag, props, children } = vnode;
-    var el = document.createElement(tag);
-    vnode.ref = el;
-    processHook("created" /* CREATED */, null, vnode);
-    mountProps(vnode);
-    processHook("beforeMount" /* BEFORE_MOUNT */, null, vnode);
-    nodeOps.insert(el, container, anchor);
-    processHook("mounted" /* MOUNTED */, null, vnode);
-    if (children) {
-        mountChildren(children, el, anchor);
-    }
-}
-
-function unmountComponent(vnode, container, anchor) {
-    var { ref: instance } = vnode;
-    var vnode = instance.vnode;
-    patch(vnode, null, container, anchor);
-}
-
-function unmount(vnode, container, anchor) {
-    switch (vnode.type) {
-        case Nodes.HTML_ELEMENT:
-            unmountElement(vnode);
-            break;
-        case Nodes.TEXT:
-            nodeOps.remove(vnode.ref);
-            break;
-        case Nodes.COMPONENT:
-            unmountComponent(vnode, container, anchor);
-            break;
-    }
-}
-function unmountChildren(children) {
-    // 卸载过程目前不需要锚点
-    children.forEach(unmount);
-}
-function unmountElement(vnode) {
-    if (vnode.children) {
-        unmountChildren(vnode.children);
-    }
-    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode, null);
-    nodeOps.remove(vnode.ref);
-    processHook("unmounted" /* UNMOUNTED */, vnode, null);
-}
-
-const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
-const normalizeKeyText = (keyframe) => isNumber(Number(keyframe)) ? `${keyframe}%` : keyframe;
-
-/*
-    diff the dom children and rules children
-
-    the dom vnodes will be reused with the same patchKey and the same type ,
-    so , we can make the reused vnodes stay in the same index , this is the first step
-    and then , the unsame keyed vnodes , we can reuse them if they have the same type , its the second step,
-    apon the process , we get the same length children ,
-    and the same type and same key vnodes are in the same index , the same type , not same key nodes also in the same index ,
-    so the only things we need todo is loop the chidren each the patch operate,
-
-    but the rules is something different ,
-    the same nodeType and same key we can reuse ,
-    others can be rsused while they have the same nodeType
-
-    ! something interesting  , the key order will not change
-*/
-function createMapAndList(children) {
-    var map = {};
-    var list = children.map((child, index) => {
-        var patchKey = child.patchKey;
-        var token = {
-            node: child,
-            patchKey,
-            index
-        };
-        map[patchKey] = token;
-        return token;
-    });
-    return {
-        map, list
-    };
-}
-function diffChildren(p, n, isRules) {
-    // copy
-    p = [...p || []];
-    n = [...n || []];
-    var nLength = n.length;
-    var { map: pMap } = createMapAndList(p);
-    var pMoved = 0;
-    for (let i = 0; i < nLength; i++) {
-        /*
-            此次循环用于将两组规则的相同key对应到相同的索引下
-        */
-        var node = n[i];
-        var patchKey = node.patchKey;
-        var sameNode = pMap[patchKey];
-        if (sameNode && (isRules || (sameNode.node.tag === node.tag))) {
-            /*
-                the condition of reuse a vnode for dom is same patchkey and same type
-                for rules is just the same patchkey
-            */
-            var sameNodeIndex = sameNode.index + pMoved;
-            var diff = i - sameNodeIndex;
-            var diffLength = Math.abs(diff);
-            if (diff < 0) {
-                /* 说明该接点在p中的位置较远，需要再n中条南充元素 */
-                insertNull(n, i, diffLength);
-                i += diffLength;
-                nLength += diffLength;
-            }
-            else {
-                insertNull(p, sameNodeIndex, diffLength);
-                pMoved += diffLength;
-            }
-        }
-    }
-    return {
-        p, n
-    };
-}
-
-const updateStyleSheet = (p, n) => {
-    var ref = n.ref = p.ref;
-    var sheet = ref.sheet;
+// normalized class always will be a map with true value
+function normalizeClass(rawClass) {
     /*
-        更新style元素的props，并且处理特殊属性如，unit,url 等
+        crush class support
+        string
+        array
+        object
+        function : use the return value
     */
-    updateSheet(p.children, n.children, sheet, n);
-};
-function updateSheet(pRules, nRules, sheet, vnode) {
-    /*
-        与更新dom元素不同，规则中只要patchKey相同就一定会复用,
-        更新过程依赖patchkey
-        patchkey 作为第一优先级
-        其次为nodetype,
-        !还是假设key相同的节点顺序一定不会变，
-    */
-    var { p, n } = diffChildren(pRules, nRules, true);
-    /*
-        经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
-        抛出同一索引下节点类型不相同的情况
-    */
-    var max = Math.max(p.length, n.length);
-    var cursor = 0;
-    for (let i = 0; i < max; i++) {
-        var pRule = p[i];
-        var nRule = n[i];
-        /*
-            不存在两个对应位置都为空的情况
-        */
-        if (!pRule) {
-            mountRule(sheet, nRule, vnode, cursor);
-            cursor++;
-        }
-        else if (!nRule) {
-            // unmount
-            sheet.deleteRule(cursor);
-            cursor--;
-        }
-        else if (pRule.nodeType !== nRule.nodeType) {
-            // 当节点类型不同时，先卸载，再挂载 
-            sheet.deleteRule(cursor);
-            mountRule(sheet, nRule, vnode, cursor);
-        }
-        else {
-            // update
-            switch (nRule.nodeType) {
-                case Nodes.STYLE_RULE:
-                    updateStyleRule(pRule, nRule);
-                    break;
-                case Nodes.MEDIA_RULE:
-                    updateMediaRule(pRule, nRule, vnode);
-                    break;
-                case Nodes.SUPPORTS_RULE:
-                    // supports cant update , 
-                    break;
-                case Nodes.KEYFRAMES_RULE:
-                    updateKeyframesRule(pRule, nRule);
-                    break;
-            }
-        }
-        cursor++;
+    if (isString(rawClass)) {
+        return parseInlineClass(rawClass);
     }
-}
-function updateStyleRule(pRule, nRule, vnode) {
-    var ref = nRule.ref = pRule.ref;
-    var { selector: pSelector, children: pDeclaration } = pRule;
-    var { selector: nSelector, children: nDeclaration } = nRule;
-    if (pSelector !== nSelector) {
-        ref.selectorText = nSelector;
+    else if (isObject(rawClass)) {
+        return rawClass;
     }
-    var style = ref.style;
-    updateDeclaration(pDeclaration, nDeclaration, style);
-}
-function updateMediaRule(pRule, nRule, vnode) {
-    var ref = nRule.ref = pRule.ref;
-    var { media: pMedia, children: pRules } = pRule;
-    var { media: nMedia, children: nRules } = nRule;
-    /* while not the same media condition */
-    if (pMedia !== nMedia) {
-        debugger;
+    else if (isArray(rawClass)) {
+        return extend(...rawClass.map(normalizeClass));
     }
-    updateSheet(pRules, nRules, ref, vnode);
-}
-function updateKeyframesRule(pRule, nRule, vnode) {
-    var keyframesRef = nRule.ref = pRule.ref;
-    var { keyframes: pKeyframes, children: pRules } = pRule;
-    var { keyframes: nKeyframes, children: nRules } = nRule;
-    if (pKeyframes !== nKeyframes) {
-        keyframesRef.name = nKeyframes;
+    else if (isFunction(rawClass)) {
+        return normalizeClass(rawClass());
     }
-    var maxLength = Math.max(pRules.length, nRules.length);
-    /*
-        最简单的更新策略，只存在keyframe，并且可以设置keyText
-    */
-    for (let i = 0; i < maxLength; i++) {
-        var pk = pRules[i];
-        var nk = nRules[i];
-        if (!pk) {
-            mountKeyframeRule(keyframesRef, nk);
-        }
-        else if (!nk) {
-            keyframesRef.deleteRule(normalizeKeyText(pk.keyframe));
-        }
-        else {
-            var { keyframe: pKeyframe, children: pDeclaration } = pk;
-            var { keyframe: nKeyframe, children: nDeclaration } = nk;
-            let keyframeRef = nk.ref = pk.ref;
-            var style = keyframeRef.style;
-            if (pKeyframe !== nKeyframe) {
-                keyframeRef.keyText = nKeyframe;
-            }
-            updateDeclaration(pDeclaration, nDeclaration, style);
-        }
-        // 不存在两个都没有的情况
-    }
-}
-
-function update(p, n, container, anchor) {
-    switch (n.type) {
-        case Nodes.TEXT:
-            updateText(p, n);
-            break;
-        case Nodes.HTML_ELEMENT:
-            updateHTMLElement(p, n, container);
-            break;
-        case Nodes.COMPONENT:
-            break;
-        case Nodes.STYLE:
-            updateStyleSheet(p, n);
-            break;
-    }
-}
-function updateText(p, n) {
-    var ref = n.ref = p.ref;
-    if (p.children !== n.children) {
-        ref.textContent = n.children;
-    }
-}
-function updateHTMLElement(p, n, container, anchor) {
-    var el = n.ref = p.ref;
-    /* think ?
-        存在html元素节点上的钩子一定是指令吗？
-        <input  b >
-    */
-    // 更新钩子仅针对元素与子节点无关
-    processHook("beforeUpdate" /* BEFORE_UPDATE */, p, n);
-    updateProps(p.props, n.props, el);
-    processHook("updated" /* UPDATED */, p, n);
-    // updated hooks should be called here ? or after children update
-    updateChildren(p.children, n.children, container);
-}
-function updateChildren(pChildren, nChildren, container, anchor) {
-    var { p, n } = diffChildren(pChildren, nChildren, false);
-    var max = Math.max(p.length, n.length);
-    for (let i = 0; i < max; i++) {
-        patch(p[i], n[i], container, getAnchor(p, i + 1));
-    }
-}
-/*
-    在已经挂载的vnodes中获取anchor
-*/
-function getAnchor(vnodes, index) {
-    for (let i = index; i < vnodes.length; i++) {
-        var ref = vnodes[i]?.ref;
-        if (ref) {
-            return ref;
-        }
-    }
-}
-
-const patch = (current, next, container, anchor = null) => {
-    if (!current) {
-        if (next) {
-            isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor);
-        }
-    }
-    else {
-        if (!next) {
-            // 卸载当前节点
-            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor);
-        }
-        else {
-            if (isArray(current)) {
-                updateChildren(current, isArray(next) ? next : [next], container);
-            }
-            else {
-                if (isArray(next)) {
-                    updateChildren([current], next, container);
-                }
-                else {
-                    // 两个单节点 ， 但key可能不同 
-                    if (current.tag === next.tag) {
-                        // 类型相同，直接更新
-                        update(current, next, container);
-                    }
-                    else {
-                        // 类型不同。先卸载，在挂载
-                        unmount(current, container, anchor);
-                        mount(next, container, anchor);
-                    }
-                }
-            }
-        }
-    }
-};
-
-var nextTick = (fn, args = undefined) => {
-    var p = Promise.resolve(args);
-    p.then(fn.bind(null));
-};
-
-var currentWork = null;
-function nextTickSingleWork(work) {
-    if (!currentWork) {
-        currentWork = work;
-        nextTick(() => {
-            currentWork();
-            currentWork = null;
-        });
-    }
-}
-
-function mixin(...sources) {
-    return Object.assign(...sources);
-}
-
-function doFlat(rules, flattedRules, parent = null, // 保存parent的作用主要是当遍历到declaration时
-key = null) {
-    for (let i = 0; i < rules.length; i++) {
-        var rule = rules[i];
-        if (!rule) {
-            continue;
-        }
-        // 使用传来的key生成唯一的key
-        var patchKey = key ? key + '_' + rule.key : rule.key;
-        rule.patchKey = patchKey;
-        rule.parent = parent;
-        switch (rule.type) {
-            case Nodes.STYLE_RULE:
-                flattedRules.push(rule);
-                var _children = rule.children;
-                rule.children = null;
-                if (_children) {
-                    doFlat(_children, flattedRules, rule);
-                }
-                break;
-            case Nodes.DECLARATION:
-                if (!rule.parent) {
-                    debugger;
-                    // 声明不再任何样式规则或媒体规则下时,应该报错
-                }
-                else if (rule.parent.type === Nodes.STYLE_RULE) {
-                    (rule.parent.children ||= []).push(rule);
-                }
-                else if (rule.parent.type === Nodes.KEYFRAME_RULE) {
-                    (rule.parent.children ||= []).push(rule);
-                }
-                else {
-                    /*
-                        当一条样式声明不时样式规则的子节点
-                    */
-                    if (rule.parent.type === Nodes.MEDIA_RULE) {
-                        /*
-                            一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
-                            此时和一直寻找parent的选择器
-                        */
-                        var selector, parent = rule.parent;
-                        while (!selector && parent) { /* 当选择器没被找到，并且parent存在时才会继续寻找 */
-                            selector = parent.selector;
-                            parent = parent.parent;
-                        }
-                        if (!selector) {
-                            error('当前样式声明不存在选择器下');
-                        }
-                        else {
-                            // reset the declaration to styleRule
-                            var newRule = createStyle(selector, rule.children, key);
-                            newRule.patchKey = patchKey;
-                            flattedRules.push(newRule);
-                        }
-                    }
-                }
-                continue;
-            case Nodes.MEDIA_RULE:
-                rule.children = flatRules(rule.children, rule);
-                flattedRules.push(rule);
-                break;
-            case Nodes.SUPPORTS_RULE:
-                rule.children = flatRules(rule.children);
-                flattedRules.push(rule);
-                break;
-            case Nodes.KEYFRAMES_RULE:
-                rule.children = flatRules(rule.children);
-                /*
-                    在此处需要把动画下的每一帧的样式处理成对象形式
-                */
-                rule.children.forEach((keyframe) => {
-                    const children = keyframe.children.map((r) => r.children);
-                    keyframe.children = mixin(...children);
-                });
-                flattedRules.push(rule);
-                break;
-            case Nodes.KEYFRAME_RULE:
-                /* 需要和styleRule处理方式一样 */
-                flattedRules.push(rule);
-                var _children = rule.children;
-                rule.children = null;
-                if (_children) {
-                    doFlat(_children, flattedRules, rule);
-                }
-                break;
-            case Nodes.FRAGMENT:
-                // fragment wont be a parent
-                doFlat(rule.children, flattedRules, rule.parent, rule.patchKey);
-                break;
-        }
-    }
-    return flattedRules;
-}
-
-function flatRules(rules, parent = null, key = null
-/* 这里传入的key是为了避免由循环产生节点中，当第一层是fragment时，无法为子节点设置上唯一的key  */
-) {
-    const flatted = doFlat(rules, [], parent, key);
-    /*
-        当一层平铺结束后 ， 处理declaration
-        stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
-    */
-    flatted.forEach((rule) => {
-        if (rule.type === Nodes.STYLE_RULE) {
-            /*
-                children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
-                并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
-                仅需要处理数组结构
-            */
-            if (isArray(rule.children)) {
-                const children = rule.children.map((r) => r.children);
-                rule.children = (rule.children.length === 0 ? null : mixin(...children));
-            }
-        }
-    });
-    return flatted;
 }
 
 /*
-    处理结果返回始终是数组
+    the result always return a map
 */
-function processdom(node, key = null) {
-    if (!node) {
-        return null;
+function normalizeStyle(style) {
+    if (isObject(style)) {
+        return style;
     }
-    if (!isArray(node)) {
-        node = [node];
+    else if (isString(style)) {
+        return parseInlineStyle(style);
     }
-    var flattedNode = [];
-    node.forEach((child) => {
-        if (child) {
-            if (child.type === Nodes.FRAGMENT) {
-                /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
-                flattedNode = flattedNode.concat(processdom(child.children, child.key));
-            }
-            else {
-                if (key) {
-                    child.patchKey = key + '_' + child.key;
-                }
-                else {
-                    child.patchKey = child.key;
-                }
-                if (child.type === Nodes.HTML_ELEMENT) {
-                    // 子节点递归处理
-                    child.children = processdom(child.children);
-                }
-                if (child.type === Nodes.STYLE) {
-                    child.children = flatRules(child.children, null, child.patchKey);
-                }
-                flattedNode.push(child);
-            }
-        }
-    });
-    return flattedNode;
+    else if (isArray(style)) {
+        style = style.map(normalizeStyle);
+        return extend(...style);
+    }
 }
+
+var renderMethods = {
+    important,
+    getCurrentScope,
+    createElement,
+    createText,
+    renderList,
+    createFragment,
+    display,
+    getDirective,
+    getComponent,
+    injectDirectives,
+    createStyleSheet,
+    createStyle,
+    createDeclaration,
+    createKeyframe,
+    createKeyframes,
+    createMedia,
+    createSupports,
+    mixin,
+    normalizeClass,
+    normalizeStyle
+};
 
 // if you are using css function with dynamic binding , use camelized function name 
 function addUnit(value, unit) {
@@ -2513,6 +3015,9 @@ function cubicBezier(x1, y1, x2, y2) {
 }
 const max = (...items) => `max(${items.join(',')})`;
 const min = (...items) => `min(${items.join(',')})`;
+function rotateY(deg) {
+    return `rotateY(${addUnit(deg, 'deg')})`;
+}
 function translateX(t) {
     return `translateX(${t})`;
 }
@@ -2540,131 +3045,65 @@ function perspective(l) {
 function skewX(x) {
     return `skewX(${addUnit(x, 'deg')})`;
 }
+function skewY(y) {
+    return `skewX(${addUnit(y, 'deg')})`;
+}
+function skew(x, y) {
+    return `skew(${addUnit(x, 'deg')},${addUnit(y, 'deg')})`;
+}
+function scaleY(n) {
+    return `scaleY(${n})`;
+}
 
-var cssFunctions = {
-    rgba,
-    rgb,
-    hsl,
-    hsla,
-    $var,
-    attr,
-    calc,
-    cubicBezier,
-    max,
-    min,
-    translateX,
-    translateY,
-    scale
-};
+function renderSlot(name, scope, fallback, uid) {
+    var instance = getCurrentInstance();
+    var slot = (instance.slots[name] || fallback)();
+    slot.key = uid; // 唯一插槽节点的key
+    return slot;
+}
 
-var proto = {
-    ...cssFunctions
-};
-var initScope = () => Object.create(proto);
-
-function createComponentInstance(options) {
-    var app = getCurrentApp();
-    if (!options._isOptions) {
-        initOptions(options);
-    }
-    const instance = {
-        uid: uid(),
-        scope: reactive(initScope()),
-        render: null,
-        vnode: null,
-        createRender: options.createRender,
-        components: options.components,
-        directives: options.directives,
-        // hooks will always be an array
-        ["beforeCreate" /* BEFORE_CREATE */]: options["beforeCreate" /* BEFORE_CREATE */] && [...options["beforeCreate" /* BEFORE_CREATE */]],
-        ["create" /* CREATE */]: options["create" /* CREATE */] && [...options["create" /* CREATE */]],
-        ["created" /* CREATED */]: options["created" /* CREATED */] && [...options["created" /* CREATED */]],
-        ["beforeMount" /* BEFORE_MOUNT */]: options["beforeMount" /* BEFORE_MOUNT */] && [...options["beforeMount" /* BEFORE_MOUNT */]],
-        ["mounted" /* MOUNTED */]: options["mounted" /* MOUNTED */] && [...options["mounted" /* MOUNTED */]],
-        ["beforeUnmount" /* BEFORE_UNMOUNT */]: options["beforeUnmount" /* BEFORE_UNMOUNT */] && [...options["beforeUnmount" /* BEFORE_UNMOUNT */]],
-        ["unmounted" /* UNMOUNTED */]: options["unmounted" /* UNMOUNTED */] && [...options["unmounted" /* UNMOUNTED */]],
-        ["beforeUpdate" /* BEFORE_UPDATE */]: options["beforeUpdate" /* BEFORE_UPDATE */] && [...options["beforeUpdate" /* BEFORE_UPDATE */]],
-        ["updated" /* UPDATED */]: options["updated" /* UPDATED */] && [...options["updated" /* UPDATED */]]
-    };
-    if (app.mixins) {
-        injectMixins(instance, app.mixins);
-    }
-    return instance;
-}
-// rendering instance and creating instance
-var currentInstance = null;
-function setCurrentInstance(instance) {
-    currentInstance = instance;
-}
-function getCurrentInstance() {
-    return currentInstance;
-}
-function getCurrentScope() {
-    return getCurrentInstance().scope;
-}
-const mountComponent = (vnode, container, anchor = null) => {
-    var { tag, props, children } = vnode;
-    var instance = createComponentInstance(tag);
-    vnode.ref = instance;
-    const { scope, createRender, } = instance;
-    callHook("beforeCreate" /* BEFORE_CREATE */, instance, scope, scope);
-    // init instance , we only can use getCurrentInstance in create hook 
-    setCurrentInstance(instance);
-    callHook("create" /* CREATE */, instance, scope, scope);
-    setCurrentInstance(null);
-    callHook("created" /* CREATED */, instance, scope, scope);
-    // render function  
-    setCurrentInstance(instance);
-    const render = createRender(renderMethods$1);
-    setCurrentInstance(null);
-    instance.render = render;
-    // component update fn
-    function update() {
-        const { isMounted, vnode } = instance;
-        // 每次更新生成新树
-        var nextTree = render();
-        // 处理fragment
-        nextTree = processdom(nextTree);
-        console.log('prevTree', vnode);
-        console.log('nextTree', nextTree);
-        // test hooks
-        callHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, instance, scope, scope);
-        patch(vnode, nextTree, container);
-        callHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, instance, scope, scope);
-        instance.isMounted = true;
-        instance.vnode = nextTree;
-    }
-    //  call at every update
-    instance.update = update;
-    effect(() => {
-        update();
-    }, {
-        scheduler: (effect) => {
-            nextTickSingleWork(effect.fn);
-        }
+// rebuilding
+const groupSelectorDelimiter = /\s*,\s*/;
+const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
+const joinSelector = (splitedSelector) => splitedSelector.join(',');
+function mergeSelector(p, c) {
+    var ref = false; // is using & 
+    var merged = c.replace('&', () => {
+        ref = true;
+        return p;
     });
-    return instance;
+    return ref ? merged : p + ' ' + c; // default merge
+}
+/*
+    ['header','footer'] , ['h1','h2'] ===> ['header h1' , 'header h2' , 'footer h1' , 'footer h2']
+*/
+function mergeSplitedSelector(parent, children) {
+    return parent.map((p) => {
+        return children.map((c) => mergeSelector(p, c));
+    }).reduce((x, y) => x.concat(y));
+}
+const mergeSplitedSelectors = (...selectors) => selectors.reduce(mergeSplitedSelector);
+const mergeSplitedSelectorsAndJoin = (...selectors) => joinSelector(mergeSplitedSelectors(...selectors));
+function mergeSelectors(...selectors) {
+    return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
+}
+
+const updateComponent = () => {
 };
 
-const show = {
-    mounted() {
-        debugger;
-    },
-    updated() {
-        debugger;
-    }
+const unmountComponent = () => {
 };
-
-const builtInDirectives = {
-    show
-};
-const builtInComponents = {};
 
 function keyframes(name, keyframes) {
     return createKeyframes(name, keyframes);
 }
 function keyframe(name, keyframes) {
     return createKeyframe(name, keyframes);
+}
+
+function getComputedStyle(el, prop) {
+    var style = window.getComputedStyle(el);
+    return prop ? style.getPropertyValue(hyphenate(prop)) : style;
 }
 
 const flash = keyframes('flash', [
@@ -2932,7 +3371,30 @@ const lightSpeedOutLeft = keyframes('lightSpeedOutLeft', [
     }),
 ]);
 
-var animations = [
+const bounce = keyframes('bounce', [
+    keyframe([0, 20, 53, 100], {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1),
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe([40, 43], {
+        animationTimingFunction: cubicBezier(0.755, 0.05, 0.855, 0.06),
+        transform: [translate3d(0, '-30px', 0), scaleY(1.1)]
+    }),
+    keyframe(70, {
+        animationTimingFunction: cubicBezier(0.755, 0.05, 0.855, 0.06),
+        transform: [translate3d(0, '-15px', 0), scaleY(1.05)]
+    }),
+    keyframe(80, {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1),
+        transform: [translate3d(0, 0, 0), scaleY(0.95)]
+    }),
+    keyframe(90, {
+        transform: [translate3d(0, '-4px', 0), scaleY(1.02)]
+    })
+]);
+
+var animations = {
+    bounce,
     jackInTheBox,
     hinge,
     flash,
@@ -2951,247 +3413,329 @@ var animations = [
     lightSpeedInRight,
     lightSpeedOutLeft,
     lightSpeedOutRigt
-];
-function installAnimation() {
-    mount(createStyleSheet(null, animations), document.head);
+};
+const checkBuiltInAnimations = () => Object.keys(animations);
+const installAnimation = () => mount(createStyleSheet(null, Object.values(animations)), document.head);
+
+/*
+    过渡动画逻辑
+    使用transition , 先保留之前元素的tansition  , 设置新的 transtion ，然后设置新的样式
+*/
+function setElementTranstion() {
 }
 
-var currentApp = null;
+var currentApp;
 function getCurrentApp() {
+    if (!currentApp) {
+        debugger;
+    }
     return currentApp;
+}
+function normalizeContainer(container) {
+    if (isString(container)) {
+        container = document.querySelector(container);
+    }
+    if (!(container instanceof Element)) {
+        error('not legal container');
+    }
+    return container;
 }
 class App {
     isMounted = false;
-    options = null;
-    constructor(options) {
-        this.options = options;
-        currentApp = this;
-        /* 安装动画 */
+    rootComponent;
+    constructor(rootComponent) {
+        this.rootComponent = rootComponent;
         this.use(installAnimation);
+        currentApp = this;
     }
     components = builtInComponents;
-    component(name, options) {
-        this.components[name] = options;
+    component(name, component) {
+        if (this.directives[name]) {
+            return warn('component is already exist');
+        }
+        this.components[name] = component;
     }
     directives = builtInDirectives;
-    directive(name, options) {
-        this.directives[name] = options;
+    directive(name, directive) {
+        if (this.directives[name]) {
+            return warn('directive is already exist');
+        }
+        this.directives[name] = directive;
     }
     mixins = [];
     mixin(mixin) {
         this.mixins.push(mixin);
     }
-    instance;
-    el = null;
-    container = null;
-    mount(container) {
-        if (this.isMounted)
-            return;
-        const _container = isString(container) ? document.querySelector(container) : container;
-        this.container = _container;
-        var options = this.options;
-        if (!options.template) {
-            options.template = _container.innerHTML;
+    plugins = new Set();
+    use(plugin, ...options) {
+        if (!this.plugins.has(plugin)) {
+            plugin(this, ...options);
         }
-        _container.innerHTML = '';
-        var vnode = createComponent(options, null, null);
-        vnode.app = this;
-        var instance = mountComponent(vnode, _container);
-        this.instance = instance;
+    }
+    container = null;
+    rootInstance;
+    useSelectorTemplate = false;
+    mount(container) {
+        container = normalizeContainer(container);
+        // todo validate legal container 
+        this.container = container;
+        var component = this.rootComponent;
+        if (!component.template && !component.render) {
+            component.template = container.innerHTML;
+            this.useSelectorTemplate = true;
+        }
+        // clear page template
+        container.innerHTML = '';
+        // mount root component
+        this.rootInstance = mountComponent(createComponent(component, null, null), container);
         this.isMounted = true;
-        return instance;
     }
     unmount() {
     }
-    installed = new Set();
-    use(installer, ...options) {
-        if (!this.installed.has(installer)) {
-            installer(this, ...options);
-        }
-    }
 }
 
-const createApp = (options) => new App(options);
+const createApp = (rootComponent) => new App(rootComponent);
 
-function display(displayData) {
-    return displayData;
-}
-
-var iterableFlag = Symbol.iterator;
-var isIterableData = (data) => !!data[iterableFlag];
-function renderList(data, callee, key) {
-    if (!isIterableData(data)) {
-        if (isNumber(data)) {
-            var from = [];
-            for (var j = 0; j < data; j++) {
-                from[j] = j + 1;
-            }
-            data = from;
-        }
-        else if (isObject(data)) {
-            data = Object.entries(data);
-        }
+function injectHook(type, target, hook) {
+    var hooks = (target[type] ||= []);
+    if (!isArray(hooks)) {
+        target[type] = [target[type]];
     }
-    var i = 0;
-    var results = [];
-    for (var item of data) {
-        var res = isArray(item) ? callee(...item, i) : callee(item, i);
-        if (res) {
-            results.push(res);
-            /* set ukey for diff */
-            res.key = key + '_' + i;
-            // i++
-        }
-        i++;
-        /*
-            需要在循环外部 i++ ，这样保证即使有空元素被排出后，索引位置也是正确的
-        */
+    // the input hooks supports array
+    if (isArray(hook)) {
+        hooks = hooks.concat(hook);
     }
-    return results;
-}
-
-function getComponent(name) {
-    return getCurrentInstance().components?.[name] || getCurrentApp().components[name];
-}
-function getDirective(name) {
-    return getCurrentInstance().directives?.[name] || getCurrentApp().directives[name];
-}
-
-const toCodeString = (_) => "'" + _ + "'";
-
-const inlineStyleDelimiter = /\s*[:;]\s*/;
-function parseInlineStyle(styleString) {
-    var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
-    var l = chips.length;
-    var styleMap = {};
-    while (l) {
-        styleMap[camelize(chips[l - 2])] = toCodeString(chips[l - 1]);
-        l -= 2;
-    }
-    return styleMap;
-}
-const inlineClassDelimiter = /\s+/;
-const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
-
-var renderMethods = {
-    createComment,
-    createElement,
-    createFragment,
-    createKeyframe,
-    createKeyframes,
-    createMedia,
-    createSVGElement,
-    createStyleSheet,
-    createStyle,
-    createText,
-    renderList,
-    mergeSelectors,
-    display,
-    createDeclaration,
-    mixin,
-    important,
-    createSupports,
-    flatRules,
-    createComponent,
-    getComponent,
-    getDirective,
-    getCurrentScope,
-    createEvent,
-    createHandlerKey,
-    normalizeClass,
-    normalizeStyle,
-    renderSlot,
-    injectDirective,
-    injectDirectives
-};
-Object.entries(renderMethods).reduce((res, [name, method]) => {
-    res[name] = method.name;
-    return res;
-}, {});
-
-/* object extend */
-const extend = Object.assign;
-
-// normalized class always will be a map with true value
-function normalizeClass(rawClass) {
-    /*
-        crush class support
-        string
-        array
-        object
-        function : use the return value
-    */
-    if (isString(rawClass)) {
-        return parseInlineClass(rawClass);
-    }
-    else if (isObject(rawClass)) {
-        return rawClass;
-    }
-    else if (isArray(rawClass)) {
-        return extend(...rawClass.map(normalizeClass));
-    }
-    else if (isFunction(rawClass)) {
-        return normalizeClass(rawClass());
+    else {
+        hooks.push(hook);
     }
 }
-
+function injectMapHooks(target, mapHooks) {
+    for (let type in mapHooks) {
+        injectHook(type, target, mapHooks[type]);
+    }
+    return target;
+}
 /*
-    the result always return a map
+    binding is used for bind the callback context , it is necessary
 */
-function normalizeStyle(style) {
-    if (isObject(style)) {
-        return style;
-    }
-    else if (isString(style)) {
-        return parseInlineStyle(style);
-    }
-    else if (isArray(style)) {
-        style = style.map(normalizeStyle);
-        return extend(...style);
-    }
+function callHook(type, target, options = null, ...args) {
+    const hooks = target[type];
+    if (!hooks)
+        return;
+    var { binding, scheduler } = options || EMPTY_OBJ;
+    hooks.forEach((hook) => {
+        if (scheduler) {
+            scheduler(hook, binding, ...args);
+        }
+        else {
+            hook.apply(binding, args);
+        }
+    });
 }
+const createHook = (type) => (hook) => injectHook(type, getCurrentInstance(), hook);
+// no beforeCreate
+const onCreated = createHook("created" /* CREATED */);
+const onBeforeMount = createHook("beforeMount" /* BEFORE_MOUNT */);
+const onMounted = createHook("mounted" /* MOUNTED */);
+const onBeforeUpdate = createHook("beforeUpdate" /* BEFORE_UPDATE */);
+const onUpdated = createHook("updated" /* UPDATED */);
+const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
+const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
 
-function renderSlot(slotName, backup) {
-}
-
-const stateIniterHandler = {
-    get(initializer, key) {
-        switch (initializer.index) {
-            case 0:
-                /* define state */
-                var scope = getCurrentScope();
-                scope[key] = initializer.value;
-                initializer.stateName = key;
-                initializer.index++;
-                return initializer.value;
-            case 1:
-                /* update state */
-                var scope = getCurrentScope();
-                var updateFn = (newValue) => {
-                    scope[initializer.stateName] = newValue;
-                };
-                scope[key] = updateFn;
-                initializer.index++;
-                return updateFn;
-            case 2:
-                var scope = getCurrentScope();
-                function onChange(callback) {
-                    watch(() => {
-                        scope[initializer.stateName];
-                    }, callback);
-                }
-                initializer.index++;
-                return onChange;
+function injectMixin(options, mixin) {
+    for (let key in mixin) {
+        switch (key) {
+            case ComponentOptions.MIXINS:
+                injectMixins(options, options[key]);
+                break;
+            case ComponentOptions.BEFORE_CREATE:
+            case ComponentOptions.CREATE:
+            case ComponentOptions.CREATED:
+            case ComponentOptions.BEFORE_MOUNT:
+            case ComponentOptions.MOUNTED:
+            case ComponentOptions.BEFORE_UPDATE:
+            case ComponentOptions.UPDATED:
+            case ComponentOptions.BEFORE_UNMOUNT:
+            case ComponentOptions.UNMOUNTED:
+                injectHook(key, options, mixin[key]);
+                break;
             default:
-                warn('stop !!!');
+                debugger;
         }
     }
-};
-function useState(value) {
-    return new Proxy({
-        value,
-        index: 0
-    }, stateIniterHandler);
+    // ! 
+    return options;
+}
+function injectMixins(target, mixins) {
+    mixins.forEach((mixin) => {
+        injectMixin(target, mixin);
+    });
+    return target;
 }
 
-export { ComponentOptionKeys, Nodes, NodesMap, createApp, createComment, createComponent, createDeclaration, createElement, createEvent, createFragment, createHandlerKey, createKeyframe, createKeyframes, createMedia, createSVGElement, createStyle, createStyleSheet, createSupports, createText, directiveTypeOf, display, effect, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, important, injectDirective, injectDirectives, injectHook, mergeSelectors, mergeSplitedSelectorsAndJoin, mixin, mountComponent, nextTick, nextTickSingleWork, normalizeClass, normalizeStyle, onMounted, parseHandlerKey, reactive, renderList, renderSlot, setCurrentInstance, splitSelector, tagTypeOf, useState };
+var ComponentOptions;
+(function (ComponentOptions) {
+    ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
+    ComponentOptions["CREATE"] = "create";
+    // setup funcition
+    ComponentOptions["CREATED"] = "created";
+    ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
+    ComponentOptions["MOUNTED"] = "mounted";
+    ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
+    ComponentOptions["UPDATED"] = "updated";
+    ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
+    ComponentOptions["UNMOUNTED"] = "unmounted";
+    ComponentOptions["TEMPLATE"] = "template";
+    ComponentOptions["RENDER"] = "render";
+    ComponentOptions["PROPS"] = "props";
+    ComponentOptions["MIXINS"] = "mixins";
+    ComponentOptions["COMPOENNTS"] = "components";
+    ComponentOptions["DIRECTIVES"] = "directives";
+})(ComponentOptions || (ComponentOptions = {}));
+function initOptions(options) {
+    for (let key in options) {
+        switch (key) {
+            case ComponentOptions.TEMPLATE:
+                options.createRender = compile(options[key]);
+                break;
+            case ComponentOptions.RENDER:
+                // todo
+                break;
+            case ComponentOptions.BEFORE_CREATE:
+            case ComponentOptions.CREATE:
+            case ComponentOptions.CREATED:
+            case ComponentOptions.BEFORE_MOUNT:
+            case ComponentOptions.MOUNTED:
+            case ComponentOptions.BEFORE_UPDATE:
+            case ComponentOptions.UPDATED:
+            case ComponentOptions.BEFORE_UNMOUNT:
+            case ComponentOptions.UNMOUNTED:
+                var option = options[key];
+                if (option && !isArray(option)) {
+                    options[key] = [option];
+                }
+                break;
+            case ComponentOptions.MIXINS:
+                var mixins = options[key];
+                injectMixins(options, mixins);
+                break;
+            case ComponentOptions.COMPOENNTS:
+                break;
+            case ComponentOptions.DIRECTIVES:
+                break;
+        }
+    }
+    options._isOptions = true;
+}
+
+function initScope() {
+    return {};
+}
+
+function createComponentInstance(options) {
+    if (!options._isOptions) {
+        initOptions(options);
+    }
+    var app = getCurrentApp();
+    const instance = {
+        uid: uid(),
+        scope: reactive$1(initScope()),
+        render: null,
+        vnode: null,
+        slots: null,
+        props: null,
+        createRender: options.createRender,
+        components: options.components,
+        directives: options.directives,
+        // hooks will always be an array
+        beforeCreate: options.beforeCreate && [...options.beforeCreate],
+        create: options.create && [...options.create],
+        created: options.created && [...options.created],
+        beforeMount: options.beforeMount && [...options.beforeMount],
+        mounted: options.mounted && [...options.mounted],
+        beforeUnmount: options.beforeUnmount && [...options.beforeUnmount],
+        unmounted: options.unmounted && [...options.unmounted],
+        beforeUpdate: options.beforeUpdate && [...options.beforeUpdate],
+        updated: options.updated && [...options.updated]
+    };
+    if (app.mixins) {
+        injectMixins(instance, app.mixins);
+    }
+    return instance;
+}
+
+function injectDirectives(target, directives) {
+    for (let directive of directives) {
+        injectDirective(target, directive);
+    }
+    return target;
+}
+/*
+    参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
+*/
+function setOwnKey(arr) {
+    for (let key of arr) {
+        arr[key] = true;
+    }
+    return arr;
+}
+function injectDirective(target, [directive, value, _arguments, modifiers]) {
+    // 指令会携带信息 值 参数 修饰符
+    var dirs = target.dirs ||= new Map();
+    const infos = {
+        value,
+        directive,
+        _arguments: _arguments && setOwnKey(_arguments),
+        modifiers: modifiers && setOwnKey(modifiers)
+    };
+    dirs.set(directive, infos);
+    // ! 
+    return target;
+}
+function processHook(type, next, previous = null) {
+    // 不存在两个节点都不存在
+    if (previous) {
+        if (next.patchKey === previous.patchKey) {
+            // same node update
+            processDirHook(type, next, previous);
+        }
+        else {
+            // fake mount and unmount
+            // 卸载旧节点 beforeUnmount , unmounted
+            // 挂载新节点 beforeCreate , created , beforeMount , mounted
+            if (type === "beforeUpdate" /* BEFORE_UPDATE */) {
+                processHook("beforeUnmount" /* BEFORE_UNMOUNT */, previous);
+                processHook("beforeCreate" /* BEFORE_CREATE */, next);
+                processHook("beforeMount" /* BEFORE_MOUNT */, next);
+            }
+            else if (type === "updated" /* UPDATED */) {
+                processHook("unmounted" /* UNMOUNTED */, previous);
+                processHook("created" /* CREATED */, next);
+                processHook("mounted" /* MOUNTED */, next);
+            }
+        }
+    }
+    else {
+        processDirHook(type, next);
+    }
+}
+function normalizeDirective(directive) {
+    return isFunction(directive) ? {
+        mounted: directive,
+        updated: directive
+    } : directive;
+}
+function processDirHook(type, next, previous = null) {
+    for (let [dir, infos] of next.dirs || EMPTY_ARR) {
+        var _dir = normalizeDirective(dir);
+        var hook = _dir[type];
+        if (hook) {
+            if (previous) {
+                infos.oldValue = previous.dirs.get(dir).value;
+            }
+            hook(next.ref, infos, next);
+        }
+    }
+}
+
+export { $var, App, ComponentOptions, EMPTY_ARR, EMPTY_OBJ, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, Nodes, NodesMap, ReactiveTypes, SYMBOL_ITERATOR$1 as SYMBOL_ITERATOR, addClass, addEventListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, capitalize, checkBuiltInAnimations, compile, computed, createApp, createComponent, createComponentInstance, createDeclaration, createElement, createEvent, createFragment, createFunction, createHandlerKey, createKeyframe, createKeyframes, createMapEntries, createMedia, createNode, createSetter, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, declare, deleteKeyframe, deleteMedium, deleteRule, destructur, diffChildren, display, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, error, exec, execCaptureGroups, extend, flatRules, getComponent, getComputedStyle, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, getElementComputedStyle, getElementStyle, getElementStyleValue, getEmptyObj, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, getUnionkeysFromMaps, hasOwn, hsl, hsla, hyphenate, important, initOptions, initScope, injectDirective, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, makeMap, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, nextTickSingleWork, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onUnmounted, onUpdated, onceListener, parseHandlerKey, parseInlineClass, parseInlineStyle, parseStyleValue, patch, perspective, processHook, processdom, reactive$1 as reactive, reactiveCollectionHandler, reactiveHandler, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeEventListener, removeFromArray, renderList, renderSlot, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonlyCollectionHandler, shallowReadonlyHandler, skew, skewX, skewY, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, translate3d, translateX, translateY, trigger, typeOf, uStringId, uVar, uid, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateStyleSheet, warn, watch };
