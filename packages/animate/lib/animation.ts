@@ -1,12 +1,3 @@
-import { hyphenate } from "@crush/common"
-
-
-export function getComputedStyle(el: Element, prop?: any) {
-    var style = window.getComputedStyle(el)
-    return prop ? style.getPropertyValue(hyphenate(prop)) : style
-}
-
-
 
 /*  think ? 
 
@@ -26,3 +17,4 @@ export const enum Animation {
 function doAnimation(el: Element, animationOptions: Record<Animation, any>) {
 
 }
+

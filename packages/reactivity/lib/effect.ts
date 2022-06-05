@@ -1,10 +1,13 @@
 
+var observeMap = new WeakMap()
 
-export function track(...args:any[]) {
+export function track(...args: any[]) {
+    console.warn('track');
 
 }
 
 
-export function trigger(...args:any[]) {
+export function trigger(...args: any[]) {
+    console.warn('trigger');
 
 }

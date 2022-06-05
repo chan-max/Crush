@@ -43,7 +43,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     instance.props = props || EMPTY_OBJ
     instance.slots = children || EMPTY_OBJ
 
-    // 保存vnode上的组件实例
+    // process props
 
 
     // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
@@ -62,10 +62,14 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     instance.render = render
 
     // component update fn
-    function update() {
+    function update(p?: any, n?: any) { // 可能通过updateComponent传入旧节点
         const { isMounted, vnode } = instance
-
         // 每次更新生成新树
+
+        if(n){
+            component = n
+        }
+
         setCurrentInstance(instance)
         var nextTree = render()
         setCurrentInstance(null)
@@ -75,10 +79,12 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
         // console.log('prevTree', vnode);
         // console.log('nextTree', nextTree);
-
-        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, component)
+        /*
+            这里发生的更新是自身状态变化发生的更新，不存在生成新节点
+        */
+        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, component, p)
         patch(vnode, nextTree, container)
-        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, component)
+        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, component, p)
         instance.isMounted = true
         instance.vnode = nextTree
     }

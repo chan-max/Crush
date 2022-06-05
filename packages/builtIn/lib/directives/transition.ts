@@ -3,6 +3,8 @@
     transition for single Element
 */
 
-export const transtion = {
-    
+export const transition = {
+    beforeMount() {
+        debugger
+    }
 }

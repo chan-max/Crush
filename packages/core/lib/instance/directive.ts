@@ -62,7 +62,7 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = nul
     if (previous) {
         if (next.patchKey === previous.patchKey) {
             // same node update
-            processDirHook(type, next, previous)
+            doProcessHook(type, next, previous)
         } else {
             // fake mount and unmount
             // 卸载旧节点 beforeUnmount , unmounted
@@ -78,7 +78,7 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = nul
             }
         }
     } else {
-        processDirHook(type, next)
+        doProcessHook(type, next)
     }
 }
 
@@ -90,7 +90,7 @@ function normalizeDirective(directive: any) {
 }
 
 
-function processDirHook(type: LifecycleHooks, next: any, previous: any = null) {
+function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefined) {
     const isComponent = next.nodeType === Nodes.COMPONENT
     if (isComponent) {
         var instance = next.instance
@@ -106,7 +106,7 @@ function processDirHook(type: LifecycleHooks, next: any, previous: any = null) {
                 infos.oldValue = previous.dirs.get(dir).value
             }
             // 
-            hook(isComponent ? next.instance.scope : next.el, infos, next)
+            hook(isComponent ? next.instance.scope : next.el, infos, next, previous)
         }
     }
 }

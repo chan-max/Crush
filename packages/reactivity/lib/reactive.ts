@@ -1,5 +1,5 @@
 import { typeOf } from "@crush/common";
-import { ReactiveFlags, ReactiveTypes } from "./common";
+import { ReactiveTypes } from "./common";
 import {
     reactiveCollectionHandler,
     reactiveHandler,

@@ -6,7 +6,7 @@ export const updateComponent = (p: any, n: any, container: any, anchor: any) => 
     if (p.patchKey === n.patchKey) {
         var instance = n.instance = p.instance
         // update props ...
-        instance.update()
+        instance.update(p, n)
     } else {
         unmountComponent(p, container, anchor)
         mountComponent(n, container, anchor)
