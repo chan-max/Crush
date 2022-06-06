@@ -1,2 +1,2 @@
 
-export type PluginType = Function
+export type PluginType = any

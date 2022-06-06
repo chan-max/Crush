@@ -1,5 +1,5 @@
 
-import { EMPTY_OBJ ,isArray } from "@crush/common"
+import { emptyObject ,isArray } from "@crush/common"
 /*
     those hooks is shared with the component instance and element vnode 
 */
@@ -55,7 +55,7 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
     var {
         binding,
         scheduler
-    } = options || EMPTY_OBJ
+    } = options || emptyObject
 
     hooks.forEach((hook: any) => {
         if (scheduler) {

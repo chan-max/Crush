@@ -51,7 +51,7 @@ import {
     LifecycleHooks
 } from './lifecycle'
 
-import { isFunction, EMPTY_ARR } from '@crush/common'
+import { isFunction, emptyArray } from '@crush/common'
 import { callHook } from './lifecycle'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
@@ -98,7 +98,7 @@ function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefine
         callHook(type, instance, { binding: scope }, scope)
     }
 
-    for (let [dir, infos] of next.dirs || EMPTY_ARR) {
+    for (let [dir, infos] of next.dirs || emptyArray) {
         var _dir = normalizeDirective(dir)
         var hook = _dir[type]
         if (hook) {

@@ -2,7 +2,7 @@ import {
     isNumber
 } from '@crush/common'
 import {
-    EMPTY_OBJ
+    emptyObject
 } from '@crush/common'
 
 export const insertNull = (arr: any[], index: number, length: number = 1) => arr.splice(index, 0, ...new Array(length).fill(null))
@@ -13,7 +13,7 @@ export const getReservedProp = (key: string) => key.slice(1)
 
 export function getUnionkeysFromMaps(...maps: Record<string, any>[]): string[] {
     var _: Record<string, any> = {}
-    for (let i in maps || EMPTY_OBJ) {
+    for (let i in maps || emptyObject) {
         for (let key in maps[i]) {
             _[key] = true
         }

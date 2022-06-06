@@ -21,7 +21,7 @@ import {
 
 
 import {
-    EMPTY_OBJ,
+    emptyObject,
     uid,
     uStringId
 } from '@crush/common'
@@ -185,7 +185,7 @@ function genSlotContent(node: any, context: any) {
     var slots: Record<string, string> = {}
 
     children.forEach((child: any) => {
-        var { name, scope } = child.outlet || EMPTY_OBJ
+        var { name, scope } = child.outlet || emptyObject
         if (name) {
             slots[name] = toArrowFunction(genNode(child, context), scope)
         } else {

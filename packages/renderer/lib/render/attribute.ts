@@ -1,13 +1,13 @@
 
-import { EMPTY_OBJ } from "@crush/common";
+import { emptyObject } from "@crush/common";
 import { keyOf,Nodes } from "@crush/const";
 import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
 
 import { getUnionkeysFromMaps } from "./common";
 
 export function updateClass(el: any, pClass: any, nClass: any,) {
-    pClass ||= EMPTY_OBJ
-    nClass ||= EMPTY_OBJ
+    pClass ||= emptyObject
+    nClass ||= emptyObject
     for (let className of getUnionkeysFromMaps(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
@@ -20,7 +20,7 @@ export function updateClass(el: any, pClass: any, nClass: any,) {
 }
 
 export function mountClass(_class: any, el: HTMLElement) {
-    updateClass(EMPTY_OBJ, _class, el)
+    updateClass(emptyObject, _class, el)
 }
 
 export function unmountClass(el: HTMLElement) {
@@ -38,11 +38,11 @@ import { updateDeclaration } from "./declaration";
 
 
 export function mountAttributes(el: any, props: any) {
-    updateAttributes(el, EMPTY_OBJ, props)
+    updateAttributes(el, emptyObject, props)
 }
 export function updateAttributes(el: any, pProps: any, nProps: any) {
-    pProps ||= EMPTY_OBJ
-    nProps ||= EMPTY_OBJ
+    pProps ||= emptyObject
+    nProps ||= emptyObject
     for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
         var pValue = pProps[propName]
         var nValue = nProps[propName]

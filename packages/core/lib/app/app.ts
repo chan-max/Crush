@@ -1,5 +1,5 @@
 import { builtInComponents, builtInDirectives } from "@crush/builtin"
-import { error, warn } from "@crush/common"
+import { error, isFunction, warn } from "@crush/common"
 import { isString } from "@crush/common"
 import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
@@ -69,7 +69,7 @@ export class App implements AppInstance {
     directives: Record<string, DirectiveType> = builtInDirectives
     directive(name: string, directive: DirectiveType) {
         if (this.directives[name]) {
-           return warn('directive is already exist')
+            return warn('directive is already exist')
         }
         this.directives[name] = directive
     }
@@ -81,9 +81,8 @@ export class App implements AppInstance {
 
     plugins: Set<PluginType> = new Set()
     use(plugin: PluginType, ...options: any[]) {
-        if (!this.plugins.has(plugin)) {
-            plugin(this, ...options)
-        }
+        if (this.plugins.has(plugin)) return
+        (isFunction(plugin) ? plugin : plugin.install)(this, ...options)
     }
 
     container: Element | null = null

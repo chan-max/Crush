@@ -2,7 +2,7 @@ import {
     isArray,
     isString,
     isObject,
-    EMPTY_OBJ ,
+    emptyObject ,
     camelize, hyphenate,
 } from '@crush/common'
 
@@ -51,8 +51,8 @@ export function parseStyleValue(rawValue: any): StyleValue {
 
 
 export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any, nDeclaration: any) {
-    pDeclaration ||= EMPTY_OBJ
-    nDeclaration ||= EMPTY_OBJ
+    pDeclaration ||= emptyObject
+    nDeclaration ||= emptyObject
     for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
         var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName])
         var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName])
@@ -63,7 +63,7 @@ export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any,
 }
 
 export function mountDeclaration(style: CSSStyleDeclaration, declaration: any) {
-    return updateDeclaration(style, EMPTY_OBJ, declaration)
+    return updateDeclaration(style, emptyObject, declaration)
 }
 
 // export 
@@ -71,7 +71,7 @@ export const setElementStyleDeclaration = (el: HTMLElement, declaration: Record<
 
 
 export function unmountDeclaration(style: CSSStyleDeclaration, declaration: any) {
-    return updateDeclaration(style, declaration, EMPTY_OBJ)
+    return updateDeclaration(style, declaration, emptyObject)
 }
 
 

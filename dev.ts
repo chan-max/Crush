@@ -1,21 +1,15 @@
-import { createApp } from "./packages/core";
+import { createApp, hasOwn, isReactive, isRef } from "./packages/core";
 
 var root = {
     template: `
         <style>
-            h1{
-                @media (min-width:900px){
-                    if(count%2 == 0){
-                        color:red;
-                    }
-                }
-            }
         </style>
         <button @click="count++">
             {{count}}
         </button>   
-        <h1 > {{count}} </h1>
+        <h1 --if="count%2 == 0"> {{count}} </h1>
     `,
+
     create($) {
         $.count = 0
         $.log = () => {
@@ -29,7 +23,14 @@ console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
-function transition(){
+import { reactive } from "./packages/reactivity/lib/reactive";
+
+
+
+var p = reactive([1,2,3,4,5,6])
+
+for(let i of p){
+    console.log(i);
     
 }
 

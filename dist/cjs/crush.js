@@ -79,8 +79,8 @@ var id = 0;
 const uid = () => id++;
 const uStringId = () => String(uid());
 const uVar = () => `_${uid()}`;
-const EMPTY_OBJ = Object.freeze({});
-const EMPTY_ARR = Object.freeze([]);
+const emptyObject = Object.freeze({});
+const emptyArray = Object.freeze([]);
 
 const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     res[item] = mapValue;
@@ -544,7 +544,7 @@ const isReservedProp = (key) => key.startsWith(`_${key}`);
 const getReservedProp = (key) => key.slice(1);
 function getUnionkeysFromMaps(...maps) {
     var _ = {};
-    for (let i in maps || EMPTY_OBJ) {
+    for (let i in maps || emptyObject) {
         for (let key in maps[i]) {
             _[key] = true;
         }
@@ -689,8 +689,8 @@ function parseStyleValue(rawValue) {
     };
 }
 function updateDeclaration(style, pDeclaration, nDeclaration) {
-    pDeclaration ||= EMPTY_OBJ;
-    nDeclaration ||= EMPTY_OBJ;
+    pDeclaration ||= emptyObject;
+    nDeclaration ||= emptyObject;
     for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
         var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName]);
         var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName]);
@@ -700,12 +700,12 @@ function updateDeclaration(style, pDeclaration, nDeclaration) {
     }
 }
 function mountDeclaration(style, declaration) {
-    return updateDeclaration(style, EMPTY_OBJ, declaration);
+    return updateDeclaration(style, emptyObject, declaration);
 }
 // export 
 const setElementStyleDeclaration = (el, declaration) => mountDeclaration(el.style, declaration);
 function unmountDeclaration(style, declaration) {
-    return updateDeclaration(style, declaration, EMPTY_OBJ);
+    return updateDeclaration(style, declaration, emptyObject);
 }
 // ready for animation and transition
 function getStyleValue(style, key) {
@@ -738,8 +738,8 @@ function getElementComputedStyle(el, keys) {
 }
 
 function updateClass(el, pClass, nClass) {
-    pClass ||= EMPTY_OBJ;
-    nClass ||= EMPTY_OBJ;
+    pClass ||= emptyObject;
+    nClass ||= emptyObject;
     for (let className of getUnionkeysFromMaps(pClass, nClass)) {
         var p = pClass[className];
         var n = nClass[className];
@@ -747,17 +747,17 @@ function updateClass(el, pClass, nClass) {
     }
 }
 function mountClass(_class, el) {
-    updateClass(EMPTY_OBJ, _class, el);
+    updateClass(emptyObject, _class, el);
 }
 function unmountClass(el) {
     el.className = '';
 }
 function mountAttributes(el, props) {
-    updateAttributes(el, EMPTY_OBJ, props);
+    updateAttributes(el, emptyObject, props);
 }
 function updateAttributes(el, pProps, nProps) {
-    pProps ||= EMPTY_OBJ;
-    nProps ||= EMPTY_OBJ;
+    pProps ||= emptyObject;
+    nProps ||= emptyObject;
     for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
         var pValue = pProps[propName];
         var nValue = nProps[propName];
@@ -1754,8 +1754,8 @@ function mountComponent(component, container, anchor = null) {
     processHook("beforeCreate" /* BEFORE_CREATE */, component);
     // setup instance
     const { scope, createRender } = instance;
-    instance.props = props || EMPTY_OBJ;
-    instance.slots = children || EMPTY_OBJ;
+    instance.props = props || emptyObject;
+    instance.slots = children || emptyObject;
     // process props
     // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
     setCurrentInstance(instance);
@@ -2720,7 +2720,7 @@ function genSlotContent(node, context) {
     var _default;
     var slots = {};
     children.forEach((child) => {
-        var { name, scope } = child.outlet || EMPTY_OBJ;
+        var { name, scope } = child.outlet || emptyObject;
         if (name) {
             slots[name] = toArrowFunction(genNode(child, context), scope);
         }
@@ -3617,7 +3617,7 @@ function callHook(type, target, options = null, ...args) {
     const hooks = target[type];
     if (!hooks)
         return;
-    var { binding, scheduler } = options || EMPTY_OBJ;
+    var { binding, scheduler } = options || emptyObject;
     hooks.forEach((hook) => {
         if (scheduler) {
             scheduler(hook, binding, ...args);
@@ -3834,7 +3834,7 @@ function doProcessHook(type, next, previous = undefined) {
         var scope = instance.scope;
         callHook(type, instance, { binding: scope }, scope);
     }
-    for (let [dir, infos] of next.dirs || EMPTY_ARR) {
+    for (let [dir, infos] of next.dirs || emptyArray) {
         var _dir = normalizeDirective(dir);
         var hook = _dir[type];
         if (hook) {
@@ -3849,8 +3849,8 @@ function doProcessHook(type, next, previous = undefined) {
 
 exports.$var = $var;
 exports.App = App;
-exports.EMPTY_ARR = EMPTY_ARR;
-exports.EMPTY_OBJ = EMPTY_OBJ;
+exports.emptyArray = emptyArray;
+exports.emptyObject = emptyObject;
 exports.IMPORTANT = IMPORTANT;
 exports.IMPORTANT_KEY = IMPORTANT_KEY;
 exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;

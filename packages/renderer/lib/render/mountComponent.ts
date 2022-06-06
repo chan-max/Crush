@@ -1,6 +1,6 @@
 import { createComponentInstance, LifecycleHooks, callHook } from "@crush/core"
 
-import { EMPTY_OBJ } from "@crush/common"
+import { emptyObject } from "@crush/common"
 
 import renderMethods from "../renderMethods"
 import { processdom } from "../common/processdom"
@@ -40,8 +40,8 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
     // setup instance
     const { scope, createRender } = instance;
-    instance.props = props || EMPTY_OBJ
-    instance.slots = children || EMPTY_OBJ
+    instance.props = props || emptyObject
+    instance.slots = children || emptyObject
 
     // process props
 

@@ -41,7 +41,6 @@ function mountElement(vnode: any, container: any, anchor: any) {
     vnode.el = el
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
-
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)

@@ -1,4 +1,4 @@
-import { isArray, isFunction,hasOwn } from "@crush/common"
+import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
@@ -14,6 +14,9 @@ export const getLastVisitTarget = () => _target
 export const getLastVisitKey = () => _key
 
 const collectionHandlers: Record<string, any> = {
+    get size() {
+        return _target.size
+    },
     add(value: any) {
         var target = toRaw(this)
         if (_isReadonly) {
@@ -145,23 +148,20 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
         _target = target
         _key = key
         // reserved keys
-        if (key === ReactiveFlags.RAW) {
-            return target
-        } else if (key === ReactiveFlags.IS_REACTIVE) {
-            return !isReadonly
-        } else if (key === ReactiveFlags.IS_SHALLOW) {
-            return isShallow
-        } else if (key === ReactiveFlags.IS_READONLY) {
-            return isReadonly
+        switch (key) {
+            case ReactiveFlags.RAW:
+                return target
+            case ReactiveFlags.IS_REACTIVE:
+                return !isReadonly
+            case ReactiveFlags.IS_SHALLOW:
+                return isShallow
+            case ReactiveFlags.IS_READONLY:
+                return isReadonly
         }
 
         if (isCollection) {
-            if (key === 'size') {
-                track(target)
-                return target.size
-            }
+            // collection methods reset
             if (hasOwn(collectionHandlers, key) && key in target) {
-                // collection methods reset
                 return collectionHandlers[key]
             }
         } else if (hasOwn(target, key)) {
@@ -198,6 +198,7 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
     return (target: any, key: any, newValue: any, receiver: any) => {
         // 返回 false 时会报错
         if (isReadonly) {
+            warn(`${target} is readonly`)
             return true
         }
         if (hasOwn(target, key)) {
@@ -236,9 +237,6 @@ function deleteProperty(target: any, key: any) {
 function readonlyDeleteProperty(target: any, key: any) {
     console.warn('readonly cant delete');
 }
-
-
-
 
 
 // object handlers
