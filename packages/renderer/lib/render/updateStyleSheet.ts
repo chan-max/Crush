@@ -85,13 +85,16 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
 
 
 function updateStyleRule(pRule: any, nRule: any, vnode: any) {
-    var ref: CSSStyleRule = nRule.ref = pRule.ref
+    var rule: CSSStyleRule = nRule.rule = pRule.rule
+    debugger
+    var style = rule.style
+
+    if (!style) return
     var { selector: pSelector, children: pDeclaration } = pRule
     var { selector: nSelector, children: nDeclaration } = nRule
     if (pSelector !== nSelector) {
-        setSelector(ref, nSelector)
+        setSelector(rule, nSelector)
     }
-    var style = ref.style
     updateDeclaration(style, pDeclaration, nDeclaration)
 }
 
@@ -116,11 +119,11 @@ function updateMedium(mediaRule: CSSMediaRule, pMediaum: string | string[], nMed
 }
 
 function updateMediaRule(pRule: any, nRule: any, vnode: any) {
-    var ref: CSSMediaRule = nRule.ref = pRule.ref
+    var rule: CSSMediaRule = nRule.rule = pRule.rule
     var { media: pMedia, children: pRules } = pRule
     var { media: nMedia, children: nRules } = nRule
-    updateMedium(ref, pMedia, nMedia)
-    updateSheet(pRules, nRules, ref, vnode)
+    updateMedium(rule, pMedia, nMedia)
+    updateSheet(pRules, nRules, rule, vnode)
 }
 
 
@@ -131,12 +134,12 @@ import { deleteKeyframe, deleteRule, setKeyframesName, setKeyText, appendMedium,
 import { isArray, isString } from "@crush/common"
 
 function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
-    var keyframesRef: CSSKeyframesRule = nRule.ref = pRule.ref
+    var keyframesrule: CSSKeyframesRule = nRule.rule = pRule.rule
     var { keyframes: pKeyframes, children: pRules } = pRule
     var { keyframes: nKeyframes, children: nRules } = nRule
 
     if (pKeyframes !== nKeyframes) {
-        setKeyframesName(keyframesRef, nKeyframes)
+        setKeyframesName(keyframesrule, nKeyframes)
     }
 
     var maxLength = Math.max(pRules.length, nRules.length)
@@ -148,16 +151,16 @@ function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
         var pk = pRules[i]
         var nk = nRules[i]
         if (!pk) {
-            mountKeyframeRule(keyframesRef, nk, vnode)
+            mountKeyframeRule(keyframesrule, nk, vnode)
         } else if (!nk) {
-            deleteKeyframe(keyframesRef, pk.keyframe)
+            deleteKeyframe(keyframesrule, pk.keyframe)
         } else {
             var { keyframe: pKeyframe, children: pDeclaration } = pk
             var { keyframe: nKeyframe, children: nDeclaration } = nk
-            let keyframeRef = nk.ref = pk.ref
-            var style = keyframeRef.style
+            let keyframerule = nk.rule = pk.rule
+            var style = keyframerule.style
             if (pKeyframe !== nKeyframe) {
-                setKeyText(keyframeRef, nKeyframe)
+                setKeyText(keyframerule, nKeyframe)
             }
             updateDeclaration(style, pDeclaration, nDeclaration)
         }

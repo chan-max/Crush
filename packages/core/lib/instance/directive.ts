@@ -53,7 +53,6 @@ import {
 
 import { isFunction, EMPTY_ARR } from '@crush/common'
 import { callHook } from './lifecycle'
-import { scope } from '../../../../recycler/crush/compiler/generator/const'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
 */
@@ -95,7 +94,8 @@ function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefine
     if (isComponent) {
         var instance = next.instance
         // 组件需要处理实例钩子
-        callHook(type, instance, { binding: instance.scope }, scope)
+        var scope = instance.scope
+        callHook(type, instance, { binding: scope }, scope)
     }
 
     for (let [dir, infos] of next.dirs || EMPTY_ARR) {

@@ -1,8 +1,0 @@
-
-/*
-    options component
-*/
-
-/*
-    funcition component
-*/

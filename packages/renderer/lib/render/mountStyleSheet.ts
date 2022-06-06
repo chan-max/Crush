@@ -62,10 +62,11 @@ export function mountStyleRule(
         selector,
         children: declaration
     } = rule
+
     if (!declaration) return
     const index = insertStyle(sheet, selector, insertIndex)
     const insertedRule = sheet.cssRules[index]
-    rule.ref = insertedRule // set ref
+    rule.rule = insertedRule // set rule
     const insertedRuleStyle = insertedRule.style
     mountDeclaration(insertedRuleStyle, declaration)
 }
@@ -80,7 +81,7 @@ function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number =
 
     var index = insertMedia(sheet, media, insertIndex)
     var newSheet = sheet.cssRules[index]
-    rule.ref = newSheet
+    rule.rule = newSheet
     mountSheet(newSheet, rules, vnode)
 }
 
@@ -96,7 +97,7 @@ function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: numb
     var keyframes = rule.keyframes
     var rules = rule.children
     var index = insertKeyframes(sheet, keyframes, insertIndex)
-    rule.ref = sheet.cssRules[insertIndex]
+    rule.rule = sheet.cssRules[insertIndex]
     var newSheet = sheet.cssRules[index]
     mountSheet(newSheet, rules, vnode)
 }
@@ -112,7 +113,7 @@ export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any
     sheet.appendRule(`${keyframe}{}`)
     var index = sheet.cssRules.length - 1
     const insertedRule: any = sheet.cssRules[index]
-    rule.ref = insertedRule // set ref
+    rule.rule = insertedRule // set rule
     const insertedRuleStyle = insertedRule.style
 
     for (let property in declaration) {

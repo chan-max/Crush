@@ -45,10 +45,20 @@
         }
     };
 
+    /*
+        transition for single Element
+    */
+    const transition = {
+        beforeMount() {
+            debugger;
+        }
+    };
+
     const builtInComponents = {};
     const builtInDirectives = {
         show,
-        model
+        model,
+        transition
     };
 
     const cache = (fn) => {
@@ -469,6 +479,7 @@
             当一层平铺结束后 ， 处理declaration
             stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
         */
+        var result = [];
         flatted.forEach((rule) => {
             if (rule.nodeType === exports.Nodes.STYLE_RULE) {
                 /*
@@ -480,9 +491,16 @@
                     const children = rule.children.map((r) => r.children);
                     rule.children = (rule.children.length === 0 ? null : mixin(...children));
                 }
+                // 去除没有children的 style rule
+                if (rule.children) {
+                    result.push(rule);
+                }
+            }
+            else {
+                result.push(rule);
             }
         });
-        return flatted;
+        return result;
     }
 
     /*
@@ -776,11 +794,11 @@
     */
     const mountStyleSheet = (vnode, container, anchor) => {
         const { props, children } = vnode;
-        var ref = docCreateElement('style');
-        mountAttributes(ref, props);
-        vnode.ref = ref;
-        insertElement(ref, container, anchor);
-        var sheet = ref.sheet;
+        var el = docCreateElement('style');
+        mountAttributes(el, props);
+        vnode.el = el;
+        insertElement(el, container, anchor);
+        var sheet = el.sheet;
         mountSheet(sheet, children, vnode);
     };
     function mountSheet(sheet, rules, vnode) {
@@ -814,7 +832,7 @@
             return;
         const index = insertStyle(sheet, selector, insertIndex);
         const insertedRule = sheet.cssRules[index];
-        rule.ref = insertedRule; // set ref
+        rule.rule = insertedRule; // set rule
         const insertedRuleStyle = insertedRule.style;
         mountDeclaration(insertedRuleStyle, declaration);
     }
@@ -826,7 +844,7 @@
         }
         var index = insertMedia(sheet, media, insertIndex);
         var newSheet = sheet.cssRules[index];
-        rule.ref = newSheet;
+        rule.rule = newSheet;
         mountSheet(newSheet, rules, vnode);
     }
     function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
@@ -840,7 +858,7 @@
         var keyframes = rule.keyframes;
         var rules = rule.children;
         var index = insertKeyframes(sheet, keyframes, insertIndex);
-        rule.ref = sheet.cssRules[insertIndex];
+        rule.rule = sheet.cssRules[insertIndex];
         var newSheet = sheet.cssRules[index];
         mountSheet(newSheet, rules, vnode);
     }
@@ -850,7 +868,7 @@
         sheet.appendRule(`${keyframe}{}`);
         var index = sheet.cssRules.length - 1;
         const insertedRule = sheet.cssRules[index];
-        rule.ref = insertedRule; // set ref
+        rule.rule = insertedRule; // set rule
         const insertedRuleStyle = insertedRule.style;
         for (let property in declaration) {
             var { value } = parseStyleValue(declaration[property]);
@@ -885,7 +903,7 @@
         processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
         // create 
         var el = docCreateElement(type);
-        vnode.ref = el;
+        vnode.el = el;
         mountAttributes(el, props);
         processHook("created" /* CREATED */, vnode);
         processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
@@ -897,9 +915,17 @@
     }
     function mountText(vnode, container, anchor) {
         var el = docCreateText(vnode.children);
-        vnode.ref = el;
+        vnode.el = el;
         insertElement(el, container, anchor);
     }
+
+    const unmountComponent = (component, container, anchor) => {
+        const { instance } = component;
+        const { vnode } = instance;
+        processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
+        patch(vnode, null, container, anchor);
+        processHook("unmounted" /* UNMOUNTED */, component);
+    };
 
     function unmount(vnode, container, anchor) {
         switch (vnode.nodeType) {
@@ -909,7 +935,10 @@
             case exports.Nodes.STYLE:
                 unmountElement(vnode, true);
             case exports.Nodes.TEXT:
-                removeElement(vnode.ref);
+                removeElement(vnode.el);
+                break;
+            case exports.Nodes.COMPONENT:
+                unmountComponent(vnode, container, anchor);
                 break;
         }
     }
@@ -922,9 +951,22 @@
             unmountChildren(vnode.children);
         }
         processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
-        removeElement(vnode.ref);
+        removeElement(vnode.el);
         processHook("unmounted" /* UNMOUNTED */, vnode);
     }
+
+    const updateComponent = (p, n, container, anchor) => {
+        // key 不同应该卸载
+        if (p.patchKey === n.patchKey) {
+            var instance = n.instance = p.instance;
+            // update props ...
+            instance.update(p, n);
+        }
+        else {
+            unmountComponent(p, container, anchor);
+            mountComponent(n, container, anchor);
+        }
+    };
 
     /*
         diff the dom children and rules children
@@ -998,8 +1040,8 @@
     }
 
     const updateStyleSheet = (p, n) => {
-        var ref = n.ref = p.ref;
-        var sheet = ref.sheet;
+        var el = n.el = p.el;
+        var sheet = el.sheet;
         /*
             更新style元素的props，并且处理特殊属性如，unit,url 等
         */
@@ -1063,13 +1105,16 @@
         }
     }
     function updateStyleRule(pRule, nRule, vnode) {
-        var ref = nRule.ref = pRule.ref;
+        var rule = nRule.rule = pRule.rule;
+        debugger;
+        var style = rule.style;
+        if (!style)
+            return;
         var { selector: pSelector, children: pDeclaration } = pRule;
         var { selector: nSelector, children: nDeclaration } = nRule;
         if (pSelector !== nSelector) {
-            setSelector(ref, nSelector);
+            setSelector(rule, nSelector);
         }
-        var style = ref.style;
         updateDeclaration(style, pDeclaration, nDeclaration);
     }
     // same as selector delimiter
@@ -1090,18 +1135,18 @@
         });
     }
     function updateMediaRule(pRule, nRule, vnode) {
-        var ref = nRule.ref = pRule.ref;
+        var rule = nRule.rule = pRule.rule;
         var { media: pMedia, children: pRules } = pRule;
         var { media: nMedia, children: nRules } = nRule;
-        updateMedium(ref, pMedia, nMedia);
-        updateSheet(pRules, nRules, ref, vnode);
+        updateMedium(rule, pMedia, nMedia);
+        updateSheet(pRules, nRules, rule, vnode);
     }
     function updateKeyframesRule(pRule, nRule, vnode) {
-        var keyframesRef = nRule.ref = pRule.ref;
+        var keyframesrule = nRule.rule = pRule.rule;
         var { keyframes: pKeyframes, children: pRules } = pRule;
         var { keyframes: nKeyframes, children: nRules } = nRule;
         if (pKeyframes !== nKeyframes) {
-            setKeyframesName(keyframesRef, nKeyframes);
+            setKeyframesName(keyframesrule, nKeyframes);
         }
         var maxLength = Math.max(pRules.length, nRules.length);
         /*
@@ -1111,18 +1156,18 @@
             var pk = pRules[i];
             var nk = nRules[i];
             if (!pk) {
-                mountKeyframeRule(keyframesRef, nk);
+                mountKeyframeRule(keyframesrule, nk);
             }
             else if (!nk) {
-                deleteKeyframe(keyframesRef, pk.keyframe);
+                deleteKeyframe(keyframesrule, pk.keyframe);
             }
             else {
                 var { keyframe: pKeyframe, children: pDeclaration } = pk;
                 var { keyframe: nKeyframe, children: nDeclaration } = nk;
-                let keyframeRef = nk.ref = pk.ref;
-                var style = keyframeRef.style;
+                let keyframerule = nk.rule = pk.rule;
+                var style = keyframerule.style;
                 if (pKeyframe !== nKeyframe) {
-                    setKeyText(keyframeRef, nKeyframe);
+                    setKeyText(keyframerule, nKeyframe);
                 }
                 updateDeclaration(style, pDeclaration, nDeclaration);
             }
@@ -1141,16 +1186,18 @@
             case exports.Nodes.STYLE:
                 updateStyleSheet(p, n);
                 break;
+            case exports.Nodes.COMPONENT:
+                updateComponent(p, n, container, anchor);
         }
     }
     function updateText(p, n) {
-        var el = n.ref = p.ref;
+        var el = n.el = p.el;
         if (p.children !== n.children) {
             el.textContent = n.children;
         }
     }
     function updateHTMLElement(p, n, container, anchor) {
-        var el = n.ref = p.ref;
+        var el = n.el = p.el;
         processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
         updateAttributes(el, p.props, n.props);
         processHook("updated" /* UPDATED */, n, p);
@@ -1185,7 +1232,7 @@
         else {
             if (!next) {
                 // 卸载当前节点
-                isArray(current) ? unmountChildren(current) : unmount(current);
+                isArray(current) ? unmountChildren(current) : unmount(current, container, anchor);
             }
             else {
                 if (isArray(current)) {
@@ -1199,11 +1246,11 @@
                         // 两个单节点 ， 但key可能不同 
                         if (current.type === next.type) {
                             // 类型相同，直接更新
-                            update(current, next, container);
+                            update(current, next, container, anchor);
                         }
                         else {
                             // 类型不同。先卸载，在挂载
-                            unmount(current);
+                            unmount(current, container, anchor);
                             mount(next, container, anchor);
                         }
                     }
@@ -1351,8 +1398,10 @@
     }
 
     function track(...args) {
+        console.warn('track');
     }
     function trigger(...args) {
+        console.warn('trigger');
     }
 
     const createReactiveObject = (value) => new Proxy(value, reactiveHandler);
@@ -1534,6 +1583,7 @@
             }
             if (isCollection) {
                 if (key === 'size') {
+                    track(target);
                     return target.size;
                 }
                 if (hasOwn(collectionHandlers, key) && key in target) {
@@ -1542,6 +1592,10 @@
                 }
             }
             else if (hasOwn(target, key)) {
+                // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
+                if (!isReadonly) {
+                    track(target, key);
+                }
                 var value = Reflect.get(target, key, receiver);
                 if (isShallow) {
                     //! readonly 和 shallowreadonly 都不会收集 , 直接返回原始值
@@ -1698,12 +1752,14 @@
     function mountComponent(component, container, anchor = null) {
         var { type, props, children } = component;
         const instance = createComponentInstance(type);
+        component.instance = instance;
+        processHook("beforeCreate" /* BEFORE_CREATE */, component);
+        // setup instance
+        const { scope, createRender } = instance;
         instance.props = props || EMPTY_OBJ;
         instance.slots = children || EMPTY_OBJ;
-        // 保存vnode上的组件实例
-        component.instance = instance;
-        const { scope, createRender } = instance;
-        // init instance , we only can use getCurrentInstance in create hook 
+        // process props
+        // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
         setCurrentInstance(instance);
         callHook("create" /* CREATE */, instance, scope, scope);
         setCurrentInstance(null);
@@ -1711,21 +1767,28 @@
         setCurrentInstance(instance);
         const render = createRender(renderMethods);
         setCurrentInstance(null);
+        processHook("created" /* CREATED */, component);
         instance.render = render;
         // component update fn
-        function update() {
+        function update(p, n) {
             const { isMounted, vnode } = instance;
             // 每次更新生成新树
+            if (n) {
+                component = n;
+            }
             setCurrentInstance(instance);
             var nextTree = render();
-            console.log('unprocessTree', nextTree);
             setCurrentInstance(null);
-            // 处理fragment
+            // 处理树
             nextTree = processdom(nextTree);
-            console.log('prevTree', vnode);
+            // console.log('prevTree', vnode);
             console.log('nextTree', nextTree);
-            // test hooks
+            /*
+                这里发生的更新是自身状态变化发生的更新，不存在生成新节点
+            */
+            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, component, p);
             patch(vnode, nextTree, container);
+            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, component, p);
             instance.isMounted = true;
             instance.vnode = nextTree;
         }
@@ -2355,6 +2418,7 @@
                 }
             }
             else {
+                // 其他属性
                 var type = reservedAttributeMap[attribute.property];
                 if (attribute.flag === '#') {
                     // id shorthand
@@ -2386,6 +2450,7 @@
                             attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineClass(attribute.value);
                             break;
                         default:
+                            // 自定义保留属性，不对外开放
                             attribute.type = exports.Nodes.RESERVED_PROP;
                     }
                 }
@@ -2478,8 +2543,40 @@
         }
     }
 
-    const renderMethodsNameMap = Object.entries(renderMethods).reduce((res, [name, method]) => {
-        res[name] = res[name].name;
+    var rfs = {
+        createComment: '',
+        createElement: '',
+        createFragment: '',
+        createKeyframe: '',
+        createKeyframes: '',
+        createMedia: '',
+        createSVGElement: '',
+        createStyleSheet: '',
+        createStyle: '',
+        createText: '',
+        renderList: '',
+        mergeSelectors: '',
+        display: '',
+        createDeclaration: '',
+        mixin: '',
+        important: '',
+        createSupports: '',
+        flatRules: '',
+        createComponent: '',
+        getComponent: '',
+        getDirective: '',
+        getCurrentScope: '',
+        createEvent: '',
+        createHandlerKey: '',
+        normalizeClass: '',
+        normalizeStyle: '',
+        renderSlot: '',
+        injectDirective: '',
+        injectDirectives: '',
+        injectReservedProps: ''
+    };
+    const renderMethodsNameMap = Object.entries(rfs).reduce((res, [name, method]) => {
+        res[name] = name;
         //res[name] = method.name
         return res;
     }, {});
@@ -2657,7 +2754,7 @@
                 var slotName = toBackQuotes(node.attributeMap?.name || 'default');
                 var fallback = toArrowFunction(genNodes(node.children, context));
                 // todo 插槽作用域
-                return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid());
+                return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, fallback, uid());
             case exports.Nodes.OUTLET:
                 return genNodes(node.children, context);
             case exports.Nodes.DYNAMIC_ELEMENT:
@@ -2953,6 +3050,16 @@
         }
     }
 
+    function renderSlot(name, scope, fallback, uid) {
+        var instance = getCurrentInstance();
+        var slot = (instance.slots[name] || fallback)();
+        if (!slot) {
+            return null;
+        }
+        slot.key = uid; // 唯一插槽节点的key
+        return slot;
+    }
+
     var renderMethods = {
         important,
         getCurrentScope,
@@ -2973,7 +3080,9 @@
         createSupports,
         mixin,
         normalizeClass,
-        normalizeStyle
+        normalizeStyle,
+        createComponent,
+        renderSlot
     };
 
     // if you are using css function with dynamic binding , use camelized function name 
@@ -3061,13 +3170,6 @@
         return `scaleY(${n})`;
     }
 
-    function renderSlot(name, scope, fallback, uid) {
-        var instance = getCurrentInstance();
-        var slot = (instance.slots[name] || fallback)();
-        slot.key = uid; // 唯一插槽节点的key
-        return slot;
-    }
-
     // rebuilding
     const groupSelectorDelimiter = /\s*,\s*/;
     const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
@@ -3094,22 +3196,11 @@
         return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
     }
 
-    const updateComponent = () => {
-    };
-
-    const unmountComponent = () => {
-    };
-
     function keyframes(name, keyframes) {
         return createKeyframes(name, keyframes);
     }
     function keyframe(name, keyframes) {
         return createKeyframe(name, keyframes);
-    }
-
-    function getComputedStyle(el, prop) {
-        var style = window.getComputedStyle(el);
-        return prop ? style.getPropertyValue(hyphenate(prop)) : style;
     }
 
     const flash = keyframes('flash', [
@@ -3427,7 +3518,7 @@
         过渡动画逻辑
         使用transition , 先保留之前元素的tansition  , 设置新的 transtion ，然后设置新的样式
     */
-    function setElementTranstion() {
+    function setElementTranstion(el) {
     }
 
     var currentApp;
@@ -3685,6 +3776,9 @@
         }
         return arr;
     }
+    /*
+        指令注入不能直接添加在钩子中 ，需要额外处理指令信息等
+    */
     function injectDirective(target, [directive, value, _arguments, modifiers]) {
         // 指令会携带信息 值 参数 修饰符
         var dirs = target.dirs ||= new Map();
@@ -3698,12 +3792,15 @@
         // ! 
         return target;
     }
+    /*
+        pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
+    */
     function processHook(type, next, previous = null) {
         // 不存在两个节点都不存在
         if (previous) {
             if (next.patchKey === previous.patchKey) {
                 // same node update
-                processDirHook(type, next, previous);
+                doProcessHook(type, next, previous);
             }
             else {
                 // fake mount and unmount
@@ -3711,18 +3808,18 @@
                 // 挂载新节点 beforeCreate , created , beforeMount , mounted
                 if (type === "beforeUpdate" /* BEFORE_UPDATE */) {
                     processHook("beforeUnmount" /* BEFORE_UNMOUNT */, previous);
-                    processHook("beforeCreate" /* BEFORE_CREATE */, next);
-                    processHook("beforeMount" /* BEFORE_MOUNT */, next);
+                    processHook("unmounted" /* UNMOUNTED */, previous);
                 }
                 else if (type === "updated" /* UPDATED */) {
-                    processHook("unmounted" /* UNMOUNTED */, previous);
+                    processHook("beforeCreate" /* BEFORE_CREATE */, next);
                     processHook("created" /* CREATED */, next);
+                    processHook("beforeMount" /* BEFORE_MOUNT */, next);
                     processHook("mounted" /* MOUNTED */, next);
                 }
             }
         }
         else {
-            processDirHook(type, next);
+            doProcessHook(type, next);
         }
     }
     function normalizeDirective(directive) {
@@ -3731,7 +3828,14 @@
             updated: directive
         } : directive;
     }
-    function processDirHook(type, next, previous = null) {
+    function doProcessHook(type, next, previous = undefined) {
+        const isComponent = next.nodeType === exports.Nodes.COMPONENT;
+        if (isComponent) {
+            var instance = next.instance;
+            // 组件需要处理实例钩子
+            var scope = instance.scope;
+            callHook(type, instance, { binding: scope }, scope);
+        }
         for (let [dir, infos] of next.dirs || EMPTY_ARR) {
             var _dir = normalizeDirective(dir);
             var hook = _dir[type];
@@ -3739,7 +3843,8 @@
                 if (previous) {
                     infos.oldValue = previous.dirs.get(dir).value;
                 }
-                hook(next.ref, infos, next);
+                // 
+                hook(isComponent ? next.instance.scope : next.el, infos, next, previous);
             }
         }
     }
@@ -3808,7 +3913,6 @@
     exports.extend = extend;
     exports.flatRules = flatRules;
     exports.getComponent = getComponent;
-    exports.getComputedStyle = getComputedStyle;
     exports.getCurrentApp = getCurrentApp;
     exports.getCurrentInstance = getCurrentInstance;
     exports.getCurrentScope = getCurrentScope;

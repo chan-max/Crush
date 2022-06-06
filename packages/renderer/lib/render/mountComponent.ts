@@ -78,7 +78,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         nextTree = processdom(nextTree)
 
         // console.log('prevTree', vnode);
-        // console.log('nextTree', nextTree);
+        console.log('nextTree', nextTree);
         /*
             这里发生的更新是自身状态变化发生的更新，不存在生成新节点
         */

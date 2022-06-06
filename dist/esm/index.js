@@ -39,10 +39,20 @@ const model = {
     }
 };
 
+/*
+    transition for single Element
+*/
+const transition = {
+    beforeMount() {
+        debugger;
+    }
+};
+
 const builtInComponents = {};
 const builtInDirectives = {
     show,
-    model
+    model,
+    transition
 };
 
 const cache = (fn) => {
@@ -463,6 +473,7 @@ function flatRules(rules, parent = null, key = null
         当一层平铺结束后 ， 处理declaration
         stylesheet 的 vdom中不会存在fragment，因为在这已经处理完了
     */
+    var result = [];
     flatted.forEach((rule) => {
         if (rule.nodeType === Nodes.STYLE_RULE) {
             /*
@@ -474,9 +485,16 @@ function flatRules(rules, parent = null, key = null
                 const children = rule.children.map((r) => r.children);
                 rule.children = (rule.children.length === 0 ? null : mixin(...children));
             }
+            // 去除没有children的 style rule
+            if (rule.children) {
+                result.push(rule);
+            }
+        }
+        else {
+            result.push(rule);
         }
     });
-    return flatted;
+    return result;
 }
 
 /*
@@ -770,11 +788,11 @@ function updateAttributes(el, pProps, nProps) {
 */
 const mountStyleSheet = (vnode, container, anchor) => {
     const { props, children } = vnode;
-    var ref = docCreateElement('style');
-    mountAttributes(ref, props);
-    vnode.ref = ref;
-    insertElement(ref, container, anchor);
-    var sheet = ref.sheet;
+    var el = docCreateElement('style');
+    mountAttributes(el, props);
+    vnode.el = el;
+    insertElement(el, container, anchor);
+    var sheet = el.sheet;
     mountSheet(sheet, children, vnode);
 };
 function mountSheet(sheet, rules, vnode) {
@@ -808,7 +826,7 @@ insertIndex = sheet.cssRules.length) {
         return;
     const index = insertStyle(sheet, selector, insertIndex);
     const insertedRule = sheet.cssRules[index];
-    rule.ref = insertedRule; // set ref
+    rule.rule = insertedRule; // set rule
     const insertedRuleStyle = insertedRule.style;
     mountDeclaration(insertedRuleStyle, declaration);
 }
@@ -820,7 +838,7 @@ function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length)
     }
     var index = insertMedia(sheet, media, insertIndex);
     var newSheet = sheet.cssRules[index];
-    rule.ref = newSheet;
+    rule.rule = newSheet;
     mountSheet(newSheet, rules, vnode);
 }
 function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
@@ -834,7 +852,7 @@ function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.len
     var keyframes = rule.keyframes;
     var rules = rule.children;
     var index = insertKeyframes(sheet, keyframes, insertIndex);
-    rule.ref = sheet.cssRules[insertIndex];
+    rule.rule = sheet.cssRules[insertIndex];
     var newSheet = sheet.cssRules[index];
     mountSheet(newSheet, rules, vnode);
 }
@@ -844,7 +862,7 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
     sheet.appendRule(`${keyframe}{}`);
     var index = sheet.cssRules.length - 1;
     const insertedRule = sheet.cssRules[index];
-    rule.ref = insertedRule; // set ref
+    rule.rule = insertedRule; // set rule
     const insertedRuleStyle = insertedRule.style;
     for (let property in declaration) {
         var { value } = parseStyleValue(declaration[property]);
@@ -879,7 +897,7 @@ function mountElement(vnode, container, anchor) {
     processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
     // create 
     var el = docCreateElement(type);
-    vnode.ref = el;
+    vnode.el = el;
     mountAttributes(el, props);
     processHook("created" /* CREATED */, vnode);
     processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
@@ -891,9 +909,17 @@ function mountElement(vnode, container, anchor) {
 }
 function mountText(vnode, container, anchor) {
     var el = docCreateText(vnode.children);
-    vnode.ref = el;
+    vnode.el = el;
     insertElement(el, container, anchor);
 }
+
+const unmountComponent = (component, container, anchor) => {
+    const { instance } = component;
+    const { vnode } = instance;
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
+    patch(vnode, null, container, anchor);
+    processHook("unmounted" /* UNMOUNTED */, component);
+};
 
 function unmount(vnode, container, anchor) {
     switch (vnode.nodeType) {
@@ -903,7 +929,10 @@ function unmount(vnode, container, anchor) {
         case Nodes.STYLE:
             unmountElement(vnode, true);
         case Nodes.TEXT:
-            removeElement(vnode.ref);
+            removeElement(vnode.el);
+            break;
+        case Nodes.COMPONENT:
+            unmountComponent(vnode, container, anchor);
             break;
     }
 }
@@ -916,9 +945,22 @@ function unmountElement(vnode, isStyle = false) {
         unmountChildren(vnode.children);
     }
     processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
-    removeElement(vnode.ref);
+    removeElement(vnode.el);
     processHook("unmounted" /* UNMOUNTED */, vnode);
 }
+
+const updateComponent = (p, n, container, anchor) => {
+    // key 不同应该卸载
+    if (p.patchKey === n.patchKey) {
+        var instance = n.instance = p.instance;
+        // update props ...
+        instance.update(p, n);
+    }
+    else {
+        unmountComponent(p, container, anchor);
+        mountComponent(n, container, anchor);
+    }
+};
 
 /*
     diff the dom children and rules children
@@ -992,8 +1034,8 @@ function diffChildren(p, n, isRules) {
 }
 
 const updateStyleSheet = (p, n) => {
-    var ref = n.ref = p.ref;
-    var sheet = ref.sheet;
+    var el = n.el = p.el;
+    var sheet = el.sheet;
     /*
         更新style元素的props，并且处理特殊属性如，unit,url 等
     */
@@ -1057,13 +1099,16 @@ function updateSheet(pRules, nRules, sheet, vnode) {
     }
 }
 function updateStyleRule(pRule, nRule, vnode) {
-    var ref = nRule.ref = pRule.ref;
+    var rule = nRule.rule = pRule.rule;
+    debugger;
+    var style = rule.style;
+    if (!style)
+        return;
     var { selector: pSelector, children: pDeclaration } = pRule;
     var { selector: nSelector, children: nDeclaration } = nRule;
     if (pSelector !== nSelector) {
-        setSelector(ref, nSelector);
+        setSelector(rule, nSelector);
     }
-    var style = ref.style;
     updateDeclaration(style, pDeclaration, nDeclaration);
 }
 // same as selector delimiter
@@ -1084,18 +1129,18 @@ function updateMedium(mediaRule, pMediaum, nMediaum) {
     });
 }
 function updateMediaRule(pRule, nRule, vnode) {
-    var ref = nRule.ref = pRule.ref;
+    var rule = nRule.rule = pRule.rule;
     var { media: pMedia, children: pRules } = pRule;
     var { media: nMedia, children: nRules } = nRule;
-    updateMedium(ref, pMedia, nMedia);
-    updateSheet(pRules, nRules, ref, vnode);
+    updateMedium(rule, pMedia, nMedia);
+    updateSheet(pRules, nRules, rule, vnode);
 }
 function updateKeyframesRule(pRule, nRule, vnode) {
-    var keyframesRef = nRule.ref = pRule.ref;
+    var keyframesrule = nRule.rule = pRule.rule;
     var { keyframes: pKeyframes, children: pRules } = pRule;
     var { keyframes: nKeyframes, children: nRules } = nRule;
     if (pKeyframes !== nKeyframes) {
-        setKeyframesName(keyframesRef, nKeyframes);
+        setKeyframesName(keyframesrule, nKeyframes);
     }
     var maxLength = Math.max(pRules.length, nRules.length);
     /*
@@ -1105,18 +1150,18 @@ function updateKeyframesRule(pRule, nRule, vnode) {
         var pk = pRules[i];
         var nk = nRules[i];
         if (!pk) {
-            mountKeyframeRule(keyframesRef, nk);
+            mountKeyframeRule(keyframesrule, nk);
         }
         else if (!nk) {
-            deleteKeyframe(keyframesRef, pk.keyframe);
+            deleteKeyframe(keyframesrule, pk.keyframe);
         }
         else {
             var { keyframe: pKeyframe, children: pDeclaration } = pk;
             var { keyframe: nKeyframe, children: nDeclaration } = nk;
-            let keyframeRef = nk.ref = pk.ref;
-            var style = keyframeRef.style;
+            let keyframerule = nk.rule = pk.rule;
+            var style = keyframerule.style;
             if (pKeyframe !== nKeyframe) {
-                setKeyText(keyframeRef, nKeyframe);
+                setKeyText(keyframerule, nKeyframe);
             }
             updateDeclaration(style, pDeclaration, nDeclaration);
         }
@@ -1135,16 +1180,18 @@ function update(p, n, container, anchor) {
         case Nodes.STYLE:
             updateStyleSheet(p, n);
             break;
+        case Nodes.COMPONENT:
+            updateComponent(p, n, container, anchor);
     }
 }
 function updateText(p, n) {
-    var el = n.ref = p.ref;
+    var el = n.el = p.el;
     if (p.children !== n.children) {
         el.textContent = n.children;
     }
 }
 function updateHTMLElement(p, n, container, anchor) {
-    var el = n.ref = p.ref;
+    var el = n.el = p.el;
     processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
     updateAttributes(el, p.props, n.props);
     processHook("updated" /* UPDATED */, n, p);
@@ -1179,7 +1226,7 @@ const patch = (current, next, container, anchor = null) => {
     else {
         if (!next) {
             // 卸载当前节点
-            isArray(current) ? unmountChildren(current) : unmount(current);
+            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor);
         }
         else {
             if (isArray(current)) {
@@ -1193,11 +1240,11 @@ const patch = (current, next, container, anchor = null) => {
                     // 两个单节点 ， 但key可能不同 
                     if (current.type === next.type) {
                         // 类型相同，直接更新
-                        update(current, next, container);
+                        update(current, next, container, anchor);
                     }
                     else {
                         // 类型不同。先卸载，在挂载
-                        unmount(current);
+                        unmount(current, container, anchor);
                         mount(next, container, anchor);
                     }
                 }
@@ -1345,8 +1392,10 @@ function isRef(value) {
 }
 
 function track(...args) {
+    console.warn('track');
 }
 function trigger(...args) {
+    console.warn('trigger');
 }
 
 const createReactiveObject = (value) => new Proxy(value, reactiveHandler);
@@ -1528,6 +1577,7 @@ function createGetter(isReadonly, isShallow, isCollection) {
         }
         if (isCollection) {
             if (key === 'size') {
+                track(target);
                 return target.size;
             }
             if (hasOwn(collectionHandlers, key) && key in target) {
@@ -1536,6 +1586,10 @@ function createGetter(isReadonly, isShallow, isCollection) {
             }
         }
         else if (hasOwn(target, key)) {
+            // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
+            if (!isReadonly) {
+                track(target, key);
+            }
             var value = Reflect.get(target, key, receiver);
             if (isShallow) {
                 //! readonly 和 shallowreadonly 都不会收集 , 直接返回原始值
@@ -1692,12 +1746,14 @@ function getCurrentScope() {
 function mountComponent(component, container, anchor = null) {
     var { type, props, children } = component;
     const instance = createComponentInstance(type);
+    component.instance = instance;
+    processHook("beforeCreate" /* BEFORE_CREATE */, component);
+    // setup instance
+    const { scope, createRender } = instance;
     instance.props = props || EMPTY_OBJ;
     instance.slots = children || EMPTY_OBJ;
-    // 保存vnode上的组件实例
-    component.instance = instance;
-    const { scope, createRender } = instance;
-    // init instance , we only can use getCurrentInstance in create hook 
+    // process props
+    // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
     setCurrentInstance(instance);
     callHook("create" /* CREATE */, instance, scope, scope);
     setCurrentInstance(null);
@@ -1705,21 +1761,28 @@ function mountComponent(component, container, anchor = null) {
     setCurrentInstance(instance);
     const render = createRender(renderMethods);
     setCurrentInstance(null);
+    processHook("created" /* CREATED */, component);
     instance.render = render;
     // component update fn
-    function update() {
+    function update(p, n) {
         const { isMounted, vnode } = instance;
         // 每次更新生成新树
+        if (n) {
+            component = n;
+        }
         setCurrentInstance(instance);
         var nextTree = render();
-        console.log('unprocessTree', nextTree);
         setCurrentInstance(null);
-        // 处理fragment
+        // 处理树
         nextTree = processdom(nextTree);
-        console.log('prevTree', vnode);
+        // console.log('prevTree', vnode);
         console.log('nextTree', nextTree);
-        // test hooks
+        /*
+            这里发生的更新是自身状态变化发生的更新，不存在生成新节点
+        */
+        processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, component, p);
         patch(vnode, nextTree, container);
+        processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, component, p);
         instance.isMounted = true;
         instance.vnode = nextTree;
     }
@@ -2349,6 +2412,7 @@ function processAttribute(ast) {
             }
         }
         else {
+            // 其他属性
             var type = reservedAttributeMap[attribute.property];
             if (attribute.flag === '#') {
                 // id shorthand
@@ -2380,6 +2444,7 @@ function processAttribute(ast) {
                         attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineClass(attribute.value);
                         break;
                     default:
+                        // 自定义保留属性，不对外开放
                         attribute.type = Nodes.RESERVED_PROP;
                 }
             }
@@ -2472,8 +2537,40 @@ function processAst(ast) {
     }
 }
 
-const renderMethodsNameMap = Object.entries(renderMethods).reduce((res, [name, method]) => {
-    res[name] = res[name].name;
+var rfs = {
+    createComment: '',
+    createElement: '',
+    createFragment: '',
+    createKeyframe: '',
+    createKeyframes: '',
+    createMedia: '',
+    createSVGElement: '',
+    createStyleSheet: '',
+    createStyle: '',
+    createText: '',
+    renderList: '',
+    mergeSelectors: '',
+    display: '',
+    createDeclaration: '',
+    mixin: '',
+    important: '',
+    createSupports: '',
+    flatRules: '',
+    createComponent: '',
+    getComponent: '',
+    getDirective: '',
+    getCurrentScope: '',
+    createEvent: '',
+    createHandlerKey: '',
+    normalizeClass: '',
+    normalizeStyle: '',
+    renderSlot: '',
+    injectDirective: '',
+    injectDirectives: '',
+    injectReservedProps: ''
+};
+const renderMethodsNameMap = Object.entries(rfs).reduce((res, [name, method]) => {
+    res[name] = name;
     //res[name] = method.name
     return res;
 }, {});
@@ -2651,7 +2748,7 @@ function genNode(node, context) {
             var slotName = toBackQuotes(node.attributeMap?.name || 'default');
             var fallback = toArrowFunction(genNodes(node.children, context));
             // todo 插槽作用域
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, fallback, NULL, uid());
+            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, fallback, uid());
         case Nodes.OUTLET:
             return genNodes(node.children, context);
         case Nodes.DYNAMIC_ELEMENT:
@@ -2947,6 +3044,16 @@ function normalizeStyle(style) {
     }
 }
 
+function renderSlot(name, scope, fallback, uid) {
+    var instance = getCurrentInstance();
+    var slot = (instance.slots[name] || fallback)();
+    if (!slot) {
+        return null;
+    }
+    slot.key = uid; // 唯一插槽节点的key
+    return slot;
+}
+
 var renderMethods = {
     important,
     getCurrentScope,
@@ -2967,7 +3074,9 @@ var renderMethods = {
     createSupports,
     mixin,
     normalizeClass,
-    normalizeStyle
+    normalizeStyle,
+    createComponent,
+    renderSlot
 };
 
 // if you are using css function with dynamic binding , use camelized function name 
@@ -3055,13 +3164,6 @@ function scaleY(n) {
     return `scaleY(${n})`;
 }
 
-function renderSlot(name, scope, fallback, uid) {
-    var instance = getCurrentInstance();
-    var slot = (instance.slots[name] || fallback)();
-    slot.key = uid; // 唯一插槽节点的key
-    return slot;
-}
-
 // rebuilding
 const groupSelectorDelimiter = /\s*,\s*/;
 const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
@@ -3088,22 +3190,11 @@ function mergeSelectors(...selectors) {
     return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
 }
 
-const updateComponent = () => {
-};
-
-const unmountComponent = () => {
-};
-
 function keyframes(name, keyframes) {
     return createKeyframes(name, keyframes);
 }
 function keyframe(name, keyframes) {
     return createKeyframe(name, keyframes);
-}
-
-function getComputedStyle(el, prop) {
-    var style = window.getComputedStyle(el);
-    return prop ? style.getPropertyValue(hyphenate(prop)) : style;
 }
 
 const flash = keyframes('flash', [
@@ -3421,7 +3512,7 @@ const installAnimation = () => mount(createStyleSheet(null, Object.values(animat
     过渡动画逻辑
     使用transition , 先保留之前元素的tansition  , 设置新的 transtion ，然后设置新的样式
 */
-function setElementTranstion() {
+function setElementTranstion(el) {
 }
 
 var currentApp;
@@ -3679,6 +3770,9 @@ function setOwnKey(arr) {
     }
     return arr;
 }
+/*
+    指令注入不能直接添加在钩子中 ，需要额外处理指令信息等
+*/
 function injectDirective(target, [directive, value, _arguments, modifiers]) {
     // 指令会携带信息 值 参数 修饰符
     var dirs = target.dirs ||= new Map();
@@ -3692,12 +3786,15 @@ function injectDirective(target, [directive, value, _arguments, modifiers]) {
     // ! 
     return target;
 }
+/*
+    pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
+*/
 function processHook(type, next, previous = null) {
     // 不存在两个节点都不存在
     if (previous) {
         if (next.patchKey === previous.patchKey) {
             // same node update
-            processDirHook(type, next, previous);
+            doProcessHook(type, next, previous);
         }
         else {
             // fake mount and unmount
@@ -3705,18 +3802,18 @@ function processHook(type, next, previous = null) {
             // 挂载新节点 beforeCreate , created , beforeMount , mounted
             if (type === "beforeUpdate" /* BEFORE_UPDATE */) {
                 processHook("beforeUnmount" /* BEFORE_UNMOUNT */, previous);
-                processHook("beforeCreate" /* BEFORE_CREATE */, next);
-                processHook("beforeMount" /* BEFORE_MOUNT */, next);
+                processHook("unmounted" /* UNMOUNTED */, previous);
             }
             else if (type === "updated" /* UPDATED */) {
-                processHook("unmounted" /* UNMOUNTED */, previous);
+                processHook("beforeCreate" /* BEFORE_CREATE */, next);
                 processHook("created" /* CREATED */, next);
+                processHook("beforeMount" /* BEFORE_MOUNT */, next);
                 processHook("mounted" /* MOUNTED */, next);
             }
         }
     }
     else {
-        processDirHook(type, next);
+        doProcessHook(type, next);
     }
 }
 function normalizeDirective(directive) {
@@ -3725,7 +3822,14 @@ function normalizeDirective(directive) {
         updated: directive
     } : directive;
 }
-function processDirHook(type, next, previous = null) {
+function doProcessHook(type, next, previous = undefined) {
+    const isComponent = next.nodeType === Nodes.COMPONENT;
+    if (isComponent) {
+        var instance = next.instance;
+        // 组件需要处理实例钩子
+        var scope = instance.scope;
+        callHook(type, instance, { binding: scope }, scope);
+    }
     for (let [dir, infos] of next.dirs || EMPTY_ARR) {
         var _dir = normalizeDirective(dir);
         var hook = _dir[type];
@@ -3733,9 +3837,10 @@ function processDirHook(type, next, previous = null) {
             if (previous) {
                 infos.oldValue = previous.dirs.get(dir).value;
             }
-            hook(next.ref, infos, next);
+            // 
+            hook(isComponent ? next.instance.scope : next.el, infos, next, previous);
         }
     }
 }
 
-export { $var, App, ComponentOptions, EMPTY_ARR, EMPTY_OBJ, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, Nodes, NodesMap, ReactiveTypes, SYMBOL_ITERATOR$1 as SYMBOL_ITERATOR, addClass, addEventListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, capitalize, checkBuiltInAnimations, compile, computed, createApp, createComponent, createComponentInstance, createDeclaration, createElement, createEvent, createFragment, createFunction, createHandlerKey, createKeyframe, createKeyframes, createMapEntries, createMedia, createNode, createSetter, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, declare, deleteKeyframe, deleteMedium, deleteRule, destructur, diffChildren, display, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, error, exec, execCaptureGroups, extend, flatRules, getComponent, getComputedStyle, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, getElementComputedStyle, getElementStyle, getElementStyleValue, getEmptyObj, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, getUnionkeysFromMaps, hasOwn, hsl, hsla, hyphenate, important, initOptions, initScope, injectDirective, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, makeMap, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, nextTickSingleWork, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onUnmounted, onUpdated, onceListener, parseHandlerKey, parseInlineClass, parseInlineStyle, parseStyleValue, patch, perspective, processHook, processdom, reactive$1 as reactive, reactiveCollectionHandler, reactiveHandler, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeEventListener, removeFromArray, renderList, renderSlot, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonlyCollectionHandler, shallowReadonlyHandler, skew, skewX, skewY, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, translate3d, translateX, translateY, trigger, typeOf, uStringId, uVar, uid, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateStyleSheet, warn, watch };
+export { $var, App, ComponentOptions, EMPTY_ARR, EMPTY_OBJ, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, Nodes, NodesMap, ReactiveTypes, SYMBOL_ITERATOR$1 as SYMBOL_ITERATOR, addClass, addEventListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, capitalize, checkBuiltInAnimations, compile, computed, createApp, createComponent, createComponentInstance, createDeclaration, createElement, createEvent, createFragment, createFunction, createHandlerKey, createKeyframe, createKeyframes, createMapEntries, createMedia, createNode, createSetter, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, declare, deleteKeyframe, deleteMedium, deleteRule, destructur, diffChildren, display, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, error, exec, execCaptureGroups, extend, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, getElementComputedStyle, getElementStyle, getElementStyleValue, getEmptyObj, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, getUnionkeysFromMaps, hasOwn, hsl, hsla, hyphenate, important, initOptions, initScope, injectDirective, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, makeMap, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, nextTickSingleWork, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onUnmounted, onUpdated, onceListener, parseHandlerKey, parseInlineClass, parseInlineStyle, parseStyleValue, patch, perspective, processHook, processdom, reactive$1 as reactive, reactiveCollectionHandler, reactiveHandler, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeEventListener, removeFromArray, renderList, renderSlot, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonlyCollectionHandler, shallowReadonlyHandler, skew, skewX, skewY, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, translate3d, translateX, translateY, trigger, typeOf, uStringId, uVar, uid, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateStyleSheet, warn, watch };
