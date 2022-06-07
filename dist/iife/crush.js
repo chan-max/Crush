@@ -71,7 +71,7 @@ var Crush = (function (exports) {
         throw `${msg}`;
     };
 
-    function getEmptyObj() {
+    function getEmptyObject() {
         return Object.create(null);
     }
     var id = 0;
@@ -84,7 +84,7 @@ var Crush = (function (exports) {
     const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
         res[item] = mapValue;
         return res;
-    }, getEmptyObj());
+    }, getEmptyObject());
     const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
     // from vue
     const makeMap = (str, delimiter = ',') => {
@@ -2035,7 +2035,7 @@ var Crush = (function (exports) {
                     var attribute = exRes[0];
                     var value = exRes[2];
                     const _attribute = parseAttribute(attribute, value);
-                    (attributeMap ||= getEmptyObj())[_attribute.property] = _attribute;
+                    (attributeMap ||= getEmptyObject())[_attribute.property] = _attribute;
                     (attributes ||= []).push(_attribute);
                 }
             }
@@ -3917,7 +3917,7 @@ var Crush = (function (exports) {
     exports.getElementComputedStyle = getElementComputedStyle;
     exports.getElementStyle = getElementStyle;
     exports.getElementStyleValue = getElementStyleValue;
-    exports.getEmptyObj = getEmptyObj;
+    exports.getEmptyObject = getEmptyObject;
     exports.getLastVisitKey = getLastVisitKey;
     exports.getLastVisitTarget = getLastVisitTarget;
     exports.getReservedProp = getReservedProp;

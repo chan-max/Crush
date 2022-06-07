@@ -2,7 +2,7 @@ import { createApp, hasOwn, isReactive, isRef, onMounted } from "./packages/core
 
 var root = {
     template: `
-        <button @click="count++">
+        <button >
             {{count}}
         </button>
     `,
@@ -18,18 +18,18 @@ var root = {
 
 
 var app = createApp(root)
+
 console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
 import { reactive, readonly } from "./packages/reactivity/lib/reactive";
+import { computed } from "./packages/reactivity/lib/computed";
+import { ref} from "./packages/reactivity/lib/ref";
 
-var m = new Map()
 
-m.set(1, 1)
 
-var p = readonly(m)
+var c = computed(() => 999)
 
-window.p = p
-
+window.c = c
 

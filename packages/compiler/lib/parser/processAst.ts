@@ -152,7 +152,6 @@ function processAttribute(ast: any) {
                     default:
                         // 自定义保留属性，不对外开放
                         attribute.type = Nodes.RESERVED_PROP
-                        
                 }
             }
         }

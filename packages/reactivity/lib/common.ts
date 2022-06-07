@@ -6,7 +6,8 @@ export const enum ReactiveFlags {
     IS_REACTIVE = 'isReactive',
     IS_SHALLOW = 'isShallow',
     IS_READONLY = 'isReadonly',
-    IS_REF = 'isRef'
+    IS_REF = 'isRef',
+    IS_COMPUTED = 'isComputed'
 }
 
 

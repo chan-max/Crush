@@ -421,8 +421,8 @@ function genProps(node: any, context: any) {
                     _arguments,
                     modifiers
                 } = attr
-                var handlerKey = isDynamicProperty ?
-                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(_arguments.map(toBackQuotes)))) : createHandlerKey(property, _arguments)
+                value ||= property // 简写形似
+                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(_arguments.map(toBackQuotes)))) : createHandlerKey(property, _arguments)
                 var callback = isHandler ? value : toArrowFunction(value)
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)))
@@ -445,6 +445,7 @@ function genProps(node: any, context: any) {
                     isDynamicProperty,
                     isDynamicValue,
                 } = attr
+                value ||= property // 简写形似
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
             case Nodes.RESERVED_PROP:

@@ -1,8 +1,6 @@
 import { ReactiveFlags } from "./common"
 
-export function ref(value: any) {
-    return new Ref(value)
-}
+export const ref = (value: any) => new Ref(value)
 
 class Ref {
 

@@ -1,4 +1,4 @@
-import { getEmptyObj } from "@crush/common";
+import { getEmptyObject } from "@crush/common";
 import { parseAttribute } from "./parseAttribute";
 import { createScanner } from "./scanner";
 
@@ -69,7 +69,7 @@ export function baseParseHTML(template: string) {
                 var attribute = exRes[0]
                 var value = exRes[2]
                 const _attribute: any = parseAttribute(attribute, value);
-                (attributeMap ||= getEmptyObj())[_attribute.property] = _attribute;
+                (attributeMap ||= getEmptyObject())[_attribute.property] = _attribute;
                 (attributes ||= []).push(_attribute);
             }
         } else {

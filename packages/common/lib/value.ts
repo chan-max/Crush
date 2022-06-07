@@ -1,6 +1,6 @@
 
 
-export function getEmptyObj() {
+export function getEmptyObject() {
     return Object.create(null)
 }
 

@@ -72,7 +72,7 @@ const error = (msg) => {
     throw `${msg}`;
 };
 
-function getEmptyObj() {
+function getEmptyObject() {
     return Object.create(null);
 }
 var id = 0;
@@ -85,7 +85,7 @@ const emptyArray = Object.freeze([]);
 const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     res[item] = mapValue;
     return res;
-}, getEmptyObj());
+}, getEmptyObject());
 const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
 // from vue
 const makeMap = (str, delimiter = ',') => {
@@ -2036,7 +2036,7 @@ function baseParseHTML(template) {
                 var attribute = exRes[0];
                 var value = exRes[2];
                 const _attribute = parseAttribute(attribute, value);
-                (attributeMap ||= getEmptyObj())[_attribute.property] = _attribute;
+                (attributeMap ||= getEmptyObject())[_attribute.property] = _attribute;
                 (attributes ||= []).push(_attribute);
             }
         }
@@ -3918,7 +3918,7 @@ exports.getDirective = getDirective;
 exports.getElementComputedStyle = getElementComputedStyle;
 exports.getElementStyle = getElementStyle;
 exports.getElementStyleValue = getElementStyleValue;
-exports.getEmptyObj = getEmptyObj;
+exports.getEmptyObject = getEmptyObject;
 exports.getLastVisitKey = getLastVisitKey;
 exports.getLastVisitTarget = getLastVisitTarget;
 exports.getReservedProp = getReservedProp;

@@ -83,7 +83,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, n, p)
         patch(vnode, nextTree, container, anchor)
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, n, p)
-
+        
         component = n
         instance.isMounted = true
         instance.vnode = nextTree
