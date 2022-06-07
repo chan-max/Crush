@@ -39,7 +39,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     processHook(LifecycleHooks.BEFORE_CREATE, component)
 
     // setup instance
-    const { scope, createRender } = instance;
+    const scope = instance.scope
     instance.props = props || emptyObject
     instance.slots = children || emptyObject
 
@@ -48,26 +48,29 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
     // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
     setCurrentInstance(instance)
-    callHook(LifecycleHooks.CREATE, instance, scope, scope)
+    callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)
     setCurrentInstance(null)
 
 
     // render function  
     setCurrentInstance(instance)
-    const render = createRender(renderMethods)
+    const render = instance.render ||= instance.createRender(renderMethods)
     setCurrentInstance(null)
 
     processHook(LifecycleHooks.CREATED, component)
 
-    instance.render = render
-
     // component update fn
-    function update(p?: any, n?: any) { // 可能通过updateComponent传入旧节点
+    function update(next?: any) { // !传入next代表为非自更新
         const { isMounted, vnode } = instance
-        // 每次更新生成新树
+        // 每次 更新生成新树
 
-        if(n){
-            component = n
+        var p, n
+
+        if (next) {
+            p = component
+            n = next
+        } else {
+            n = component
         }
 
         setCurrentInstance(instance)
@@ -77,14 +80,11 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         // 处理树
         nextTree = processdom(nextTree)
 
-        // console.log('prevTree', vnode);
-        console.log('nextTree', nextTree);
-        /*
-            这里发生的更新是自身状态变化发生的更新，不存在生成新节点
-        */
-        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, component, p)
-        patch(vnode, nextTree, container)
-        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, component, p)
+        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, n, p)
+        patch(vnode, nextTree, container, anchor)
+        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, n, p)
+
+        component = n
         instance.isMounted = true
         instance.vnode = nextTree
     }

@@ -22,3 +22,4 @@ export type ComponentType = {
     directives?: Record<string, DirectiveType>
     _isOptions?: boolean
 }
+

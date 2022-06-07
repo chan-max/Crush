@@ -15,87 +15,78 @@ export const getLastVisitKey = () => _key
 
 const collectionHandlers: Record<string, any> = {
     get size() {
+        track(_target)
         return _target.size
     },
+    // set weakset
     add(value: any) {
-        var target = toRaw(this)
         if (_isReadonly) {
-            return console.warn(target, 'is readonly , cant add');
+            return warn(_target, 'is readonly , cant add');
         }
-        var result = target.add(value)
-        console.warn('trigger add');
+        var result = _target.add(value)
+        trigger(_target)
         // 返回set对象本身
         return result
     },
     // map set
     clear() {
-        var target = toRaw(this)
         if (_isReadonly) {
-            return console.warn(target, 'is readonly cant clear');
+            return warn(_target, 'is readonly cant clear');
         }
-        target.clear()
-        console.warn('trigger clear');
-        return
+        _target.clear()
+        trigger(_target)
     },
     // map weakmap set weakset
     delete(key: any) {
-        var target = toRaw(this)
         if (_isReadonly) {
-            return console.warn(target, 'is readonly cant delete');
+            return console.warn(_target, 'is readonly cant delete');
         }
-        const result = target.delete(key)
+        const result = _target.delete(key)
         if (result) { // 返回为 true 为删除成功
-            console.warn('trigger');
+            trigger(_target)
         }
         return result
     },
     // map set
     entries() {
-        var target = toRaw(this)
-        console.warn('track')
-        return target.entries()
+        track(_target)
+        return _target.entries()
     },
     // map set
     forEach(fn: any) {
-        var target = toRaw(this)
-        console.warn('track')
-        return target.forEach(fn)
+        track(_target)
+        return _target.forEach(fn)
     },
     // set map weakset weakmap
     has(key: any) {
-        var target = toRaw(this)
-        console.warn('track')
-        return target.has(key)
+        track(_target)
+        return _target.has(key)
     },
     // map set
     keys() {
-        var target = toRaw(this)
-        console.warn('track')
-        return target.keys()
+        track(_target)
+        return _target.keys()
     },
     // map set
     values() {
-        var target = toRaw(this)
-        console.warn('track')
-        return target.values()
+        track(_target)
+        return _target.values()
     },
     // map weakmap
     set(key: any, value: any) {
-        var target = toRaw(this)
         if (_isReadonly) {
-            return console.warn(target, 'is readonly , cant set');
+            return console.warn(_target, 'is readonly , cant set');
         }
-        var result = target.set(key, value)
-        console.warn('trigger');
+        var result = _target.set(key, value)
+        trigger(_target, key)
         return result
     },
     // map weakmap
     get(key: any) {
-        var target = toRaw(this)
         if (!_isReadonly) {
-            console.warn('track');
+            track(_target)
         }
-        var value = target.get(key)
+        var value = _target.get(key)
         return _isShallow ? value : reactive(value)
     }
 }
@@ -204,7 +195,7 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
         if (hasOwn(target, key)) {
             // 不允许设置非自身属性
             Reflect.set(target, key, newValue, receiver)
-            console.warn('trigger set', target, key);
+            trigger(target, key)
         }
         return true
     }
@@ -212,15 +203,20 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
 
 function has(target: any, key: any) {
     /*
-        has 包括非自身的key
+        has 包括非自身的key 
+        ? in target
     */
     if (hasOwn(target, key)) {
-        console.warn('track has', target, key);
+        track(target, key)
     }
     return Reflect.has(target, key);
 }
+
 function ownKeys(target: any) {
-    console.warn('track ownKeys', target);
+    /*
+        for ? in target
+    */
+    track(target)
     return Reflect.ownKeys(target);
 }
 
@@ -228,14 +224,14 @@ function deleteProperty(target: any, key: any) {
     // 为 true 表示删除成功
     const result = Reflect.deleteProperty(target, key);
     if (result && hasOwn(target, key)) {
-        var value = target[key]
-        console.warn('trigger deleteProperty');
+        trigger(target, key)
     }
     return result;
 }
 
 function readonlyDeleteProperty(target: any, key: any) {
-    console.warn('readonly cant delete');
+    warn(`${key} in `, target, ` can't delete`)
+    return true
 }
 
 

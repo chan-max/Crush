@@ -1,36 +1,35 @@
-import { createApp, hasOwn, isReactive, isRef } from "./packages/core";
+import { createApp, hasOwn, isReactive, isRef, onMounted } from "./packages/core";
 
 var root = {
     template: `
-        <style>
-        </style>
         <button @click="count++">
             {{count}}
-        </button>   
-        <h1 --if="count%2 == 0"> {{count}} </h1>
+        </button>
     `,
-
     create($) {
         $.count = 0
         $.log = () => {
             console.log(666);
         }
+        console.log(this);
     },
 }
+
+
 
 var app = createApp(root)
 console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
-import { reactive } from "./packages/reactivity/lib/reactive";
+import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 
+var m = new Map()
 
+m.set(1, 1)
 
-var p = reactive([1,2,3,4,5,6])
+var p = readonly(m)
 
-for(let i of p){
-    console.log(i);
-    
-}
+window.p = p
+
 
