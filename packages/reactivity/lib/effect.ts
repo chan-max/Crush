@@ -34,4 +34,4 @@ class Effect {
 }
 
 
-export const effect = (fn: any) => new Effect()
+// export const effect = (fn: any) => new Effect(fn)

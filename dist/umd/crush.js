@@ -544,7 +544,7 @@
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
     const isReservedProp = (key) => key.startsWith(`_${key}`);
     const getReservedProp = (key) => key.slice(1);
-    function getUnionkeysFromMaps(...maps) {
+    function getUnionkeys(...maps) {
         var _ = {};
         for (let i in maps || emptyObject) {
             for (let key in maps[i]) {
@@ -693,7 +693,7 @@
     function updateDeclaration(style, pDeclaration, nDeclaration) {
         pDeclaration ||= emptyObject;
         nDeclaration ||= emptyObject;
-        for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
+        for (let propName of getUnionkeys(pDeclaration, nDeclaration)) {
             var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName]);
             var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName]);
             if (pValue !== nValue || pImportant !== nImportant) {
@@ -742,7 +742,7 @@
     function updateClass(el, pClass, nClass) {
         pClass ||= emptyObject;
         nClass ||= emptyObject;
-        for (let className of getUnionkeysFromMaps(pClass, nClass)) {
+        for (let className of getUnionkeys(pClass, nClass)) {
             var p = pClass[className];
             var n = nClass[className];
             p ? (n || removeClass(el, className)) : (n && addClass(el, className));
@@ -760,7 +760,7 @@
     function updateAttributes(el, pProps, nProps) {
         pProps ||= emptyObject;
         nProps ||= emptyObject;
-        for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
+        for (let propName of getUnionkeys(pProps, nProps)) {
             var pValue = pProps[propName];
             var nValue = nProps[propName];
             if (isEvent(propName)) {
@@ -3926,7 +3926,7 @@
     exports.getReservedProp = getReservedProp;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
-    exports.getUnionkeysFromMaps = getUnionkeysFromMaps;
+    exports.getUnionkeys = getUnionkeys;
     exports.hasOwn = hasOwn;
     exports.hsl = hsl;
     exports.hsla = hsla;

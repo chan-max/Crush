@@ -6,6 +6,7 @@ const openTagRE = /^<([\w-]+)(?:\.([\w\.]+))?/
 var closeTagRE = /^<\/([\w-]+)(?:\.[\w\.]+)?\s*>/
 const htmlCommentRE = /<!--((.|[\r\n])*?)-->/
 const attributeRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/
+var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/
 
 export function baseParseHTML(template: string) {
     var scanner = createScanner(template)
@@ -73,7 +74,6 @@ export function baseParseHTML(template: string) {
                 (attributes ||= []).push(_attribute);
             }
         } else {
-            var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/
             var textToken, text
             if ((textToken = textEndsWithTag.exec(scanner.source))) {
                 text = textToken[1]

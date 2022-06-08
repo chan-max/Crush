@@ -1,7 +1,6 @@
 
 import { error, camelize,execCaptureGroups , isUndefined  } from "@crush/common"
 
-
 const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/
 
 // both for html attribute and css declaration

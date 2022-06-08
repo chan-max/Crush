@@ -1,17 +1,23 @@
 
 
+// compiler required : 
+
+/*
+    model types :
+    checkbox
+    color
+    date
+    rang
+*/
 
 export const model = {
-    beforeCreate() {
-
-    },
-    created() {
-
+    created(el: HTMLElement) {
+        debugger
     },
     beforeMount() {
     },
     mounted() {
-
+        
     },
     beforeUpdate(el: Element, infos: any, vnode: any) {
         const assigner = vnode.props._assigner

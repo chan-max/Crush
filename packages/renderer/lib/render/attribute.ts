@@ -1,14 +1,14 @@
 
 import { emptyObject } from "@crush/common";
-import { keyOf,Nodes } from "@crush/const";
+import { keyOf, Nodes } from "@crush/const";
 import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
 
-import { getUnionkeysFromMaps } from "./common";
+import { getUnionkeys } from "./common";
 
 export function updateClass(el: any, pClass: any, nClass: any,) {
     pClass ||= emptyObject
     nClass ||= emptyObject
-    for (let className of getUnionkeysFromMaps(pClass, nClass)) {
+    for (let className of getUnionkeys(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
         p ? (
@@ -33,8 +33,9 @@ import {
     parseHandlerKey,
     isEvent
 } from '../common/event'
-import { getReservedProp, isReservedProp } from "./common";
+import { isReservedProp } from "./common";
 import { updateDeclaration } from "./declaration";
+import { normalizeClass, normalizeStyle } from "@crush/core";
 
 
 export function mountAttributes(el: any, props: any) {
@@ -43,7 +44,7 @@ export function mountAttributes(el: any, props: any) {
 export function updateAttributes(el: any, pProps: any, nProps: any) {
     pProps ||= emptyObject
     nProps ||= emptyObject
-    for (let propName of getUnionkeysFromMaps(pProps, nProps)) {
+    for (let propName of getUnionkeys(pProps, nProps)) {
         var pValue = pProps[propName]
         var nValue = nProps[propName]
         if (isEvent(propName)) {
@@ -55,11 +56,11 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
                 }
             }
         } else if (propName === keyOf(Nodes.STYLE)) {
-            updateDeclaration(el.style, pValue, nValue)
+            updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
         } else if (propName === keyOf(Nodes.CLASS)) {
-            updateClass(el, pValue, nValue)
+            updateClass(el, normalizeClass(pValue), normalizeClass(nValue))
         } else if (isReservedProp(propName)) {
-            debugger
+  
         } else {
             // attribute
             (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))

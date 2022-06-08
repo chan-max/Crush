@@ -11,3 +11,6 @@ export const uVar = () => `_${uid()}`
 
 export const emptyObject = Object.freeze({})
 export const emptyArray = Object.freeze([])
+
+
+export const createMap = (entries:any) => new Map(entries)

@@ -12,41 +12,6 @@ export type DirectiveType = {
 } | Function
 
 
-
-export function injectDirectives(target: any, directives: any[]) {
-    for (let directive of directives) {
-        injectDirective(target, directive)
-    }
-    return target
-}
-
-/*
-    参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
-*/
-function setOwnKey(arr: any[]) {
-    for (let key of arr) {
-        arr[key] = true
-    }
-    return arr
-}
-
-/*
-    指令注入不能直接添加在钩子中 ，需要额外处理指令信息等
-*/
-export function injectDirective(target: any, [directive, value, _arguments, modifiers]: any) {
-    // 指令会携带信息 值 参数 修饰符
-    var dirs = target.dirs ||= new Map()
-    const infos = {
-        value,
-        directive,
-        _arguments: _arguments && setOwnKey(_arguments),
-        modifiers: modifiers && setOwnKey(modifiers)
-    }
-    dirs.set(directive, infos)
-    // ! 
-    return target
-}
-
 import {
     LifecycleHooks
 } from './lifecycle'
@@ -88,6 +53,15 @@ function normalizeDirective(directive: any) {
     } : directive
 }
 
+/*
+    参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
+*/
+function setOwnKey(arr: any[]) {
+    for (let key of arr) {
+        arr[key] = true
+    }
+    return arr
+}
 
 function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefined) {
     const isComponent = next.nodeType === Nodes.COMPONENT
@@ -98,15 +72,24 @@ function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefine
         callHook(type, instance, { binding: scope }, scope)
     }
 
-    for (let [dir, infos] of next.dirs || emptyArray) {
+    var dirs = next?.props?._dirs
+
+    if (!dirs) return
+    for (let [dir, [value, _arguments, modifiers]] of dirs) {
         var _dir = normalizeDirective(dir)
         var hook = _dir[type]
         if (hook) {
+            var bindings: any = {
+                directive: dir, //保留原始指令
+                value,
+                _arguments: _arguments && setOwnKey(_arguments),
+                modifiers: modifiers && setOwnKey(modifiers)
+            }
             if (previous) {
-                infos.oldValue = previous.dirs.get(dir).value
+                bindings.oldValue = previous?.props?._dirs.get(dir)[0]
             }
             // 
-            hook(isComponent ? next.instance.scope : next.el, infos, next, previous)
+            hook(isComponent ? next.instance.scope : next.el, bindings, next, previous)
         }
     }
 }

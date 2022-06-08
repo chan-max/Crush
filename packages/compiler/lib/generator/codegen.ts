@@ -137,37 +137,13 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
     }
 }
 
-function genCustomDirectives(code: string, customDirectives: any[], context: any): string {
-    // injectDirective
-    var dirs = customDirectives.map((rawDir: any) => {
-
-        var { property, value, isDynamicProperty, _arguments, modifiers } = rawDir
-
-        // 支持动态指令
-        var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
-        if (!isDynamicProperty) {
-            directive = context.hoistExpression(directive)
-        }
-
-        var dirInfos = [
-            directive,
-            value,
-            _arguments && _arguments.map(toSingleQuotes),
-            modifiers && modifiers.map(toSingleQuotes)
-        ]
-
-        return dirInfos
-    })
-    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
-}
-
 function genChildrenString(children: any, context: any) {
     if (!children) return NULL
     return stringify(genChildren(children, context))
 }
 
 function genDirs(code: string, node: any, context: any) {
-    if (node.customDirectives) { code = genCustomDirectives(code, node.customDirectives, context) }
+    // custom directive会作为属性的一部分
     if (node.directives) { code = genDirectives(code, node.directives, context) }
     return code
 }
@@ -448,25 +424,38 @@ function genProps(node: any, context: any) {
                 value ||= property // 简写形似
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
-            case Nodes.RESERVED_PROP:
-                // 当确定是保留属性时，一定是非动态属性名
-                var {
-                    property,
+            case Nodes.CUSTOM_DIRECTIVE:
+                // ! 用下划线作为私有属性
+                var dirs = props._dirs ||= []
+                var { property, value, isDynamicProperty, _arguments, modifiers } = attr
+                // 支持动态指令
+                var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
+                if (!isDynamicProperty) {
+                    directive = context.hoistExpression(directive)
+                }
+                var dirInfos = [
                     value,
-                    isDynamicValue,
-                } = attr
-                props[toReservedProp(property)] = isDynamicValue ? value : toBackQuotes(value)
+                    _arguments && _arguments.map(toSingleQuotes),
+                    modifiers && modifiers.map(toSingleQuotes)
+                ]
+                dirs.push([directive, dirInfos])
                 break
+            // 自定义指令
         }
     });
 
-    // merge class , there could be more than one class
+    // merge class , there could be more than one class , 不应该在render函数中使用normalize
     if (props.class) {
-        props.class = context.callRenderFn(renderMethodsNameMap.normalizeClass, stringify(props.class))
+        props.class = stringify(props.class)
     }
 
     if (props.style) {
-        props.style = context.callRenderFn(renderMethodsNameMap.normalizeStyle, stringify(props.style))
+        props.style = stringify(props.style)
+    }
+
+    if (props._dirs) {
+        var dirStr = stringify(props._dirs)
+        props._dirs = context.callRenderFn(renderMethodsNameMap.createMap,dirStr)
     }
 
     return stringify(props) === '{}' ? NULL : stringify(props)

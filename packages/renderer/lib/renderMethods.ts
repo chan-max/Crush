@@ -32,9 +32,6 @@ import {
     getComponent
 } from './common/assets'
 import {
-    injectDirectives
-} from '@crush/core'
-import {
     mixin
 } from './common/mixin'
 
@@ -44,6 +41,10 @@ import {
 import {
     normalizeStyle
 } from './common/normalizeStyle'
+
+import {
+    createMap
+} from '@crush/common'
 
 import {renderSlot} from './common/renderSlot'
 
@@ -57,7 +58,6 @@ export default {
     display,
     getDirective,
     getComponent,
-    injectDirectives,
     createStyleSheet,
     createStyle,
     createDeclaration,
@@ -69,5 +69,6 @@ export default {
     normalizeClass,
     normalizeStyle,
     createComponent,
-    renderSlot
+    renderSlot,
+    createMap
 }

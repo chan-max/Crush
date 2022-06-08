@@ -12,7 +12,7 @@ import {
 } from '../common/important'
 
 
-import { getUnionkeysFromMaps } from "./common";
+import { getUnionkeys } from "./common";
 
 
 export type StyleValue = {
@@ -53,7 +53,7 @@ export function parseStyleValue(rawValue: any): StyleValue {
 export function updateDeclaration(style: CSSStyleDeclaration, pDeclaration: any, nDeclaration: any) {
     pDeclaration ||= emptyObject
     nDeclaration ||= emptyObject
-    for (let propName of getUnionkeysFromMaps(pDeclaration, nDeclaration)) {
+    for (let propName of getUnionkeys(pDeclaration, nDeclaration)) {
         var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName])
         var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName])
         if (pValue !== nValue || pImportant !== nImportant) {

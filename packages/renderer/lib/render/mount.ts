@@ -35,7 +35,7 @@ import { mountStyleSheet } from "./mountStyleSheet";
 
 function mountElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode
-    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
+    // processHook(LifecycleHooks.BEFORE_CREATE, vnode) 不在提供beforeCreate钩子
     // create 
     var el = docCreateElement(type)
     vnode.el = el

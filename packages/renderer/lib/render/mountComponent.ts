@@ -75,6 +75,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
         setCurrentInstance(instance)
         var nextTree = render()
+        console.log(nextTree);
         setCurrentInstance(null)
 
         // 处理树

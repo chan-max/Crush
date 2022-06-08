@@ -31,7 +31,8 @@ export var rfs = {
     renderSlot:'',
     injectDirective:'',
     injectDirectives:'',
-    injectReservedProps:''
+    injectReservedProps:'',
+    createMap:''
 }
 
 
