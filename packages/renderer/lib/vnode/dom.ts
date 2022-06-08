@@ -39,24 +39,27 @@ function createElement(tagName: string, props: any, children: any, key: any = ui
 }
 
 function createSVGElement() {
-
+ 
 }
 
 
 
-const SYMBOL_TEXT = Symbol('Text')
-const SYMBOL_COMMENT = Symbol('Comment')
+const Text = Symbol('Text')
+const Comment = Symbol('Comment')
 // the key is for other node
 function createText(text: any, key = uid()) {
     var node = createNode(Nodes.TEXT)
-    node.type = SYMBOL_TEXT
+    node.type = Text
     node.children = text
     node.key = key
     return node
 }
 
+const Fragment = Symbol('Fragment')
+
 function createFragment(children: any, key = uid()) {
     const f = createNode(Nodes.FRAGMENT)
+    f.type = Fragment
     f.children = children
     f.key = key
     return f

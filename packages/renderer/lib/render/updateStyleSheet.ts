@@ -86,9 +86,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
 
 function updateStyleRule(pRule: any, nRule: any, vnode: any) {
     var rule: CSSStyleRule = nRule.rule = pRule.rule
-    debugger
     var style = rule.style
-
     if (!style) return
     var { selector: pSelector, children: pDeclaration } = pRule
     var { selector: nSelector, children: nDeclaration } = nRule

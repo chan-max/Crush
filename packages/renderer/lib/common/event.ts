@@ -1,5 +1,5 @@
 import {
-    arrayToMap,    capitalize
+    arrayToMap, capitalize
 } from '@crush/common'
 
 // for renderer
@@ -7,6 +7,9 @@ import {
 const onRE = /^on[A-Z]/;
 export const isEvent = (key: string) => onRE.test(key);
 
+/*
+    dom 事件名称无大写，所以handlerkey上第一个参数为事件名称，其它为arguments
+*/
 export const parseHandlerKey = (handlerKey: string) => {
     var keys = handlerKey.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
     // remove on

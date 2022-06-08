@@ -17,6 +17,11 @@ export type ComponentType = {
     createRender?: Function
     mixins?: any
     props?: any
+    propsOptions?: any
+    emits?: any
+    emitsOptions?: any
+
+    customOptions?:any
 
     components?: Record<string, ComponentType>
     directives?: Record<string, DirectiveType>

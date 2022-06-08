@@ -68,7 +68,9 @@ export enum Nodes {
     // form binding
     MODEL,
 
-    RESERVED_PROP
+    RESERVED_PROP,
+
+    SKIP
 }
 
 /*

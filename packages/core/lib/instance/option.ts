@@ -6,6 +6,7 @@ import {
 import {
     compile
 } from '@crush/compiler'
+import { normalizePropsOptions } from "./props";
 
 export enum ComponentOptions {
 
@@ -26,14 +27,22 @@ export enum ComponentOptions {
 
     PROPS = 'props',
 
+    EMITS = 'emits',
+
     MIXINS = 'mixins',
     COMPOENNTS = 'components',
     DIRECTIVES = 'directives'
 }
 
-export function initOptions(options: ComponentType) {
+export function initOptions(options: ComponentType | any) {
     for (let key in options) {
         switch (key) {
+            case ComponentOptions.PROPS:
+                options.propsOptions = normalizePropsOptions(options[key])
+                break
+            case ComponentOptions.EMITS:
+                options.emitsOptions = normalizePropsOptions(options[key])
+                break
             case ComponentOptions.TEMPLATE:
                 options.createRender = compile(options[key] as string)
                 break
@@ -64,6 +73,8 @@ export function initOptions(options: ComponentType) {
                 break
             default:
                 /*custom options*/
+                const customOptions = options.customOptions ||= {}
+                customOptions[key] = options[key]
                 break
         }
     }

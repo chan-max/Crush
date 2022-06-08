@@ -196,11 +196,11 @@ function genNode(node: any, context: any): any {
         case Nodes.OUTLET:
             return genNodes(node.children as any[], context)
         case Nodes.DYNAMIC_ELEMENT:
-            var { value, isDynamicValue } = node.attributeMap['is']
+            var { is, isDynamicIs } = node
             var code: string = context.callRenderFn(
                 renderMethodsNameMap.createElement,
-                isDynamicValue ? value : toSingleQuotes(value),
-                genProps(node, context),
+                isDynamicIs ? is : toSingleQuotes(is),
+                genProps(node, context), // 正常生成props
                 genChildrenString(node.children, context),
                 uStringId())
             code = genDirs(code, node, context)
@@ -421,7 +421,7 @@ function genProps(node: any, context: any) {
                     isDynamicProperty,
                     isDynamicValue,
                 } = attr
-                value ||= property // 简写形似
+                value ||= property // 简写形式
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
             case Nodes.CUSTOM_DIRECTIVE:
@@ -455,7 +455,7 @@ function genProps(node: any, context: any) {
 
     if (props._dirs) {
         var dirStr = stringify(props._dirs)
-        props._dirs = context.callRenderFn(renderMethodsNameMap.createMap,dirStr)
+        props._dirs = context.callRenderFn(renderMethodsNameMap.createMap, dirStr)
     }
 
     return stringify(props) === '{}' ? NULL : stringify(props)

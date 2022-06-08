@@ -6,3 +6,6 @@ export const removeFromArray = (arr: any[], item: any) => {
     arr.splice(index, 1)
     return true
 }
+
+
+export const shallowCloneArray = (arr: any[] | any) => arr && [...arr] 

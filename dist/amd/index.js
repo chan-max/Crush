@@ -540,7 +540,7 @@ define(['exports'], (function (exports) { 'use strict';
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
     const isReservedProp = (key) => key.startsWith(`_${key}`);
     const getReservedProp = (key) => key.slice(1);
-    function getUnionkeys(...maps) {
+    function unionkeys(...maps) {
         var _ = {};
         for (let i in maps || emptyObject) {
             for (let key in maps[i]) {
@@ -689,7 +689,7 @@ define(['exports'], (function (exports) { 'use strict';
     function updateDeclaration(style, pDeclaration, nDeclaration) {
         pDeclaration ||= emptyObject;
         nDeclaration ||= emptyObject;
-        for (let propName of getUnionkeys(pDeclaration, nDeclaration)) {
+        for (let propName of unionkeys(pDeclaration, nDeclaration)) {
             var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName]);
             var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName]);
             if (pValue !== nValue || pImportant !== nImportant) {
@@ -738,7 +738,7 @@ define(['exports'], (function (exports) { 'use strict';
     function updateClass(el, pClass, nClass) {
         pClass ||= emptyObject;
         nClass ||= emptyObject;
-        for (let className of getUnionkeys(pClass, nClass)) {
+        for (let className of unionkeys(pClass, nClass)) {
             var p = pClass[className];
             var n = nClass[className];
             p ? (n || removeClass(el, className)) : (n && addClass(el, className));
@@ -756,7 +756,7 @@ define(['exports'], (function (exports) { 'use strict';
     function updateAttributes(el, pProps, nProps) {
         pProps ||= emptyObject;
         nProps ||= emptyObject;
-        for (let propName of getUnionkeys(pProps, nProps)) {
+        for (let propName of unionkeys(pProps, nProps)) {
             var pValue = pProps[propName];
             var nValue = nProps[propName];
             if (isEvent(propName)) {
@@ -3922,7 +3922,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.getReservedProp = getReservedProp;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
-    exports.getUnionkeys = getUnionkeys;
+    exports.unionkeys = unionkeys;
     exports.hasOwn = hasOwn;
     exports.hsl = hsl;
     exports.hsla = hsla;

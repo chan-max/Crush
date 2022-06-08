@@ -11,7 +11,7 @@ export const insertNull = (arr: any[], index: number, length: number = 1) => arr
 export const isReservedProp = (key: string) => key.startsWith(`_`)
 export const getReservedProp = (key: string) => key.slice(1)
 
-export function getUnionkeys(...maps: Record<string, any>[]): string[] {
+export function unionkeys(...maps: Record<string, any>[]): string[] {
     var _: Record<string, any> = {}
     for (let i in maps || emptyObject) {
         for (let key in maps[i]) {
@@ -20,14 +20,6 @@ export function getUnionkeys(...maps: Record<string, any>[]): string[] {
     }
     return Object.keys(_)
 }
-
-
-
-// 获取数组的并集
-
-function getArraysUnion() {
-}
-
 
 /*
     用于 props 的diff 算法 输入两个map类型，

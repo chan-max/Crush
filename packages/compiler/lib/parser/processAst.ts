@@ -4,6 +4,8 @@ import { toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
 import { parseText } from "./parseText"
 import { parseInlineClass, parseInlineStyle } from "./specialAttr"
+import { parseCSS } from './parseCSS'
+import { processRules } from './processRules'
 
 // legal variable name
 var varRE = /^\w+$/
@@ -30,12 +32,12 @@ const builtInTags: Record<string, any> = {
     },
     if(ast: any) {
         ast.type = Nodes.IF
-        ast.condition = ast.attributeMap['condition']
+        ast.condition = ast.attributeMap['condition'].value
         ast.isBranchStart = true
     },
     elseIf(ast: any) {
         ast.type = Nodes.ELSE_IF
-        ast.condition = ast.attributeMap['condition']
+        ast.condition = ast.attributeMap['condition'].value
         ast.isBranch = true
     },
     else(ast: any) {
@@ -44,7 +46,7 @@ const builtInTags: Record<string, any> = {
     },
     for(ast: any) {
         ast.type = Nodes.FOR
-        ast.iterator = parseIterator(ast.attributeMap['iterator'])
+        ast.iterator = parseIterator(ast.attributeMap['iterator'].value)
     },
     template(ast: any) {
         ast.type = Nodes.TEMPLATE
@@ -57,9 +59,21 @@ const builtInTags: Record<string, any> = {
     },
     element(ast: any) {
         ast.type = Nodes.DYNAMIC_ELEMENT
+        const is = ast.attributeMap.is
+        const { isDynamicValue, value } = is
+        ast.is = value
+        ast.isDynamicIs = isDynamicValue
+        is.type = Nodes.SKIP
     },
     style(ast: any) {
         ast.type = Nodes.STYLE
+        var template = ast.children?.[0].children
+        if (template) {
+            var styleAst = parseCSS(template)
+            processRules(styleAst)
+            ast.children = styleAst
+        }
+        ast.ignoreChildren = true
     }
 }
 
@@ -100,6 +114,10 @@ const builtInDirectives: any = {
     slot(attr: any, ast: any) {
         attr.type = Nodes.SLOT
         ast.directives.push(attr)
+    },
+    model(attr: any, ast: any) {
+        debugger
+        // 是否需要支持动态的 model type 类型
     }
 }
 
@@ -114,20 +132,39 @@ const builtInAttributes: any = {
     }
 }
 
+const builtInEvents: any = {
+    hook(attr: any, ast: any) {
+        attr.type = Nodes.SKIP
+        const hooks = attr._arguments
+        hooks.forEach((hook: string) => {
+            ast.attributes.push({
+                property: '_' + hook, // 作为保留属性
+                value: attr.value,
+                isDynamicProperty: false,
+                isDynamicValue: true
+            })
+        })
+    }
+}
+
 
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
     for (let i = 0; i < attributes.length; i++) {
         var attribute = attributes[i]
-        var { flag, } = attribute
+        var { flag, isDynamicProperty } = attribute
         if (flag === '@') {
             // event
             attribute.type = Nodes.EVENT
             attribute.isHandler = isHandler(attribute.value)
+            if (!isDynamicProperty && builtInEvents[attribute.property]) {
+                // 保留事件
+                builtInEvents[attribute.property](attribute, ast)
+            }
         } else if (flag === '--') {
             const dirHandler = builtInDirectives[attribute.property]
-            const isCustomDirective = attribute.isDynamicProperty || !dirHandler
+            const isCustomDirective = isDynamicProperty || !dirHandler
             if (isCustomDirective) {
                 // 自定义指令会作为props的一部分
                 attribute.type = Nodes.CUSTOM_DIRECTIVE

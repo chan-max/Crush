@@ -72,24 +72,32 @@ function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefine
         callHook(type, instance, { binding: scope }, scope)
     }
 
+    // 指令钩子
     var dirs = next?.props?._dirs
 
-    if (!dirs) return
-    for (let [dir, [value, _arguments, modifiers]] of dirs) {
-        var _dir = normalizeDirective(dir)
-        var hook = _dir[type]
-        if (hook) {
-            var bindings: any = {
-                directive: dir, //保留原始指令
-                value,
-                _arguments: _arguments && setOwnKey(_arguments),
-                modifiers: modifiers && setOwnKey(modifiers)
+    if (dirs) {
+        for (let [dir, [value, _arguments, modifiers]] of dirs) {
+            var _dir = normalizeDirective(dir)
+            var hook = _dir[type]
+            if (hook) {
+                var bindings: any = {
+                    directive: dir, //保留原始指令
+                    value,
+                    _arguments: _arguments && setOwnKey(_arguments),
+                    modifiers: modifiers && setOwnKey(modifiers)
+                }
+                if (previous) {
+                    bindings.oldValue = previous?.props?._dirs.get(dir)[0]
+                }
+                // 
+                hook(isComponent ? next.instance.scope : next.el, bindings, next, previous)
             }
-            if (previous) {
-                bindings.oldValue = previous?.props?._dirs.get(dir)[0]
-            }
-            // 
-            hook(isComponent ? next.instance.scope : next.el, bindings, next, previous)
         }
+    }
+
+    // 节点钩子
+    const vnodeHook = next?.props?.[`_${type}`]
+    if (vnodeHook) {
+        vnodeHook(isComponent ? next.instance.scope : next.el)
     }
 }

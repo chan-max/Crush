@@ -17,6 +17,7 @@ import {
 import {
     nextTickSingleWork
 } from '@crush/scheduler'
+import { mountComponentProps } from "./componentProps"
 
 // rendering instance and creating instance
 export var currentInstance: any = null
@@ -40,13 +41,12 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
     // setup instance
     const scope = instance.scope
-    instance.props = props || emptyObject
-    instance.slots = children || emptyObject
 
     // process props
 
+    mountComponentProps(instance, props)
 
-    // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
+    // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加 , create 中可以查看props
     setCurrentInstance(instance)
     callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)
     setCurrentInstance(null)
@@ -84,7 +84,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, n, p)
         patch(vnode, nextTree, container, anchor)
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, n, p)
-        
+
         component = n
         instance.isMounted = true
         instance.vnode = nextTree

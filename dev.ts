@@ -1,19 +1,39 @@
 import { createApp, hasOwn, isReactive, isRef, onMounted } from "./packages/core";
 
-var root = {
-    directives:{
-        x:{
-            updated(el,infos){
-                console.log(el,infos.oldValue);
-            }
+const tom = {
+    props: {
+        name: {
+            type: Number,
+            required:true
         }
     },
     template: `
-        <h1 --x:a:b:c.x.y.z="count*10" @click="count++"> {{count}} </h1>
+        <h6> I am child component </h6>
+        <input $value="count" type="range">
+        <button @click="count++"> {{count}} </button>
+    `,
+    create($) {
+        console.log(this);
+        
+        $.count = 0
+    }
+}
+
+var root = {
+    components: {
+        tom
+    },
+    name:'',
+    template: `
+        <button @click="count++"> {{count}} </button>
+        <tom  >
     `,
     create($) {
         $.count = 0
-    },
+        $.log = () => {
+            console.log(66);
+        }
+    }
 }
 
 
@@ -27,7 +47,6 @@ console.log('instance', instance);
 // import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 // import { computed } from "./packages/reactivity/lib/computed";
 // import { ref} from "./packages/reactivity/lib/ref";
-
 
 
 
