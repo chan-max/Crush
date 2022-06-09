@@ -18,6 +18,8 @@ function doAnimation(el: Element, animationOptions: Record<Animation, any>) {
 
 }
 
+export const nextFrame = (cb: any) => requestAnimationFrame(cb)
+
 
 
 

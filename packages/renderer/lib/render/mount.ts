@@ -29,16 +29,16 @@ export function mountChildren(children: any, container: any, anchor: any) {
     });
 }
 
-import { processHook,LifecycleHooks } from '@crush/core'
+import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
 
 function mountElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode
-    // processHook(LifecycleHooks.BEFORE_CREATE, vnode) 不在提供beforeCreate钩子
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
-    var el = docCreateElement(type)
-    vnode.el = el
+    var el = vnode.el = docCreateElement(type)
+
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)

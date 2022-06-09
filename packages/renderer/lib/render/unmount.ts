@@ -26,10 +26,11 @@ export function unmountChildren(children: any) {
 }
 
 function unmountElement(vnode: any, isStyle: boolean = false) {
+    processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
     if (vnode.children && !isStyle) {
         unmountChildren(vnode.children)
     }
-    processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
+    const el = vnode.el
     removeElement(vnode.el)
     processHook(LifecycleHooks.UNMOUNTED, vnode)
 }

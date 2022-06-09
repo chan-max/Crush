@@ -17,6 +17,8 @@ import { flip, flipInX, flipInY, flipOutX, flipOutY } from './animations/flipper
 import { lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt } from './animations/lightsspeed'
 import { bounce } from './animations/bounce'
 
+// copy animate.css
+
 var animations = {
     bounce,
     jackInTheBox,

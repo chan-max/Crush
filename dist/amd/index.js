@@ -996,7 +996,7 @@ define(['exports'], (function (exports) { 'use strict';
             map, list
         };
     }
-    function diffChildren(p, n, isRules) {
+    function sortChildren(p, n, isRules) {
         // copy
         p = [...p || []];
         n = [...n || []];
@@ -1051,7 +1051,7 @@ define(['exports'], (function (exports) { 'use strict';
             其次为nodetype,
             !还是假设key相同的节点顺序一定不会变，
         */
-        var { p, n } = diffChildren(pRules, nRules, true);
+        var { p, n } = sortChildren(pRules, nRules, true);
         /*
             经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
             抛出同一索引下节点类型不相同的情况
@@ -1201,7 +1201,7 @@ define(['exports'], (function (exports) { 'use strict';
         updateChildren(p.children, n.children, container);
     }
     function updateChildren(pChildren, nChildren, container, anchor) {
-        var { p, n } = diffChildren(pChildren, nChildren, false);
+        var { p, n } = sortChildren(pChildren, nChildren, false);
         var max = Math.max(p.length, n.length);
         for (let i = 0; i < max; i++) {
             patch(p[i], n[i], container, getAnchor(p, i + 1));
@@ -3895,7 +3895,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.deleteMedium = deleteMedium;
     exports.deleteRule = deleteRule;
     exports.destructur = destructur;
-    exports.diffChildren = diffChildren;
+    exports.sortChildren = sortChildren;
     exports.display = display;
     exports.doFlat = doFlat;
     exports.docCreateComment = docCreateComment;

@@ -29,7 +29,7 @@ export const patch = (current: any, next: any, container: any, anchor: any = nul
                     updateChildren([current], next, container, anchor)
                 } else {
                     // 两个单节点 ， 但key可能不同 
-                    if (current.type === next.type) {
+                    if (current.type === next.type && current.patchKey === next.patchKey) {
                         // 类型相同，直接更新
                         update(current, next, container, anchor)
                     } else {

@@ -21,30 +21,6 @@ import { callHook } from './lifecycle'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
 */
-export function processHook(type: LifecycleHooks, next: any, previous: any = null) {
-    // 不存在两个节点都不存在
-    if (previous) {
-        if (next.patchKey === previous.patchKey) {
-            // same node update
-            doProcessHook(type, next, previous)
-        } else {
-            // fake mount and unmount
-            // 卸载旧节点 beforeUnmount , unmounted
-            // 挂载新节点 beforeCreate , created , beforeMount , mounted
-            if (type === LifecycleHooks.BEFORE_UPDATE) {
-                processHook(LifecycleHooks.BEFORE_UNMOUNT, previous)
-                processHook(LifecycleHooks.UNMOUNTED, previous)
-            } else if (type === LifecycleHooks.UPDATED) {
-                processHook(LifecycleHooks.BEFORE_CREATE, next)
-                processHook(LifecycleHooks.CREATED, next)
-                processHook(LifecycleHooks.BEFORE_MOUNT, next)
-                processHook(LifecycleHooks.MOUNTED, next)
-            }
-        }
-    } else {
-        doProcessHook(type, next)
-    }
-}
 
 function normalizeDirective(directive: any) {
     return isFunction(directive) ? {
@@ -63,7 +39,8 @@ function setOwnKey(arr: any[]) {
     return arr
 }
 
-function doProcessHook(type: LifecycleHooks, next: any, previous: any = undefined) {
+export function processHook(type: LifecycleHooks, next: any, previous: any = undefined) {
+    // 在这不需要判断 两个节点的patchkey是否相同
     const isComponent = next.nodeType === Nodes.COMPONENT
     if (isComponent) {
         var instance = next.instance

@@ -407,11 +407,11 @@ function genProps(node: any, context: any) {
                 break
             case Nodes.CLASS:
                 var _class = props.class ||= []
-                _class.push(attr.value)
+                _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 break
             case Nodes.STYLE:
                 var style = props.style ||= []
-                style.push(attr.value)
+                style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 break
             case Nodes.ATTRIBUTE:
                 // normal attributes

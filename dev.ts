@@ -1,10 +1,10 @@
-import { createApp, hasOwn, isReactive, isRef, onMounted } from "./packages/core";
+import { createApp, hasOwn, isReactive, isRef, onMounted, removeElement } from "./packages/core";
 
 const tom = {
     props: {
         name: {
             type: Number,
-            required:true
+            required: true
         }
     },
     template: `
@@ -14,20 +14,44 @@ const tom = {
     `,
     create($) {
         console.log(this);
-        
+
         $.count = 0
     }
 }
 
 var root = {
-    components: {
-        tom
+    directives: {
+        x: {
+            created() {
+                console.log('created');
+            },
+            updated() {
+                console.log('updated');
+            },
+            mounted() {
+                console.log('mounted');
+            },
+            beforeUnmount(el) {
+                removeElement(el)
+            },
+            unmounted(el) {
+                debugger
+                console.log('unmounted');
+            },
+        }
     },
-    name:'',
     template: `
+        <style>
+            .box{
+                width:200px;
+                height:200px;
+                border:1px solid green;
+            }
+        </style>
         <button @click="count++"> {{count}} </button>
-        <tom  >
-    `,
+        <div .box --x --if="count%2 === 0"> 666 </div>
+        <div .box --if="count%2 === 1"> 777 </div>
+    `,  
     create($) {
         $.count = 0
         $.log = () => {

@@ -23,7 +23,7 @@ export function update(p: any, n: any, container: any, anchor: any) {
 
 
 import {
-    diffChildren
+    sortChildren
 } from './sequence'
 import { updateStyleSheet } from "./updateStyleSheet"
 
@@ -50,7 +50,7 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {
     var {
         p, n
-    } = diffChildren(pChildren, nChildren, false)
+    } = sortChildren(pChildren, nChildren, false)
 
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {

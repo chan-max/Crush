@@ -37,7 +37,7 @@ function createMapAndList(children: any[]) {
     }
 }
 
-export function diffChildren(p: any, n: any, isRules: any) {
+export function sortChildren(p: any, n: any, isRules: any) {
 
     // copy
     p = [...p || []]
