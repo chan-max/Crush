@@ -1,13 +1,6 @@
 import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeElement } from "./packages/core";
 
 
-const hello = {
-    template:`<h1 @click="count++"> {{count }}</h1>`,
-    create($){
-        $.count = 0
-    }
-}
-
 var root = {
     directives: {
         x: {
@@ -42,8 +35,6 @@ var root = {
         }
     }
 }
-
-
 
 var app = createApp(root)
 

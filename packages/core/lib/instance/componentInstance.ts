@@ -15,7 +15,9 @@ export function createComponentInstance(options: ComponentType | Function | any)
 
     const isFunctional = isFunction(options)
     if (isFunctional) {
-        options = emptyObject
+        options = {
+            rootCreate: options
+        }
     } else if (!options._isOptions) {
         initOptions(options)
     }
@@ -34,9 +36,9 @@ export function createComponentInstance(options: ComponentType | Function | any)
         components: options.components,
         directives: options.directives,
         // hooks will always be an array
-        rootCreate: isFunctional ?  options : options.rootCreate,
+        rootCreate: options.rootCreate,
         create: null,
-        beforeCreate:shallowCloneArray(options.beforeCreate),
+        beforeCreate: shallowCloneArray(options.beforeCreate),
         created: shallowCloneArray(options.created),
         beforeMount: shallowCloneArray(options.beforeMount),
         mounted: shallowCloneArray(options.mounted),

@@ -78,6 +78,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     // 组件根初始化方法
     let rootCreateResult
     if (rootCreate) {
+        debugger
         rootCreateResult = rootCreate(scope)
     }
     /*
