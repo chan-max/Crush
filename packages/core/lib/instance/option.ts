@@ -9,7 +9,7 @@ import {
 import { normalizePropsOptions } from "./props";
 
 export enum ComponentOptions {
-
+    BEFORE_CREATE = 'beforeCreate',
     CREATE = 'create',
     // setup funcition
     CREATED = 'created',
@@ -53,6 +53,7 @@ export function initOptions(options: ComponentType | any) {
                 options.rootCreate = value
                 // 清空create ，只用于处理 mixin 混入的create
                 options.create = null
+            case ComponentOptions.BEFORE_CREATE:
             case ComponentOptions.CREATED:
             case ComponentOptions.BEFORE_MOUNT:
             case ComponentOptions.MOUNTED:

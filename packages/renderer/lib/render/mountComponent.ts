@@ -57,6 +57,8 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 
     const { scope, rootCreate, isFunctional } = instance
 
+    callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
+
     component.instance = instance
 
     setCurrentInstance(instance)

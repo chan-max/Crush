@@ -5,6 +5,7 @@ import { emptyObject, isArray } from "@crush/common"
 */
 const enum LifecycleHooks {
 
+    BEFORE_CREATE = 'beforeCreate',
 
     CREATE = 'create',
 

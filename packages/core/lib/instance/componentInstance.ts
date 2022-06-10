@@ -36,6 +36,7 @@ export function createComponentInstance(options: ComponentType | Function | any)
         // hooks will always be an array
         rootCreate: isFunctional ?  options : options.rootCreate,
         create: null,
+        beforeCreate:shallowCloneArray(options.beforeCreate),
         created: shallowCloneArray(options.created),
         beforeMount: shallowCloneArray(options.beforeMount),
         mounted: shallowCloneArray(options.mounted),

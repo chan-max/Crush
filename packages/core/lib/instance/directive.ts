@@ -1,6 +1,7 @@
 import { Nodes } from '@crush/const'
 
 export type DirectiveType = {
+    beforeCreate?:Function
     created?: Function
     beforeMount?: Function
     mounted?: Function
