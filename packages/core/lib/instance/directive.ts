@@ -50,8 +50,9 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
     }
 
     // 指令钩子
-    var dirs = next?.props?._dirs
-
+    const props = next.props
+    if (!props) return
+    var dirs = props._dirs
     if (dirs) {
         for (let [dir, [value, _arguments, modifiers]] of dirs) {
             var _dir = normalizeDirective(dir)
@@ -73,7 +74,7 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
     }
 
     // 节点钩子
-    const vnodeHook = next?.props?.[`_${type}`]
+    const vnodeHook = props[`_${type}`]
     if (vnodeHook) {
         vnodeHook(isComponent ? next.instance.scope : next.el)
     }

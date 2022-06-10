@@ -35,23 +35,15 @@ var root = {
                 removeElement(el)
             },
             unmounted(el) {
-                debugger
                 console.log('unmounted');
             },
         }
     },
-    template: `
-        <style>
-            .box{
-                width:200px;
-                height:200px;
-                border:1px solid green;
-            }
-        </style>
-        <button @click="count++"> {{count}} </button>
-        <div .box --x --if="count%2 === 0"> 666 </div>
-        <div .box --if="count%2 === 1"> 777 </div>
-    `,  
+    template: `  
+        <tom>
+            <slot --slot:d="x" name="header" x="123">
+        </tom>
+    `,
     create($) {
         $.count = 0
         $.log = () => {
@@ -71,7 +63,6 @@ console.log('instance', instance);
 // import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 // import { computed } from "./packages/reactivity/lib/computed";
 // import { ref} from "./packages/reactivity/lib/ref";
-
 
 
 

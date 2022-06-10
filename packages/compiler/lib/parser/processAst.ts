@@ -6,7 +6,6 @@ import { parseText } from "./parseText"
 import { parseInlineClass, parseInlineStyle } from "./specialAttr"
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
-
 // legal variable name
 var varRE = /^\w+$/
 // arrow function
@@ -51,11 +50,28 @@ const builtInTags: Record<string, any> = {
     template(ast: any) {
         ast.type = Nodes.TEMPLATE
     },
+    // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
     slot(ast: any) {
         ast.type = Nodes.SLOT
+        // 插槽名称支持动态， 作用域不支持动态
+        // ! slot need : slotName , isDynamicSlot 
+        ast.type = Nodes.SLOT
+        const attr = ast.attributeMap
+        if (attr?.name) {
+            attr.name.type = Nodes.SKIP
+            ast.slotName = attr.name.value
+            ast.isDynamicSlot = attr.name.isDynamicValue
+        } else {
+            ast.slotName = 'default'
+        }
     },
     component(ast: any) {
         ast.type = Nodes.DYNAMIC_COMPONENT
+        const is = ast.attributeMap.is
+        const { isDynamicValue, value } = is
+        ast.is = value
+        ast.isDynamicIs = isDynamicValue
+        is.type = Nodes.SKIP
     },
     element(ast: any) {
         ast.type = Nodes.DYNAMIC_ELEMENT
@@ -106,14 +122,26 @@ const builtInDirectives: any = {
         ast.directives.push(attr)
     },
     text(attr: any, ast: any) {
-
+        attr.type = Nodes.ATTRIBUTE
+        attr.property = 'innerText'
+        attr.isDynamicValue = true
+        ast.children = null // 直接忽略
     },
     html(attr: any, ast: any) {
-
+        attr.type = Nodes.ATTRIBUTE
+        attr.property = 'innerHTML'
+        attr.isDynamicValue = true
+        ast.children = null // 直接忽略
     },
     slot(attr: any, ast: any) {
-        attr.type = Nodes.SLOT
-        ast.directives.push(attr)
+        // ! slot 指令用于定义插槽 ， 可用于单个元素和 template （fragment）, 需要定义 slotName 
+        /*
+            注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
+        */
+        attr.type = Nodes.SKIP
+        // 定义插槽无动态插槽 , 第一个参数为slot的名称
+        ast.defineSlotName = attr?._arguments?.[0]
+        ast.slotScope = attr.value
     },
     model(attr: any, ast: any) {
         debugger

@@ -17,7 +17,7 @@ export function createComponentInstance(options: ComponentType): ComponentInstan
     const instance: ComponentInstanceType = {
         uid: uid(),
         scope: reactive(initScope()),
-        render: null,
+        render: options.render, // 手写render
         vnode: null,
         slots: null,
         props: null,

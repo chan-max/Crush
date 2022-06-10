@@ -4,7 +4,7 @@
 */
 
 export const transition = {
-    beforeMount() {
+    beforeMount(el: HTMLElement, bindings: any, vnode: any) {
         debugger
     }
 }

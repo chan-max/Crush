@@ -24,6 +24,7 @@ export function mount(vnode: Vnode, container: any, anchor: any = null) {
 }
 
 export function mountChildren(children: any, container: any, anchor: any) {
+    if (!children) return
     children.forEach((child: any) => {
         mount(child, container, anchor)
     });
@@ -38,15 +39,13 @@ function mountElement(vnode: any, container: any, anchor: any) {
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
     var el = vnode.el = docCreateElement(type)
-
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
+
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)
-    if (children) {
-        mountChildren(children, el, anchor)
-    }
+    mountChildren(children, el, anchor)
 }
 
 function mountText(vnode: any, container: any, anchor: any) {

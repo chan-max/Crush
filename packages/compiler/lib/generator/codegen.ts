@@ -123,15 +123,6 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
             case Nodes.FOR:
                 target = genForWithFragment(target, dir.iterator, context)
                 break
-            case Nodes.SLOT:
-                // where there is a slot directive on a element or component , the target will be the fallback content
-                var slotName = toBackQuotes(dir.value || 'default')
-                // 指令插槽的渲染无法携带作用域信息
-                target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, toArrowFunction(target), uid())
-                break
-            case Nodes.OUTLET:
-                // 不在此处处理outlet
-                break
         }
         return genDirectives(target, dirs, context)
     }
@@ -161,9 +152,9 @@ function genSlotContent(node: any, context: any) {
     var slots: Record<string, string> = {}
 
     children.forEach((child: any) => {
-        var { name, scope } = child.outlet || emptyObject
-        if (name) {
-            slots[name] = toArrowFunction(genNode(child, context), scope)
+        var { defineSlotName, slotScope } = child
+        if (defineSlotName) {
+            slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope)
         } else {
             (_default ||= []).push(child)
         }
@@ -189,10 +180,13 @@ function genNode(node: any, context: any): any {
             if (node.dirs) { code = genDirectives(code, node.dirs, context) }
             return code
         case Nodes.SLOT:
-            var slotName = toBackQuotes(node.attributeMap?.name || 'default')
-            var fallback = toArrowFunction(genNodes(node.children, context))
-            // todo 插槽作用域
-            return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, fallback, uid())
+            const { slotName, isDynamicSlot, children } = node
+            return context.callRenderFn(
+                renderMethodsNameMap.renderSlot,
+                isDynamicSlot ? slotName : toBackQuotes(slotName),
+                genProps(node, context),
+                children ? toArrowFunction(genNodes(children, context)) : NULL,
+                uid())
         case Nodes.OUTLET:
             return genNodes(node.children as any[], context)
         case Nodes.DYNAMIC_ELEMENT:
@@ -213,8 +207,8 @@ function genNode(node: any, context: any): any {
             debugger
             return context.callRenderFn(renderMethodsNameMap.createSVGElement)
         case Nodes.DYNAMIC_COMPONENT:
-            var { value, isDynamicValue } = node.attrMap['is']
-            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicValue ? value : toSingleQuotes(value),)
+            var { is, isDynamicIs } = node
+            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is),)
             // 动态组件不会提升
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)

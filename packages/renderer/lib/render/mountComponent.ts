@@ -55,6 +55,7 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     // render function  
     setCurrentInstance(instance)
     const render = instance.render ||= instance.createRender(renderMethods)
+
     setCurrentInstance(null)
 
     processHook(LifecycleHooks.CREATED, component)
