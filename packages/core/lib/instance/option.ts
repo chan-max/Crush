@@ -10,8 +10,6 @@ import { normalizePropsOptions } from "./props";
 
 export enum ComponentOptions {
 
-    BEFORE_CREATE = 'beforeCreate',
-
     CREATE = 'create',
     // setup funcition
     CREATED = 'created',
@@ -36,21 +34,25 @@ export enum ComponentOptions {
 
 export function initOptions(options: ComponentType | any) {
     for (let key in options) {
+        const value = options[key]
         switch (key) {
             case ComponentOptions.PROPS:
-                options.propsOptions = normalizePropsOptions(options[key])
+                options.propsOptions = normalizePropsOptions(value)
                 break
             case ComponentOptions.EMITS:
-                options.emitsOptions = normalizePropsOptions(options[key])
+                options.emitsOptions = normalizePropsOptions(value)
                 break
             case ComponentOptions.TEMPLATE:
-                options.createRender = compile(options[key] as string)
+                options.createRender = compile(value as string)
                 break
             case ComponentOptions.RENDER:
                 // todo
                 break
-            case ComponentOptions.BEFORE_CREATE:
             case ComponentOptions.CREATE:
+                // 根create 存在 rootcreate上
+                options.rootCreate = value
+                // 清空create ，只用于处理 mixin 混入的create
+                options.create = null
             case ComponentOptions.CREATED:
             case ComponentOptions.BEFORE_MOUNT:
             case ComponentOptions.MOUNTED:
@@ -58,23 +60,24 @@ export function initOptions(options: ComponentType | any) {
             case ComponentOptions.UPDATED:
             case ComponentOptions.BEFORE_UNMOUNT:
             case ComponentOptions.UNMOUNTED:
-                var option = options[key]
-                if (option && !isArray(option)) {
-                    options[key] = [option]
+                // 转换为数组形式
+                if (value && !isArray(value)) {
+                    options[key] = [value]
                 }
-                break
-            case ComponentOptions.MIXINS:
-                var mixins = options[key]
-                injectMixins(options, mixins as any[])
                 break
             case ComponentOptions.COMPOENNTS:
                 break
             case ComponentOptions.DIRECTIVES:
                 break
+            //! remove to create instance
+            // case ComponentOptions.MIXINS:
+            //     var mixins = value
+            //     injectMixins(options, mixins as any[])
+            //     break
             default:
                 /*custom options*/
                 const customOptions = options.customOptions ||= {}
-                customOptions[key] = options[key]
+                customOptions[key] = value
                 break
         }
     }

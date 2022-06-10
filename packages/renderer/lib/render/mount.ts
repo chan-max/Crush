@@ -36,12 +36,10 @@ import { mountStyleSheet } from "./mountStyleSheet";
 
 function mountElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode
-    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
     var el = vnode.el = docCreateElement(type)
     mountAttributes(el, props)
     processHook(LifecycleHooks.CREATED, vnode)
-
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)

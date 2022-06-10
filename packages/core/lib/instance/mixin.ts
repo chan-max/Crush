@@ -3,7 +3,6 @@ import { LifecycleHooks, injectHook } from "./lifecycle"
 import { ComponentOptions } from "./option"
 
 export type MixinType = {
-    beforeCreate?: Function  // mainly for plugins
     create?: Function // setup 
     created?: Function
     beforeMount?: Function
@@ -21,7 +20,6 @@ export function injectMixin(options: ComponentType, mixin: MixinType) {
             case ComponentOptions.MIXINS:
                 injectMixins(options, options[key])
                 break
-            case ComponentOptions.BEFORE_CREATE:
             case ComponentOptions.CREATE:
             case ComponentOptions.CREATED:
             case ComponentOptions.BEFORE_MOUNT:

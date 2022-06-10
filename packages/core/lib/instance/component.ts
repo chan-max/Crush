@@ -1,8 +1,8 @@
 import { DirectiveType } from "./directive"
 
-export type ComponentType = {
+export type ComponentType =  {
+    rootCreate?:any
     // hooks
-    beforeCreate?: Function | Function[]  // mainly for plugins
     create?: Function | Function[]  // setup 
     created?: Function | Function[]
     beforeMount?: Function | Function[]

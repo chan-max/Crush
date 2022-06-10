@@ -8,4 +8,5 @@ export const removeFromArray = (arr: any[], item: any) => {
 }
 
 
-export const shallowCloneArray = (arr: any[] | any) => arr && [...arr] 
+export const shallowCloneArray = (arr: any[] | any) => arr && [...arr]
+

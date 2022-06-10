@@ -1,11 +1,10 @@
 
-import { emptyObject ,isArray } from "@crush/common"
+import { emptyObject, isArray } from "@crush/common"
 /*
     those hooks is shared with the component instance and element vnode 
 */
 const enum LifecycleHooks {
 
-    BEFORE_CREATE = 'beforeCreate',
 
     CREATE = 'create',
 
@@ -48,7 +47,8 @@ function injectMapHooks(target: any, mapHooks: any) {
 /*
     binding is used for bind the callback context , it is necessary
 */
-function callHook(type: LifecycleHooks, target: any, options: any = null, ...args: any[]) {
+function callHook(type: LifecycleHooks, target: any, options: any = null, ...args: any[]): undefined | any[] {
+    // hooks is always be array
     const hooks = target[type]
     if (!hooks) return
 
@@ -57,20 +57,19 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
         scheduler
     } = options || emptyObject
 
-    hooks.forEach((hook: any) => {
-        if (scheduler) {
-            scheduler(hook, binding, ...args)
-        } else {
-            hook.apply(binding, args)
-        }
+    const hooksResults = hooks.map((hook: any) => {
+        return scheduler ? 
+        scheduler(hook, binding, ...args) : 
+        hook.apply(binding, args)
     })
+    // 返回钩子的调用结果
+    return hooksResults
 }
 
 import { getCurrentInstance } from "@crush/renderer"
 
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)
 
-// no beforeCreate
 const onCreated = createHook(LifecycleHooks.CREATED)
 const onBeforeMount = createHook(LifecycleHooks.BEFORE_MOUNT)
 const onMounted = createHook(LifecycleHooks.MOUNTED)

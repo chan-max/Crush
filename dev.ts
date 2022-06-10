@@ -1,20 +1,9 @@
-import { createApp, hasOwn, isReactive, isRef, onMounted, removeElement } from "./packages/core";
+import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeElement } from "./packages/core";
 
-const tom = {
-    props: {
-        name: {
-            type: Number,
-            required: true
-        }
-    },
-    template: `
-        <h6> I am child component </h6>
-        <input $value="count" type="range">
-        <button @click="count++"> {{count}} </button>
-    `,
-    create($) {
-        console.log(this);
 
+const hello = {
+    template:`<h1 @click="count++"> {{count }}</h1>`,
+    create($){
         $.count = 0
     }
 }
@@ -39,10 +28,12 @@ var root = {
             },
         }
     },
+    components:{
+        hello
+    },
     template: `  
-        <tom>
-            <slot --slot:d="x" name="header" x="123">
-        </tom>
+        <button @click="count++"> {{count}} </button>
+        <hello --for="i in count">
     `,
     create($) {
         $.count = 0
@@ -56,13 +47,13 @@ var root = {
 
 var app = createApp(root)
 
+
 console.log('app', app);
 var instance = app.mount('#app')
 console.log('instance', instance);
 
 // import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 // import { computed } from "./packages/reactivity/lib/computed";
-// import { ref} from "./packages/reactivity/lib/ref";
+// import { ref } from "./packages/reactivity/lib/ref";
 
-
-
+// functional component
