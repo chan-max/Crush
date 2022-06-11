@@ -46,9 +46,12 @@ import {
     createMap
 } from '@crush/common'
 
-import {renderSlot} from './common/renderSlot'
+import { renderSlot } from './common/renderSlot'
+
+import { injectDirectives } from '@crush/core'
 
 export default {
+    injectDirectives,
     important,
     getCurrentScope,
     createElement,

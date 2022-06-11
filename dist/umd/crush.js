@@ -3689,7 +3689,7 @@
         ComponentOptions["COMPOENNTS"] = "components";
         ComponentOptions["DIRECTIVES"] = "directives";
     })(exports.ComponentOptions || (exports.ComponentOptions = {}));
-    function initOptions(options) {
+    function resolveOptions(options) {
         for (let key in options) {
             switch (key) {
                 case exports.ComponentOptions.TEMPLATE:
@@ -3731,7 +3731,7 @@
 
     function createComponentInstance(options) {
         if (!options._isOptions) {
-            initOptions(options);
+            resolveOptions(options);
         }
         var app = getCurrentApp();
         const instance = {
@@ -3932,7 +3932,7 @@
     exports.hsla = hsla;
     exports.hyphenate = hyphenate;
     exports.important = important;
-    exports.initOptions = initOptions;
+    exports.resolveOptions = resolveOptions;
     exports.initScope = initScope;
     exports.injectDirective = injectDirective;
     exports.injectDirectives = injectDirectives;

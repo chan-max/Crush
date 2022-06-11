@@ -32,7 +32,7 @@ export enum ComponentOptions {
     DIRECTIVES = 'directives'
 }
 
-export function initOptions(options: ComponentType | any) {
+export function resolveOptions(options: ComponentType | any) {
     for (let key in options) {
         const value = options[key]
         switch (key) {
@@ -83,5 +83,4 @@ export function initOptions(options: ComponentType | any) {
                 break
         }
     }
-    options._isOptions = true
 }

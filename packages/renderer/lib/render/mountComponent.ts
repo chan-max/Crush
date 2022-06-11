@@ -1,6 +1,6 @@
-import { createComponentInstance, LifecycleHooks, callHook } from "@crush/core"
+import { createComponentInstance, LifecycleHooks, callHook, processComponent, COMPONENT_TYPE, Components } from "@crush/core"
 
-import { emptyFunction, emptyObject, isFunction, isObject } from "@crush/common"
+import { emptyFunction, emptyObject, error, isFunction, isObject } from "@crush/common"
 
 import renderMethods from "../renderMethods"
 import { processdom } from "../common/processdom"
@@ -31,17 +31,6 @@ export function getCurrentScope() {
     return getCurrentInstance().scope
 }
 
-function asyncComponent() {
-}
-
-function pureComponent() {
-
-}
-
-
-
-
-
 function setScopeData(scope: any, data: any) {
     if (!isObject(data)) { return }
     for (let key in data) {
@@ -50,8 +39,26 @@ function setScopeData(scope: any, data: any) {
     }
 }
 
+
 export function mountComponent(component: any, container: Element, anchor: Element | null = null) {
-    const { type, props, children } = component
+    switch (processComponent(component.type)[COMPONENT_TYPE]) {
+        case Components.OPTIONS_COMPONENT:
+        case Components.FUNCTIONAL_COMPONENT:
+            return mountStatefulComponent(component, container, anchor)
+        case Components.RENDER_COMPONENT:
+            return mountRenderComponent(component, container, anchor)
+        case Components.ASYNC_COMPONENT:
+            return mountAsyncComponent(component, container, anchor)
+        case Components.RESOLVED_ASYNC_COMPONENT:
+            return mountResolvedAsyncComponent(component, container, anchor)
+    }
+}
+
+
+// 有状态函数式组件必须用functionalComponent 声明
+export function mountStatefulComponent(component: any, container: Element, anchor: Element | null = null) {
+
+    const { type, props, children }: any = component
 
     const instance = createComponentInstance(type)
 
@@ -78,7 +85,6 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     // 组件根初始化方法
     let rootCreateResult
     if (rootCreate) {
-        debugger
         rootCreateResult = rootCreate(scope)
     }
     /*
@@ -86,12 +92,14 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         create 返回的渲染函数  > render > template , 暂时不支持无状态组件
     */
     let render: any
-    if (isFunctional) {
+    if (isFunction(rootCreateResult)) {
         // ! 初始化返回结果作为 render
         // 无论是options组件还还是函数式组件 ， 只有rootCreate返回结果是函数都会作为
         render = rootCreateResult
     } else {
         // ! 返回结果作为data
+        setScopeData(scope, rootCreateResult)
+
         if (instance.render) {
             render = instance.render
         } else if (instance.createRender) {
@@ -99,7 +107,6 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
         } else {
             render = emptyFunction
         }
-        setScopeData(scope, rootCreateResult)
     }
 
     render = render.bind(scope) // 用于手写 render 时的 this
@@ -149,4 +156,16 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
     })
 
     return instance
+}
+
+function mountRenderComponent(component: any, container: any, anchor: any) {
+    debugger
+}
+
+function mountAsyncComponent(component: any, container: any, anchor: any) {
+
+}
+
+function mountResolvedAsyncComponent(component: any, container: any, anchor: any) {
+
 }

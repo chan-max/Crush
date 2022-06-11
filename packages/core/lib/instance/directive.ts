@@ -1,7 +1,7 @@
 import { Nodes } from '@crush/const'
 
 export type DirectiveType = {
-    beforeCreate?:Function
+    beforeCreate?: Function
     created?: Function
     beforeMount?: Function
     mounted?: Function
@@ -29,6 +29,19 @@ function normalizeDirective(directive: any) {
     } : directive
 }
 
+
+function injectDirective(target: any, [directive, ...bindings]: any) {
+    var dirs = target.dirs ||= new Map()
+    dirs.set(directive, bindings)
+}
+
+export function injectDirectives(target: any, directives: any[]) {
+    directives.forEach((directive: any) => {
+        injectDirective(target, directive)
+    })
+    return target
+}
+
 /*
     参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
 */
@@ -50,9 +63,7 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
     }
 
     // 指令钩子
-    const props = next.props
-    if (!props) return
-    var dirs = props._dirs
+    var dirs = next.dirs
     if (dirs) {
         for (let [dir, [value, _arguments, modifiers]] of dirs) {
             var _dir = normalizeDirective(dir)
@@ -65,7 +76,8 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
                     modifiers: modifiers && setOwnKey(modifiers)
                 }
                 if (previous) {
-                    bindings.oldValue = previous?.props?._dirs.get(dir)[0]
+                    // 如果更新的话两个节点的指令应该完全相同
+                    bindings.oldValue = previous.dirs.get(dir)[0]
                 }
                 // 
                 hook(isComponent ? next.instance.scope : next.el, bindings, next, previous)
@@ -74,7 +86,7 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
     }
 
     // 节点钩子
-    const vnodeHook = props[`_${type}`]
+    const vnodeHook = next?.props?.[`_${type}`]
     if (vnodeHook) {
         vnodeHook(isComponent ? next.instance.scope : next.el)
     }

@@ -134,9 +134,26 @@ function genChildrenString(children: any, context: any) {
 }
 
 function genDirs(code: string, node: any, context: any) {
-    // custom directive会作为属性的一部分
+    if (node.customDirectives) { code = genCustomDirectives(code, node.customDirectives, context) }
     if (node.directives) { code = genDirectives(code, node.directives, context) }
     return code
+}
+
+function genCustomDirectives(code: any, directives: any, context: any) {
+    var dirs = directives.map((directive: any) => {
+        var { property, value, isDynamicProperty, _arguments, modifiers } = directive
+        var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
+        if (!isDynamicProperty) {
+            directive = context.hoistExpression(directive)
+        }
+        return [
+            directive,
+            value,
+            _arguments && _arguments.map(toSingleQuotes),
+            modifiers && modifiers.map(toSingleQuotes)
+        ]
+    });
+    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code,stringify(dirs))
 }
 
 function genSlotContent(node: any, context: any) {
@@ -418,23 +435,6 @@ function genProps(node: any, context: any) {
                 value ||= property // 简写形式
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
-            case Nodes.CUSTOM_DIRECTIVE:
-                // ! 用下划线作为私有属性
-                var dirs = props._dirs ||= []
-                var { property, value, isDynamicProperty, _arguments, modifiers } = attr
-                // 支持动态指令
-                var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
-                if (!isDynamicProperty) {
-                    directive = context.hoistExpression(directive)
-                }
-                var dirInfos = [
-                    value,
-                    _arguments && _arguments.map(toSingleQuotes),
-                    modifiers && modifiers.map(toSingleQuotes)
-                ]
-                dirs.push([directive, dirInfos])
-                break
-            // 自定义指令
         }
     });
 
@@ -445,11 +445,6 @@ function genProps(node: any, context: any) {
 
     if (props.style) {
         props.style = stringify(props.style)
-    }
-
-    if (props._dirs) {
-        var dirStr = stringify(props._dirs)
-        props._dirs = context.callRenderFn(renderMethodsNameMap.createMap, dirStr)
     }
 
     return stringify(props) === '{}' ? NULL : stringify(props)

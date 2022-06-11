@@ -3685,7 +3685,7 @@ define(['exports'], (function (exports) { 'use strict';
         ComponentOptions["COMPOENNTS"] = "components";
         ComponentOptions["DIRECTIVES"] = "directives";
     })(exports.ComponentOptions || (exports.ComponentOptions = {}));
-    function initOptions(options) {
+    function resolveOptions(options) {
         for (let key in options) {
             switch (key) {
                 case exports.ComponentOptions.TEMPLATE:
@@ -3727,7 +3727,7 @@ define(['exports'], (function (exports) { 'use strict';
 
     function createComponentInstance(options) {
         if (!options._isOptions) {
-            initOptions(options);
+            resolveOptions(options);
         }
         var app = getCurrentApp();
         const instance = {
@@ -3928,7 +3928,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.hsla = hsla;
     exports.hyphenate = hyphenate;
     exports.important = important;
-    exports.initOptions = initOptions;
+    exports.resolveOptions = resolveOptions;
     exports.initScope = initScope;
     exports.injectDirective = injectDirective;
     exports.injectDirectives = injectDirectives;

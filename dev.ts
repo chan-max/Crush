@@ -1,38 +1,19 @@
-import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeElement } from "./packages/core";
+import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeElement, functionalComponent } from "./packages/core";
 
 
 var root = {
-    directives: {
-        x: {
-            created() {
-                console.log('created');
-            },
-            updated() {
-                console.log('updated');
-            },
-            mounted() {
-                console.log('mounted');
-            },
-            beforeUnmount(el) {
-                removeElement(el)
-            },
-            unmounted(el) {
-                console.log('unmounted');
-            },
+    components: {
+        hello: {
+            props: ['count'],
+            template: `<h1 @click="count++"> hello {{ count }} </h1>`,
         }
-    },
-    components:{
-        hello
     },
     template: `  
         <button @click="count++"> {{count}} </button>
-        <hello --for="i in count">
+        <hello $count="count">
     `,
     create($) {
         $.count = 0
-        $.log = () => {
-            console.log(66);
-        }
     }
 }
 
@@ -47,4 +28,3 @@ console.log('instance', instance);
 // import { computed } from "./packages/reactivity/lib/computed";
 // import { ref } from "./packages/reactivity/lib/ref";
 
-// functional component

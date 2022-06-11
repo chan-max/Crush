@@ -1,27 +1,18 @@
-import { initOptions } from "./option";
+import { resolveOptions } from "./option";
 import { ComponentType } from "./component";
 import { getCurrentApp } from "../app/app";
 import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { initScope } from "./scope";
+import { Components, COMPONENT_TYPE } from "./defineComponent";
 
 
 export type ComponentInstanceType = any
 
 export function createComponentInstance(options: ComponentType | Function | any): ComponentInstanceType {
 
-    //! 创建组件实例只支持 选项式组件 ，和返回值时render函数的函数组件 
-
-    const isFunctional = isFunction(options)
-    if (isFunctional) {
-        options = {
-            rootCreate: options
-        }
-    } else if (!options._isOptions) {
-        initOptions(options)
-    }
-
+    //! 创建组件实例只支持 选项式组件 ，和返回值时render函数的函数组件
     const instance: ComponentInstanceType = {
         uid: uid(),
         scope: reactive(initScope()),
@@ -46,7 +37,7 @@ export function createComponentInstance(options: ComponentType | Function | any)
         unmounted: shallowCloneArray(options.unmounted),
         beforeUpdate: shallowCloneArray(options.beforeUpdate),
         updated: shallowCloneArray(options.updated),
-        isFunctional,
+        isFunctional: options[COMPONENT_TYPE] === Components.FUNCTIONAL_COMPONENT
     }
     var app = getCurrentApp()
     if (app.mixins) {

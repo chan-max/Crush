@@ -195,7 +195,8 @@ function processAttribute(ast: any) {
             const isCustomDirective = isDynamicProperty || !dirHandler
             if (isCustomDirective) {
                 // 自定义指令会作为props的一部分
-                attribute.type = Nodes.CUSTOM_DIRECTIVE
+                attribute.type = Nodes.CUSTOM_DIRECTIVE;
+                (ast.customDirectives ||= []).push(attribute)
             } else {
                 ast.directives ||= []
                 dirHandler(attribute, ast)

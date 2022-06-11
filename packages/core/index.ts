@@ -17,3 +17,5 @@ export * from '@crush/const'
 export * from '@crush/reactivity'
 export * from '@crush/renderer'
 export * from '@crush/scheduler'
+
+export * from './lib/instance/defineComponent'
