@@ -30,7 +30,7 @@ export function unmountClass(el: HTMLElement) {
 
 
 import {
-    parseHandlerKey,
+    parseNativeEventName,
     isEvent
 } from '../common/event'
 import { isReservedProp } from "./common";
@@ -51,7 +51,7 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
             // 保留属性
         } else if (isEvent(propName)) {
             if (pValue !== nValue) {
-                var { event, options } = parseHandlerKey(propName)
+                var { event, options } = parseNativeEventName(propName)
                 removeEventListener(el, event, pValue, options)
                 if (nValue) {
                     addEventListener(el, event, nValue, options)

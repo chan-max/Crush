@@ -578,7 +578,7 @@ function createMapEntries(...maps) {
 // for renderer
 const onRE = /^on[A-Z]/;
 const isEvent = (key) => onRE.test(key);
-const parseHandlerKey = (handlerKey) => {
+const parseNativeEventName = (handlerKey) => {
     var keys = handlerKey.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
     // remove on
     keys.shift();
@@ -591,7 +591,7 @@ const parseHandlerKey = (handlerKey) => {
     };
 };
 // for compiler
-function createHandlerKey(eventName, options) {
+function createNativeEventName(eventName, options) {
     var handlerKey = `on${capitalize(eventName)}`;
     if (options && options.length !== 0) {
         handlerKey += options.map(capitalize).join(''); // join default with ,
@@ -763,7 +763,7 @@ function updateAttributes(el, pProps, nProps) {
         var nValue = nProps[propName];
         if (isEvent(propName)) {
             if (pValue !== nValue) {
-                var { event, options } = parseHandlerKey(propName);
+                var { event, options } = parseNativeEventName(propName);
                 removeEventListener(el, event, pValue, options);
                 if (nValue) {
                     addEventListener(el, event, nValue, options);
@@ -2565,7 +2565,7 @@ var rfs = {
     getDirective: '',
     getCurrentScope: '',
     createEvent: '',
-    createHandlerKey: '',
+    createNativeEventName: '',
     normalizeClass: '',
     normalizeStyle: '',
     renderSlot: '',
@@ -2915,7 +2915,7 @@ function genProps(node, context) {
             case exports.Nodes.EVENT:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                 var handlerKey = isDynamicProperty ?
-                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createHandlerKey, property, stringify(_arguments.map(toBackQuotes)))) : createHandlerKey(property, _arguments);
+                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) : createNativeEventName(property, _arguments);
                 var callback = isHandler ? value : toArrowFunction(value);
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
@@ -3880,7 +3880,7 @@ exports.createElement = createElement;
 exports.createEvent = createEvent;
 exports.createFragment = createFragment;
 exports.createFunction = createFunction;
-exports.createHandlerKey = createHandlerKey;
+exports.createNativeEventName = createNativeEventName;
 exports.createKeyframe = createKeyframe;
 exports.createKeyframes = createKeyframes;
 exports.createMapEntries = createMapEntries;
@@ -3996,7 +3996,7 @@ exports.onMounted = onMounted;
 exports.onUnmounted = onUnmounted;
 exports.onUpdated = onUpdated;
 exports.onceListener = onceListener;
-exports.parseHandlerKey = parseHandlerKey;
+exports.parseNativeEventName = parseNativeEventName;
 exports.parseInlineClass = parseInlineClass;
 exports.parseInlineStyle = parseInlineStyle;
 exports.parseStyleValue = parseStyleValue;

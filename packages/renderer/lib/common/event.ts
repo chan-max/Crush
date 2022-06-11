@@ -10,7 +10,7 @@ export const isEvent = (key: string) => onRE.test(key);
 /*
     dom 事件名称无大写，所以handlerkey上第一个参数为事件名称，其它为arguments
 */
-export const parseHandlerKey = (handlerKey: string) => {
+export const parseNativeEventName = (handlerKey: string) => {
     var keys = handlerKey.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
     // remove on
     keys.shift()
@@ -24,7 +24,7 @@ export const parseHandlerKey = (handlerKey: string) => {
 }
 
 // for compiler
-export function createHandlerKey(eventName: string, options?: string[]): string {
+export function createNativeEventName(eventName: string, options?: string[]): string {
     var handlerKey = `on${capitalize(eventName)}`
     if (options && options.length !== 0) {
         handlerKey += options.map(capitalize).join('') // join default with ,

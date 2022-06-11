@@ -4,16 +4,25 @@ import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeEleme
 var root = {
     components: {
         hello: {
-            props: ['count'],
-            template: `<h1 @click="count++"> hello {{ count }} </h1>`,
+            props: ['data'],
+            template: `<h1 @click="count++"> {{ data }} </h1>`,
+            create(){
+            }
         }
     },
-    template: `  
+    template: `
         <button @click="count++"> {{count}} </button>
-        <hello $count="count">
+        <hello $data >
+            <h6 --if="12346" > 我是插槽 </h6>
+        </hello>
     `,
     create($) {
         $.count = 0
+        $.data = {
+            a:111,
+            b:222,
+            c:333
+        }
     }
 }
 

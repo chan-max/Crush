@@ -1,5 +1,20 @@
 
 
+export const enum DataEffects {
+    SIZE,
+    ADD,
+    DELETE,
+    ITERATE,
+    TARGET_TO_KEY,
+    HAS,
+    DELETE_PROPERTY,
+    OWNKEYS,
+    ARRAY_TRIGGER,
+    ARRAY_TRACK
+}
+
+
+
 export function track(...args: any[]) {
     console.warn('track', ...args);
 }
@@ -26,7 +41,6 @@ class Effect {
     }
 
     run() {
-
         activeEffect = this
         activeEffectStack.push(this)
     }
@@ -34,4 +48,4 @@ class Effect {
 }
 
 
-// export const effect = (fn: any) => new Effect(fn)
+const effect = (fn: any) => new Effect(fn)

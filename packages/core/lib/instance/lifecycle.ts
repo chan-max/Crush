@@ -57,7 +57,6 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
         binding,
         scheduler
     } = options || emptyObject
-
     const hooksResults = hooks.map((hook: any) => {
         return scheduler ? 
         scheduler(hook, binding, ...args) : 

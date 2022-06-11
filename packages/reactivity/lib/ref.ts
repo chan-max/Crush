@@ -20,6 +20,7 @@ class Ref {
 
     set value(newValue) {
         if (this._value === newValue) {
+            // sensitive 
             return
         }
         this._value = newValue

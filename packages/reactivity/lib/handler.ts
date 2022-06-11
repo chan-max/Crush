@@ -2,7 +2,7 @@ import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
-import { track, trigger } from './effect'
+import { DataEffects, track, trigger, } from './effect'
 
 // global state
 let _isReadonly = false
@@ -15,7 +15,7 @@ export const getLastVisitKey = () => _key
 
 const collectionHandlers: Record<string, any> = {
     get size() {
-        track(_target)
+        track(DataEffects.SIZE, _target)
         return _target.size
     },
     // set weakset
@@ -24,7 +24,7 @@ const collectionHandlers: Record<string, any> = {
             return warn(_target, 'is readonly , cant add');
         }
         var result = _target.add(value)
-        trigger(_target)
+        trigger(DataEffects.ADD, _target)
         // 返回set对象本身
         return result
     },
@@ -39,22 +39,22 @@ const collectionHandlers: Record<string, any> = {
     // map weakmap set weakset
     delete(key: any) {
         if (_isReadonly) {
-            return console.warn(_target, 'is readonly cant delete');
+            return warn(_target, 'is readonly cant delete');
         }
         const result = _target.delete(key)
         if (result) { // 返回为 true 为删除成功
-            trigger(_target)
+            trigger(DataEffects.DELETE, _target)
         }
         return result
     },
     // map set
     entries() {
-        track(_target)
+        track(DataEffects.ITERATE, _target)
         return _target.entries()
     },
     // map set
     forEach(fn: any) {
-        track(_target)
+        track(DataEffects.ITERATE, _target)
         return _target.forEach(fn)
     },
     // set map weakset weakmap
@@ -84,7 +84,7 @@ const collectionHandlers: Record<string, any> = {
     // map weakmap
     get(key: any) {
         if (!_isReadonly) {
-            track(_target)
+            track( _target, key)
         }
         var value = _target.get(key)
         return _isShallow ? value : reactive(value)
@@ -94,7 +94,7 @@ const collectionHandlers: Record<string, any> = {
 
 function arrayHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
-        console.warn('ARRAY track');
+        trigger(DataEffects.ARRAY_TRACK, _target)
     }
     let result = _target[_key](...args)
     return result
@@ -102,10 +102,10 @@ function arrayHandlerWithTrack(...args: any[]) {
 
 function arrayHandlerWithTrigger(...args: any[]) {
     if (_isReadonly) {
-        return console.error('readonly');
+        return warn(`${_target}is readonly cant ${_key}`);
     }
     let result = _target[_key](...args)
-    console.warn('trigger')
+    trigger(DataEffects.ARRAY_TRIGGER, _target)
     return result
 }
 
@@ -127,6 +127,7 @@ const SYMBOL_ITERATOR = Symbol.iterator
 const specialKeyHandler: Record<string, any> = {
     [SYMBOL_ITERATOR]: (value: Function) => {
         // should track ?
+        track(DataEffects.ITERATE, _target)
         return value.bind(_target)
     }
 }
@@ -158,7 +159,7 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
         } else if (hasOwn(target, key)) {
             // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
             if (!isReadonly) {
-                track(target, key)
+                track(DataEffects.TARGET_TO_KEY, target, key)
             }
             var value = Reflect.get(target, key, receiver)
 
@@ -195,7 +196,7 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
         if (hasOwn(target, key)) {
             // 不允许设置非自身属性
             Reflect.set(target, key, newValue, receiver)
-            trigger(target, key)
+            trigger(DataEffects.TARGET_TO_KEY, target, key)
         }
         return true
     }
@@ -207,7 +208,7 @@ function has(target: any, key: any) {
         ? in target
     */
     if (hasOwn(target, key)) {
-        track(target, key)
+        track(DataEffects.HAS, target, key)
     }
     return Reflect.has(target, key);
 }
@@ -216,7 +217,7 @@ function ownKeys(target: any) {
     /*
         for ? in target
     */
-    track(target)
+    track(DataEffects.OWNKEYS, target)
     return Reflect.ownKeys(target);
 }
 
@@ -224,7 +225,7 @@ function deleteProperty(target: any, key: any) {
     // 为 true 表示删除成功
     const result = Reflect.deleteProperty(target, key);
     if (result && hasOwn(target, key)) {
-        trigger(target, key)
+        trigger(DataEffects.DELETE_PROPERTY, target, key)
     }
     return result;
 }

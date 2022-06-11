@@ -1,5 +1,5 @@
 
-export enum Nodes {
+export const enum Nodes {
 
     NULL, /* null */
 

@@ -85,7 +85,7 @@ export function mountStatefulComponent(component: any, container: Element, ancho
     // 组件根初始化方法
     let rootCreateResult
     if (rootCreate) {
-        rootCreateResult = rootCreate(scope)
+        rootCreateResult = rootCreate.call(scope, scope)
     }
     /*
         render 优先级
