@@ -1,4 +1,4 @@
-export * from './lib/_reactive'
+export * from './lib/reactive'
 // export * from './lib/reactive'
 export * from './lib/common'
 export * from './lib/effect'

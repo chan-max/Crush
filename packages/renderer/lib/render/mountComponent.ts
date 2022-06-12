@@ -11,11 +11,12 @@ import {
     patch
 } from './patch'
 import {
+    createReactiveEffect,
     effect
 } from '@crush/reactivity'
 
 import {
-    nextTickSingleWork
+    queueJob
 } from '@crush/scheduler'
 import { mountComponentProps } from "./componentProps"
 
@@ -99,7 +100,7 @@ export function mountStatefulComponent(component: any, container: Element, ancho
     } else {
         // ! 返回结果作为data
         setScopeData(scope, rootCreateResult)
-
+        
         if (instance.render) {
             render = instance.render
         } else if (instance.createRender) {
@@ -147,14 +148,10 @@ export function mountStatefulComponent(component: any, container: Element, ancho
 
     //  call at every update
     instance.update = update
-    effect(() => {
-        update()
-    }, {
-        scheduler: (effect: any) => {
-            nextTickSingleWork(effect.fn)
-        }
-    })
 
+    const rednerEffect = createReactiveEffect(update, queueJob)
+    // 手动渲染
+    rednerEffect.run()
     return instance
 }
 

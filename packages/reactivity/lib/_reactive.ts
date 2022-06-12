@@ -128,8 +128,3 @@ function watch(visitor: Function, callback: Function) {
         }
     })
 }
-
-export {
-    reactive,
-    effect,
-}
