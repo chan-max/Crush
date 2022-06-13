@@ -28,7 +28,7 @@ export function parseEventName(name: string) {
     return initialLowerCase(name.slice(2))
 }
 
-// for compiler
+// 只有原生事件支持 opitons
 export function toEventName(eventName: string, options?: string[]): string {
     var name = `on${initialUpperCase(eventName)}`
     if (options && options.length !== 0) {
@@ -53,7 +53,7 @@ const modifierGuards: any = {
 /*
     使用修饰符后每次都会创建一个新的函数    
 */
-export function createEvent(fn: any, modifiers: any) {
+export function withEventModifiers(fn: any, modifiers: any) {
     return (event: any, ...args: any) => {
         for (let i = 0; i < modifiers.length; i++) {
             const guard = modifierGuards[modifiers[i]];
@@ -63,3 +63,4 @@ export function createEvent(fn: any, modifiers: any) {
         return fn(event, ...args);
     };
 };
+

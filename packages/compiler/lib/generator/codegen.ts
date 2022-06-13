@@ -413,7 +413,7 @@ function genProps(node: any, context: any) {
                 toEventName(property, type === Nodes.HTML_ELEMENT && _arguments)
                 var callback = isHandler ? value : toArrowFunction(value)
                 if (modifiers) {
-                    callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)))
+                    callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)))
                 }
                 props[handlerKey] = callback
                 break

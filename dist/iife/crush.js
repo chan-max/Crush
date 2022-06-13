@@ -612,7 +612,7 @@ var Crush = (function (exports) {
     /*
         使用修饰符后每次都会创建一个新的函数
     */
-    function createEvent(fn, modifiers) {
+    function withEventModifiers(fn, modifiers) {
         return (event, ...args) => {
             for (let i = 0; i < modifiers.length; i++) {
                 const guard = modifierGuards[modifiers[i]];
@@ -2563,7 +2563,7 @@ var Crush = (function (exports) {
         getComponent: '',
         getDirective: '',
         getCurrentScope: '',
-        createEvent: '',
+        withEventModifiers: '',
         toEventName: '',
         normalizeClass: '',
         normalizeStyle: '',
@@ -2917,7 +2917,7 @@ var Crush = (function (exports) {
                         dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : toEventName(property, _arguments);
                     var callback = isHandler ? value : toArrowFunction(value);
                     if (modifiers) {
-                        callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
+                        callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)));
                     }
                     props[handlerKey] = callback;
                     break;
@@ -3876,7 +3876,7 @@ var Crush = (function (exports) {
     exports.createComponentInstance = createComponentInstance;
     exports.createDeclaration = createDeclaration;
     exports.createElement = createElement;
-    exports.createEvent = createEvent;
+    exports.withEventModifiers = withEventModifiers;
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
     exports.toEventName = toEventName;

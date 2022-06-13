@@ -49,11 +49,6 @@ export function resolveOptions(options: ComponentType | any) {
                 // todo
                 break
             case ComponentOptions.CREATE:
-                // 根create 存在 rootcreate上
-                options.rootCreate = value
-                // 清空create ，只用于处理 mixin 混入的create
-                options.create = null
-                break
             case ComponentOptions.BEFORE_CREATE:
             case ComponentOptions.CREATED:
             case ComponentOptions.BEFORE_MOUNT:

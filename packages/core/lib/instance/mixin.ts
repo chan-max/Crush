@@ -3,7 +3,7 @@ import { LifecycleHooks, injectHook } from "./lifecycle"
 import { ComponentOptions } from "./option"
 
 export type MixinType = {
-    beforeCreate?:Function
+    beforeCreate?: Function
     create?: Function // setup 
     created?: Function
     beforeMount?: Function
@@ -40,7 +40,8 @@ export function injectMixin(options: ComponentType, mixin: MixinType) {
     return options
 }
 
-export function injectMixins(target: any, mixins: MixinType[]) {
+export function injectMixins(target: any, mixins?: MixinType[]) {
+    if (!mixins) return
     mixins.forEach((mixin: MixinType) => {
         injectMixin(target, mixin)
     })

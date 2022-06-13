@@ -8,26 +8,36 @@ const protoMethods = {
 
 
 const scopeProperties: any = {
-    $instance: (instance: any) => instance
+    $instance: (instance: any) => instance,
+    $emit: (instance: any) => instance.emit,
+    $el: (instance: any) => instance.vnode
 }
 
-export function defineScopeGetterProperty(key: string, getter: any) {
+export function defineScopePropertyGetter(key: string, getter: any) {
     scopeProperties[key] = getter
 }
 
 export function createScope(instance: any) {
-    return new Proxy(reactive(Object.create(protoMethods)), {
+    const scope = reactive(Object.create(protoMethods))
+
+    for (let key in scopeProperties) {
+        Reflect.defineProperty(scope, key, {
+            configurable: false,
+            enumerable: false,
+            get: () => scopeProperties[key](instance)
+        })
+    }
+
+    return new Proxy(scope, {
         get(target: any, key: any, receiver: any) {
-            if (hasOwn(scopeProperties, key)) {
-                return scopeProperties[key](instance)
+            if (key === Symbol.unscopables) {
+                return
             }
             var result = Reflect.get(target, key, receiver)
-
             return isRef(result) ? result.value : result
         },
         set(target: any, key: any, newValue: any, receiver: any) {
             if (hasOwn(scopeProperties, key)) {
-                warn('proto methods cant redefine')
                 return true
             } else {
                 return Reflect.set(target, key, newValue, receiver)
