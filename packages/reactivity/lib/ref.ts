@@ -1,10 +1,10 @@
-import { ReactiveFlags } from "./common"
+import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
 import { getActiveEffect, TARGET_MAP, track, TrackTypes, trigger, ReactiveEffect } from "./effect"
 
 export const ref = (value: any) => new Ref(value)
 
 class Ref {
-
+    [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_REF] = true
 
     _value: any
@@ -16,6 +16,7 @@ class Ref {
     get value() {
         // track
         trackRef(this)
+
         return this._value
     }
 
@@ -36,6 +37,7 @@ export function trackRef(ref: any) {
     if (!activeEffect) {
         return
     }
+ 
     var deps = TARGET_MAP.get(ref)
     if (!deps) {
         deps = new Set()

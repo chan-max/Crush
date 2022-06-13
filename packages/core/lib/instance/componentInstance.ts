@@ -4,7 +4,7 @@ import { getCurrentApp } from "../app/app";
 import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
-import { initScope } from "./scope";
+import { createScope, } from "./scope";
 import { Components, COMPONENT_TYPE } from "./defineComponent";
 
 
@@ -15,7 +15,7 @@ export function createComponentInstance(options: ComponentType | Function | any)
     //! 创建组件实例只支持 选项式组件 ，和返回值时render函数的函数组件
     const instance: ComponentInstanceType = {
         uid: uid(),
-        scope: reactive(initScope()),
+        scope: null,
         render: options.render, // 手写render
         vnode: null,
         slots: null,
@@ -36,9 +36,9 @@ export function createComponentInstance(options: ComponentType | Function | any)
         beforeUnmount: shallowCloneArray(options.beforeUnmount),
         unmounted: shallowCloneArray(options.unmounted),
         beforeUpdate: shallowCloneArray(options.beforeUpdate),
-        updated: shallowCloneArray(options.updated),
-        isFunctional: options[COMPONENT_TYPE] === Components.FUNCTIONAL_COMPONENT
+        updated: shallowCloneArray(options.updated)
     }
+    instance.scope = createScope(instance)
     var app = getCurrentApp()
     if (app.mixins) {
         injectMixins(instance, app.mixins)

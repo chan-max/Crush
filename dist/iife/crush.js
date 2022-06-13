@@ -137,7 +137,7 @@ var Crush = (function (exports) {
     }));
     const hyphenateRE = /\B([A-Z])/g;
     const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
-    const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
+    const initialUpperCase = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
 
     const hasOwnProperty = Object.prototype.hasOwnProperty;
     const hasOwn = (target, key) => hasOwnProperty.call(target, key);
@@ -590,10 +590,10 @@ var Crush = (function (exports) {
         };
     };
     // for compiler
-    function createNativeEventName(eventName, options) {
-        var handlerKey = `on${capitalize(eventName)}`;
+    function toEventName(eventName, options) {
+        var handlerKey = `on${initialUpperCase(eventName)}`;
         if (options && options.length !== 0) {
-            handlerKey += options.map(capitalize).join(''); // join default with ,
+            handlerKey += options.map(initialUpperCase).join(''); // join default with ,
         }
         return handlerKey;
     }
@@ -2564,7 +2564,7 @@ var Crush = (function (exports) {
         getDirective: '',
         getCurrentScope: '',
         createEvent: '',
-        createNativeEventName: '',
+        toEventName: '',
         normalizeClass: '',
         normalizeStyle: '',
         renderSlot: '',
@@ -2914,7 +2914,7 @@ var Crush = (function (exports) {
                 case exports.Nodes.EVENT:
                     var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                     var handlerKey = isDynamicProperty ?
-                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) : createNativeEventName(property, _arguments);
+                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : toEventName(property, _arguments);
                     var callback = isHandler ? value : toArrowFunction(value);
                     if (modifiers) {
                         callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
@@ -3867,7 +3867,7 @@ var Crush = (function (exports) {
     exports.callFn = callFn;
     exports.callHook = callHook;
     exports.camelize = camelize;
-    exports.capitalize = capitalize;
+    exports.initialUpperCase = initialUpperCase;
     exports.checkBuiltInAnimations = checkBuiltInAnimations;
     exports.compile = compile;
     exports.computed = computed;
@@ -3879,7 +3879,7 @@ var Crush = (function (exports) {
     exports.createEvent = createEvent;
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
-    exports.createNativeEventName = createNativeEventName;
+    exports.toEventName = toEventName;
     exports.createKeyframe = createKeyframe;
     exports.createKeyframes = createKeyframes;
     exports.createMapEntries = createMapEntries;

@@ -1,5 +1,5 @@
 import { typeOf } from "@crush/common";
-import { ReactiveTypes } from "./common";
+import { isProxy, ReactiveTypes } from "./common";
 import {
     reactiveCollectionHandler,
     reactiveHandler,
@@ -24,6 +24,10 @@ export const createShallowReadonlyCollection = (value: any) => new Proxy(value, 
 
 
 function createProxy(value: any, isReadonly: boolean, isShallow: boolean): any {
+    //! 如果 已经代理过，返回原始值
+    if (isProxy(value)) {
+        return value
+    }
     switch (typeOf(value)) {
         case ReactiveTypes.OBJECT:
         case ReactiveTypes.ARRAY:

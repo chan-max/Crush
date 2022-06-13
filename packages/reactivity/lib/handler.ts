@@ -1,5 +1,5 @@
 import { isArray, isFunction, hasOwn, warn } from "@crush/common"
-import { ReactiveFlags, toRaw } from "./common"
+import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
 import { TrackTypes, track, trigger, } from './effect'
@@ -12,8 +12,6 @@ let _key: any
 
 export const getLastVisitTarget = () => _target
 export const getLastVisitKey = () => _key
-
-
 
 const collectionHandlers: Record<string, any> = {
     get size() {
@@ -135,6 +133,8 @@ const specialKeyHandler: Record<string, any> = {
     }
 }
 
+const isProxyKey = (target: any, key: any) => !(key in target) || hasOwn(target, key)
+
 function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boolean) {
     return (target: any, key: any, receiver: any) => {
         // cache global state
@@ -152,6 +152,8 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
                 return isShallow
             case ReactiveFlags.IS_READONLY:
                 return isReadonly
+            case ReactiveTypeSymbol:
+                return true
         }
 
         if (isCollection) {
@@ -159,7 +161,7 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
             if (hasOwn(collectionHandlers, key) && key in target) {
                 return collectionHandlers[key]
             }
-        } else if (hasOwn(target, key)) {
+        } else if (isProxyKey(target, key)) {
             // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
             if (!isReadonly) {
                 track(TrackTypes.TARGET_TO_KEY, target, key)
@@ -196,7 +198,7 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
             warn(`${target} is readonly`)
             return true
         }
-        if (!(key in target) || hasOwn(target, key)) {
+        if (isProxyKey(target, key)) {
             // 不允许设置非自身属性
             Reflect.set(target, key, newValue, receiver)
             trigger(TrackTypes.TARGET_TO_KEY, target, key)

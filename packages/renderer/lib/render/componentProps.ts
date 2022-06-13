@@ -1,5 +1,5 @@
 import { emptyObject, error, isUndefined } from "@crush/common";
-import { isEvent } from "@crush/core";
+import { isEvent, parseEventName } from "@crush/core";
 import { createMapEntries, unionkeys } from "./common";
 
 
@@ -13,10 +13,12 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     for (let prop of unionkeys(pProps, nProps, propsOptions)) {
         let pValue = pProps[prop]
         let nValue = nProps[prop]
+        if (pValue === nValue) continue
         if (prop.startsWith('_')) {
             // 组件保留属性
         } else if (isEvent(prop)) {
-            // 暂时忽略组件事件的参数和修饰符
+            // 暂时忽略组件事件的参数和修饰符.
+            events[parseEventName(prop)] = nValue
         } else {
             // normal props
             if (propsOptions?.[prop]) {

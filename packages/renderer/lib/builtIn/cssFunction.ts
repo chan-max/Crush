@@ -151,5 +151,8 @@ export {
     skewX,
     skewY,
     scaleY,
-    rotateY
+    rotateY,
+    conicGradient,
+    linearGradient,
+    radialGradient
 }

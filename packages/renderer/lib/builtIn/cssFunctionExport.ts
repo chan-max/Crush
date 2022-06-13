@@ -1,4 +1,4 @@
-import {
+import  {
     rgba,
     rgb,
     hsl,
@@ -11,7 +11,20 @@ import {
     min,
     translateX,
     translateY,
-    scale
+    scale,
+    rotate3d,
+    translate3d,
+    rotate,
+    perspective,
+    scale3d,
+    skew,
+    skewX,
+    skewY,
+    scaleY,
+    rotateY,
+    conicGradient,
+    linearGradient,
+    radialGradient
 } from './cssFunction'
 
 export default {
@@ -27,5 +40,18 @@ export default {
     min,
     translateX,
     translateY,
-    scale
+    scale,
+    rotate3d,
+    translate3d,
+    rotate,
+    perspective,
+    scale3d,
+    skew,
+    skewX,
+    skewY,
+    scaleY,
+    rotateY,
+    conicGradient,
+    linearGradient,
+    radialGradient
 }

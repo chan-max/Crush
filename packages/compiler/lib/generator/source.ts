@@ -25,7 +25,7 @@ export var rfs = {
     getDirective:'',
     getCurrentScope:'',
     createEvent:'',
-    createNativeEventName:'',
+    toEventName:'',
     normalizeClass:'',
     normalizeStyle:'',
     renderSlot:'',

@@ -12,7 +12,6 @@ import {
 } from './patch'
 import {
     createReactiveEffect,
-    effect
 } from '@crush/reactivity'
 
 import {
@@ -44,7 +43,6 @@ function setScopeData(scope: any, data: any) {
 export function mountComponent(component: any, container: Element, anchor: Element | null = null) {
     switch (processComponent(component.type)[COMPONENT_TYPE]) {
         case Components.OPTIONS_COMPONENT:
-        case Components.FUNCTIONAL_COMPONENT:
             return mountStatefulComponent(component, container, anchor)
         case Components.RENDER_COMPONENT:
             return mountRenderComponent(component, container, anchor)
@@ -56,14 +54,13 @@ export function mountComponent(component: any, container: Element, anchor: Eleme
 }
 
 
-// 有状态函数式组件必须用functionalComponent 声明
 export function mountStatefulComponent(component: any, container: Element, anchor: Element | null = null) {
 
     const { type, props, children }: any = component
 
     const instance = createComponentInstance(type)
 
-    const { scope, rootCreate, isFunctional } = instance
+    const { scope, rootCreate } = instance
 
     callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
 
@@ -100,7 +97,7 @@ export function mountStatefulComponent(component: any, container: Element, ancho
     } else {
         // ! 返回结果作为data
         setScopeData(scope, rootCreateResult)
-        
+
         if (instance.render) {
             render = instance.render
         } else if (instance.createRender) {
@@ -155,14 +152,15 @@ export function mountStatefulComponent(component: any, container: Element, ancho
     return instance
 }
 
+
+
+
 function mountRenderComponent(component: any, container: any, anchor: any) {
     debugger
 }
 
 function mountAsyncComponent(component: any, container: any, anchor: any) {
-
 }
 
 function mountResolvedAsyncComponent(component: any, container: any, anchor: any) {
-
 }

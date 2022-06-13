@@ -1,5 +1,5 @@
 import {
-    arrayToMap, capitalize
+    arrayToMap, initialLowerCase, initialUpperCase
 } from '@crush/common'
 
 // for renderer
@@ -8,10 +8,10 @@ const onRE = /^on[A-Z]/;
 export const isEvent = (key: string) => onRE.test(key);
 
 /*
-    dom 事件名称无大写，所以handlerkey上第一个参数为事件名称，其它为arguments
+    dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
 */
-export const parseNativeEventName = (handlerKey: string) => {
-    var keys = handlerKey.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
+export const parseNativeEventName = (name: string) => {
+    var keys = name.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
     // remove on
     keys.shift()
     var event = keys[0]
@@ -23,13 +23,18 @@ export const parseNativeEventName = (handlerKey: string) => {
     }
 }
 
+
+export function parseEventName(name: string) {
+    return initialLowerCase(name.slice(2))
+}
+
 // for compiler
-export function createNativeEventName(eventName: string, options?: string[]): string {
-    var handlerKey = `on${capitalize(eventName)}`
+export function toEventName(eventName: string, options?: string[]): string {
+    var name = `on${initialUpperCase(eventName)}`
     if (options && options.length !== 0) {
-        handlerKey += options.map(capitalize).join('') // join default with ,
+        name += options.map(initialUpperCase).join('') // join default with ,
     }
-    return handlerKey
+    return name
 }
 
 const modifierGuards: any = {

@@ -5,7 +5,6 @@ import { resolveOptions } from "./option"
 export const enum Components {
 
     OPTIONS_COMPONENT,
-    FUNCTIONAL_COMPONENT,
 
     ASYNC_COMPONENT,
     RESOLVED_ASYNC_COMPONENT,
@@ -22,12 +21,8 @@ export function component(component: any) {
     return component
 }
 
-// 函数组件默认是无状态组件 ， 有状态的函数组件需要特殊声明
-export function functionalComponent (component: any) {
-    component = { name: component.name, rootCreate: component }
-    mark(component, COMPONENT_TYPE, Components.FUNCTIONAL_COMPONENT)
-    return component
-}
+
+// ! 移除函数式有状态组件
 
 export function asyncComponent(source: any) {
     if (isFunction(source)) {

@@ -390,7 +390,7 @@ function genDeclartion(declarationGroup: any[], context: any) {
 }
 
 import {
-    createNativeEventName
+    toEventName
 } from '@crush/renderer'
 
 function genProps(node: any, context: any) {
@@ -409,7 +409,8 @@ function genProps(node: any, context: any) {
                     modifiers
                 } = attr
                 value ||= property // 简写形似
-                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) : createNativeEventName(property, _arguments)
+                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : 
+                toEventName(property, type === Nodes.HTML_ELEMENT && _arguments)
                 var callback = isHandler ? value : toArrowFunction(value)
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)))

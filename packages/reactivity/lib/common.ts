@@ -10,6 +10,8 @@ export const enum ReactiveFlags {
     IS_COMPUTED = 'isComputed'
 }
 
+export const ReactiveTypeSymbol = Symbol('ReactiveType')
+
 
 export enum ReactiveTypes {
     OBJECT = 'Object',
@@ -20,18 +22,22 @@ export enum ReactiveTypes {
     WEAK_SET = 'WeakSet',
 }
 
-export function toRaw(reactiveData: any) {
-    return reactiveData[ReactiveFlags.RAW]
+export function toRaw(value: any) {
+    return value && value[ReactiveFlags.RAW]
 }
 
 export function isReactive(value: any) {
-    return value[ReactiveFlags.IS_REACTIVE]
+    return value && value[ReactiveFlags.IS_REACTIVE]
 }
 
 export function isShallow(value: any) {
-    return value[ReactiveFlags.IS_SHALLOW]
+    return value && value[ReactiveFlags.IS_SHALLOW]
 }
 
 export function isRef(value: any) {
-    return value[ReactiveFlags.IS_REF]
+    return value && value[ReactiveFlags.IS_REF]
+}
+
+export function isProxy(value: any) {
+    return value && value[ReactiveTypeSymbol]
 }

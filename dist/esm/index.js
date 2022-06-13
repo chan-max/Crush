@@ -134,7 +134,7 @@ const camelize = cache((str) => str.replace(camelizeRE, (_, l, r) => {
 }));
 const hyphenateRE = /\B([A-Z])/g;
 const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
-const capitalize = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
+const initialUpperCase = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 const hasOwn = (target, key) => hasOwnProperty.call(target, key);
@@ -587,10 +587,10 @@ const parseNativeEventName = (handlerKey) => {
     };
 };
 // for compiler
-function createNativeEventName(eventName, options) {
-    var handlerKey = `on${capitalize(eventName)}`;
+function toEventName(eventName, options) {
+    var handlerKey = `on${initialUpperCase(eventName)}`;
     if (options && options.length !== 0) {
-        handlerKey += options.map(capitalize).join(''); // join default with ,
+        handlerKey += options.map(initialUpperCase).join(''); // join default with ,
     }
     return handlerKey;
 }
@@ -2561,7 +2561,7 @@ var rfs = {
     getDirective: '',
     getCurrentScope: '',
     createEvent: '',
-    createNativeEventName: '',
+    toEventName: '',
     normalizeClass: '',
     normalizeStyle: '',
     renderSlot: '',
@@ -2911,7 +2911,7 @@ function genProps(node, context) {
             case Nodes.EVENT:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                 var handlerKey = isDynamicProperty ?
-                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.createNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) : createNativeEventName(property, _arguments);
+                    dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : toEventName(property, _arguments);
                 var callback = isHandler ? value : toArrowFunction(value);
                 if (modifiers) {
                     callback = context.callRenderFn(renderMethodsNameMap.createEvent, callback, stringify(modifiers.map(toBackQuotes)));
@@ -3843,4 +3843,4 @@ function doProcessHook(type, next, previous = undefined) {
     }
 }
 
-export { $var, App, ComponentOptions, emptyArray, emptyObject, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, Nodes, NodesMap, ReactiveTypes, SYMBOL_ITERATOR$1 as SYMBOL_ITERATOR, addClass, addEventListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, capitalize, checkBuiltInAnimations, compile, computed, createApp, createComponent, createComponentInstance, createDeclaration, createElement, createEvent, createFragment, createFunction, createNativeEventName, createKeyframe, createKeyframes, createMapEntries, createMedia, createNode, createSetter, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, declare, deleteKeyframe, deleteMedium, deleteRule, destructur, sortChildren, display, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, error, exec, execCaptureGroups, extend, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, getElementComputedStyle, getElementStyle, getElementStyleValue, getEmptyObject, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, unionkeys, hasOwn, hsl, hsla, hyphenate, important, resolveOptions, initScope, injectDirective, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, makeMap, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, nextTickSingleWork, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onUnmounted, onUpdated, onceListener, parseNativeEventName, parseInlineClass, parseInlineStyle, parseStyleValue, patch, perspective, processHook, processdom, reactive$1 as reactive, reactiveCollectionHandler, reactiveHandler, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeEventListener, removeFromArray, renderList, renderSlot, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonlyCollectionHandler, shallowReadonlyHandler, skew, skewX, skewY, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, translate3d, translateX, translateY, trigger, typeOf, uStringId, uVar, uid, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateStyleSheet, warn, watch };
+export { $var, App, ComponentOptions, emptyArray, emptyObject, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, Nodes, NodesMap, ReactiveTypes, SYMBOL_ITERATOR$1 as SYMBOL_ITERATOR, addClass, addEventListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, initialUpperCase, checkBuiltInAnimations, compile, computed, createApp, createComponent, createComponentInstance, createDeclaration, createElement, createEvent, createFragment, createFunction, toEventName, createKeyframe, createKeyframes, createMapEntries, createMedia, createNode, createSetter, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, declare, deleteKeyframe, deleteMedium, deleteRule, destructur, sortChildren, display, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, error, exec, execCaptureGroups, extend, flatRules, getComponent, getCurrentApp, getCurrentInstance, getCurrentScope, getDirective, getElementComputedStyle, getElementStyle, getElementStyleValue, getEmptyObject, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, unionkeys, hasOwn, hsl, hsla, hyphenate, important, resolveOptions, initScope, injectDirective, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, makeMap, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, nextTickSingleWork, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onUnmounted, onUpdated, onceListener, parseNativeEventName, parseInlineClass, parseInlineStyle, parseStyleValue, patch, perspective, processHook, processdom, reactive$1 as reactive, reactiveCollectionHandler, reactiveHandler, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeEventListener, removeFromArray, renderList, renderSlot, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonlyCollectionHandler, shallowReadonlyHandler, skew, skewX, skewY, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, translate3d, translateX, translateY, trigger, typeOf, uStringId, uVar, uid, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateStyleSheet, warn, watch };
