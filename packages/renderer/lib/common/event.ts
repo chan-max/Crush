@@ -10,6 +10,16 @@ export const isEvent = (key: string) => onRE.test(key);
 /*
     dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
 */
+
+// 只有原生事件支持 opitons
+export function toNativeEventName(eventName: string, _arguments?: string[]): string {
+    var name = `on${initialUpperCase(eventName)}`
+    if (_arguments && _arguments.length !== 0) {
+        name += _arguments.map(initialUpperCase).join('') // join default with ,
+    }
+    return name
+}
+
 export const parseNativeEventName = (name: string) => {
     var keys = name.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
     // remove on
@@ -23,19 +33,37 @@ export const parseNativeEventName = (name: string) => {
     }
 }
 
+/* 
+    @event:arg1:arg2.mod1.mod2
+        tranform to...
+        onEvent_arg1_arg2$mod1$mod2
+*/
 
+export function toEventName(event: string, _arguments?: string[], modifiers?: string[]) {
+    event = `on${initialUpperCase(event)}`
+    _arguments && (event += _arguments.map((_) => `_${_}`).join(''))
+    modifiers && (event += modifiers.map(($) => `$${$}`).join(''))
+    return event
+}
+
+// quickly get the handler key event
+export function getEventName(name: string): string {
+    return initialLowerCase(name.slice(2).split(/_|\$/)[0])
+}
+
+
+const extrctEventNameRE = /on([a-zA-Z]+)([_a-zA-Z]*)([\$a-zA-Z]*)/
 export function parseEventName(name: string) {
-    return initialLowerCase(name.slice(2))
+    const [_, event, _argumentsStr, modifiersStr]: any = extrctEventNameRE.exec(name)
+    return {
+        event: initialLowerCase(event),
+        _arguments: _argumentsStr && arrayToMap(_argumentsStr.split('_').filter(Boolean)),
+        modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
+    }
 }
 
-// 只有原生事件支持 opitons
-export function toEventName(eventName: string, options?: string[]): string {
-    var name = `on${initialUpperCase(eventName)}`
-    if (options && options.length !== 0) {
-        name += options.map(initialUpperCase).join('') // join default with ,
-    }
-    return name
-}
+
+
 
 const modifierGuards: any = {
     stop: (e: any) => e.stopPropagation(),

@@ -7,13 +7,17 @@ import { effect } from "./packages/core";
 import { useColor, useNumber, useString } from "./packages/reactivity/lib/useData";
 
 var root = {
+    components:{
+        hello:{
+            emits:['submit'],
+            template:`123456`
+        }
+    },
     template: `
-        <h1 > emit </h1>
+        <hello @submit:aa:bb:cc.xx.yy.zz="666">
     `,
     create($) {
-        var x = this.$nextTick
-        var y = this.$nextTick
-        debugger
+
     }
 }
 
@@ -23,4 +27,5 @@ var app = createApp(root)
 console.log('app', app);
 var instance = app.mount('#app')
 console.log(instance);
+
 

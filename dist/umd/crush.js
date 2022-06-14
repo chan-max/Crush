@@ -24,10 +24,17 @@
         }
     };
 
+    // compiler required : 
+    /*
+        model types :
+        checkbox
+        color
+        date
+        rang
+    */
     const model = {
-        beforeCreate() {
-        },
-        created() {
+        created(el) {
+            debugger;
         },
         beforeMount() {
         },
@@ -49,13 +56,13 @@
         transition for single Element
     */
     const transition = {
-        beforeMount() {
+        beforeMount(el, bindings, vnode) {
             debugger;
         }
     };
 
     const builtInComponents = {};
-    const builtInDirectives = {
+    const builtInDirectives$1 = {
         show,
         model,
         transition
@@ -70,8 +77,8 @@
     };
 
     const warn = (...msg) => console.warn(...msg);
-    const error = (msg) => {
-        throw `${msg}`;
+    const error = (...msg) => {
+        throw new Error(...msg);
     };
 
     function getEmptyObject() {
@@ -83,6 +90,8 @@
     const uVar = () => `_${uid()}`;
     const emptyObject = Object.freeze({});
     const emptyArray = Object.freeze([]);
+    const emptyFunction = () => null;
+    const createMap = (entries) => new Map(entries);
 
     const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
         res[item] = mapValue;
@@ -102,6 +111,15 @@
         arr.splice(index, 1);
         return true;
     };
+    const shallowCloneArray = (arr) => arr && [...arr];
+    function mark(target, key, value = true) {
+        Object.defineProperty(target, key, {
+            value,
+            writable: true,
+            configurable: false,
+            enumerable: false
+        });
+    }
 
     function exec(target, extractor) {
         return extractor.exec(target);
@@ -134,16 +152,18 @@
     }
     const isArray = Array.isArray;
 
-    const camelizeRE = /(\w)-(\w)/g;
-    const camelize = cache((str) => str.replace(camelizeRE, (_, l, r) => {
-        return l + r.toUpperCase();
-    }));
+    const camelizeRE = /-(\w)/g;
+    const camelize = cache((str) => {
+        return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
+    });
     const hyphenateRE = /\B([A-Z])/g;
     const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
     const initialUpperCase = cache((str) => str.charAt(0).toUpperCase() + str.slice(1));
+    const initialLowerCase = cache((str) => str.charAt(0).toLowerCase() + str.slice(1));
 
     const hasOwnProperty = Object.prototype.hasOwnProperty;
-    const hasOwn = (target, key) => hasOwnProperty.call(target, key);
+    // target may be null undefined
+    const hasOwn = (target, key) => target && hasOwnProperty.call(target, key);
 
     const svgNS = 'http://www.w3.org/2000/svg';
     const addClass = (el, className) => el.classList.add(className);
@@ -177,107 +197,6 @@
         addEventListener(el, event, onceHandler, options);
     }
 
-    exports.Nodes = void 0;
-    (function (Nodes) {
-        Nodes[Nodes["NULL"] = 0] = "NULL";
-        Nodes[Nodes["FRAGMENT"] = 1] = "FRAGMENT";
-        Nodes[Nodes["TEMPLATE"] = 2] = "TEMPLATE";
-        Nodes[Nodes["IF"] = 3] = "IF";
-        Nodes[Nodes["ELSE_IF"] = 4] = "ELSE_IF";
-        Nodes[Nodes["ELSE"] = 5] = "ELSE";
-        Nodes[Nodes["FOR"] = 6] = "FOR";
-        Nodes[Nodes["ATTRIBUTE"] = 7] = "ATTRIBUTE";
-        Nodes[Nodes["DOM_ELEMENT"] = 8] = "DOM_ELEMENT";
-        Nodes[Nodes["SVG_ELEMENT"] = 9] = "SVG_ELEMENT";
-        Nodes[Nodes["HTML_COMMENT"] = 10] = "HTML_COMMENT";
-        Nodes[Nodes["DYNAMIC_ELEMENT"] = 11] = "DYNAMIC_ELEMENT";
-        Nodes[Nodes["TEXT"] = 12] = "TEXT";
-        Nodes[Nodes["HTML_ELEMENT"] = 13] = "HTML_ELEMENT";
-        Nodes[Nodes["COMPONENT"] = 14] = "COMPONENT";
-        Nodes[Nodes["DYNAMIC_COMPONENT"] = 15] = "DYNAMIC_COMPONENT";
-        Nodes[Nodes["STYLE"] = 16] = "STYLE";
-        // class contain dynamic class and static class
-        Nodes[Nodes["CLASS"] = 17] = "CLASS";
-        Nodes[Nodes["DYNAMIC_CLASS"] = 18] = "DYNAMIC_CLASS";
-        Nodes[Nodes["STATIC_CLASS"] = 19] = "STATIC_CLASS";
-        Nodes[Nodes["AT"] = 20] = "AT";
-        Nodes[Nodes["MEDIA_RULE"] = 21] = "MEDIA_RULE";
-        Nodes[Nodes["SUPPORTS_RULE"] = 22] = "SUPPORTS_RULE";
-        Nodes[Nodes["KEYFRAMES_RULE"] = 23] = "KEYFRAMES_RULE";
-        Nodes[Nodes["EVENT"] = 24] = "EVENT";
-        Nodes[Nodes["STYLE_RULE"] = 25] = "STYLE_RULE";
-        Nodes[Nodes["KEYFRAME_RULE"] = 26] = "KEYFRAME_RULE";
-        /*
-         declarationGroup is contain declaratin and mixin
-        */
-        Nodes[Nodes["DECLARATION_GROUP"] = 27] = "DECLARATION_GROUP";
-        Nodes[Nodes["DECLARATION"] = 28] = "DECLARATION";
-        Nodes[Nodes["MIXIN"] = 29] = "MIXIN";
-        Nodes[Nodes["UNKNOWN"] = 30] = "UNKNOWN";
-        Nodes[Nodes["DIRECTIVE_FLAG"] = 31] = "DIRECTIVE_FLAG";
-        Nodes[Nodes["BUILTIN_DIRECTIVE"] = 32] = "BUILTIN_DIRECTIVE";
-        Nodes[Nodes["CUSTOM_DIRECTIVE"] = 33] = "CUSTOM_DIRECTIVE";
-        // use slot
-        Nodes[Nodes["SLOT"] = 34] = "SLOT";
-        // define slot
-        Nodes[Nodes["OUTLET"] = 35] = "OUTLET";
-        // form binding
-        Nodes[Nodes["MODEL"] = 36] = "MODEL";
-        Nodes[Nodes["RESERVED_PROP"] = 37] = "RESERVED_PROP";
-    })(exports.Nodes || (exports.Nodes = {}));
-    /*
-        input nodeType return nodeKeyword
-        input nodeKeyword return nodeType
-    */
-    exports.NodesMap = void 0;
-    (function (NodesMap) {
-        NodesMap[NodesMap["if"] = 3] = "if";
-        NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
-        NodesMap[NodesMap["else"] = 5] = "else";
-        NodesMap[NodesMap["for"] = 6] = "for";
-        NodesMap[NodesMap["slot"] = 34] = "slot";
-        NodesMap[NodesMap["outlet"] = 35] = "outlet";
-        NodesMap[NodesMap["..."] = 29] = "...";
-        NodesMap[NodesMap["@"] = 20] = "@";
-        NodesMap[NodesMap["--"] = 31] = "--";
-        NodesMap[NodesMap["media"] = 21] = "media";
-        NodesMap[NodesMap["keyframes"] = 23] = "keyframes";
-        NodesMap[NodesMap["supports"] = 22] = "supports";
-        NodesMap[NodesMap["style"] = 16] = "style";
-        NodesMap[NodesMap["class"] = 17] = "class";
-        NodesMap[NodesMap["template"] = 2] = "template";
-        NodesMap[NodesMap["element"] = 11] = "element";
-        NodesMap[NodesMap["component"] = 15] = "component";
-        NodesMap[NodesMap["model"] = 36] = "model";
-    })(exports.NodesMap || (exports.NodesMap = {}));
-    function keyOf(nodeType) {
-        return exports.NodesMap[nodeType];
-    }
-
-    const SYMBOL_ITERATOR$1 = Symbol.iterator;
-
-    const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
-        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
-        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
-        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
-        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
-        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
-        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
-        'option,output,progress,select,textarea,details,dialog,menu,' +
-        'summary,template,blockquote,iframe,tfoot,area,base,br,col,embed,hr,img,input,link,meta,param,source,track,wbr';
-    const isHTMLTag = makeMap(HTML_TAGS);
-    const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,' +
-        'defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,' +
-        'feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,' +
-        'feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,' +
-        'feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,' +
-        'fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,' +
-        'foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,' +
-        'mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,' +
-        'polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,' +
-        'text,textPath,title,tspan,unknown,use,view';
-    const isSVGTag = makeMap(SVG_TAGS);
-
     function createNode(nodeType) {
         return {
             key: null,
@@ -288,7 +207,7 @@
         };
     }
     function createComponent(type, props, slots, key = uid()) {
-        var component = createNode(exports.Nodes.COMPONENT);
+        var component = createNode(14 /* COMPONENT */);
         component.type = type;
         component.props = props;
         component.children = slots;
@@ -296,31 +215,33 @@
         return component;
     }
     function createElement(tagName, props, children, key = uid()) {
-        var node = createNode(exports.Nodes.HTML_ELEMENT);
+        var node = createNode(13 /* HTML_ELEMENT */);
         node.type = tagName;
         node.props = props;
         node.children = children;
         node.key = key;
         return node;
     }
-    const SYMBOL_TEXT = Symbol('Text');
+    const Text = Symbol('Text');
     // the key is for other node
     function createText(text, key = uid()) {
-        var node = createNode(exports.Nodes.TEXT);
-        node.type = SYMBOL_TEXT;
+        var node = createNode(12 /* TEXT */);
+        node.type = Text;
         node.children = text;
         node.key = key;
         return node;
     }
+    const Fragment = Symbol('Fragment');
     function createFragment(children, key = uid()) {
-        const f = createNode(exports.Nodes.FRAGMENT);
+        const f = createNode(1 /* FRAGMENT */);
+        f.type = Fragment;
         f.children = children;
         f.key = key;
         return f;
     }
 
     var createStyleSheet = (props, children, key = uid()) => {
-        var node = createNode(exports.Nodes.STYLE);
+        var node = createNode(16 /* STYLE */);
         node.props = props;
         node.children = children;
         node.key = key;
@@ -329,41 +250,41 @@
     };
     var createStyle = (selector, children, key) => {
         return {
-            nodeType: exports.Nodes.STYLE_RULE,
+            nodeType: 25 /* STYLE_RULE */,
             selector,
             children,
             key
         };
     };
     var createMedia = (media, children, key) => ({
-        nodeType: exports.Nodes.MEDIA_RULE,
+        nodeType: 21 /* MEDIA_RULE */,
         media,
         children,
         key
     });
     var createKeyframes = (keyframes, children, key = uid()) => {
-        var node = createNode(exports.Nodes.KEYFRAMES_RULE);
+        var node = createNode(23 /* KEYFRAMES_RULE */);
         node.keyframes = keyframes;
         node.children = children;
         node.key = key;
         return node;
     };
     var createKeyframe = (keyframe, children, key = uid()) => {
-        var node = createNode(exports.Nodes.KEYFRAME_RULE);
+        var node = createNode(26 /* KEYFRAME_RULE */);
         node.keyframe = keyframe;
         node.children = children;
         node.key = key;
         return node;
     };
     var createSupports = (supports, children, key) => ({
-        nodeType: exports.Nodes.SUPPORTS_RULE,
+        nodeType: 22 /* SUPPORTS_RULE */,
         supports,
         children,
         key
     });
     var createDeclaration = (children, key) => {
         return {
-            nodeType: exports.Nodes.DECLARATION,
+            nodeType: 28 /* DECLARATION */,
             /*
                 render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
             */
@@ -389,7 +310,7 @@
             rule.patchKey = patchKey;
             rule.parent = parent;
             switch (rule.nodeType) {
-                case exports.Nodes.STYLE_RULE:
+                case 25 /* STYLE_RULE */:
                     flattedRules.push(rule);
                     var _children = rule.children;
                     rule.children = null;
@@ -397,22 +318,22 @@
                         doFlat(_children, flattedRules, rule);
                     }
                     break;
-                case exports.Nodes.DECLARATION:
+                case 28 /* DECLARATION */:
                     if (!rule.parent) {
                         debugger;
                         // 声明不再任何样式规则或媒体规则下时,应该报错
                     }
-                    else if (rule.parent.nodeType === exports.Nodes.STYLE_RULE) {
+                    else if (rule.parent.nodeType === 25 /* STYLE_RULE */) {
                         (rule.parent.children ||= []).push(rule);
                     }
-                    else if (rule.parent.nodeType === exports.Nodes.KEYFRAME_RULE) {
+                    else if (rule.parent.nodeType === 26 /* KEYFRAME_RULE */) {
                         (rule.parent.children ||= []).push(rule);
                     }
                     else {
                         /*
                             当一条样式声明不时样式规则的子节点
                         */
-                        if (rule.parent.nodeType === exports.Nodes.MEDIA_RULE) {
+                        if (rule.parent.nodeType === 21 /* MEDIA_RULE */) {
                             /*
                                 一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
                                 此时和一直寻找parent的选择器
@@ -434,15 +355,15 @@
                         }
                     }
                     continue;
-                case exports.Nodes.MEDIA_RULE:
+                case 21 /* MEDIA_RULE */:
                     rule.children = flatRules(rule.children, rule);
                     flattedRules.push(rule);
                     break;
-                case exports.Nodes.SUPPORTS_RULE:
+                case 22 /* SUPPORTS_RULE */:
                     rule.children = flatRules(rule.children);
                     flattedRules.push(rule);
                     break;
-                case exports.Nodes.KEYFRAMES_RULE:
+                case 23 /* KEYFRAMES_RULE */:
                     rule.children = flatRules(rule.children);
                     /*
                         在此处需要把动画下的每一帧的样式处理成对象形式
@@ -453,7 +374,7 @@
                     });
                     flattedRules.push(rule);
                     break;
-                case exports.Nodes.KEYFRAME_RULE:
+                case 26 /* KEYFRAME_RULE */:
                     /* 需要和styleRule处理方式一样 */
                     flattedRules.push(rule);
                     var _children = rule.children;
@@ -462,7 +383,7 @@
                         doFlat(_children, flattedRules, rule);
                     }
                     break;
-                case exports.Nodes.FRAGMENT:
+                case 1 /* FRAGMENT */:
                     // fragment wont be a parent
                     doFlat(rule.children, flattedRules, rule.parent, rule.patchKey);
                     break;
@@ -481,7 +402,7 @@
         */
         var result = [];
         flatted.forEach((rule) => {
-            if (rule.nodeType === exports.Nodes.STYLE_RULE) {
+            if (rule.nodeType === 25 /* STYLE_RULE */) {
                 /*
                     children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                     并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
@@ -517,7 +438,7 @@
         node.forEach((child) => {
             if (!child)
                 return; // 空节点筛除  
-            if (child.nodeType === exports.Nodes.FRAGMENT) {
+            if (child.nodeType === 1 /* FRAGMENT */) {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
                 flattedNode = flattedNode.concat(processdom(child.children, child.key));
             }
@@ -528,11 +449,11 @@
                 else {
                     child.patchKey = child.key;
                 }
-                if (child.nodeType === exports.Nodes.HTML_ELEMENT) {
+                if (child.nodeType === 13 /* HTML_ELEMENT */) {
                     // 子节点递归处理
                     child.children = processdom(child.children);
                 }
-                if (child.nodeType === exports.Nodes.STYLE) {
+                if (child.nodeType === 16 /* STYLE */) {
                     child.children = flatRules(child.children, null, child.patchKey);
                 }
                 flattedNode.push(child);
@@ -541,8 +462,59 @@
         return flattedNode;
     }
 
+    /*
+        input nodeType return nodeKeyword
+        input nodeKeyword return nodeType
+    */
+    exports.NodesMap = void 0;
+    (function (NodesMap) {
+        NodesMap[NodesMap["if"] = 3] = "if";
+        NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
+        NodesMap[NodesMap["else"] = 5] = "else";
+        NodesMap[NodesMap["for"] = 6] = "for";
+        NodesMap[NodesMap["slot"] = 34] = "slot";
+        NodesMap[NodesMap["outlet"] = 35] = "outlet";
+        NodesMap[NodesMap["..."] = 29] = "...";
+        NodesMap[NodesMap["@"] = 20] = "@";
+        NodesMap[NodesMap["--"] = 31] = "--";
+        NodesMap[NodesMap["media"] = 21] = "media";
+        NodesMap[NodesMap["keyframes"] = 23] = "keyframes";
+        NodesMap[NodesMap["supports"] = 22] = "supports";
+        NodesMap[NodesMap["style"] = 16] = "style";
+        NodesMap[NodesMap["class"] = 17] = "class";
+        NodesMap[NodesMap["template"] = 2] = "template";
+        NodesMap[NodesMap["element"] = 11] = "element";
+        NodesMap[NodesMap["component"] = 15] = "component";
+        NodesMap[NodesMap["model"] = 36] = "model";
+    })(exports.NodesMap || (exports.NodesMap = {}));
+    function keyOf(nodeType) {
+        return exports.NodesMap[nodeType];
+    }
+
+    const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
+        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
+        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
+        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
+        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
+        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
+        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
+        'option,output,progress,select,textarea,details,dialog,menu,' +
+        'summary,template,blockquote,iframe,tfoot,area,base,br,col,embed,hr,img,input,link,meta,param,source,track,wbr';
+    const isHTMLTag = makeMap(HTML_TAGS);
+    const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,' +
+        'defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,' +
+        'feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,' +
+        'feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,' +
+        'feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,' +
+        'fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,' +
+        'foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,' +
+        'mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,' +
+        'polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,' +
+        'text,textPath,title,tspan,unknown,use,view';
+    const isSVGTag = makeMap(SVG_TAGS);
+
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
-    const isReservedProp = (key) => key.startsWith(`_${key}`);
+    const isReservedProp = (key) => key.startsWith(`_`);
     const getReservedProp = (key) => key.slice(1);
     function unionkeys(...maps) {
         var _ = {};
@@ -580,8 +552,11 @@
     // for renderer
     const onRE = /^on[A-Z]/;
     const isEvent = (key) => onRE.test(key);
-    const parseNativeEventName = (handlerKey) => {
-        var keys = handlerKey.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
+    /*
+        dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
+    */
+    const parseNativeEventName = (name) => {
+        var keys = name.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
         // remove on
         keys.shift();
         var event = keys[0];
@@ -592,13 +567,16 @@
             options: arrayToMap(keys)
         };
     };
-    // for compiler
-    function toEventName(eventName, options) {
-        var handlerKey = `on${initialUpperCase(eventName)}`;
+    function parseEventName(name) {
+        return initialLowerCase(name.slice(2));
+    }
+    // 只有原生事件支持 opitons
+    function toNativeEventName(eventName, options) {
+        var name = `on${initialUpperCase(eventName)}`;
         if (options && options.length !== 0) {
-            handlerKey += options.map(initialUpperCase).join(''); // join default with ,
+            name += options.map(initialUpperCase).join(''); // join default with ,
         }
-        return handlerKey;
+        return name;
     }
     const modifierGuards = {
         stop: (e) => e.stopPropagation(),
@@ -763,7 +741,8 @@
         for (let propName of unionkeys(pProps, nProps)) {
             var pValue = pProps[propName];
             var nValue = nProps[propName];
-            if (isEvent(propName)) {
+            if (propName.startsWith('_')) ;
+            else if (isEvent(propName)) {
                 if (pValue !== nValue) {
                     var { event, options } = parseNativeEventName(propName);
                     removeEventListener(el, event, pValue, options);
@@ -772,14 +751,14 @@
                     }
                 }
             }
-            else if (propName === keyOf(exports.Nodes.STYLE)) {
-                updateDeclaration(el.style, pValue, nValue);
+            else if (propName === keyOf(16 /* STYLE */)) {
+                updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue));
             }
-            else if (propName === keyOf(exports.Nodes.CLASS)) {
-                updateClass(el, pValue, nValue);
+            else if (propName === keyOf(17 /* CLASS */)) {
+                updateClass(el, normalizeClass(pValue), normalizeClass(nValue));
             }
-            else if (isReservedProp(propName)) {
-                debugger;
+            else if (propName in el) { // dom props
+                (pValue !== nValue) && (el[propName] = nValue);
             }
             else {
                 // attribute
@@ -808,19 +787,19 @@
     }
     function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
         switch (rule.nodeType) {
-            case exports.Nodes.STYLE_RULE:
+            case 25 /* STYLE_RULE */:
                 mountStyleRule(sheet, rule, vnode, index);
                 break;
-            case exports.Nodes.MEDIA_RULE:
+            case 21 /* MEDIA_RULE */:
                 mountMediaRule(sheet, rule, vnode, index);
                 break;
-            case exports.Nodes.SUPPORTS_RULE:
+            case 22 /* SUPPORTS_RULE */:
                 mountSupportsRule(sheet, rule, vnode, index);
                 break;
-            case exports.Nodes.KEYFRAMES_RULE:
+            case 23 /* KEYFRAMES_RULE */:
                 mountKeyframesRule(sheet, rule, vnode, index);
                 break;
-            case exports.Nodes.KEYFRAME_RULE:
+            case 26 /* KEYFRAME_RULE */:
                 mountKeyframeRule(sheet, rule, vnode, index);
                 break;
         }
@@ -879,39 +858,37 @@
 
     function mount(vnode, container, anchor = null) {
         switch (vnode.nodeType) {
-            case exports.Nodes.HTML_ELEMENT:
+            case 13 /* HTML_ELEMENT */:
                 mountElement(vnode, container, anchor);
                 break;
-            case exports.Nodes.TEXT:
+            case 12 /* TEXT */:
                 mountText(vnode, container, anchor);
                 break;
-            case exports.Nodes.COMPONENT:
+            case 14 /* COMPONENT */:
                 mountComponent(vnode, container, anchor);
                 break;
-            case exports.Nodes.STYLE:
+            case 16 /* STYLE */:
                 mountStyleSheet(vnode, container, anchor);
                 break;
         }
     }
     function mountChildren(children, container, anchor) {
+        if (!children)
+            return;
         children.forEach((child) => {
             mount(child, container, anchor);
         });
     }
     function mountElement(vnode, container, anchor) {
         const { type, props, children } = vnode;
-        processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
         // create 
-        var el = docCreateElement(type);
-        vnode.el = el;
+        var el = vnode.el = docCreateElement(type);
         mountAttributes(el, props);
         processHook("created" /* CREATED */, vnode);
         processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
         insertElement(el, container, anchor);
         processHook("mounted" /* MOUNTED */, vnode);
-        if (children) {
-            mountChildren(children, el, anchor);
-        }
+        mountChildren(children, el, anchor);
     }
     function mountText(vnode, container, anchor) {
         var el = docCreateText(vnode.children);
@@ -919,7 +896,7 @@
         insertElement(el, container, anchor);
     }
 
-    const unmountComponent = (component, container, anchor) => {
+    const unmountComponent = (component, container, anchor = null) => {
         const { instance } = component;
         const { vnode } = instance;
         processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
@@ -929,15 +906,15 @@
 
     function unmount(vnode, container, anchor) {
         switch (vnode.nodeType) {
-            case exports.Nodes.HTML_ELEMENT:
+            case 13 /* HTML_ELEMENT */:
                 unmountElement(vnode);
                 break;
-            case exports.Nodes.STYLE:
+            case 16 /* STYLE */:
                 unmountElement(vnode, true);
-            case exports.Nodes.TEXT:
+            case 12 /* TEXT */:
                 removeElement(vnode.el);
                 break;
-            case exports.Nodes.COMPONENT:
+            case 14 /* COMPONENT */:
                 unmountComponent(vnode, container, anchor);
                 break;
         }
@@ -947,25 +924,132 @@
         children.forEach(unmount);
     }
     function unmountElement(vnode, isStyle = false) {
+        processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
         if (vnode.children && !isStyle) {
             unmountChildren(vnode.children);
         }
-        processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
+        vnode.el;
         removeElement(vnode.el);
         processHook("unmounted" /* UNMOUNTED */, vnode);
     }
 
+    const globalComponentListeners = new WeakMap();
+    function getInstanceEvents(instance) {
+        let listenersMap = globalComponentListeners.get(instance);
+        if (!listenersMap) {
+            listenersMap = new Map();
+            globalComponentListeners.set(instance, listenersMap);
+        }
+        return listenersMap;
+    }
+    function getInstancetEventListeners(instance, event) {
+        let events = getInstanceEvents(instance);
+        let listeners = events.get(event);
+        if (!listeners) {
+            listeners = new Set();
+            events.set(event, listeners);
+        }
+        return listeners;
+    }
+    function createInstanceEventEmitter(instance) {
+        return (event, ...args) => {
+            emitInstancetEvent(instance, event, ...args);
+        };
+    }
+    function emitInstancetEvent(instance, event, ...args) {
+        const listeners = getInstancetEventListeners(instance, event);
+        listeners.forEach((handler) => {
+            handler(...args);
+        });
+    }
+    function operateListeners(operatorType, listeners, handler) {
+        if (isFunction(handler)) {
+            switch (operatorType) {
+                case 0 /* ADD */:
+                    listeners.add(handler);
+                    break;
+                case 1 /* DELETE */:
+                    listeners.delete(handler);
+                    break;
+                case 2 /* ONCE */:
+                    const onceHandler = (...args) => {
+                        handler(...args);
+                        listeners.delete(onceHandler);
+                    };
+                    listeners.add(onceHandler);
+                    break;
+            }
+        }
+        else if (isArray(handler)) {
+            handler.forEach((_handler) => operateListeners(operatorType, listeners, _handler));
+        }
+    }
+    function updateInstanceListeners(instance, event, pHandler, nHandler) {
+        // 不影响组件自身注册的事件
+        removeInstanceListener(instance, event, pHandler);
+        addInstanceListener(instance, event, nHandler);
+    }
+    function addInstanceListener(instance, event, handler) {
+        operateListeners(0 /* ADD */, getInstancetEventListeners(instance, event), handler);
+    }
+    function removeInstanceListener(instance, event, handler) {
+        operateListeners(1 /* DELETE */, getInstancetEventListeners(instance, event), handler);
+    }
+    function onceInstanceListener(instance, event, handler) {
+        operateListeners(2 /* ONCE */, getInstancetEventListeners(instance, event), handler);
+    }
+
+    const mountComponentProps = (instance, props) => updateComponentProps(instance, null, props);
+    function updateComponentProps(instance, pProps, nProps) {
+        pProps ||= emptyObject;
+        nProps ||= emptyObject;
+        const { scope, propsOptions, emitsOptions } = instance;
+        // 在props都不存在的情况下也要处理默认值，必须值等情况，所以传入propsoptions进入循环
+        for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
+            let pValue = pProps[prop];
+            let nValue = nProps[prop];
+            if (pValue === nValue)
+                continue;
+            if (prop.startsWith('_')) ;
+            else if (!emitsOptions[parseEventName(prop)] && !propsOptions[prop]) {
+                // 未定义
+                let attrs = instance.attrs ||= {};
+                attrs[prop] = nValue;
+            }
+            else if (isEvent(prop)) {
+                // events
+                updateInstanceListeners(instance, parseEventName(prop), pValue, nValue);
+            }
+            else {
+                // props
+                const { default: _default, type, validator, required } = propsOptions[prop];
+                if (isUndefined(nValue)) {
+                    // nValue 不存在在时应该使用默认值
+                    if (required) {
+                        error(`props ${prop} is required`);
+                    }
+                    else {
+                        nValue = _default;
+                    }
+                }
+                if (type && nValue.constructor !== type) {
+                    error(`prop ${nValue} is not the typeOf ${type.name}`);
+                }
+                if (validator && !validator(nValue)) {
+                    error(`prop ${nValue} is not legal for custom validator`);
+                }
+                // do update props value
+                scope[prop] = nValue;
+            }
+        }
+    }
+
     const updateComponent = (p, n, container, anchor) => {
-        // key 不同应该卸载
-        if (p.patchKey === n.patchKey) {
-            var instance = n.instance = p.instance;
-            // update props ...
-            instance.update(p, n);
-        }
-        else {
-            unmountComponent(p, container, anchor);
-            mountComponent(n, container, anchor);
-        }
+        // 进入update 则patchkey一定相同
+        var instance = n.instance = p.instance;
+        updateComponentProps(instance, p.props, n.props);
+        // update props ...
+        instance.update(n);
     };
 
     /*
@@ -1085,18 +1169,18 @@
             else {
                 // update
                 switch (nRule.nodeType) {
-                    case exports.Nodes.STYLE_RULE:
+                    case 25 /* STYLE_RULE */:
                         updateStyleRule(pRule, nRule);
                         break;
-                    case exports.Nodes.MEDIA_RULE:
+                    case 21 /* MEDIA_RULE */:
                         updateMediaRule(pRule, nRule, vnode);
                         break;
-                    case exports.Nodes.SUPPORTS_RULE:
+                    case 22 /* SUPPORTS_RULE */:
                         // supports can't update 
                         deleteRule(sheet, cursor);
                         mountRule(sheet, nRule, vnode, cursor);
                         break;
-                    case exports.Nodes.KEYFRAMES_RULE:
+                    case 23 /* KEYFRAMES_RULE */:
                         updateKeyframesRule(pRule, nRule);
                         break;
                 }
@@ -1106,7 +1190,6 @@
     }
     function updateStyleRule(pRule, nRule, vnode) {
         var rule = nRule.rule = pRule.rule;
-        debugger;
         var style = rule.style;
         if (!style)
             return;
@@ -1177,17 +1260,17 @@
 
     function update(p, n, container, anchor) {
         switch (n.nodeType) {
-            case exports.Nodes.TEXT:
+            case 12 /* TEXT */:
                 updateText(p, n);
                 break;
-            case exports.Nodes.HTML_ELEMENT:
+            case 13 /* HTML_ELEMENT */:
                 updateHTMLElement(p, n, container);
                 break;
-            case exports.Nodes.STYLE:
+            case 16 /* STYLE */:
                 updateStyleSheet(p, n);
                 break;
-            case exports.Nodes.COMPONENT:
-                updateComponent(p, n, container, anchor);
+            case 14 /* COMPONENT */:
+                updateComponent(p, n);
         }
     }
     function updateText(p, n) {
@@ -1244,9 +1327,9 @@
                     }
                     else {
                         // 两个单节点 ， 但key可能不同 
-                        if (current.type === next.type) {
+                        if (current.type === next.type && current.patchKey === next.patchKey) {
                             // 类型相同，直接更新
-                            update(current, next, container, anchor);
+                            update(current, next, container);
                         }
                         else {
                             // 类型不同。先卸载，在挂载
@@ -1259,122 +1342,7 @@
         }
     };
 
-    var activeEffect = null;
-    var shouldTrack = false;
-    var effectStack = [];
-    var targetMap = new WeakMap();
-    const SYMBOL_WITH = Symbol.unscopables;
-    class ReactiveEffect {
-        fn = null;
-        deps = [];
-        scheduler = null;
-        constructor(fn, options) {
-            this.fn = fn;
-            this.scheduler = options.scheduler;
-        }
-        cleanDeps() {
-            this.deps.forEach((deps) => {
-                deps.delete(this);
-            });
-            this.deps = [];
-        }
-        run() {
-            effectStack.push(this);
-            activeEffect = this;
-            shouldTrack = true;
-            this.cleanDeps();
-            var res = this.fn();
-            effectStack.pop();
-            activeEffect = effectStack[effectStack.length - 1];
-            return res;
-        }
-    }
-    function effect(fn, options = {}) {
-        var _effect = new ReactiveEffect(fn, options);
-        if (!options.lazy) {
-            _effect.run();
-        }
-        return _effect;
-    }
-    function track$1(target, key) {
-        if (key === SYMBOL_WITH)
-            return;
-        if (!shouldTrack)
-            return;
-        if (!activeEffect)
-            return;
-        let depsMap = targetMap.get(target);
-        if (!depsMap) {
-            depsMap = new Map();
-            targetMap.set(target, depsMap);
-        }
-        let deps = depsMap.get(key);
-        if (!deps) {
-            deps = new Set();
-            depsMap.set(key, deps);
-        }
-        deps.add(activeEffect);
-        activeEffect.deps.push(deps);
-    }
-    function trigger$1(target, key) {
-        if (key === SYMBOL_WITH)
-            return;
-        const depsMap = targetMap.get(target);
-        if (!depsMap)
-            return;
-        var deps = depsMap.get(key);
-        if (!deps)
-            return;
-        // 克隆一份，防止死循环
-        deps = new Set(deps);
-        deps.forEach((e) => {
-            if (e === activeEffect)
-                return;
-            if (e.scheduler) {
-                e.scheduler(e);
-            }
-            else {
-                e.run();
-            }
-        });
-    }
-    var handler = {
-        get(target, key) {
-            track$1(target, key);
-            return target[key];
-        },
-        set(target, key, newValue) {
-            trigger$1(target, key);
-            target[key] = newValue;
-            return true;
-        }
-    };
-    function reactive$1(target) {
-        return new Proxy(target, handler);
-    }
-    function computed(getter) {
-        var value;
-        var dirty = true;
-        var _effect = effect(getter, {
-            scheduler: () => {
-            },
-            lazy: true
-        });
-        var res = {
-            get value() {
-                return dirty ? _effect.run() : value;
-            }
-        };
-        return res;
-    }
-    function watch(visitor, callback) {
-        effect(visitor, {
-            scheduler: () => {
-                callback();
-            }
-        });
-    }
-
+    const ReactiveTypeSymbol = Symbol('ReactiveType');
     exports.ReactiveTypes = void 0;
     (function (ReactiveTypes) {
         ReactiveTypes["OBJECT"] = "Object";
@@ -1384,58 +1352,109 @@
         ReactiveTypes["WEAK_MAP"] = "WeakMap";
         ReactiveTypes["WEAK_SET"] = "WeakSet";
     })(exports.ReactiveTypes || (exports.ReactiveTypes = {}));
-    function toRaw(reactiveData) {
-        return reactiveData["raw" /* RAW */];
+    function toRaw(value) {
+        return value && value["raw" /* RAW */];
     }
     function isReactive(value) {
-        return value["isReactive" /* IS_REACTIVE */];
+        return value && value["isReactive" /* IS_REACTIVE */];
     }
     function isShallow(value) {
-        return value["isShallow" /* IS_SHALLOW */];
+        return value && value["isShallow" /* IS_SHALLOW */];
     }
     function isRef(value) {
-        return value["isRef" /* IS_REF */];
+        return value && value["isRef" /* IS_REF */];
+    }
+    function isProxy(value) {
+        return value && value[ReactiveTypeSymbol];
     }
 
-    function track(...args) {
-        console.warn('track');
-    }
-    function trigger(...args) {
-        console.warn('trigger');
-    }
-
-    const createReactiveObject = (value) => new Proxy(value, reactiveHandler);
-    const createReadonlyObject = (value) => new Proxy(value, readonlyHandler);
-    const createShallowReactiveObject = (value) => new Proxy(value, shallowReactiveHandler);
-    const createShallowReadonlyObject = (value) => new Proxy(value, shallowReadonlyHandler);
-    const createReactiveCollection = (value) => new Proxy(value, reactiveCollectionHandler);
-    const createReadonlyCollection = (value) => new Proxy(value, readonlyCollectionHandler);
-    const createShallowReactiveCollection = (value) => new Proxy(value, shallowReactiveCollectionHandler);
-    const createShallowReadonlyCollection = (value) => new Proxy(value, shallowReadonlyCollectionHandler);
-    function createProxy(value, isReadonly, isShallow) {
-        switch (typeOf(value)) {
-            case exports.ReactiveTypes.OBJECT:
-            case exports.ReactiveTypes.ARRAY:
-                return isReadonly ?
-                    (isShallow ? createShallowReadonlyObject(value) : createReadonlyObject(value)) :
-                    (isShallow ? createShallowReactiveObject(value) : createReactiveObject(value));
-            case exports.ReactiveTypes.MAP:
-            case exports.ReactiveTypes.WEAK_MAP:
-            case exports.ReactiveTypes.SET:
-            case exports.ReactiveTypes.WEAK_SET:
-                return isReadonly ?
-                    (isShallow ? createShallowReadonlyCollection(value) : createReadonlyCollection(value)) :
-                    (isShallow ? createShallowReactiveCollection(value) : createReactiveCollection(value));
-            default:
-                return value;
+    const TARGET_MAP = new WeakMap();
+    function track(type, target, key) {
+        let activeEffect = getActiveEffect();
+        if (!activeEffect)
+            return;
+        if (type === 4 /* TARGET_TO_KEY */) {
+            let depsMap = TARGET_MAP.get(target);
+            if (!depsMap) {
+                depsMap = new Map();
+                TARGET_MAP.set(target, depsMap);
+            }
+            let deps = depsMap.get(key);
+            if (!deps) {
+                deps = new Set();
+                depsMap.set(key, deps);
+            }
+            deps.add(activeEffect);
+            // 用于清除依赖
+            activeEffect.deps.push(deps);
+        }
+        else {
+            debugger;
         }
     }
-    function reactive(value) {
-        return createProxy(value, false, false);
+    function trigger(type, target, key) {
+        if (type === 4 /* TARGET_TO_KEY */) {
+            const depsMap = TARGET_MAP.get(target);
+            if (!depsMap)
+                return;
+            var deps = depsMap.get(key);
+            if (!deps)
+                return;
+            // 克隆一份，防止死循环
+            deps = new Set(deps);
+            deps.forEach((effect) => effect.triggerRun());
+        }
+        else {
+            debugger;
+        }
     }
-    function readonly(value) {
-        return createProxy(value, true, false);
+    const effectStack = [];
+    const getActiveEffect = () => effectStack[effectStack.length - 1];
+    const setActiveEffect = (effect) => effectStack.push(effect);
+    const deleteActiveEffect = () => effectStack.pop();
+    class ReactiveEffect {
+        // 记录副作用依赖了那些变量
+        deps = [];
+        effectFn;
+        scheduler;
+        active = false;
+        constructor(fn, scheduler) {
+            this.effectFn = fn.bind(null);
+            this.scheduler = scheduler;
+        }
+        run() {
+            this.active = true;
+            setActiveEffect(this);
+            this.cleanDeps();
+            const result = this.effectFn();
+            deleteActiveEffect();
+            return result;
+        }
+        triggerRun() {
+            if (this.scheduler) {
+                return this.scheduler(this.run.bind(this));
+            }
+            else {
+                return this.run();
+            }
+        }
+        cleanDeps() {
+            this.deps.forEach((deps) => {
+                deps.delete(this);
+            });
+            this.deps = [];
+        }
     }
+    function createReactiveEffect(fn, scheduler) {
+        return new ReactiveEffect(fn, scheduler);
+    }
+    const effect = (fn, options = emptyObject) => {
+        var effect = createReactiveEffect(fn, options.scheduler);
+        if (!options.lazy) {
+            effect.run();
+        }
+        return effect;
+    };
 
     // global state
     let _isReadonly = false;
@@ -1445,101 +1464,96 @@
     const getLastVisitTarget = () => _target;
     const getLastVisitKey = () => _key;
     const collectionHandlers = {
+        get size() {
+            //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
+            track(0 /* SIZE */, _target);
+            return _target.size;
+        },
+        // set weakset
         add(value) {
-            var target = toRaw(this);
             if (_isReadonly) {
-                return console.warn(target, 'is readonly , cant add');
+                return warn(_target, 'is readonly , cant add');
             }
-            var result = target.add(value);
-            console.warn('trigger add');
+            var result = _target.add(value);
+            trigger(1 /* ADD */, _target);
             // 返回set对象本身
             return result;
         },
         // map set
         clear() {
-            var target = toRaw(this);
             if (_isReadonly) {
-                return console.warn(target, 'is readonly cant clear');
+                return warn(_target, 'is readonly cant clear');
             }
-            target.clear();
-            console.warn('trigger clear');
-            return;
+            _target.clear();
+            trigger(12 /* CLEAR */, _target);
         },
         // map weakmap set weakset
         delete(key) {
-            var target = toRaw(this);
             if (_isReadonly) {
-                return console.warn(target, 'is readonly cant delete');
+                return warn(_target, 'is readonly cant delete');
             }
-            const result = target.delete(key);
+            const result = _target.delete(key);
             if (result) { // 返回为 true 为删除成功
-                console.warn('trigger');
+                trigger(2 /* DELETE */, _target, key);
             }
             return result;
         },
         // map set
         entries() {
-            var target = toRaw(this);
-            console.warn('track');
-            return target.entries();
+            track(3 /* ITERATE */, _target);
+            return _target.entries();
         },
         // map set
         forEach(fn) {
-            var target = toRaw(this);
-            console.warn('track');
-            return target.forEach(fn);
+            track(3 /* ITERATE */, _target);
+            return _target.forEach(fn);
         },
         // set map weakset weakmap
         has(key) {
-            var target = toRaw(this);
-            console.warn('track');
-            return target.has(key);
+            track(5 /* HAS */, _target, key);
+            return _target.has(key);
         },
         // map set
         keys() {
-            var target = toRaw(this);
-            console.warn('track');
-            return target.keys();
+            track(3 /* ITERATE */, _target);
+            return _target.keys();
         },
         // map set
         values() {
-            var target = toRaw(this);
-            console.warn('track');
-            return target.values();
+            track(3 /* ITERATE */, _target);
+            return _target.values();
         },
         // map weakmap
         set(key, value) {
-            var target = toRaw(this);
             if (_isReadonly) {
-                return console.warn(target, 'is readonly , cant set');
+                return warn(_target, 'is readonly , cant set');
             }
-            var result = target.set(key, value);
-            console.warn('trigger');
+            var result = _target.set(key, value);
+            trigger(10 /* SET */, _target, key);
             return result;
         },
         // map weakmap
         get(key) {
-            var target = toRaw(this);
             if (!_isReadonly) {
-                console.warn('track');
+                track(11 /* GET */, _target, key);
             }
-            var value = target.get(key);
+            var value = _target.get(key);
             return _isShallow ? value : reactive(value);
         }
     };
     function arrayHandlerWithTrack(...args) {
         if (!_isReadonly) { // 非只读才会收集
-            console.warn('ARRAY track');
+            trigger(9 /* ARRAY_TRACK */, _target);
         }
         let result = _target[_key](...args);
         return result;
     }
     function arrayHandlerWithTrigger(...args) {
         if (_isReadonly) {
-            return console.error('readonly');
+            return warn(`${_target}is readonly cant ${_key}`);
         }
         let result = _target[_key](...args);
-        console.warn('trigger');
+        trigger(8 /* ARRAY_TRIGGER */, _target);
         return result;
     }
     const arrayHandlers = {
@@ -1558,9 +1572,11 @@
     const specialKeyHandler = {
         [SYMBOL_ITERATOR]: (value) => {
             // should track ?
+            track(3 /* ITERATE */, _target);
             return value.bind(_target);
         }
     };
+    const isProxyKey = (target, key) => !(key in target) || hasOwn(target, key);
     function createGetter(isReadonly, isShallow, isCollection) {
         return (target, key, receiver) => {
             // cache global state
@@ -1569,32 +1585,28 @@
             _target = target;
             _key = key;
             // reserved keys
-            if (key === "raw" /* RAW */) {
-                return target;
-            }
-            else if (key === "isReactive" /* IS_REACTIVE */) {
-                return !isReadonly;
-            }
-            else if (key === "isShallow" /* IS_SHALLOW */) {
-                return isShallow;
-            }
-            else if (key === "isReadonly" /* IS_READONLY */) {
-                return isReadonly;
+            switch (key) {
+                case "raw" /* RAW */:
+                    return target;
+                case "isReactive" /* IS_REACTIVE */:
+                    return !isReadonly;
+                case "isShallow" /* IS_SHALLOW */:
+                    return isShallow;
+                case "isReadonly" /* IS_READONLY */:
+                    return isReadonly;
+                case ReactiveTypeSymbol:
+                    return true;
             }
             if (isCollection) {
-                if (key === 'size') {
-                    track(target);
-                    return target.size;
-                }
+                // collection methods reset
                 if (hasOwn(collectionHandlers, key) && key in target) {
-                    // collection methods reset
                     return collectionHandlers[key];
                 }
             }
-            else if (hasOwn(target, key)) {
+            else if (isProxyKey(target, key)) {
                 // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
                 if (!isReadonly) {
-                    track(target, key);
+                    track(4 /* TARGET_TO_KEY */, target, key);
                 }
                 var value = Reflect.get(target, key, receiver);
                 if (isShallow) {
@@ -1619,12 +1631,13 @@
         return (target, key, newValue, receiver) => {
             // 返回 false 时会报错
             if (isReadonly) {
+                warn(`${target} is readonly`);
                 return true;
             }
-            if (hasOwn(target, key)) {
+            if (isProxyKey(target, key)) {
                 // 不允许设置非自身属性
                 Reflect.set(target, key, newValue, receiver);
-                console.warn('trigger set', target, key);
+                trigger(4 /* TARGET_TO_KEY */, target, key);
             }
             return true;
         };
@@ -1632,27 +1645,33 @@
     function has(target, key) {
         /*
             has 包括非自身的key
+            ? in target
         */
         if (hasOwn(target, key)) {
-            console.warn('track has', target, key);
+            // has 的收集 ， 只有在key删除时才会触发 
+            //! bug 使用 with 访问值时会先进入has 在进入get
+            track(4 /* TARGET_TO_KEY */, target, key);
         }
         return Reflect.has(target, key);
     }
     function ownKeys(target) {
-        console.warn('track ownKeys', target);
+        /*
+            for ? in target
+        */
+        track(3 /* ITERATE */, target);
         return Reflect.ownKeys(target);
     }
     function deleteProperty(target, key) {
         // 为 true 表示删除成功
         const result = Reflect.deleteProperty(target, key);
         if (result && hasOwn(target, key)) {
-            target[key];
-            console.warn('trigger deleteProperty');
+            trigger(4 /* TARGET_TO_KEY */, target, key);
         }
         return result;
     }
     function readonlyDeleteProperty(target, key) {
-        console.warn('readonly cant delete');
+        warn(`${key} in `, target, ` can't delete`);
+        return true;
     }
     // object handlers
     const reactiveHandler = {
@@ -1698,10 +1717,52 @@
         shallowReadonlyDeepReactive
     */
 
-    function ref(value) {
-        return new Ref(value);
+    const createReactiveObject = (value) => new Proxy(value, reactiveHandler);
+    const createReadonlyObject = (value) => new Proxy(value, readonlyHandler);
+    const createShallowReactiveObject = (value) => new Proxy(value, shallowReactiveHandler);
+    const createShallowReadonlyObject = (value) => new Proxy(value, shallowReadonlyHandler);
+    const createReactiveCollection = (value) => new Proxy(value, reactiveCollectionHandler);
+    const createReadonlyCollection = (value) => new Proxy(value, readonlyCollectionHandler);
+    const createShallowReactiveCollection = (value) => new Proxy(value, shallowReactiveCollectionHandler);
+    const createShallowReadonlyCollection = (value) => new Proxy(value, shallowReadonlyCollectionHandler);
+    function createProxy(value, isReadonly, isShallow) {
+        //! 如果 已经代理过，返回原始值
+        if (isProxy(value)) {
+            return value;
+        }
+        switch (typeOf(value)) {
+            case exports.ReactiveTypes.OBJECT:
+            case exports.ReactiveTypes.ARRAY:
+                return isReadonly ?
+                    (isShallow ? createShallowReadonlyObject(value) : createReadonlyObject(value)) :
+                    (isShallow ? createShallowReactiveObject(value) : createReactiveObject(value));
+            case exports.ReactiveTypes.MAP:
+            case exports.ReactiveTypes.WEAK_MAP:
+            case exports.ReactiveTypes.SET:
+            case exports.ReactiveTypes.WEAK_SET:
+                return isReadonly ?
+                    (isShallow ? createShallowReadonlyCollection(value) : createReadonlyCollection(value)) :
+                    (isShallow ? createShallowReactiveCollection(value) : createReactiveCollection(value));
+            default:
+                return value;
+        }
     }
+    function reactive(value) {
+        return createProxy(value, false, false);
+    }
+    function shallowReactive(value) {
+        return createProxy(value, false, true);
+    }
+    function readonly(value) {
+        return createProxy(value, true, false);
+    }
+    function shallowReadonly(value) {
+        return createProxy(value, true, true);
+    }
+
+    const ref = (value) => new Ref(value);
     class Ref {
+        [ReactiveTypeSymbol] = true;
         ["isRef" /* IS_REF */] = true;
         _value;
         constructor(value) {
@@ -1709,33 +1770,107 @@
         }
         get value() {
             // track
-            console.warn('ref track');
+            trackRef(this);
             return this._value;
         }
         set value(newValue) {
             if (this._value === newValue) {
+                // sensitive 
                 return;
             }
             this._value = newValue;
             // trigger
-            console.warn('ref trigger');
+            triggerRef(this);
         }
+    }
+    function trackRef(ref) {
+        var activeEffect = getActiveEffect();
+        if (!activeEffect) {
+            return;
+        }
+        var deps = TARGET_MAP.get(ref);
+        if (!deps) {
+            deps = new Set();
+            TARGET_MAP.set(ref, deps);
+        }
+        deps.add(activeEffect);
+    }
+    function triggerRef(ref) {
+        var deps = TARGET_MAP.get(ref);
+        if (!deps) {
+            return;
+        }
+        deps.forEach((effect) => effect.triggerRun());
+    }
+
+    class ReactiveBoolean extends Ref {
+        constructor(value) {
+            super(value);
+        }
+        toggle() {
+            return this.value = !this.value;
+        }
+        toTrue() {
+            return this.value = true;
+        }
+        toFalse() {
+            return this.value = false;
+        }
+    }
+    function useBoolean(value = true) {
+        return new ReactiveBoolean(value);
+    }
+    class ReactiveString extends Ref {
+        constructor(value) {
+            super(value);
+        }
+        concat(...values) {
+            return this.value.concat(...values);
+        }
+        padEnd(targetLength, padString) {
+            return this.value = this.value.padEnd(targetLength, padString);
+        }
+    }
+    function useString(value = 'hello world') {
+        return new ReactiveString(value);
+    }
+    class ReactiveNumber extends Ref {
+        constructor(value) {
+            super(value);
+        }
+        plus(value = 1) {
+            return this.value += value;
+        }
+        minus(value = 1) {
+            return this.value -= value;
+        }
+        multiply(value = 1) {
+            return this.value *= value;
+        }
+        devide(value = 1) {
+            return this.value /= value;
+        }
+    }
+    function useNumber(value) {
+        return new ReactiveNumber(value);
+    }
+    function useColor() {
     }
 
     var nextTick = (fn, args = undefined) => {
         var p = Promise.resolve(args);
         p.then(fn.bind(null));
     };
-
-    var currentWork = null;
-    function nextTickSingleWork(work) {
-        if (!currentWork) {
-            currentWork = work;
-            nextTick(() => {
-                currentWork();
-                currentWork = null;
-            });
-        }
+    var queueJobs = new Set();
+    function queueJob(job) {
+        queueJobs.add(job);
+        nextTick(executeQueueJobs);
+    }
+    function executeQueueJobs() {
+        queueJobs.forEach((job) => {
+            job();
+            queueJobs.delete(job);
+        });
     }
 
     // rendering instance and creating instance
@@ -1749,59 +1884,98 @@
     function getCurrentScope() {
         return getCurrentInstance().scope;
     }
+    function setScopeData(scope, data) {
+        if (!isObject(data)) {
+            return;
+        }
+        for (let key in data) {
+            // data 存在时应该警告
+            scope[key] = data[key];
+        }
+    }
     function mountComponent(component, container, anchor = null) {
-        var { type, props, children } = component;
+        switch (processComponent(component.type)[COMPONENT_TYPE]) {
+            case 0 /* OPTIONS_COMPONENT */:
+                return mountStatefulComponent(component, container, anchor);
+            case 3 /* RENDER_COMPONENT */:
+                return mountRenderComponent();
+            case 1 /* ASYNC_COMPONENT */:
+                return mountAsyncComponent();
+            case 2 /* RESOLVED_ASYNC_COMPONENT */:
+                return mountResolvedAsyncComponent();
+        }
+    }
+    function mountStatefulComponent(component, container, anchor = null) {
+        const { type, props, children } = component;
         const instance = createComponentInstance(type);
+        const { scope } = instance;
+        callHook("beforeCreate" /* BEFORE_CREATE */, instance, { binding: scope }, scope);
         component.instance = instance;
-        processHook("beforeCreate" /* BEFORE_CREATE */, component);
-        // setup instance
-        const { scope, createRender } = instance;
-        instance.props = props || emptyObject;
-        instance.slots = children || emptyObject;
-        // process props
-        // create 钩子只能 通过组件选项定义，无法通过指令或者节点钩子添加
         setCurrentInstance(instance);
-        callHook("create" /* CREATE */, instance, scope, scope);
-        setCurrentInstance(null);
-        // render function  
-        setCurrentInstance(instance);
-        const render = createRender(renderMethods);
+        // 初次创建前应该把 slot props 方法等挂载到作用域上
+        // 先挂载props ，这样 create hook中才能访问
+        mountComponentProps(instance, props);
+        instance.slots = children;
+        // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
+        const createResults = callHook("create" /* CREATE */, instance, { binding: scope }, scope);
+        // 注入 mixins 状态
+        createResults?.forEach((data) => setScopeData(scope, data));
+        // 组件根初始化方法
+        /*
+            render 优先级
+            create 返回的渲染函数  > render > template , 暂时不支持无状态组件
+        */
+        let render;
+        if (instance.render) {
+            render = instance.render.bind(scope);
+        }
+        else if (instance.createRender) {
+            render = instance.createRender(renderMethods);
+        }
+        else {
+            render = emptyFunction;
+        }
         setCurrentInstance(null);
         processHook("created" /* CREATED */, component);
-        instance.render = render;
+        // component update
+        let prevComponent = null, nextComponent = component;
         // component update fn
-        function update(p, n) {
+        function update(next) {
             const { isMounted, vnode } = instance;
-            // 每次更新生成新树
-            if (n) {
-                component = n;
+            // 每次 更新生成新树
+            if (next) {
+                prevComponent = nextComponent;
+                nextComponent = next;
+            }
+            else {
+                // 自更新时重置 prevComponent ， 防止钩子调用出错
+                prevComponent = null;
             }
             setCurrentInstance(instance);
             var nextTree = render();
+            console.log(nextTree);
             setCurrentInstance(null);
             // 处理树
             nextTree = processdom(nextTree);
-            // console.log('prevTree', vnode);
-            console.log('nextTree', nextTree);
-            /*
-                这里发生的更新是自身状态变化发生的更新，不存在生成新节点
-            */
-            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, component, p);
-            patch(vnode, nextTree, container);
-            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, component, p);
+            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nextComponent, prevComponent);
+            patch(vnode, nextTree, container, anchor);
+            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nextComponent, prevComponent);
             instance.isMounted = true;
             instance.vnode = nextTree;
         }
         //  call at every update
         instance.update = update;
-        effect(() => {
-            update();
-        }, {
-            scheduler: (effect) => {
-                nextTickSingleWork(effect.fn);
-            }
-        });
+        const rednerEffect = createReactiveEffect(update, queueJob);
+        // 手动渲染
+        rednerEffect.run();
         return instance;
+    }
+    function mountRenderComponent(component, container, anchor) {
+        debugger;
+    }
+    function mountAsyncComponent(component, container, anchor) {
+    }
+    function mountResolvedAsyncComponent(component, container, anchor) {
     }
 
     var iterableFlag = Symbol.iterator;
@@ -1974,6 +2148,7 @@
     var closeTagRE = /^<\/([\w-]+)(?:\.[\w\.]+)?\s*>/;
     const htmlCommentRE = /<!--((.|[\r\n])*?)-->/;
     const attributeRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/;
+    var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/;
     function baseParseHTML(template) {
         var scanner = createScanner(template);
         var ast = [], attributes, attributeMap, //! duplicate names will be overwritten
@@ -2043,7 +2218,6 @@
                 }
             }
             else {
-                var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/;
                 var textToken, text;
                 if ((textToken = textEndsWithTag.exec(scanner.source))) {
                     text = textToken[1];
@@ -2063,19 +2237,6 @@
         return ast;
     }
 
-    // we can use $(exp) as a dynamic content
-    var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
-    function parseSelector(selector) {
-        var isDynamic = false;
-        return {
-            selectorText: selector.replace(extractDynamicSelector, (_, content) => {
-                isDynamic = true;
-                return '${' + content + '}';
-            }),
-            isDynamic
-        };
-    }
-
     const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
     function parseIterator(expression) {
         const [_, items, iterable] = extIteratorExp.exec(expression);
@@ -2084,184 +2245,6 @@
             items: items.split(',')
         };
     }
-
-    const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
-    const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
-    const AtRuleRE = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/;
-    const mixinRE = /\.\.\.([^;]+);/;
-    const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
-    /*
-        判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
-    */
-    const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
-    const parseCSS = (source) => {
-        var scanner = createScanner(source);
-        var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
-        while (scanner.source) {
-            if (scanner.startsWith('}')) {
-                closing = true;
-            }
-            else if (scanner.startsWith(keyOf(exports.Nodes.AT))) {
-                /*
-                    media conditions
-                */
-                var [key, content] = scanner.exec(AtRuleRE);
-                var type = exports.NodesMap[key];
-                current = {
-                    type
-                };
-                if (type === exports.Nodes.MEDIA_RULE) {
-                    current.media = content;
-                }
-                else if (type === exports.Nodes.KEYFRAMES_RULE) {
-                    current.keyframes = content;
-                }
-                else if (type === exports.Nodes.SUPPORTS_RULE) {
-                    current.supports = content;
-                }
-            }
-            else if (scanner.expect('/*')) ;
-            else if (scanner.startsWith(keyOf(exports.Nodes.MIXIN))) {
-                var [mixin] = scanner.exec(mixinRE);
-                var m = {
-                    type: exports.Nodes.MIXIN,
-                    mixin
-                };
-                (declarationGroup ||= []).push(m);
-                continue;
-            }
-            else if (cssReservedWord.test(scanner.source)) {
-                /*
-                    处理指令，指令不再需要通过标识符去判断
-                */
-                var [dir, content] = scanner.exec(CSSDir);
-                var type = keyOf(dir);
-                var d = { type };
-                switch (type) {
-                    case exports.Nodes.FOR:
-                        d.iterator = parseIterator(content);
-                        break;
-                    case exports.Nodes.IF:
-                        d.condition = content;
-                        d.isBranchStart = true;
-                        break;
-                    case exports.Nodes.ELSE_IF:
-                        d.condition = content;
-                        d.isBranch = true;
-                        break;
-                    case exports.Nodes.ELSE:
-                        d.isBranch = true;
-                        break;
-                }
-                current = d;
-            }
-            else if (exResult = scanner.exec(selectorRE)) {
-                /*
-                    try to get the selector
-                */
-                current = {
-                    type: exports.Nodes.STYLE_RULE,
-                    selector: parseSelector(exResult[0])
-                };
-            }
-            else if (exResult = scanner.exec(declarationRE)) {
-                /*
-                    the last declaration must end with  " ; "
-                */
-                var declaration = parseAttribute(exResult[0], exResult[1]);
-                var { property, flag, endFlag } = declaration;
-                if (flag === '$') {
-                    declaration.isDynamicValue = true;
-                }
-                else if (flag === '$--') {
-                    declaration.isDynamicValue = true;
-                    declaration.property = '--' + property;
-                    declaration.illegalKey = true;
-                }
-                else if (flag === '--') {
-                    declaration.property = '--' + property;
-                    declaration.illegalKey = true;
-                }
-                //! important
-                declaration.isImportant = endFlag === '!';
-                (declarationGroup ||= []).push({
-                    declaration,
-                    type: exports.Nodes.DECLARATION
-                });
-                continue;
-            }
-            else {
-                /* error */
-                debugger;
-            }
-            /* process the relation , with cascading struct */
-            if (declarationGroup) {
-                var asb = { type: exports.Nodes.DECLARATION_GROUP };
-                asb.children = declarationGroup;
-                asb.parent = parent;
-                (parent.children ||= []).push(asb);
-                declarationGroup = null;
-            }
-            if (closing) {
-                stack.pop();
-                parent = stack[stack.length - 1];
-                scanner.move(1);
-                closing = false;
-                continue;
-            }
-            if (!parent) {
-                // while there is no parent , the currentDeclaration is meaningless
-                ast.push(current);
-            }
-            else {
-                var children = parent.children ||= [];
-                current.parent = parent;
-                children.push(current);
-            }
-            stack.push(current);
-            parent = current;
-        }
-        return ast;
-    };
-
-    /*
-        extend the selectors and process keyframes
-    */
-    const processRules = (rules, isKeyframe = false) => {
-        rules.forEach((rule) => {
-            switch (rule.type) {
-                case exports.Nodes.STYLE_RULE:
-                    const { selector, parent } = rule;
-                    if (isKeyframe) {
-                        rule.type = exports.Nodes.KEYFRAME_RULE;
-                    }
-                    else {
-                        var extendSelectors = parent?.selectors;
-                        if (extendSelectors) {
-                            rule.selectors = [...extendSelectors, selector];
-                        }
-                        else {
-                            rule.selectors = [selector];
-                        }
-                    }
-                    break;
-                case exports.Nodes.IF:
-                case exports.Nodes.ELSE_IF:
-                case exports.Nodes.ELSE:
-                case exports.Nodes.FOR:
-                case exports.Nodes.MEDIA_RULE:
-                case exports.Nodes.SUPPORTS_RULE:
-                    rule.selectors = rule.parent?.selectors;
-                    break;
-                case exports.Nodes.KEYFRAMES_RULE:
-                    isKeyframe = true;
-                    break;
-            }
-            if (rule.children) {
-                processRules(rule.children, isKeyframe);
-            }
-        });
-    };
 
     var mustache = /\{\{(.*?)\}\}/g;
     var parseText = (text) => {
@@ -2306,7 +2289,197 @@
     const inlineClassDelimiter = /\s+/;
     const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
 
-    // parse for codegen 
+    // we can use $(exp) as a dynamic content
+    var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
+    function parseSelector(selector) {
+        var isDynamic = false;
+        return {
+            selectorText: selector.replace(extractDynamicSelector, (_, content) => {
+                isDynamic = true;
+                return '${' + content + '}';
+            }),
+            isDynamic
+        };
+    }
+
+    const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
+    const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
+    const AtRuleRE = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/;
+    const mixinRE = /\.\.\.([^;]+);/;
+    const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
+    /*
+        判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
+    */
+    const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
+    const parseCSS = (source) => {
+        var scanner = createScanner(source);
+        var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
+        while (scanner.source) {
+            if (scanner.startsWith('}')) {
+                closing = true;
+            }
+            else if (scanner.startsWith(keyOf(20 /* AT */))) {
+                /*
+                    media conditions
+                */
+                var [key, content] = scanner.exec(AtRuleRE);
+                var type = exports.NodesMap[key];
+                current = {
+                    type
+                };
+                if (type === 21 /* MEDIA_RULE */) {
+                    current.media = content;
+                }
+                else if (type === 23 /* KEYFRAMES_RULE */) {
+                    current.keyframes = content;
+                }
+                else if (type === 22 /* SUPPORTS_RULE */) {
+                    current.supports = content;
+                }
+            }
+            else if (scanner.expect('/*')) ;
+            else if (scanner.startsWith(keyOf(29 /* MIXIN */))) {
+                var [mixin] = scanner.exec(mixinRE);
+                var m = {
+                    type: 29 /* MIXIN */,
+                    mixin
+                };
+                (declarationGroup ||= []).push(m);
+                continue;
+            }
+            else if (cssReservedWord.test(scanner.source)) {
+                /*
+                    处理指令，指令不再需要通过标识符去判断
+                */
+                var [dir, content] = scanner.exec(CSSDir);
+                var type = keyOf(dir);
+                var d = { type };
+                switch (type) {
+                    case 6 /* FOR */:
+                        d.iterator = parseIterator(content);
+                        break;
+                    case 3 /* IF */:
+                        d.condition = content;
+                        d.isBranchStart = true;
+                        break;
+                    case 4 /* ELSE_IF */:
+                        d.condition = content;
+                        d.isBranch = true;
+                        break;
+                    case 5 /* ELSE */:
+                        d.isBranch = true;
+                        break;
+                }
+                current = d;
+            }
+            else if (exResult = scanner.exec(selectorRE)) {
+                /*
+                    try to get the selector
+                */
+                current = {
+                    type: 25 /* STYLE_RULE */,
+                    selector: parseSelector(exResult[0])
+                };
+            }
+            else if (exResult = scanner.exec(declarationRE)) {
+                /*
+                    the last declaration must end with  " ; "
+                */
+                var declaration = parseAttribute(exResult[0], exResult[1]);
+                var { property, flag, endFlag } = declaration;
+                if (flag === '$') {
+                    declaration.isDynamicValue = true;
+                }
+                else if (flag === '$--') {
+                    declaration.isDynamicValue = true;
+                    declaration.property = '--' + property;
+                    declaration.illegalKey = true;
+                }
+                else if (flag === '--') {
+                    declaration.property = '--' + property;
+                    declaration.illegalKey = true;
+                }
+                //! important
+                declaration.isImportant = endFlag === '!';
+                (declarationGroup ||= []).push({
+                    declaration,
+                    type: 28 /* DECLARATION */
+                });
+                continue;
+            }
+            else {
+                /* error */
+                debugger;
+            }
+            /* process the relation , with cascading struct */
+            if (declarationGroup) {
+                var asb = { type: 27 /* DECLARATION_GROUP */ };
+                asb.children = declarationGroup;
+                asb.parent = parent;
+                (parent.children ||= []).push(asb);
+                declarationGroup = null;
+            }
+            if (closing) {
+                stack.pop();
+                parent = stack[stack.length - 1];
+                scanner.move(1);
+                closing = false;
+                continue;
+            }
+            if (!parent) {
+                // while there is no parent , the currentDeclaration is meaningless
+                ast.push(current);
+            }
+            else {
+                var children = parent.children ||= [];
+                current.parent = parent;
+                children.push(current);
+            }
+            stack.push(current);
+            parent = current;
+        }
+        return ast;
+    };
+
+    /*
+        extend the selectors and process keyframes
+    */
+    const processRules = (rules, isKeyframe = false) => {
+        rules.forEach((rule) => {
+            switch (rule.type) {
+                case 25 /* STYLE_RULE */:
+                    const { selector, parent } = rule;
+                    if (isKeyframe) {
+                        rule.type = 26 /* KEYFRAME_RULE */;
+                    }
+                    else {
+                        var extendSelectors = parent?.selectors;
+                        if (extendSelectors) {
+                            rule.selectors = [...extendSelectors, selector];
+                        }
+                        else {
+                            rule.selectors = [selector];
+                        }
+                    }
+                    break;
+                case 3 /* IF */:
+                case 4 /* ELSE_IF */:
+                case 5 /* ELSE */:
+                case 6 /* FOR */:
+                case 21 /* MEDIA_RULE */:
+                case 22 /* SUPPORTS_RULE */:
+                    rule.selectors = rule.parent?.selectors;
+                    break;
+                case 23 /* KEYFRAMES_RULE */:
+                    isKeyframe = true;
+                    break;
+            }
+            if (rule.children) {
+                processRules(rule.children, isKeyframe);
+            }
+        });
+    };
+
     // legal variable name
     var varRE = /^\w+$/;
     // arrow function
@@ -2318,25 +2491,159 @@
     function isHandler(exp) {
         return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
     }
-    var reservedDirMap = {
-        if: exports.Nodes.IF,
-        elseIf: exports.Nodes.ELSE_IF,
-        else: exports.Nodes.ELSE,
-        for: exports.Nodes.FOR,
-        slot: exports.Nodes.SLOT,
-        outlet: exports.Nodes.OUTLET,
-        model: exports.Nodes.MODEL
+    const builtInTags = {
+        ''(ast) {
+            ast.type = 12 /* TEXT */;
+            ast.children = parseText(ast.children);
+            ast.ignoreChildren = true;
+        },
+        '!'(ast) {
+            ast.type = 10 /* HTML_COMMENT */;
+            ast.ignoreChildren = true;
+        },
+        if(ast) {
+            ast.type = 3 /* IF */;
+            ast.condition = ast.attributeMap['condition'].value;
+            ast.isBranchStart = true;
+        },
+        elseIf(ast) {
+            ast.type = 4 /* ELSE_IF */;
+            ast.condition = ast.attributeMap['condition'].value;
+            ast.isBranch = true;
+        },
+        else(ast) {
+            ast.type = 5 /* ELSE */;
+            ast.isBranch = true;
+        },
+        for(ast) {
+            ast.type = 6 /* FOR */;
+            ast.iterator = parseIterator(ast.attributeMap['iterator'].value);
+        },
+        template(ast) {
+            ast.type = 2 /* TEMPLATE */;
+        },
+        // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
+        slot(ast) {
+            ast.type = 34 /* SLOT */;
+            // 插槽名称支持动态， 作用域不支持动态
+            // ! slot need : slotName , isDynamicSlot 
+            ast.type = 34 /* SLOT */;
+            const attr = ast.attributeMap;
+            if (attr?.name) {
+                attr.name.type = 38 /* SKIP */;
+                ast.slotName = attr.name.value;
+                ast.isDynamicSlot = attr.name.isDynamicValue;
+            }
+            else {
+                ast.slotName = 'default';
+            }
+        },
+        component(ast) {
+            ast.type = 15 /* DYNAMIC_COMPONENT */;
+            const is = ast.attributeMap.is;
+            const { isDynamicValue, value } = is;
+            ast.is = value;
+            ast.isDynamicIs = isDynamicValue;
+            is.type = 38 /* SKIP */;
+        },
+        element(ast) {
+            ast.type = 11 /* DYNAMIC_ELEMENT */;
+            const is = ast.attributeMap.is;
+            const { isDynamicValue, value } = is;
+            ast.is = value;
+            ast.isDynamicIs = isDynamicValue;
+            is.type = 38 /* SKIP */;
+        },
+        style(ast) {
+            ast.type = 16 /* STYLE */;
+            var template = ast.children?.[0].children;
+            if (template) {
+                var styleAst = parseCSS(template);
+                processRules(styleAst);
+                ast.children = styleAst;
+            }
+            ast.ignoreChildren = true;
+        }
     };
-    const reservedAttributeMap = {
-        style: exports.Nodes.STYLE,
-        class: exports.Nodes.CLASS,
-        created: true,
-        beforeMount: true,
-        mounted: true,
-        beforeUpdate: true,
-        updated: true,
-        beforeUnmount: true,
-        unmounted: true
+    // 新策略指令作为props一部分
+    const builtInDirectives = {
+        if(attr, ast) {
+            attr.type = 3 /* IF */;
+            const directives = ast.directives;
+            if (!directives.length) { // 为元素的第一个指令
+                ast.condition = attr.value;
+                ast.isBranchStart = true;
+            }
+            else {
+                directives.push(attr);
+            }
+        },
+        elseIf(attr, ast) {
+            attr.type = 4 /* ELSE_IF */;
+            if (!ast.directives.length) {
+                ast.isBranch = true;
+                ast.condition = attr.value;
+            }
+        },
+        else(attr, ast) {
+            attr.type = 5 /* ELSE */;
+            ast.isBranch = true;
+        },
+        for(attr, ast) {
+            attr.type = 6 /* FOR */;
+            attr.iterator = parseIterator(attr.value);
+            ast.directives.push(attr);
+        },
+        text(attr, ast) {
+            attr.type = 7 /* ATTRIBUTE */;
+            attr.property = 'innerText';
+            attr.isDynamicValue = true;
+            ast.children = null; // 直接忽略
+        },
+        html(attr, ast) {
+            attr.type = 7 /* ATTRIBUTE */;
+            attr.property = 'innerHTML';
+            attr.isDynamicValue = true;
+            ast.children = null; // 直接忽略
+        },
+        slot(attr, ast) {
+            // ! slot 指令用于定义插槽 ， 可用于单个元素和 template （fragment）, 需要定义 slotName 
+            /*
+                注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
+            */
+            attr.type = 38 /* SKIP */;
+            // 定义插槽无动态插槽 , 第一个参数为slot的名称
+            ast.defineSlotName = attr?._arguments?.[0];
+            ast.slotScope = attr.value;
+        },
+        model(attr, ast) {
+            debugger;
+            // 是否需要支持动态的 model type 类型
+        }
+    };
+    const builtInAttributes = {
+        style(attr, ast) {
+            attr.type = 16 /* STYLE */;
+            attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value);
+        },
+        class(attr, ast) {
+            attr.type = 17 /* CLASS */;
+            attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value);
+        }
+    };
+    const builtInEvents = {
+        hook(attr, ast) {
+            attr.type = 38 /* SKIP */;
+            const hooks = attr._arguments;
+            hooks.forEach((hook) => {
+                ast.attributes.push({
+                    property: '_' + hook,
+                    value: attr.value,
+                    isDynamicProperty: false,
+                    isDynamicValue: true
+                });
+            });
+        }
     };
     function processAttribute(ast) {
         var attributes = ast.attributes;
@@ -2344,138 +2651,57 @@
             return;
         for (let i = 0; i < attributes.length; i++) {
             var attribute = attributes[i];
-            var { flag } = attribute;
+            var { flag, isDynamicProperty } = attribute;
             if (flag === '@') {
                 // event
-                attribute.type = exports.Nodes.EVENT;
+                attribute.type = 24 /* EVENT */;
                 attribute.isHandler = isHandler(attribute.value);
+                if (!isDynamicProperty && builtInEvents[attribute.property]) {
+                    // 保留事件
+                    builtInEvents[attribute.property](attribute, ast);
+                }
             }
             else if (flag === '--') {
-                // direvtive
-                const type = reservedDirMap[attribute.property];
-                const isCustomDirective = attribute.isDynamicProperty || !type;
+                const dirHandler = builtInDirectives[attribute.property];
+                const isCustomDirective = isDynamicProperty || !dirHandler;
                 if (isCustomDirective) {
+                    // 自定义指令会作为props的一部分
+                    attribute.type = 33 /* CUSTOM_DIRECTIVE */;
                     (ast.customDirectives ||= []).push(attribute);
                 }
                 else {
-                    // reserved directive
-                    var directives = ast.directives ||= [];
-                    switch (attribute.type = type) {
-                        case exports.Nodes.IF:
-                            if (!directives.length) {
-                                //  此时为元素的第一个指令为if ， 最外层的分支指令会注入到元素节点 ， 在代码生成时用作判断处理
-                                ast.condition = attribute.value;
-                                ast.isBranchStart = true;
-                            }
-                            else {
-                                directives.push(attribute);
-                            }
-                            break;
-                        case exports.Nodes.ELSE_IF:
-                            if (!directives.length) {
-                                ast.isBranch = true;
-                            }
-                            else {
-                                debugger;
-                                //! else-if 指令只会在第一个指令出现 error
-                            }
-                            break;
-                        case exports.Nodes.ELSE:
-                            if (!directives.length) {
-                                ast.isBranch = true;
-                            }
-                            else {
-                                debugger;
-                                // else-if 指令只会在第一个指令出现
-                            }
-                            break;
-                        case exports.Nodes.FOR:
-                            attribute.iterator = parseIterator(attribute.value);
-                            directives.push(attribute);
-                            break;
-                        case exports.Nodes.SLOT:
-                            directives.push(attribute);
-                            break;
-                        case exports.Nodes.OUTLET:
-                            // define slot
-                            ast.outlet = {
-                                name: attribute._arguments[0],
-                                scope: attribute.value
-                            };
-                            break;
-                        case exports.Nodes.MODEL:
-                            ast.tagName;
-                            ast.attributes.unshift({
-                                type: exports.Nodes.RESERVED_PROP,
-                                property: 'assigner',
-                                isDynamicValue: true,
-                                value: toArrowFunction(`${attribute.value}=_`, '_')
-                            });
-                            i++;
-                            (ast.customDirectives ||= []).push(attribute);
-                            break;
-                    }
+                    ast.directives ||= [];
+                    dirHandler(attribute, ast);
                 }
             }
+            else if (flag === '#') {
+                // id shorthand
+                attribute.type = 7 /* ATTRIBUTE */;
+                attribute.value = attribute.property;
+                attribute.property = 'id';
+                attribute.isDynamicValue = attribute.isDynamicProperty;
+                attribute.isDynamicProperty = false;
+            }
+            else if (flag === '.') {
+                // class shourthand
+                attribute.type = 17 /* CLASS */;
+                attribute.value = attribute.property;
+                attribute.property = 'class';
+                attribute.isDynamicValue = attribute.isDynamicProperty;
+                attribute.isDynamicProperty = false;
+            }
             else {
-                // 其他属性
-                var type = reservedAttributeMap[attribute.property];
-                if (attribute.flag === '#') {
-                    // id shorthand
-                    attribute.type = exports.Nodes.ATTRIBUTE;
-                    attribute.value = attribute.property;
-                    attribute.property = 'id';
-                    attribute.isDynamicValue = attribute.isDynamicProperty;
-                    attribute.isDynamicProperty = false;
-                }
-                else if (attribute.flag === '.') {
-                    // class shourthand
-                    attribute.type = exports.Nodes.CLASS;
-                    attribute.value = attribute.property;
-                    attribute.property = 'class';
-                    attribute.isDynamicValue = attribute.isDynamicProperty;
-                    attribute.isDynamicProperty = false;
-                }
-                else if (!type || attribute.isDynamicProperty) {
-                    attribute.type = exports.Nodes.ATTRIBUTE;
+                // normal property
+                const attrHandler = builtInAttributes[attribute.property];
+                if (!attrHandler || attribute.isDynamicProperty) {
+                    attribute.type = 7 /* ATTRIBUTE */;
                 }
                 else {
-                    switch (type) {
-                        case exports.Nodes.STYLE:
-                            attribute.type = exports.Nodes.STYLE;
-                            attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineStyle(attribute.value);
-                            break;
-                        case exports.Nodes.CLASS:
-                            attribute.type = exports.Nodes.CLASS;
-                            attribute.value = attribute.isDynamicValue ? attribute.value : parseInlineClass(attribute.value);
-                            break;
-                        default:
-                            // 自定义保留属性，不对外开放
-                            attribute.type = exports.Nodes.RESERVED_PROP;
-                    }
+                    attrHandler(attribute, ast);
                 }
             }
         }
     }
-    var reservedTagMap = {
-        if: exports.Nodes.IF,
-        elseIf: exports.Nodes.ELSE_IF,
-        else: exports.Nodes.ELSE,
-        for: exports.Nodes.FOR,
-        slot: exports.Nodes.SLOT,
-        outlet: exports.Nodes.OUTLET,
-        '': exports.Nodes.TEXT,
-        '!': exports.Nodes.HTML_COMMENT,
-        'template': exports.Nodes.TEMPLATE,
-        'component': exports.Nodes.DYNAMIC_COMPONENT,
-        'element': exports.Nodes.DYNAMIC_ELEMENT,
-        'style': exports.Nodes.STYLE
-    };
-    /*
-        tips
-        why should devide the componet and element tag
-        bcause the children is different
-    */
     function processAst(ast) {
         if (isArray(ast)) {
             ast.forEach(processAst);
@@ -2485,60 +2711,19 @@
         const tagName = camelize(tag);
         ast.tagName = tagName;
         processAttribute(ast);
-        let ignoreChildren = false;
-        const type = reservedTagMap[tagName];
-        if (type) {
-            // reserved tag
-            switch (ast.type = type) {
-                case exports.Nodes.HTML_COMMENT:
-                    break;
-                case exports.Nodes.TEXT:
-                    ast.children = parseText(ast.children);
-                    ignoreChildren = true;
-                    break;
-                case exports.Nodes.STYLE:
-                    var template = ast.children?.[0].children;
-                    if (template) {
-                        var styleAst = parseCSS(template);
-                        processRules(styleAst);
-                        ast.children = styleAst;
-                    }
-                    ignoreChildren = true;
-                    break;
-                case exports.Nodes.IF:
-                    ast.condition = ast.attributeMap['condition'];
-                    ast.isBranchStart = true;
-                    break;
-                case exports.Nodes.ELSE_IF:
-                    ast.condition = ast.attributeMap['condition'];
-                    ast.isBranch = true;
-                    break;
-                case exports.Nodes.ELSE:
-                    ast.isBranch = true;
-                    break;
-                case exports.Nodes.FOR:
-                    ast.iterator = parseIterator(ast.attributeMap['iterator']);
-                    break;
-                case exports.Nodes.OUTLET:
-                    ast.outlet = {
-                        name: ast.attributeMap?.['name'],
-                        scope: ast.attributeMap?.['scope']
-                    };
-                    break;
-                case exports.Nodes.DYNAMIC_ELEMENT:
-                    break;
-            }
+        if (builtInTags[tagName]) {
+            builtInTags[tagName](ast);
         }
         else if (isHTMLTag(tagName)) {
-            ast.type = exports.Nodes.HTML_ELEMENT;
+            ast.type = 13 /* HTML_ELEMENT */;
         }
         else if (isSVGTag(tagName)) {
-            ast.type = exports.Nodes.SVG_ELEMENT;
+            ast.type = 9 /* SVG_ELEMENT */;
         }
         else {
-            ast.type = exports.Nodes.COMPONENT;
+            ast.type = 14 /* COMPONENT */;
         }
-        if (!ignoreChildren && ast.children) {
+        if (!ast.ignoreChildren && ast.children) {
             processAst(ast.children);
         }
     }
@@ -2567,13 +2752,14 @@
         getDirective: '',
         getCurrentScope: '',
         withEventModifiers: '',
-        toEventName: '',
+        toNativeEventName: '',
         normalizeClass: '',
         normalizeStyle: '',
         renderSlot: '',
         injectDirective: '',
         injectDirectives: '',
-        injectReservedProps: ''
+        injectReservedProps: '',
+        createMap: ''
     };
     const renderMethodsNameMap = Object.entries(rfs).reduce((res, [name, method]) => {
         res[name] = name;
@@ -2657,44 +2843,16 @@
             var dir = dirs[dirs.length - 1];
             dirs.pop();
             switch (dir.type) {
-                case exports.Nodes.IF:
+                case 3 /* IF */:
                     target = genIf(target, dir.condition);
                     break;
-                case exports.Nodes.FOR:
+                case 6 /* FOR */:
                     target = genForWithFragment(target, dir.iterator, context);
-                    break;
-                case exports.Nodes.SLOT:
-                    // where there is a slot directive on a element or component , the target will be the fallback content
-                    var slotName = toBackQuotes(dir.value || 'default');
-                    // 指令插槽的渲染无法携带作用域信息
-                    target = context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, toArrowFunction(target), uid());
-                    break;
-                case exports.Nodes.OUTLET:
-                    // 不在此处处理outlet
                     break;
             }
             return genDirectives(target, dirs, context);
         }
     };
-    function genCustomDirectives(code, customDirectives, context) {
-        // injectDirective
-        var dirs = customDirectives.map((rawDir) => {
-            var { property, value, isDynamicProperty, _arguments, modifiers } = rawDir;
-            // 支持动态指令
-            var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property));
-            if (!isDynamicProperty) {
-                directive = context.hoistExpression(directive);
-            }
-            var dirInfos = [
-                directive,
-                value,
-                _arguments && _arguments.map(toSingleQuotes),
-                modifiers && modifiers.map(toSingleQuotes)
-            ];
-            return dirInfos;
-        });
-        return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
-    }
     function genChildrenString(children, context) {
         if (!children)
             return NULL;
@@ -2709,6 +2867,22 @@
         }
         return code;
     }
+    function genCustomDirectives(code, directives, context) {
+        var dirs = directives.map((directive) => {
+            var { property, value, isDynamicProperty, _arguments, modifiers } = directive;
+            var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property));
+            if (!isDynamicProperty) {
+                directive = context.hoistExpression(directive);
+            }
+            return [
+                directive,
+                value,
+                _arguments && _arguments.map(toSingleQuotes),
+                modifiers && modifiers.map(toSingleQuotes)
+            ];
+        });
+        return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
+    }
     function genSlotContent(node, context) {
         var { children } = node;
         /*
@@ -2722,9 +2896,9 @@
         var _default;
         var slots = {};
         children.forEach((child) => {
-            var { name, scope } = child.outlet || emptyObject;
-            if (name) {
-                slots[name] = toArrowFunction(genNode(child, context), scope);
+            var { defineSlotName, slotScope } = child;
+            if (defineSlotName) {
+                slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope);
             }
             else {
                 (_default ||= []).push(child);
@@ -2737,48 +2911,47 @@
     }
     function genNode(node, context) {
         switch (node.type) {
-            case exports.Nodes.IF:
-            case exports.Nodes.ELSE_IF:
-            case exports.Nodes.ELSE:
+            case 3 /* IF */:
+            case 4 /* ELSE_IF */:
+            case 5 /* ELSE */:
                 return genNodes(node.children, context);
-            case exports.Nodes.FOR:
+            case 6 /* FOR */:
                 // use the fragment , cause the iterator will set the u key in each node , 
                 return genForWithFragment(genNodes(node.children, context), node.iterator, context);
-            case exports.Nodes.TEMPLATE:
+            case 2 /* TEMPLATE */:
                 var code = genNodes(node.children, context);
                 if (node.dirs) {
                     code = genDirectives(code, node.dirs, context);
                 }
                 return code;
-            case exports.Nodes.SLOT:
-                var slotName = toBackQuotes(node.attributeMap?.name || 'default');
-                var fallback = toArrowFunction(genNodes(node.children, context));
-                // todo 插槽作用域
-                return context.callRenderFn(renderMethodsNameMap.renderSlot, slotName, NULL, fallback, uid());
-            case exports.Nodes.OUTLET:
+            case 34 /* SLOT */:
+                const { slotName, isDynamicSlot, children } = node;
+                return context.callRenderFn(renderMethodsNameMap.renderSlot, isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
+            case 35 /* OUTLET */:
                 return genNodes(node.children, context);
-            case exports.Nodes.DYNAMIC_ELEMENT:
-                var { value, isDynamicValue } = node.attributeMap['is'];
-                var code = context.callRenderFn(renderMethodsNameMap.createElement, isDynamicValue ? value : toSingleQuotes(value), genProps(node, context), genChildrenString(node.children, context), uStringId());
+            case 11 /* DYNAMIC_ELEMENT */:
+                var { is, isDynamicIs } = node;
+                var code = context.callRenderFn(renderMethodsNameMap.createElement, isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
+                genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case exports.Nodes.HTML_ELEMENT:
+            case 13 /* HTML_ELEMENT */:
                 var code = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case exports.Nodes.SVG_ELEMENT:
+            case 9 /* SVG_ELEMENT */:
                 debugger;
                 return context.callRenderFn(renderMethodsNameMap.createSVGElement);
-            case exports.Nodes.DYNAMIC_COMPONENT:
-                var { value, isDynamicValue } = node.attrMap['is'];
-                var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicValue ? value : toSingleQuotes(value));
+            case 15 /* DYNAMIC_COMPONENT */:
+                var { is, isDynamicIs } = node;
+                var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is));
                 // 动态组件不会提升
                 var props = genProps(node, context);
                 var slots = genSlotContent(node, context);
                 code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case exports.Nodes.COMPONENT:
+            case 14 /* COMPONENT */:
                 var code = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName));
                 var uv = context.hoistExpression(code);
                 var props = genProps(node, context);
@@ -2786,25 +2959,25 @@
                 code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case exports.Nodes.TEXT:
+            case 12 /* TEXT */:
                 return genText(node.children, context);
-            case exports.Nodes.STYLE:
+            case 16 /* STYLE */:
                 var props = genProps(node, context);
                 var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case exports.Nodes.STYLE_RULE:
+            case 25 /* STYLE_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
-            case exports.Nodes.MEDIA_RULE:
+            case 21 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
                 return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId());
-            case exports.Nodes.KEYFRAMES_RULE:
+            case 23 /* KEYFRAMES_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
-            case exports.Nodes.KEYFRAME_RULE:
+            case 26 /* KEYFRAME_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
-            case exports.Nodes.SUPPORTS_RULE:
+            case 22 /* SUPPORTS_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
-            case exports.Nodes.DECLARATION_GROUP:
+            case 27 /* DECLARATION_GROUP */:
                 return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId());
         }
     }
@@ -2858,11 +3031,11 @@
         var res = [];
         var lastIsDeclaration = false;
         declarationGroup.forEach((declaration) => {
-            if (declaration.type === exports.Nodes.MIXIN) {
+            if (declaration.type === 29 /* MIXIN */) {
                 res.push(declaration.mixin);
                 lastIsDeclaration = false;
             }
-            else if (declaration.type === exports.Nodes.DECLARATION) {
+            else if (declaration.type === 28 /* DECLARATION */) {
                 var target;
                 if (lastIsDeclaration) {
                     target = res[res.length - 1];
@@ -2914,42 +3087,39 @@
         var props = {};
         attributes.forEach((attr) => {
             switch (attr.type) {
-                case exports.Nodes.EVENT:
+                case 24 /* EVENT */:
                     var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
-                    var handlerKey = isDynamicProperty ?
-                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : toEventName(property, _arguments);
+                    value ||= property; // 简写形似
+                    var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) :
+                        toNativeEventName(property, type === 13 /* HTML_ELEMENT */ && _arguments);
                     var callback = isHandler ? value : toArrowFunction(value);
                     if (modifiers) {
                         callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)));
                     }
                     props[handlerKey] = callback;
                     break;
-                case exports.Nodes.CLASS:
+                case 17 /* CLASS */:
                     var _class = props.class ||= [];
-                    _class.push(attr.value);
+                    _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     break;
-                case exports.Nodes.STYLE:
+                case 16 /* STYLE */:
                     var style = props.style ||= [];
-                    style.push(attr.value);
+                    style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     break;
-                case exports.Nodes.ATTRIBUTE:
+                case 7 /* ATTRIBUTE */:
                     // normal attributes
                     var { property, value, isDynamicProperty, isDynamicValue, } = attr;
+                    value ||= property; // 简写形式
                     props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
-                    break;
-                case exports.Nodes.RESERVED_PROP:
-                    // 当确定是保留属性时，一定是非动态属性名
-                    var { property, value, isDynamicValue, } = attr;
-                    props[toReservedProp(property)] = isDynamicValue ? value : toBackQuotes(value);
                     break;
             }
         });
-        // merge class , there could be more than one class
+        // merge class , there could be more than one class , 不应该在render函数中使用normalize
         if (props.class) {
-            props.class = context.callRenderFn(renderMethodsNameMap.normalizeClass, stringify(props.class));
+            props.class = stringify(props.class);
         }
         if (props.style) {
-            props.style = context.callRenderFn(renderMethodsNameMap.normalizeStyle, stringify(props.style));
+            props.style = stringify(props.style);
         }
         return stringify(props) === '{}' ? NULL : stringify(props);
     }
@@ -3051,16 +3221,20 @@
     }
 
     function renderSlot(name, scope, fallback, uid) {
-        var instance = getCurrentInstance();
-        var slot = (instance.slots[name] || fallback)();
+        const instance = getCurrentInstance();
+        let slot = instance.slots[name] || fallback;
         if (!slot) {
             return null;
+        }
+        else {
+            slot = slot(scope);
         }
         slot.key = uid; // 唯一插槽节点的key
         return slot;
     }
 
     var renderMethods = {
+        injectDirectives,
         important,
         getCurrentScope,
         createElement,
@@ -3070,7 +3244,6 @@
         display,
         getDirective,
         getComponent,
-        injectDirectives,
         createStyleSheet,
         createStyle,
         createDeclaration,
@@ -3082,7 +3255,8 @@
         normalizeClass,
         normalizeStyle,
         createComponent,
-        renderSlot
+        renderSlot,
+        createMap
     };
 
     // if you are using css function with dynamic binding , use camelized function name 
@@ -3127,6 +3301,13 @@
     }
     function cubicBezier(x1, y1, x2, y2) {
         return `cubic-bezier(${x1},${y1},${x2},${y2})`;
+    }
+    // color gradient
+    function conicGradient() {
+    }
+    function linearGradient() {
+    }
+    function radialGradient() {
     }
     const max = (...items) => `max(${items.join(',')})`;
     const min = (...items) => `min(${items.join(',')})`;
@@ -3202,6 +3383,11 @@
     function keyframe(name, keyframes) {
         return createKeyframe(name, keyframes);
     }
+
+    /*  think ?
+
+    */
+    const nextFrame = (cb) => requestAnimationFrame(cb);
 
     const flash = keyframes('flash', [
         keyframe([0, 50, 100], {
@@ -3490,6 +3676,7 @@
         })
     ]);
 
+    // copy animate.css
     var animations = {
         bounce,
         jackInTheBox,
@@ -3539,12 +3726,14 @@
     }
     class App {
         isMounted = false;
-        rootComponent;
-        constructor(rootComponent) {
-            this.rootComponent = rootComponent;
+        rootOptions;
+        constructor(rootOptions) {
+            this.rootOptions = rootOptions;
+            // 安装动画
             this.use(installAnimation);
             currentApp = this;
         }
+        // globalProperty
         components = builtInComponents;
         component(name, component) {
             if (this.directives[name]) {
@@ -3552,7 +3741,7 @@
             }
             this.components[name] = component;
         }
-        directives = builtInDirectives;
+        directives = builtInDirectives$1;
         directive(name, directive) {
             if (this.directives[name]) {
                 return warn('directive is already exist');
@@ -3565,33 +3754,40 @@
         }
         plugins = new Set();
         use(plugin, ...options) {
-            if (!this.plugins.has(plugin)) {
-                plugin(this, ...options);
-            }
+            if (this.plugins.has(plugin))
+                return;
+            (isFunction(plugin) ? plugin : plugin.install)(this, ...options);
         }
         container = null;
         rootInstance;
         useSelectorTemplate = false;
+        rootComponent;
         mount(container) {
             container = normalizeContainer(container);
             // todo validate legal container 
             this.container = container;
-            var component = this.rootComponent;
-            if (!component.template && !component.render) {
-                component.template = container.innerHTML;
+            var options = this.rootOptions;
+            if (!options.template && !options.render) {
+                options.template = container.innerHTML;
                 this.useSelectorTemplate = true;
             }
             // clear page template
             container.innerHTML = '';
             // mount root component
-            this.rootInstance = mountComponent(createComponent(component, null, null), container);
+            var component = createComponent(options, null, null);
+            this.rootComponent = component;
+            var instance = mountComponent(component, container);
+            // instance.root = instance
+            this.rootInstance = instance;
             this.isMounted = true;
+            return instance;
         }
         unmount() {
+            unmountComponent(this.rootComponent, this.container);
         }
     }
 
-    const createApp = (rootComponent) => new App(rootComponent);
+    const createApp = (rootOptions) => new App(rootOptions);
 
     function injectHook(type, target, hook) {
         var hooks = (target[type] ||= []);
@@ -3616,21 +3812,20 @@
         binding is used for bind the callback context , it is necessary
     */
     function callHook(type, target, options = null, ...args) {
+        // hooks is always be array
         const hooks = target[type];
         if (!hooks)
             return;
         var { binding, scheduler } = options || emptyObject;
-        hooks.forEach((hook) => {
-            if (scheduler) {
-                scheduler(hook, binding, ...args);
-            }
-            else {
+        const hooksResults = hooks.map((hook) => {
+            return scheduler ?
+                scheduler(hook, binding, ...args) :
                 hook.apply(binding, args);
-            }
         });
+        // 返回钩子的调用结果
+        return hooksResults;
     }
     const createHook = (type) => (hook) => injectHook(type, getCurrentInstance(), hook);
-    // no beforeCreate
     const onCreated = createHook("created" /* CREATED */);
     const onBeforeMount = createHook("beforeMount" /* BEFORE_MOUNT */);
     const onMounted = createHook("mounted" /* MOUNTED */);
@@ -3638,6 +3833,86 @@
     const onUpdated = createHook("updated" /* UPDATED */);
     const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
     const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
+
+    /*
+        当传入不合理的props时
+    */
+    function normalizePropsOptions(options) {
+        if (isArray(options)) {
+            return arrayToMap(options, emptyObject);
+        }
+        else {
+            return options;
+        }
+    }
+
+    exports.ComponentOptions = void 0;
+    (function (ComponentOptions) {
+        ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
+        ComponentOptions["CREATE"] = "create";
+        // setup funcition
+        ComponentOptions["CREATED"] = "created";
+        ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
+        ComponentOptions["MOUNTED"] = "mounted";
+        ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
+        ComponentOptions["UPDATED"] = "updated";
+        ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
+        ComponentOptions["UNMOUNTED"] = "unmounted";
+        ComponentOptions["TEMPLATE"] = "template";
+        ComponentOptions["RENDER"] = "render";
+        ComponentOptions["PROPS"] = "props";
+        ComponentOptions["EMITS"] = "emits";
+        ComponentOptions["MIXINS"] = "mixins";
+        ComponentOptions["COMPOENNTS"] = "components";
+        ComponentOptions["DIRECTIVES"] = "directives";
+    })(exports.ComponentOptions || (exports.ComponentOptions = {}));
+    function resolveOptions(options) {
+        for (let key in options) {
+            const value = options[key];
+            switch (key) {
+                case exports.ComponentOptions.PROPS:
+                    options.propsOptions = normalizePropsOptions(value);
+                    break;
+                case exports.ComponentOptions.EMITS:
+                    options.emitsOptions = normalizePropsOptions(value);
+                    break;
+                case exports.ComponentOptions.TEMPLATE:
+                    options.createRender = compile(value);
+                    break;
+                case exports.ComponentOptions.RENDER:
+                    // todo
+                    break;
+                case exports.ComponentOptions.CREATE:
+                case exports.ComponentOptions.BEFORE_CREATE:
+                case exports.ComponentOptions.CREATED:
+                case exports.ComponentOptions.BEFORE_MOUNT:
+                case exports.ComponentOptions.MOUNTED:
+                case exports.ComponentOptions.BEFORE_UPDATE:
+                case exports.ComponentOptions.UPDATED:
+                case exports.ComponentOptions.BEFORE_UNMOUNT:
+                case exports.ComponentOptions.UNMOUNTED:
+                    // 转换为数组形式
+                    if (value && !isArray(value)) {
+                        options[key] = [value];
+                    }
+                    break;
+                case exports.ComponentOptions.COMPOENNTS:
+                    break;
+                case exports.ComponentOptions.DIRECTIVES:
+                    break;
+                //! remove to create instance
+                // case ComponentOptions.MIXINS:
+                //     var mixins = value
+                //     injectMixins(options, mixins as any[])
+                //     break
+                default:
+                    /*custom options*/
+                    const customOptions = options.customOptions ||= {};
+                    customOptions[key] = value;
+                    break;
+            }
+        }
+    }
 
     function injectMixin(options, mixin) {
         for (let key in mixin) {
@@ -3664,107 +3939,205 @@
         return options;
     }
     function injectMixins(target, mixins) {
+        if (!mixins)
+            return;
         mixins.forEach((mixin) => {
             injectMixin(target, mixin);
         });
         return target;
     }
 
-    exports.ComponentOptions = void 0;
-    (function (ComponentOptions) {
-        ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
-        ComponentOptions["CREATE"] = "create";
-        // setup funcition
-        ComponentOptions["CREATED"] = "created";
-        ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
-        ComponentOptions["MOUNTED"] = "mounted";
-        ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
-        ComponentOptions["UPDATED"] = "updated";
-        ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
-        ComponentOptions["UNMOUNTED"] = "unmounted";
-        ComponentOptions["TEMPLATE"] = "template";
-        ComponentOptions["RENDER"] = "render";
-        ComponentOptions["PROPS"] = "props";
-        ComponentOptions["MIXINS"] = "mixins";
-        ComponentOptions["COMPOENNTS"] = "components";
-        ComponentOptions["DIRECTIVES"] = "directives";
-    })(exports.ComponentOptions || (exports.ComponentOptions = {}));
-    function resolveOptions(options) {
-        for (let key in options) {
-            switch (key) {
-                case exports.ComponentOptions.TEMPLATE:
-                    options.createRender = compile(options[key]);
-                    break;
-                case exports.ComponentOptions.RENDER:
-                    // todo
-                    break;
-                case exports.ComponentOptions.BEFORE_CREATE:
-                case exports.ComponentOptions.CREATE:
-                case exports.ComponentOptions.CREATED:
-                case exports.ComponentOptions.BEFORE_MOUNT:
-                case exports.ComponentOptions.MOUNTED:
-                case exports.ComponentOptions.BEFORE_UPDATE:
-                case exports.ComponentOptions.UPDATED:
-                case exports.ComponentOptions.BEFORE_UNMOUNT:
-                case exports.ComponentOptions.UNMOUNTED:
-                    var option = options[key];
-                    if (option && !isArray(option)) {
-                        options[key] = [option];
-                    }
-                    break;
-                case exports.ComponentOptions.MIXINS:
-                    var mixins = options[key];
-                    injectMixins(options, mixins);
-                    break;
-                case exports.ComponentOptions.COMPOENNTS:
-                    break;
-                case exports.ComponentOptions.DIRECTIVES:
-                    break;
-            }
-        }
-        options._isOptions = true;
-    }
+    var cssMethods = {
+        rgba,
+        rgb,
+        hsl,
+        hsla,
+        $var,
+        attr,
+        calc,
+        cubicBezier,
+        max,
+        min,
+        translateX,
+        translateY,
+        scale,
+        rotate3d,
+        translate3d,
+        rotate,
+        perspective,
+        scale3d,
+        skew,
+        skewX,
+        skewY,
+        scaleY,
+        rotateY,
+        conicGradient,
+        linearGradient,
+        radialGradient
+    };
 
-    function initScope() {
-        return {};
+    const protoMethods = {
+        ...cssMethods
+    };
+    const scopeProperties = {
+        $instance: (instance) => instance,
+        $el: (instance) => instance.vnode,
+        $root: (instance) => instance.root,
+        $attrs: (instance) => instance.attrs,
+        $slots: (instance) => instance.slots,
+        $parent: (instance) => instance.parent,
+        $watch: (instance) => instance.watch,
+        $nextTick: (instance) => nextTick.bind(instance.scope),
+        // evnets
+        $emit: (instance) => instance.emit,
+        $on: (instance) => (event, handler) => addInstanceListener(instance, event, handler),
+        $off: (instance) => (event, handler) => removeInstanceListener(instance, event, handler),
+        $once: (instance) => (event, handler) => onceInstanceListener(instance, event, handler),
+        $events: (instance) => getInstanceEvents(instance),
+        $listeners: (instance) => (event) => getInstancetEventListeners(instance, event)
+    };
+    function defineScopePropertyGetter(key, getter) {
+        scopeProperties[key] = getter;
+    }
+    function createScope(instance) {
+        const scope = reactive(Object.create(protoMethods));
+        return new Proxy(scope, {
+            get(target, key, receiver) {
+                if (key === Symbol.unscopables) {
+                    return;
+                }
+                if (hasOwn(scopeProperties, key)) {
+                    return scopeProperties[key](instance);
+                }
+                var result = Reflect.get(target, key, receiver);
+                return isRef(result) ? result.value : result;
+            },
+            set(target, key, newValue, receiver) {
+                if (hasOwn(scopeProperties, key)) {
+                    return true;
+                }
+                else {
+                    return Reflect.set(target, key, newValue, receiver);
+                }
+            }
+        });
     }
 
     function createComponentInstance(options) {
-        if (!options._isOptions) {
-            resolveOptions(options);
-        }
-        var app = getCurrentApp();
         const instance = {
             uid: uid(),
-            scope: reactive$1(initScope()),
-            render: null,
+            scope: null,
+            render: options.render,
             vnode: null,
             slots: null,
             props: null,
+            attrs: null,
+            events: null,
+            emit: null,
+            root: null,
+            parent: null,
+            customOptions: options.customOptions,
+            propsOptions: options.propsOptions || emptyObject,
+            emitsOptions: options.emitsOptions || emptyObject,
             createRender: options.createRender,
             components: options.components,
             directives: options.directives,
             // hooks will always be an array
-            beforeCreate: options.beforeCreate && [...options.beforeCreate],
-            create: options.create && [...options.create],
-            created: options.created && [...options.created],
-            beforeMount: options.beforeMount && [...options.beforeMount],
-            mounted: options.mounted && [...options.mounted],
-            beforeUnmount: options.beforeUnmount && [...options.beforeUnmount],
-            unmounted: options.unmounted && [...options.unmounted],
-            beforeUpdate: options.beforeUpdate && [...options.beforeUpdate],
-            updated: options.updated && [...options.updated]
+            create: shallowCloneArray(options.create),
+            beforeCreate: shallowCloneArray(options.beforeCreate),
+            created: shallowCloneArray(options.created),
+            beforeMount: shallowCloneArray(options.beforeMount),
+            mounted: shallowCloneArray(options.mounted),
+            beforeUnmount: shallowCloneArray(options.beforeUnmount),
+            unmounted: shallowCloneArray(options.unmounted),
+            beforeUpdate: shallowCloneArray(options.beforeUpdate),
+            updated: shallowCloneArray(options.updated)
         };
-        if (app.mixins) {
-            injectMixins(instance, app.mixins);
-        }
+        instance.scope = createScope(instance);
+        var app = getCurrentApp();
+        instance.emit = createInstanceEventEmitter(instance);
+        injectMixins(instance, app.mixins);
+        injectMixins(instance, options.mixins);
         return instance;
     }
-
-    function injectDirectives(target, directives) {
-        for (let directive of directives) {
-            injectDirective(target, directive);
+    // export const createComponentInstance = (options: any) => new ComponentInstance(options)
+    // 用class 的话this指向有问题
+    class ComponentInstance {
+        uid = uid();
+        scope = null;
+        render;
+        vnode;
+        slots;
+        props = null;
+        attrs;
+        customOptions;
+        propsOptions;
+        emitsOptions;
+        createRender;
+        components;
+        directives;
+        rootCreate;
+        // hooks will always be an array
+        create;
+        beforeCreate;
+        created;
+        beforeMount;
+        mounted;
+        beforeUnmount;
+        unmounted;
+        beforeUpdate;
+        updated;
+        constructor(options) {
+            const { render, createRender, create, beforeCreate, created, beforeMount, mounted, beforeUnmount, unmounted, beforeUpdate, updated, mixins, components, directives, customOptions, propsOptions, emitsOptions, } = options;
+            this.scope = createScope(this);
+            this.beforeCreate = shallowCloneArray(beforeCreate);
+            this.create = shallowCloneArray(create);
+            this.created = shallowCloneArray(created);
+            this.beforeMount = shallowCloneArray(beforeMount);
+            this.mounted = shallowCloneArray(mounted);
+            this.beforeUpdate = shallowCloneArray(beforeUpdate);
+            this.updated = shallowCloneArray(updated);
+            this.beforeUnmount = shallowCloneArray(beforeUnmount);
+            this.unmounted = shallowCloneArray(unmounted);
+            this.customOptions = customOptions;
+            this.propsOptions = propsOptions || emptyObject;
+            this.emitsOptions = emitsOptions || emptyObject;
+            this.components = components;
+            this.directives = directives;
+            this.render = render;
+            this.createRender = createRender;
+            let app = getCurrentApp();
+            injectMixins(this, mixins);
+            injectMixins(this, app.mixins);
         }
+        events = null;
+        emit(name, ...args) {
+            debugger;
+            const handler = this.events[name];
+            debugger;
+            if (handler) {
+                handler(...args);
+            }
+        }
+    }
+
+    /*
+        pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
+    */
+    function normalizeDirective(directive) {
+        return isFunction(directive) ? {
+            mounted: directive,
+            updated: directive
+        } : directive;
+    }
+    function injectDirective(target, [directive, ...bindings]) {
+        var dirs = target.dirs ||= new Map();
+        dirs.set(directive, bindings);
+    }
+    function injectDirectives(target, directives) {
+        directives.forEach((directive) => {
+            injectDirective(target, directive);
+        });
         return target;
     }
     /*
@@ -3776,130 +4149,145 @@
         }
         return arr;
     }
-    /*
-        指令注入不能直接添加在钩子中 ，需要额外处理指令信息等
-    */
-    function injectDirective(target, [directive, value, _arguments, modifiers]) {
-        // 指令会携带信息 值 参数 修饰符
-        var dirs = target.dirs ||= new Map();
-        const infos = {
-            value,
-            directive,
-            _arguments: _arguments && setOwnKey(_arguments),
-            modifiers: modifiers && setOwnKey(modifiers)
-        };
-        dirs.set(directive, infos);
-        // ! 
-        return target;
-    }
-    /*
-        pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
-    */
-    function processHook(type, next, previous = null) {
-        // 不存在两个节点都不存在
-        if (previous) {
-            if (next.patchKey === previous.patchKey) {
-                // same node update
-                doProcessHook(type, next, previous);
-            }
-            else {
-                // fake mount and unmount
-                // 卸载旧节点 beforeUnmount , unmounted
-                // 挂载新节点 beforeCreate , created , beforeMount , mounted
-                if (type === "beforeUpdate" /* BEFORE_UPDATE */) {
-                    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, previous);
-                    processHook("unmounted" /* UNMOUNTED */, previous);
-                }
-                else if (type === "updated" /* UPDATED */) {
-                    processHook("beforeCreate" /* BEFORE_CREATE */, next);
-                    processHook("created" /* CREATED */, next);
-                    processHook("beforeMount" /* BEFORE_MOUNT */, next);
-                    processHook("mounted" /* MOUNTED */, next);
-                }
-            }
-        }
-        else {
-            doProcessHook(type, next);
-        }
-    }
-    function normalizeDirective(directive) {
-        return isFunction(directive) ? {
-            mounted: directive,
-            updated: directive
-        } : directive;
-    }
-    function doProcessHook(type, next, previous = undefined) {
-        const isComponent = next.nodeType === exports.Nodes.COMPONENT;
+    function processHook(type, next, previous = undefined) {
+        // 在这不需要判断 两个节点的patchkey是否相同
+        const isComponent = next.nodeType === 14 /* COMPONENT */;
         if (isComponent) {
             var instance = next.instance;
             // 组件需要处理实例钩子
             var scope = instance.scope;
             callHook(type, instance, { binding: scope }, scope);
         }
-        for (let [dir, infos] of next.dirs || emptyArray) {
-            var _dir = normalizeDirective(dir);
-            var hook = _dir[type];
-            if (hook) {
-                if (previous) {
-                    infos.oldValue = previous.dirs.get(dir).value;
+        // 指令钩子
+        var dirs = next.dirs;
+        if (dirs) {
+            for (let [dir, [value, _arguments, modifiers]] of dirs) {
+                var _dir = normalizeDirective(dir);
+                var hook = _dir[type];
+                if (hook) {
+                    var bindings = {
+                        directive: dir,
+                        value,
+                        _arguments: _arguments && setOwnKey(_arguments),
+                        modifiers: modifiers && setOwnKey(modifiers)
+                    };
+                    if (previous) {
+                        // 如果更新的话两个节点的指令应该完全相同
+                        bindings.oldValue = previous.dirs.get(dir)[0];
+                    }
+                    // 
+                    hook(isComponent ? next.instance.scope : next.el, bindings, next, previous);
                 }
-                // 
-                hook(isComponent ? next.instance.scope : next.el, infos, next, previous);
             }
+        }
+        // 节点钩子
+        const vnodeHook = next?.props?.[`_${type}`];
+        if (vnodeHook) {
+            vnodeHook(isComponent ? next.instance.scope : next.el);
+        }
+    }
+
+    const COMPONENT_TYPE = Symbol('component_type');
+    // options component
+    function component(component) {
+        mark(component, COMPONENT_TYPE, 0 /* OPTIONS_COMPONENT */);
+        resolveOptions(component);
+        return component;
+    }
+    // ! 移除函数式有状态组件
+    function asyncComponent(source) {
+        if (isFunction(source)) {
+            source = {
+                resolved: false,
+                loader: source,
+                loadingComponent: '',
+                errorComponent: '',
+                timeout: 200
+            };
+        }
+        mark(source, COMPONENT_TYPE, 1 /* ASYNC_COMPONENT */);
+        return source;
+    }
+    function processComponent(source) {
+        if (source[COMPONENT_TYPE]) {
+            return source;
+        }
+        else if (isObject(source)) {
+            return component(source);
+        }
+        else if (isFunction(source)) {
+            mark(source, COMPONENT_TYPE, 3 /* RENDER_COMPONENT */);
+            return source;
         }
     }
 
     exports.$var = $var;
     exports.App = App;
-    exports.emptyArray = emptyArray;
-    exports.emptyObject = emptyObject;
+    exports.COMPONENT_TYPE = COMPONENT_TYPE;
+    exports.ComponentInstance = ComponentInstance;
     exports.IMPORTANT = IMPORTANT;
     exports.IMPORTANT_KEY = IMPORTANT_KEY;
     exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;
     exports.NULL = NULL;
-    exports.SYMBOL_ITERATOR = SYMBOL_ITERATOR$1;
+    exports.ReactiveEffect = ReactiveEffect;
+    exports.ReactiveTypeSymbol = ReactiveTypeSymbol;
+    exports.Ref = Ref;
+    exports.TARGET_MAP = TARGET_MAP;
     exports.addClass = addClass;
     exports.addEventListener = addEventListener;
+    exports.addInstanceListener = addInstanceListener;
     exports.appendMedium = appendMedium;
     exports.arrayToMap = arrayToMap;
+    exports.asyncComponent = asyncComponent;
     exports.attr = attr;
     exports.builtInComponents = builtInComponents;
-    exports.builtInDirectives = builtInDirectives;
+    exports.builtInDirectives = builtInDirectives$1;
     exports.cache = cache;
     exports.calc = calc;
     exports.callFn = callFn;
     exports.callHook = callHook;
     exports.camelize = camelize;
-    exports.initialUpperCase = initialUpperCase;
     exports.checkBuiltInAnimations = checkBuiltInAnimations;
     exports.compile = compile;
-    exports.computed = computed;
+    exports.component = component;
+    exports.conicGradient = conicGradient;
     exports.createApp = createApp;
     exports.createComponent = createComponent;
     exports.createComponentInstance = createComponentInstance;
     exports.createDeclaration = createDeclaration;
     exports.createElement = createElement;
-    exports.withEventModifiers = withEventModifiers;
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
-    exports.toEventName = toEventName;
+    exports.createInstanceEventEmitter = createInstanceEventEmitter;
     exports.createKeyframe = createKeyframe;
     exports.createKeyframes = createKeyframes;
+    exports.createMap = createMap;
     exports.createMapEntries = createMapEntries;
     exports.createMedia = createMedia;
     exports.createNode = createNode;
+    exports.createReactiveCollection = createReactiveCollection;
+    exports.createReactiveEffect = createReactiveEffect;
+    exports.createReactiveObject = createReactiveObject;
+    exports.createReadonlyCollection = createReadonlyCollection;
+    exports.createReadonlyObject = createReadonlyObject;
+    exports.createScope = createScope;
     exports.createSetter = createSetter;
+    exports.createShallowReactiveCollection = createShallowReactiveCollection;
+    exports.createShallowReactiveObject = createShallowReactiveObject;
+    exports.createShallowReadonlyCollection = createShallowReadonlyCollection;
+    exports.createShallowReadonlyObject = createShallowReadonlyObject;
     exports.createStyle = createStyle;
     exports.createStyleSheet = createStyleSheet;
     exports.createSupports = createSupports;
     exports.createText = createText;
     exports.cubicBezier = cubicBezier;
     exports.declare = declare;
+    exports.defineScopePropertyGetter = defineScopePropertyGetter;
+    exports.deleteActiveEffect = deleteActiveEffect;
     exports.deleteKeyframe = deleteKeyframe;
     exports.deleteMedium = deleteMedium;
     exports.deleteRule = deleteRule;
     exports.destructur = destructur;
-    exports.sortChildren = sortChildren;
     exports.display = display;
     exports.doFlat = doFlat;
     exports.docCreateComment = docCreateComment;
@@ -3907,11 +4295,15 @@
     exports.docCreateText = docCreateText;
     exports.dynamicMapKey = dynamicMapKey;
     exports.effect = effect;
+    exports.emptyArray = emptyArray;
+    exports.emptyFunction = emptyFunction;
+    exports.emptyObject = emptyObject;
     exports.error = error;
     exports.exec = exec;
     exports.execCaptureGroups = execCaptureGroups;
     exports.extend = extend;
     exports.flatRules = flatRules;
+    exports.getActiveEffect = getActiveEffect;
     exports.getComponent = getComponent;
     exports.getCurrentApp = getCurrentApp;
     exports.getCurrentInstance = getCurrentInstance;
@@ -3921,20 +4313,20 @@
     exports.getElementStyle = getElementStyle;
     exports.getElementStyleValue = getElementStyleValue;
     exports.getEmptyObject = getEmptyObject;
+    exports.getInstanceEvents = getInstanceEvents;
+    exports.getInstancetEventListeners = getInstancetEventListeners;
     exports.getLastVisitKey = getLastVisitKey;
     exports.getLastVisitTarget = getLastVisitTarget;
     exports.getReservedProp = getReservedProp;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
-    exports.unionkeys = unionkeys;
     exports.hasOwn = hasOwn;
     exports.hsl = hsl;
     exports.hsla = hsla;
     exports.hyphenate = hyphenate;
     exports.important = important;
-    exports.resolveOptions = resolveOptions;
-    exports.initScope = initScope;
-    exports.injectDirective = injectDirective;
+    exports.initialLowerCase = initialLowerCase;
+    exports.initialUpperCase = initialUpperCase;
     exports.injectDirectives = injectDirectives;
     exports.injectHook = injectHook;
     exports.injectMapHooks = injectMapHooks;
@@ -3956,6 +4348,7 @@
     exports.isNumber = isNumber;
     exports.isNumberString = isNumberString;
     exports.isObject = isObject;
+    exports.isProxy = isProxy;
     exports.isReactive = isReactive;
     exports.isRef = isRef;
     exports.isReservedProp = isReservedProp;
@@ -3967,7 +4360,9 @@
     exports.keyOf = keyOf;
     exports.keyframe = keyframe;
     exports.keyframes = keyframes;
+    exports.linearGradient = linearGradient;
     exports.makeMap = makeMap;
+    exports.mark = mark;
     exports.max = max;
     exports.mergeSelectors = mergeSelectors;
     exports.mergeSplitedSelector = mergeSplitedSelector;
@@ -3982,10 +4377,11 @@
     exports.mountDeclaration = mountDeclaration;
     exports.mountKeyframeRule = mountKeyframeRule;
     exports.mountRule = mountRule;
+    exports.mountStatefulComponent = mountStatefulComponent;
     exports.mountStyleRule = mountStyleRule;
     exports.mountStyleSheet = mountStyleSheet;
+    exports.nextFrame = nextFrame;
     exports.nextTick = nextTick;
-    exports.nextTickSingleWork = nextTickSingleWork;
     exports.normalizeClass = normalizeClass;
     exports.normalizeKeyText = normalizeKeyText;
     exports.normalizeStyle = normalizeStyle;
@@ -3997,18 +4393,24 @@
     exports.onMounted = onMounted;
     exports.onUnmounted = onUnmounted;
     exports.onUpdated = onUpdated;
+    exports.onceInstanceListener = onceInstanceListener;
     exports.onceListener = onceListener;
-    exports.parseNativeEventName = parseNativeEventName;
+    exports.parseEventName = parseEventName;
     exports.parseInlineClass = parseInlineClass;
     exports.parseInlineStyle = parseInlineStyle;
+    exports.parseNativeEventName = parseNativeEventName;
     exports.parseStyleValue = parseStyleValue;
     exports.patch = patch;
     exports.perspective = perspective;
+    exports.processComponent = processComponent;
     exports.processHook = processHook;
     exports.processdom = processdom;
-    exports.reactive = reactive$1;
+    exports.queueJob = queueJob;
+    exports.radialGradient = radialGradient;
+    exports.reactive = reactive;
     exports.reactiveCollectionHandler = reactiveCollectionHandler;
     exports.reactiveHandler = reactiveHandler;
+    exports.readonly = readonly;
     exports.readonlyCollectionHandler = readonlyCollectionHandler;
     exports.readonlyHandler = readonlyHandler;
     exports.ref = ref;
@@ -4017,8 +4419,10 @@
     exports.removeElement = removeElement;
     exports.removeEventListener = removeEventListener;
     exports.removeFromArray = removeFromArray;
+    exports.removeInstanceListener = removeInstanceListener;
     exports.renderList = renderList;
     exports.renderSlot = renderSlot;
+    exports.resolveOptions = resolveOptions;
     exports.rgb = rgb;
     exports.rgba = rgba;
     exports.rotate = rotate;
@@ -4027,6 +4431,7 @@
     exports.scale = scale;
     exports.scale3d = scale3d;
     exports.scaleY = scaleY;
+    exports.setActiveEffect = setActiveEffect;
     exports.setAttribute = setAttribute;
     exports.setCurrentInstance = setCurrentInstance;
     exports.setElementStyleDeclaration = setElementStyleDeclaration;
@@ -4037,13 +4442,17 @@
     exports.setSelector = setSelector;
     exports.setStyleProperty = setStyleProperty;
     exports.setText = setText;
+    exports.shallowCloneArray = shallowCloneArray;
+    exports.shallowReactive = shallowReactive;
     exports.shallowReactiveCollectionHandler = shallowReactiveCollectionHandler;
     exports.shallowReactiveHandler = shallowReactiveHandler;
+    exports.shallowReadonly = shallowReadonly;
     exports.shallowReadonlyCollectionHandler = shallowReadonlyCollectionHandler;
     exports.shallowReadonlyHandler = shallowReadonlyHandler;
     exports.skew = skew;
     exports.skewX = skewX;
     exports.skewY = skewY;
+    exports.sortChildren = sortChildren;
     exports.splitSelector = splitSelector;
     exports.stringToMap = stringToMap;
     exports.stringify = stringify;
@@ -4052,19 +4461,23 @@
     exports.toArray = toArray;
     exports.toArrowFunction = toArrowFunction;
     exports.toBackQuotes = toBackQuotes;
+    exports.toNativeEventName = toNativeEventName;
     exports.toRaw = toRaw;
     exports.toReservedProp = toReservedProp;
     exports.toSingleQuotes = toSingleQuotes;
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
+    exports.trackRef = trackRef;
     exports.translate3d = translate3d;
     exports.translateX = translateX;
     exports.translateY = translateY;
     exports.trigger = trigger;
+    exports.triggerRef = triggerRef;
     exports.typeOf = typeOf;
     exports.uStringId = uStringId;
     exports.uVar = uVar;
     exports.uid = uid;
+    exports.unionkeys = unionkeys;
     exports.unmount = unmount;
     exports.unmountChildren = unmountChildren;
     exports.unmountClass = unmountClass;
@@ -4076,9 +4489,14 @@
     exports.updateClass = updateClass;
     exports.updateComponent = updateComponent;
     exports.updateDeclaration = updateDeclaration;
+    exports.updateInstanceListeners = updateInstanceListeners;
     exports.updateStyleSheet = updateStyleSheet;
+    exports.useBoolean = useBoolean;
+    exports.useColor = useColor;
+    exports.useNumber = useNumber;
+    exports.useString = useString;
     exports.warn = warn;
-    exports.watch = watch;
+    exports.withEventModifiers = withEventModifiers;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

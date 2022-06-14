@@ -153,7 +153,7 @@ function genCustomDirectives(code: any, directives: any, context: any) {
             modifiers && modifiers.map(toSingleQuotes)
         ]
     });
-    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code,stringify(dirs))
+    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
 }
 
 function genSlotContent(node: any, context: any) {
@@ -287,7 +287,8 @@ const genText = (texts: Text[], context: any) => {
 import {
     splitSelector,
     mergeSplitedSelector,
-    joinSelector
+    joinSelector,
+    toEventName
 } from '@crush/renderer'
 
 function genSelector(selectors: Array<any>, context: any) {
@@ -390,11 +391,12 @@ function genDeclartion(declarationGroup: any[], context: any) {
 }
 
 import {
-    toEventName
+    toNativeEventName
 } from '@crush/renderer'
 
 function genProps(node: any, context: any) {
-    var { type, attributes } = node
+    const { type, attributes } = node
+    const isComponent = type === Nodes.COMPONENT
     if (!attributes) { return NULL }
     var props: any = {}
     attributes.forEach((attr: any) => {
@@ -409,10 +411,17 @@ function genProps(node: any, context: any) {
                     modifiers
                 } = attr
                 value ||= property // 简写形似
-                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)))) : 
-                toEventName(property, type === Nodes.HTML_ELEMENT && _arguments)
+
+                const handlerKey = isDynamicProperty ?
+                    (isComponent ?
+                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
+                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes))))) :
+                    (isComponent ?
+                        toEventName(property, _arguments, modifiers) :
+                        toNativeEventName(property, _arguments));
+
                 var callback = isHandler ? value : toArrowFunction(value)
-                if (modifiers) {
+                if (modifiers && !isComponent) {
                     callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)))
                 }
                 props[handlerKey] = callback

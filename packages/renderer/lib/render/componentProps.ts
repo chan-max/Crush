@@ -1,5 +1,5 @@
 import { emptyObject, error, isUndefined } from "@crush/common";
-import { isEvent, parseEventName } from "@crush/core";
+import { getEventName, isEvent, parseEventName } from "@crush/core";
 import { unionkeys } from "./common";
 import { updateInstanceListeners } from "./componentListener";
 
@@ -17,13 +17,19 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
         if (pValue === nValue) continue
         if (prop.startsWith('_')) {
             // 组件保留属性 skip
-        } else if (!emitsOptions[parseEventName(prop)] && !propsOptions[prop]) {
+        } else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
             // 未定义
             let attrs = instance.attrs ||= {}
             attrs[prop] = nValue
         } else if (isEvent(prop)) {
             // events
-            updateInstanceListeners(instance, parseEventName(prop), pValue, nValue)
+            var {
+                event,
+                _arguments,
+                modifiers
+            } = parseEventName(prop)
+            debugger
+            updateInstanceListeners(instance, event, pValue, nValue)
         } else {
             // props
             const { default: _default, type, validator, required } = propsOptions[prop]

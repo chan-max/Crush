@@ -33,7 +33,7 @@ import {
     parseNativeEventName,
     isEvent
 } from '../common/event'
-import { isReservedProp } from "./common";
+
 import { updateDeclaration } from "./declaration";
 import { normalizeClass, normalizeStyle } from "@crush/core";
 
@@ -41,6 +41,7 @@ import { normalizeClass, normalizeStyle } from "@crush/core";
 export function mountAttributes(el: any, props: any) {
     updateAttributes(el, emptyObject, props)
 }
+
 export function updateAttributes(el: any, pProps: any, nProps: any) {
     pProps ||= emptyObject
     nProps ||= emptyObject
