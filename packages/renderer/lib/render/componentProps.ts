@@ -1,7 +1,9 @@
 import { emptyObject, error, isUndefined } from "@crush/common";
 import { isEvent, parseEventName } from "@crush/core";
 import { unionkeys } from "./common";
+import { updateInstanceListeners } from "./componentListener";
 
+export const mountComponentProps = (instance: any, props: any) => updateComponentProps(instance, null, props)
 
 export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     pProps ||= emptyObject
@@ -21,8 +23,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
             attrs[prop] = nValue
         } else if (isEvent(prop)) {
             // events
-            let events = instance.events ||= {}
-            events[parseEventName(prop)] = nValue
+            updateInstanceListeners(instance, parseEventName(prop), pValue, nValue)
         } else {
             // props
             const { default: _default, type, validator, required } = propsOptions[prop]
@@ -49,5 +50,3 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     }
 }
 
-
-export const mountComponentProps = (instance: any, props: any) => updateComponentProps(instance, null, props)

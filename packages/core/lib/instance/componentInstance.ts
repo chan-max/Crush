@@ -5,14 +5,8 @@ import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@cr
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createScope, } from "./scope";
+import { createInstanceEventEmitter } from "@crush/renderer/lib/render/componentListener";
 
-
-const createEventEmitter = (instance: any) => (name: string, ...args: any[]) => {
-    const handler = instance?.events[name]
-    if (handler) {
-        handler(...args)
-    }
-}
 
 export function createComponentInstance(options: ComponentType | Function | any) {
     const instance: any = {
@@ -46,7 +40,7 @@ export function createComponentInstance(options: ComponentType | Function | any)
     }
     instance.scope = createScope(instance)
     var app = getCurrentApp()
-    instance.emit = createEventEmitter(instance)
+    instance.emit = createInstanceEventEmitter(instance)
     injectMixins(instance, app.mixins)
     injectMixins(instance, options.mixins)
     return instance

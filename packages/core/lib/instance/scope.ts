@@ -1,5 +1,6 @@
 import { hasOwn, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
+import { addInstanceListener, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { nextTick } from "@crush/scheduler";
 
@@ -11,7 +12,6 @@ const protoMethods = {
 
 const scopeProperties: any = {
     $instance: (instance: any) => instance,
-    $emit: (instance: any) => instance.emit,
     $el: (instance: any) => instance.vnode,
     $root: (instance: any) => instance.root,
     $attrs: (instance: any) => instance.attrs,
@@ -19,7 +19,14 @@ const scopeProperties: any = {
     $parent: (instance: any) => instance.parent,
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
-    $animate: () => ''
+    
+    // evnets
+    $emit: (instance: any) => instance.emit,
+    $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
+    $off: (instance: any) => (event: string, handler: any) => removeInstanceListener(instance, event, handler),
+    $once: (instance: any) => (event: string, handler: any) => onceInstanceListener(instance, event, handler),
+    $events: (instance: any) => getInstanceEvents(instance),
+    $listeners: (instance: any) => (event: string) => getInstancetEventListeners(instance, event)
 }
 
 export function defineScopePropertyGetter(key: string, getter: any) {
@@ -28,7 +35,6 @@ export function defineScopePropertyGetter(key: string, getter: any) {
 
 export function createScope(instance: any) {
     const scope = reactive(Object.create(protoMethods))
-
     return new Proxy(scope, {
         get(target: any, key: any, receiver: any) {
             if (key === Symbol.unscopables) {

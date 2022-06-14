@@ -8,20 +8,12 @@ import { useColor, useNumber, useString } from "./packages/reactivity/lib/useDat
 
 var root = {
     template: `
-        <h1 @click="add"> {{x}} </h1>
+        <h1 > emit </h1>
     `,
     create($) {
-
-        let x = useNumber(20)
-
-        function add() {
-            x.plus(10)
-        }
-
-        return {
-            x,
-            add
-        }
+        var x = this.$nextTick
+        var y = this.$nextTick
+        debugger
     }
 }
 
