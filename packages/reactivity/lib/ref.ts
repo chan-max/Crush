@@ -3,7 +3,7 @@ import { getActiveEffect, TARGET_MAP, track, TrackTypes, trigger, ReactiveEffect
 
 export const ref = (value: any) => new Ref(value)
 
-class Ref {
+export class Ref {
     [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_REF] = true
 

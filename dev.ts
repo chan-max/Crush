@@ -2,33 +2,25 @@ import { createApp, hasOwn, isReactive, isRef, onCreated, onMounted, removeEleme
 import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 import { computed } from "./packages/reactivity/lib/computed";
 import { ref } from "./packages/reactivity/lib/ref";
-import { effect } from "./packages/reactivity/lib/effect";
+import { effect } from "./packages/core";
 
+import { useColor, useNumber, useString } from "./packages/reactivity/lib/useData";
 
 var root = {
-    components: {
-        hello: {
-            template: `
-            <h1 @click="$emit('add')"> 子组件 </h1>
-            `,
-            emits: ['add'],
-            create($) {
-                console.log(this);
-            }
-        }
-    },
     template: `
         <h1 @click="add"> {{x}} </h1>
-        <hello @add>
     `,
-    create() {
-        var x = ref(666)
+    create($) {
+
+        let x = useNumber(20)
+
         function add() {
-            x.value++
+            x.plus(10)
         }
+
         return {
             x,
-            add,
+            add
         }
     }
 }
@@ -38,20 +30,5 @@ var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
+console.log(instance);
 
-var scope = reactive({
-    a: 123,
-    b: 465
-})
-
-console.log(scope);
-
-Object.defineProperty(scope, 'x', {
-    configurable: false,
-    enumerable: false,
-    get() {
-        return 
-    }
-})
-
-window.scope = scope

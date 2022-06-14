@@ -5,36 +5,19 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 import { MixinType } from "../instance/mixin"
 import { PluginType } from "../instance/plugin"
-import { mountComponent } from "@crush/renderer"
+import { mountComponent, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
 
-var currentApp: AppInstance
+var currentApp: App
 
-export function getCurrentApp(): AppInstance {
+export function getCurrentApp(): App {
     if (!currentApp) {
         debugger
     }
     return currentApp
 }
-
-
-export interface AppInstance {
-    isMounted: boolean
-    rootComponent: null | ComponentType
-    components: Record<string, ComponentType>
-    directives: Record<string, DirectiveType>
-    mixins: MixinType[]
-    plugins: Set<PluginType>
-    component(name: string, component: ComponentType): void
-    directive(name: string, directive: DirectiveType): void
-    mixin(mixin: MixinType): void
-    mount(selectorOrContainer: string | Element): any
-    unmount(): any
-    use(plugin: PluginType): any
-}
-
 
 function normalizeContainer(container: any): Element {
     if (isString(container)) {
@@ -46,17 +29,20 @@ function normalizeContainer(container: any): Element {
     return container
 }
 
-export class App implements AppInstance {
+export class App {
 
     isMounted = false
 
-    rootComponent: ComponentType
+    rootOptions: ComponentType
 
-    constructor(rootComponent: ComponentType) {
-        this.rootComponent = rootComponent
+    constructor(rootOptions: ComponentType) {
+        this.rootOptions = rootOptions
+        // 安装动画
         this.use(installAnimation)
-        currentApp = this as AppInstance
+        currentApp = this
     }
+
+    // globalProperty
 
     components: Record<string, ComponentType> = builtInComponents
     component(name: string, component: ComponentType) {
@@ -88,24 +74,29 @@ export class App implements AppInstance {
     container: Element | null = null
     rootInstance: any
     useSelectorTemplate: boolean = false
+    rootComponent: any
     mount(container: string | Element) {
         container = normalizeContainer(container)
         // todo validate legal container 
         this.container = container as Element
-        var component = this.rootComponent
-        if (!component.template && !component.render) {
-            component.template = container.innerHTML
+        var options = this.rootOptions
+        if (!options.template && !options.render) {
+            options.template = container.innerHTML
             this.useSelectorTemplate = true
         }
         // clear page template
         container.innerHTML = ''
         // mount root component
-        this.rootInstance = mountComponent(createComponent(component, null, null), container)
+        var component = createComponent(options, null, null)
+        this.rootComponent = component
+        var instance = mountComponent(component, container)
+        // instance.root = instance
+        this.rootInstance = instance
         this.isMounted = true
+        return instance
     }
 
     unmount() {
-
+        unmountComponent(this.rootComponent, this.container)
     }
-
 }

@@ -5,12 +5,16 @@ import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@cr
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createScope, } from "./scope";
-import { Components, COMPONENT_TYPE } from "./defineComponent";
 
+
+const createEventEmitter = (instance: any) => (name: string, ...args: any[]) => {
+    const handler = instance?.events[name]
+    if (handler) {
+        handler(...args)
+    }
+}
 
 export function createComponentInstance(options: ComponentType | Function | any) {
-
-    //! 创建组件实例只支持 选项式组件 ，和返回值时render函数的函数组件
     const instance: any = {
         uid: uid(),
         scope: null,
@@ -21,6 +25,8 @@ export function createComponentInstance(options: ComponentType | Function | any)
         attrs: null,
         events: null,
         emit: null,
+        root: null,
+        parent: null,
         customOptions: options.customOptions,
         propsOptions: options.propsOptions || emptyObject,
         emitsOptions: options.emitsOptions || emptyObject,
@@ -28,7 +34,6 @@ export function createComponentInstance(options: ComponentType | Function | any)
         components: options.components,
         directives: options.directives,
         // hooks will always be an array
-        rootCreate: null,
         create: shallowCloneArray(options.create),
         beforeCreate: shallowCloneArray(options.beforeCreate),
         created: shallowCloneArray(options.created),
@@ -40,8 +45,6 @@ export function createComponentInstance(options: ComponentType | Function | any)
         updated: shallowCloneArray(options.updated)
     }
     instance.scope = createScope(instance)
-    instance.rootCreate = instance.create && instance.create.shift()
-
     var app = getCurrentApp()
     instance.emit = createEventEmitter(instance)
     injectMixins(instance, app.mixins)
@@ -50,14 +53,7 @@ export function createComponentInstance(options: ComponentType | Function | any)
 }
 
 
-const createEventEmitter = (instance: any) => (name: string, ...args: any[]) => {
-    const handler = instance?.events[name]
-    if (handler) {
-        handler(...args)
-    }
-}
-
-// export const createComponentInstance = (options:any) => new ComponentInstance(options)
+// export const createComponentInstance = (options: any) => new ComponentInstance(options)
 
 // 用class 的话this指向有问题
 export class ComponentInstance {
@@ -124,17 +120,9 @@ export class ComponentInstance {
         this.directives = directives
         this.render = render
         this.createRender = createRender
-
         let app = getCurrentApp()
-
-        if (mixins) {
-            injectMixins(this, mixins)
-        }
-
-        if (app.mixins) {
-            injectMixins(this, app.mixins)
-        }
-
+        injectMixins(this, mixins)
+        injectMixins(this, app.mixins)
     }
 
     events: any = null

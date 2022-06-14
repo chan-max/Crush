@@ -60,7 +60,7 @@ export function mountStatefulComponent(component: any, container: Element, ancho
 
     const instance = createComponentInstance(type)
 
-    const { scope, rootCreate } = instance
+    const { scope } = instance
 
     callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
 
@@ -81,37 +81,24 @@ export function mountStatefulComponent(component: any, container: Element, ancho
     createResults?.forEach((data: any) => setScopeData(scope, data))
 
     // 组件根初始化方法
-    let rootCreateResult
-    if (rootCreate) {
-        rootCreateResult = rootCreate.call(scope, scope)
-    }
     /*
         render 优先级
         create 返回的渲染函数  > render > template , 暂时不支持无状态组件
     */
     let render: any
-    if (isFunction(rootCreateResult)) {
-        // ! 初始化返回结果作为 render
-        // 无论是options组件还还是函数式组件 ， 只有rootCreate返回结果是函数都会作为
-        render = rootCreateResult
+    if (instance.render) {
+        render = instance.render.bind(scope)
+    } else if (instance.createRender) {
+        render = instance.createRender(renderMethods)
     } else {
-        // ! 返回结果作为data
-        setScopeData(scope, rootCreateResult)
-
-        if (instance.render) {
-            render = instance.render
-        } else if (instance.createRender) {
-            render = instance.createRender(renderMethods)
-        } else {
-            render = emptyFunction
-        }
+        render = emptyFunction
     }
-
-    render = render.bind(scope) // 用于手写 render 时的 this
 
     setCurrentInstance(null)
 
     processHook(LifecycleHooks.CREATED, component)
+
+    // component update
 
     let prevComponent: any = null, nextComponent = component
     // component update fn

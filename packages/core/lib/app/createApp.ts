@@ -1,6 +1,6 @@
 import { ComponentType } from "../instance/component";
-import { App, AppInstance } from "./app";
+import { App } from "./app";
 
 
-export const createApp = (rootComponent: ComponentType): AppInstance => new App(rootComponent)
+export const createApp = (rootOptions: ComponentType): App => new App(rootOptions)
 
