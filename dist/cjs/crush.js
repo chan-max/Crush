@@ -1,3 +1,11 @@
+/**
+ * 
+ *     Crush.js 
+ *     1.0.16
+ *     chan
+ * 
+ */
+
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -553,6 +561,14 @@ const isEvent = (key) => onRE.test(key);
 /*
     dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
 */
+// 只有原生事件支持 opitons
+function toNativeEventName(eventName, _arguments) {
+    var name = `on${initialUpperCase(eventName)}`;
+    if (_arguments && _arguments.length !== 0) {
+        name += _arguments.map(initialUpperCase).join(''); // join default with ,
+    }
+    return name;
+}
 const parseNativeEventName = (name) => {
     var keys = name.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
     // remove on
@@ -565,16 +581,29 @@ const parseNativeEventName = (name) => {
         options: arrayToMap(keys)
     };
 };
-function parseEventName(name) {
-    return initialLowerCase(name.slice(2));
+/*
+    @event:arg1:arg2.mod1.mod2
+        tranform to...
+        onEvent_arg1_arg2$mod1$mod2
+*/
+function toEventName(event, _arguments, modifiers) {
+    event = `on${initialUpperCase(event)}`;
+    _arguments && (event += _arguments.map((_) => `_${_}`).join(''));
+    modifiers && (event += modifiers.map(($) => `$${$}`).join(''));
+    return event;
 }
-// 只有原生事件支持 opitons
-function toNativeEventName(eventName, options) {
-    var name = `on${initialUpperCase(eventName)}`;
-    if (options && options.length !== 0) {
-        name += options.map(initialUpperCase).join(''); // join default with ,
-    }
-    return name;
+// quickly get the handler key event
+function getEventName(name) {
+    return initialLowerCase(name.slice(2).split(/_|\$/)[0]);
+}
+const extrctEventNameRE = /on([a-zA-Z]+)([_a-zA-Z]*)([\$a-zA-Z]*)/;
+function parseEventName(name) {
+    const [_, event, _argumentsStr, modifiersStr] = extrctEventNameRE.exec(name);
+    return {
+        event: initialLowerCase(event),
+        _arguments: _argumentsStr && arrayToMap(_argumentsStr.split('_').filter(Boolean)),
+        modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
+    };
 }
 const modifierGuards = {
     stop: (e) => e.stopPropagation(),
@@ -715,6 +744,75 @@ function getElementComputedStyle(el, keys) {
     return getStyle(window.getComputedStyle(el), keys);
 }
 
+const globalComponentListeners = new WeakMap();
+function getInstanceEvents(instance) {
+    let listenersMap = globalComponentListeners.get(instance);
+    if (!listenersMap) {
+        listenersMap = new Map();
+        globalComponentListeners.set(instance, listenersMap);
+    }
+    return listenersMap;
+}
+function getInstancetEventListeners(instance, event) {
+    let events = getInstanceEvents(instance);
+    let listeners = events.get(event);
+    if (!listeners) {
+        listeners = new Set();
+        events.set(event, listeners);
+    }
+    return listeners;
+}
+function createInstanceEventEmitter(instance) {
+    return (event, ...args) => {
+        emitInstancetEvent(instance, event, ...args);
+    };
+}
+function emitInstancetEvent(instance, event, ...args) {
+    const listeners = getInstancetEventListeners(instance, event);
+    listeners.forEach((handler) => {
+        handler(...args);
+    });
+}
+/* handler 标准化，转成数组格式 */
+function arrayHandler(handler) {
+    return (isArray(handler) ? handler : [handler]).filter(isFunction);
+}
+function operateHandler(operatorType, instance, event, rawhandler) {
+    const listeners = getInstancetEventListeners(instance, event);
+    arrayHandler(rawhandler).forEach((handler) => {
+        switch (operatorType) {
+            case 0 /* ADD */:
+                listeners.add(handler);
+                break;
+            case 1 /* DELETE */:
+                listeners.delete(handler);
+                break;
+            case 2 /* ONCE */:
+                const onceHandler = (...args) => {
+                    handler(...args);
+                    listeners.delete(onceHandler);
+                };
+                listeners.add(onceHandler);
+                break;
+        }
+    });
+}
+function updateInstanceListeners(instance, event, pHandler, nHandler) {
+    // 不影响组件自身注册的事件
+    removeInstanceListener(instance, event, pHandler);
+    addInstanceListener(instance, event, nHandler);
+}
+function addInstanceListener(instance, event, handler) {
+    operateHandler(0 /* ADD */, instance, event, handler);
+}
+function removeInstanceListener(instance, event, handler) {
+    operateHandler(1 /* DELETE */, instance, event, handler);
+}
+function onceInstanceListener(instance, event, handler) {
+    operateHandler(2 /* ONCE */, instance, event, handler);
+}
+// native events
+
 function updateClass(el, pClass, nClass) {
     pClass ||= emptyObject;
     nClass ||= emptyObject;
@@ -741,13 +839,8 @@ function updateAttributes(el, pProps, nProps) {
         var nValue = nProps[propName];
         if (propName.startsWith('_')) ;
         else if (isEvent(propName)) {
-            if (pValue !== nValue) {
-                var { event, options } = parseNativeEventName(propName);
-                removeEventListener(el, event, pValue, options);
-                if (nValue) {
-                    addEventListener(el, event, nValue, options);
-                }
-            }
+            var { event, options } = parseNativeEventName(propName);
+            updateNativeEvents(el, event, pValue, nValue, options);
         }
         else if (propName === keyOf(16 /* STYLE */)) {
             updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue));
@@ -764,7 +857,17 @@ function updateAttributes(el, pProps, nProps) {
         }
     }
 }
-// unmountAttribute
+/*
+    原生侦听器支持一维数组格式，[a,b,c]
+*/
+function updateNativeEvents(el, event, pHandler, nHandler, options) {
+    arrayHandler(pHandler).forEach((ph) => {
+        removeEventListener(el, event, ph, options);
+    });
+    arrayHandler(nHandler).forEach((nh) => {
+        addEventListener(el, event, nh, options);
+    });
+}
 
 /*
     mountStyleSheet will create a style element
@@ -931,72 +1034,6 @@ function unmountElement(vnode, isStyle = false) {
     processHook("unmounted" /* UNMOUNTED */, vnode);
 }
 
-const globalComponentListeners = new WeakMap();
-function getInstanceEvents(instance) {
-    let listenersMap = globalComponentListeners.get(instance);
-    if (!listenersMap) {
-        listenersMap = new Map();
-        globalComponentListeners.set(instance, listenersMap);
-    }
-    return listenersMap;
-}
-function getInstancetEventListeners(instance, event) {
-    let events = getInstanceEvents(instance);
-    let listeners = events.get(event);
-    if (!listeners) {
-        listeners = new Set();
-        events.set(event, listeners);
-    }
-    return listeners;
-}
-function createInstanceEventEmitter(instance) {
-    return (event, ...args) => {
-        emitInstancetEvent(instance, event, ...args);
-    };
-}
-function emitInstancetEvent(instance, event, ...args) {
-    const listeners = getInstancetEventListeners(instance, event);
-    listeners.forEach((handler) => {
-        handler(...args);
-    });
-}
-function operateListeners(operatorType, listeners, handler) {
-    if (isFunction(handler)) {
-        switch (operatorType) {
-            case 0 /* ADD */:
-                listeners.add(handler);
-                break;
-            case 1 /* DELETE */:
-                listeners.delete(handler);
-                break;
-            case 2 /* ONCE */:
-                const onceHandler = (...args) => {
-                    handler(...args);
-                    listeners.delete(onceHandler);
-                };
-                listeners.add(onceHandler);
-                break;
-        }
-    }
-    else if (isArray(handler)) {
-        handler.forEach((_handler) => operateListeners(operatorType, listeners, _handler));
-    }
-}
-function updateInstanceListeners(instance, event, pHandler, nHandler) {
-    // 不影响组件自身注册的事件
-    removeInstanceListener(instance, event, pHandler);
-    addInstanceListener(instance, event, nHandler);
-}
-function addInstanceListener(instance, event, handler) {
-    operateListeners(0 /* ADD */, getInstancetEventListeners(instance, event), handler);
-}
-function removeInstanceListener(instance, event, handler) {
-    operateListeners(1 /* DELETE */, getInstancetEventListeners(instance, event), handler);
-}
-function onceInstanceListener(instance, event, handler) {
-    operateListeners(2 /* ONCE */, getInstancetEventListeners(instance, event), handler);
-}
-
 const mountComponentProps = (instance, props) => updateComponentProps(instance, null, props);
 function updateComponentProps(instance, pProps, nProps) {
     pProps ||= emptyObject;
@@ -1009,14 +1046,16 @@ function updateComponentProps(instance, pProps, nProps) {
         if (pValue === nValue)
             continue;
         if (prop.startsWith('_')) ;
-        else if (!emitsOptions[parseEventName(prop)] && !propsOptions[prop]) {
+        else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
             // 未定义
             let attrs = instance.attrs ||= {};
             attrs[prop] = nValue;
         }
         else if (isEvent(prop)) {
             // events
-            updateInstanceListeners(instance, parseEventName(prop), pValue, nValue);
+            var { event, _arguments, modifiers } = parseEventName(prop);
+            debugger;
+            updateInstanceListeners(instance, event, pValue, nValue);
         }
         else {
             // props
@@ -1894,7 +1933,7 @@ function setScopeData(scope, data) {
 function mountComponent(component, container, anchor = null) {
     switch (processComponent(component.type)[COMPONENT_TYPE]) {
         case 0 /* OPTIONS_COMPONENT */:
-            return mountStatefulComponent(component, container, anchor);
+            return mountComponent(component, container, anchor);
         case 3 /* RENDER_COMPONENT */:
             return mountRenderComponent();
         case 1 /* ASYNC_COMPONENT */:
@@ -1903,7 +1942,7 @@ function mountComponent(component, container, anchor = null) {
             return mountResolvedAsyncComponent();
     }
 }
-function mountStatefulComponent(component, container, anchor = null) {
+function mountComponent(component, container, anchor = null) {
     const { type, props, children } = component;
     const instance = createComponentInstance(type);
     const { scope } = instance;
@@ -3078,7 +3117,8 @@ function genDeclartion(declarationGroup, context) {
     }
 }
 function genProps(node, context) {
-    var { type, attributes } = node;
+    const { type, attributes } = node;
+    const isComponent = type === 14 /* COMPONENT */;
     if (!attributes) {
         return NULL;
     }
@@ -3088,10 +3128,15 @@ function genProps(node, context) {
             case 24 /* EVENT */:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                 value ||= property; // 简写形似
-                var handlerKey = isDynamicProperty ? dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes)))) :
-                    toNativeEventName(property, type === 13 /* HTML_ELEMENT */ && _arguments);
+                const handlerKey = isDynamicProperty ?
+                    (isComponent ?
+                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
+                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes))))) :
+                    (isComponent ?
+                        toEventName(property, _arguments, modifiers) :
+                        toNativeEventName(property, _arguments));
                 var callback = isHandler ? value : toArrowFunction(value);
-                if (modifiers) {
+                if (modifiers && !isComponent) {
                     callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)));
                 }
                 props[handlerKey] = callback;
@@ -4021,52 +4066,17 @@ function createScope(instance) {
     });
 }
 
-function createComponentInstance(options) {
-    const instance = {
-        uid: uid(),
-        scope: null,
-        render: options.render,
-        vnode: null,
-        slots: null,
-        props: null,
-        attrs: null,
-        events: null,
-        emit: null,
-        root: null,
-        parent: null,
-        customOptions: options.customOptions,
-        propsOptions: options.propsOptions || emptyObject,
-        emitsOptions: options.emitsOptions || emptyObject,
-        createRender: options.createRender,
-        components: options.components,
-        directives: options.directives,
-        // hooks will always be an array
-        create: shallowCloneArray(options.create),
-        beforeCreate: shallowCloneArray(options.beforeCreate),
-        created: shallowCloneArray(options.created),
-        beforeMount: shallowCloneArray(options.beforeMount),
-        mounted: shallowCloneArray(options.mounted),
-        beforeUnmount: shallowCloneArray(options.beforeUnmount),
-        unmounted: shallowCloneArray(options.unmounted),
-        beforeUpdate: shallowCloneArray(options.beforeUpdate),
-        updated: shallowCloneArray(options.updated)
-    };
-    instance.scope = createScope(instance);
-    var app = getCurrentApp();
-    instance.emit = createInstanceEventEmitter(instance);
-    injectMixins(instance, app.mixins);
-    injectMixins(instance, options.mixins);
-    return instance;
-}
-// export const createComponentInstance = (options: any) => new ComponentInstance(options)
+const createComponentInstance = (options) => new ComponentInstance(options);
 // 用class 的话this指向有问题
 class ComponentInstance {
+    update;
+    isMounted;
     uid = uid();
-    scope = null;
+    scope = createScope(this);
     render;
     vnode;
     slots;
-    props = null;
+    props;
     attrs;
     customOptions;
     propsOptions;
@@ -4085,9 +4095,10 @@ class ComponentInstance {
     unmounted;
     beforeUpdate;
     updated;
+    events;
+    app;
     constructor(options) {
         const { render, createRender, create, beforeCreate, created, beforeMount, mounted, beforeUnmount, unmounted, beforeUpdate, updated, mixins, components, directives, customOptions, propsOptions, emitsOptions, } = options;
-        this.scope = createScope(this);
         this.beforeCreate = shallowCloneArray(beforeCreate);
         this.create = shallowCloneArray(create);
         this.created = shallowCloneArray(created);
@@ -4105,17 +4116,9 @@ class ComponentInstance {
         this.render = render;
         this.createRender = createRender;
         let app = getCurrentApp();
+        this.app = app;
         injectMixins(this, mixins);
         injectMixins(this, app.mixins);
-    }
-    events = null;
-    emit(name, ...args) {
-        debugger;
-        const handler = this.events[name];
-        debugger;
-        if (handler) {
-            handler(...args);
-        }
     }
 }
 
@@ -4235,6 +4238,7 @@ exports.addClass = addClass;
 exports.addEventListener = addEventListener;
 exports.addInstanceListener = addInstanceListener;
 exports.appendMedium = appendMedium;
+exports.arrayHandler = arrayHandler;
 exports.arrayToMap = arrayToMap;
 exports.asyncComponent = asyncComponent;
 exports.attr = attr;
@@ -4311,6 +4315,7 @@ exports.getElementComputedStyle = getElementComputedStyle;
 exports.getElementStyle = getElementStyle;
 exports.getElementStyleValue = getElementStyleValue;
 exports.getEmptyObject = getEmptyObject;
+exports.getEventName = getEventName;
 exports.getInstanceEvents = getInstanceEvents;
 exports.getInstancetEventListeners = getInstancetEventListeners;
 exports.getLastVisitKey = getLastVisitKey;
@@ -4375,7 +4380,7 @@ exports.mountComponent = mountComponent;
 exports.mountDeclaration = mountDeclaration;
 exports.mountKeyframeRule = mountKeyframeRule;
 exports.mountRule = mountRule;
-exports.mountStatefulComponent = mountStatefulComponent;
+exports.mountComponent = mountComponent;
 exports.mountStyleRule = mountStyleRule;
 exports.mountStyleSheet = mountStyleSheet;
 exports.nextFrame = nextFrame;
@@ -4459,6 +4464,7 @@ exports.ternaryExp = ternaryExp;
 exports.toArray = toArray;
 exports.toArrowFunction = toArrowFunction;
 exports.toBackQuotes = toBackQuotes;
+exports.toEventName = toEventName;
 exports.toNativeEventName = toNativeEventName;
 exports.toRaw = toRaw;
 exports.toReservedProp = toReservedProp;

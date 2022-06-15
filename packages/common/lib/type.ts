@@ -3,7 +3,7 @@ function isNumber(value: any) {
     return typeof value === 'number' && value !== NaN
 }
 
-function isString(value: any):boolean {
+function isString(value: any): boolean {
     return typeof value === 'string'
 }
 
@@ -21,6 +21,9 @@ function typeOf(value: any) {
     return objectToString.call(value).slice(8, -1)
 }
 
+const isPromise = (value: any) => {
+    return isObject(value) && isFunction(value.then) && isFunction(value.catch);
+};
 
 const isArray = Array.isArray
 
@@ -32,5 +35,6 @@ export {
     isUndefined,
     isObject,
     typeOf,
+    isPromise,
     isNumberString
 }

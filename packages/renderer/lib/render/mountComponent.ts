@@ -1,6 +1,6 @@
-import { createComponentInstance, LifecycleHooks, callHook, processComponent, COMPONENT_TYPE, Components } from "@crush/core"
+import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 
-import { emptyFunction, emptyObject, error, isFunction, isObject } from "@crush/common"
+import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
 
 import renderMethods from "../renderMethods"
 import { processdom } from "../common/processdom"
@@ -40,23 +40,9 @@ function setScopeData(scope: any, data: any) {
 }
 
 
-export function mountComponent(component: any, container: Element, anchor: Element | null = null) {
-    switch (processComponent(component.type)[COMPONENT_TYPE]) {
-        case Components.OPTIONS_COMPONENT:
-            return mountStatefulComponent(component, container, anchor)
-        case Components.RENDER_COMPONENT:
-            return mountRenderComponent(component, container, anchor)
-        case Components.ASYNC_COMPONENT:
-            return mountAsyncComponent(component, container, anchor)
-        case Components.RESOLVED_ASYNC_COMPONENT:
-            return mountResolvedAsyncComponent(component, container, anchor)
-    }
-}
+export function mountComponent(vnode: any, container: Element, anchor: Element | null = null) {
 
-
-export function mountStatefulComponent(component: any, container: Element, anchor: Element | null = null) {
-
-    const { type, props, children }: any = component
+    const { type, props, children }: any = vnode
 
     const instance = createComponentInstance(type)
 
@@ -64,7 +50,7 @@ export function mountStatefulComponent(component: any, container: Element, ancho
 
     callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
 
-    component.instance = instance
+    vnode.instance = instance
 
     setCurrentInstance(instance)
 
@@ -96,11 +82,11 @@ export function mountStatefulComponent(component: any, container: Element, ancho
 
     setCurrentInstance(null)
 
-    processHook(LifecycleHooks.CREATED, component)
+    processHook(LifecycleHooks.CREATED, vnode)
 
     // component update
 
-    let prevComponent: any = null, nextComponent = component
+    let prevComponent: any = null, nextComponent = vnode
     // component update fn
     function update(next?: any) { // !传入next代表为非自更新
         const { isMounted, vnode } = instance
@@ -142,12 +128,3 @@ export function mountStatefulComponent(component: any, container: Element, ancho
 
 
 
-function mountRenderComponent(component: any, container: any, anchor: any) {
-    debugger
-}
-
-function mountAsyncComponent(component: any, container: any, anchor: any) {
-}
-
-function mountResolvedAsyncComponent(component: any, container: any, anchor: any) {
-}

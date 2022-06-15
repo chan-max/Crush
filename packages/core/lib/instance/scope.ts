@@ -21,7 +21,7 @@ const scopeProperties: any = {
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     
     // evnets
-    $emit: (instance: any) => instance.emit,
+    $emit: (instance: any) => instance.emit, // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
     $off: (instance: any) => (event: string, handler: any) => removeInstanceListener(instance, event, handler),
     $once: (instance: any) => (event: string, handler: any) => onceInstanceListener(instance, event, handler),

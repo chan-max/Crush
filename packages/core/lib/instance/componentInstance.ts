@@ -12,6 +12,8 @@ export const createComponentInstance = (options: any): ComponentInstance => new 
 
 // 用class 的话this指向有问题
 export class ComponentInstance {
+    update: any
+    isMounted: any
     uid = uid()
     scope = createScope(this)
     render: any

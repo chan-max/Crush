@@ -18,6 +18,10 @@ export function update(p: any, n: any, container: any, anchor: any) {
             break
         case Nodes.COMPONENT:
             updateComponent(p, n, container, anchor)
+            break
+        case Nodes.RENDER_COMPONENT:
+            updateRenderComponent(p, n, container, anchor)
+            break
     }
 }
 
@@ -26,6 +30,7 @@ import {
     sortChildren
 } from './sequence'
 import { updateStyleSheet } from "./updateStyleSheet"
+import { updateRenderComponent } from "./renderComponent"
 
 function updateText(p: any, n: any) {
     var el = n.el = p.el

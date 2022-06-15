@@ -1,5 +1,6 @@
-import { isArray } from "@crush/common"
+import { isArray, isNumber, isString } from "@crush/common"
 import { Nodes } from "@crush/const"
+import { createComment, createText } from "@crush/core"
 import {
     flatRules
 } from './flatRules'
@@ -7,10 +8,22 @@ import {
 /*
     处理结果返回始终是数组
 */
-export function processdom(node: any, key: any = null): null | any[] {
+
+function processStringRender(source: string | number, key: any) {
+    source = String(source)
+    return source.startsWith('! ') ?
+        createComment(source.slice(2), key) :
+        createText(source, key)
+}
+
+export function processdom(node: any, key?: any): null | any[] {
 
     if (!node) {
         return null
+    }
+
+    if (isString(node) || isNumber(node)) {
+        node = processStringRender(node, key)
     }
 
     if (!isArray(node)) {
@@ -38,7 +51,7 @@ export function processdom(node: any, key: any = null): null | any[] {
                 child.children = processdom(child.children)
             }
 
-  
+
             if (child.nodeType === Nodes.STYLE) {
                 child.children = flatRules(child.children, null, child.patchKey)
             }

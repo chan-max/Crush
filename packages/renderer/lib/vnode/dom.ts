@@ -1,6 +1,6 @@
-import { uid } from "@crush/common"
+import { isFunction, isObject, mark, uid } from "@crush/common"
 import { Nodes } from "@crush/const"
-import { ComponentType } from "@crush/core"
+import { ComponentType, resolveOptions } from "@crush/core"
 
 export type Vnode = {
     nodeType: Nodes
@@ -10,7 +10,7 @@ export type Vnode = {
     key: any
 }
 
-function createNode(nodeType: Nodes): any{
+function createNode(nodeType: Nodes): any {
     return {
         key: null,
         nodeType,
@@ -20,13 +20,32 @@ function createNode(nodeType: Nodes): any{
     }
 }
 
-function createComponent(type: ComponentType, props: any, slots: any, key: any = uid()): Vnode {
-    var component = createNode(Nodes.COMPONENT)
-    component.type = type
-    component.props = props
-    component.children = slots
-    component.key = key
-    return component
+
+
+const COMPONENT_TYPE = Symbol('ComponentType')
+
+
+function createComponent(type: any, props: any, children: any, key: any = uid()) {
+    let componentFlag = type[COMPONENT_TYPE]
+    if (!componentFlag) {
+        // stateful component
+        if (isObject(type)) {
+            componentFlag = Nodes.COMPONENT
+            resolveOptions(type)
+        } else if (isFunction(type)) {
+            // render component
+            componentFlag = Nodes.RENDER_COMPONENT
+        }
+        mark(type, COMPONENT_TYPE, componentFlag)
+    }
+
+    return {
+        nodeType: componentFlag,
+        type,
+        props,
+        children,
+        key
+    }
 }
 
 function createElement(tagName: string, props: any, children: any, key: any = uid()) {
@@ -38,14 +57,19 @@ function createElement(tagName: string, props: any, children: any, key: any = ui
     return node
 }
 
-function createSVGElement() {
- 
+export function createSVGElement(tagName: string, props: any, children: any, key: any = uid()) {
+    var node = createNode(Nodes.SVG_ELEMENT)
+    node.type = tagName
+    node.props = props
+    node.children = children
+    node.key = key
+    return node
 }
 
 
 
-const Text = Symbol('Text')
-const Comment = Symbol('Comment')
+export const Text = Symbol('Text')
+export const Comment = Symbol('Comment')
 // the key is for other node
 function createText(text: any, key = uid()) {
     var node = createNode(Nodes.TEXT)
@@ -53,6 +77,14 @@ function createText(text: any, key = uid()) {
     node.children = text
     node.key = key
     return node
+}
+
+export function createComment(text: any, key = uid()) {
+    return {
+        type: Comment,
+        nodeType: Nodes.HTML_COMMENT,
+        text, key
+    }
 }
 
 const Fragment = Symbol('Fragment')

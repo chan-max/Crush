@@ -44,8 +44,14 @@ const enum ListenerOperateType {
     ONCE
 }
 
-function operateListeners(operatorType: ListenerOperateType, listeners: Set<any>, handler: EventHandler) {
-    if (isFunction(handler)) {
+/* handler 标准化，转成数组格式 */
+export function arrayHandler(handler: any): any {
+    return (isArray(handler) ? handler : [handler]).filter(isFunction)
+}
+
+function operateHandler(operatorType: ListenerOperateType, instance: any, event: any, rawhandler: EventHandler) {
+    const listeners = getInstancetEventListeners(instance, event)
+    arrayHandler(rawhandler).forEach((handler: any) => {
         switch (operatorType) {
             case ListenerOperateType.ADD:
                 listeners.add(handler)
@@ -61,9 +67,7 @@ function operateListeners(operatorType: ListenerOperateType, listeners: Set<any>
                 listeners.add(onceHandler)
                 break
         }
-    } else if (isArray(handler)) {
-        handler.forEach((_handler) => operateListeners(operatorType, listeners, _handler))
-    }
+    })
 }
 
 export function updateInstanceListeners(instance: any, event: any, pHandler: EventHandler, nHandler: EventHandler) {
@@ -73,14 +77,15 @@ export function updateInstanceListeners(instance: any, event: any, pHandler: Eve
 }
 
 export function addInstanceListener(instance: any, event: string, handler: EventHandler) {
-    operateListeners(ListenerOperateType.ADD, getInstancetEventListeners(instance, event), handler)
+    operateHandler(ListenerOperateType.ADD, instance, event, handler)
 }
 
 export function removeInstanceListener(instance: any, event: string, handler: EventHandler) {
-    operateListeners(ListenerOperateType.DELETE, getInstancetEventListeners(instance, event), handler)
+    operateHandler(ListenerOperateType.DELETE, instance, event, handler)
 }
 
 export function onceInstanceListener(instance: any, event: string, handler: EventHandler) {
-    operateListeners(ListenerOperateType.ONCE, getInstancetEventListeners(instance, event), handler)
+    operateHandler(ListenerOperateType.ONCE, instance, event, handler)
 }
 
+// native events

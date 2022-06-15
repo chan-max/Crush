@@ -1,10 +1,10 @@
 import { Vnode } from "../vnode/dom";
 import { Nodes } from "@crush/const";
-import { mountComponent } from "./mountComponent";
 import {
     docCreateElement, docCreateText, insertElement
 } from '../dom'
 import { mountAttributes } from "./attribute"
+import { mountComponent } from "./mountComponent";
 
 export function mount(vnode: Vnode, container: any, anchor: any = null) {
     switch (vnode.nodeType) {
@@ -16,6 +16,9 @@ export function mount(vnode: Vnode, container: any, anchor: any = null) {
             break
         case Nodes.COMPONENT:
             mountComponent(vnode, container, anchor)
+            break
+        case Nodes.RENDER_COMPONENT:
+            mountRenderComponent(vnode, container, anchor)
             break
         case Nodes.STYLE:
             mountStyleSheet(vnode, container, anchor)
@@ -33,6 +36,7 @@ export function mountChildren(children: any, container: any, anchor: any) {
 import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
+import { mountRenderComponent } from "./renderComponent";
 
 function mountElement(vnode: any, container: any, anchor: any) {
     const { type, props, children } = vnode

@@ -1,5 +1,5 @@
 
-import { emptyObject } from "@crush/common";
+import { emptyObject, isArray } from "@crush/common";
 import { keyOf, Nodes } from "@crush/const";
 import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
 
@@ -51,13 +51,8 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
         if (propName.startsWith('_')) {
             // 保留属性
         } else if (isEvent(propName)) {
-            if (pValue !== nValue) {
-                var { event, options } = parseNativeEventName(propName)
-                removeEventListener(el, event, pValue, options)
-                if (nValue) {
-                    addEventListener(el, event, nValue, options)
-                }
-            }
+            var { event, options } = parseNativeEventName(propName)
+            updateNativeEvents(el, event, pValue, nValue, options)
         } else if (propName === keyOf(Nodes.STYLE)) {
             updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
         } else if (propName === keyOf(Nodes.CLASS)) {
@@ -73,4 +68,16 @@ export function updateAttributes(el: any, pProps: any, nProps: any) {
 
 
 // unmountAttribute
+import { arrayHandler } from './componentListener'
 
+/*
+    原生侦听器支持一维数组格式，[a,b,c]
+*/
+function updateNativeEvents(el: HTMLElement, event: string, pHandler: any, nHandler: any, options: any) {
+    arrayHandler(pHandler).forEach((ph: any) => {
+        removeEventListener(el, event, ph, options)
+    });
+    arrayHandler(nHandler).forEach((nh: any) => {
+        addEventListener(el, event, nh, options)
+    });
+}
