@@ -1,4 +1,4 @@
-import { isNumber, isArray, isNumberString,hyphenate } from "@crush/common"
+import { isNumber, isArray, isNumberString, hyphenate } from "@crush/common"
 import {
     IMPORTANT
 } from './common/important'
@@ -9,7 +9,7 @@ export function normalizeKeyText(keyframe: string | number | Array<string | numb
     if (isArray(keyframe)) {
         return keyframe.map(normalizeKeyText).join(',')
     }
-    if (isNumberString(keyframe)) {
+    if (isNumber(Number(keyframe))) {
         // 为数字或者数字字符串
         return `${keyframe}%`
     }
@@ -39,8 +39,8 @@ export const deleteKeyframe = (keyframes: CSSKeyframesRule, keyText: string | nu
 export const setSelector = (styleRule: CSSStyleRule, selector: string) => styleRule.selectorText = selector
 export const setKeyframesName = (keyframesRule: CSSKeyframesRule, name: string) => keyframesRule.name = name
 
-export const deleteMedium = (mediaRule:CSSMediaRule,medium:string) => mediaRule.media.deleteMedium(medium)
-export const appendMedium = (mediaRule:CSSMediaRule,medium:string) => mediaRule.media.appendMedium(medium)
+export const deleteMedium = (mediaRule: CSSMediaRule, medium: string) => mediaRule.media.deleteMedium(medium)
+export const appendMedium = (mediaRule: CSSMediaRule, medium: string) => mediaRule.media.appendMedium(medium)
 
 export const setStyleProperty = (style: CSSStyleDeclaration, property: string, value: string, important: boolean = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '')
 

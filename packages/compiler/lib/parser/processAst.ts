@@ -152,11 +152,11 @@ const builtInDirectives: any = {
 const builtInAttributes: any = {
     style(attr: any, ast: any) {
         attr.type = Nodes.STYLE
-        attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
+        // attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
     },
     class(attr: any, ast: any) {
         attr.type = Nodes.CLASS
-        attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
+        // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
     }
 }
 

@@ -1,16 +1,16 @@
 import { isArray, isFunction } from "@crush/common"
 
 
-const globalComponentListeners = new WeakMap()
+const globalInstanceEventListeners = new WeakMap()
 
 // handler 支持数组和嵌套形式
 type EventHandler = Function | undefined | EventHandler[]
 
 export function getInstanceEvents(instance: any) {
-    let listenersMap = globalComponentListeners.get(instance)
+    let listenersMap = globalInstanceEventListeners.get(instance)
     if (!listenersMap) {
         listenersMap = new Map()
-        globalComponentListeners.set(instance, listenersMap)
+        globalInstanceEventListeners.set(instance, listenersMap)
     }
     return listenersMap
 }

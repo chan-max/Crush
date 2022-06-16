@@ -221,8 +221,9 @@ function genNode(node: any, context: any): any {
             code = genDirs(code, node, context)
             return code
         case Nodes.SVG_ELEMENT:
-            debugger
-            return context.callRenderFn(renderMethodsNameMap.createSVGElement)
+            var code: string = context.callRenderFn(renderMethodsNameMap.createSVGElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            code = genDirs(code, node, context)
+            return code
         case Nodes.DYNAMIC_COMPONENT:
             var { is, isDynamicIs } = node
             var component: string = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is),)

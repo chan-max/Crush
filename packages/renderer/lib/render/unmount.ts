@@ -12,6 +12,8 @@ export function unmount(vnode: any, container: any, anchor: any) {
             break
         case Nodes.STYLE:
             unmountElement(vnode,)
+        case Nodes.SVG_ELEMENT:
+            unmountElement(vnode)
         case Nodes.TEXT:
             removeElement(vnode.el)
             break
@@ -34,6 +36,7 @@ function unmountElement(vnode: any) {
     if (vnode.children && vnode.nodeType !== Nodes.STYLE) {
         unmountChildren(vnode.children)
     }
+
     const el = vnode.el
     removeElement(vnode.el)
     processHook(LifecycleHooks.UNMOUNTED, vnode)

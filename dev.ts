@@ -7,16 +7,40 @@ import { effect } from "./packages/core";
 import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
 
 var root = {
-    components: {
-        hello: (props) => h('button', null, props.num)
-    },
     template: `
         <style>
+            .box{
+                width:200px;
+                height:200px;
+                background-color:black;
+            }
+            .test{
+                &-enter-form{
+                    color:red;
+                }
+                &-enter-active{
+                    color:red;
+                }
+                &-enter-to{
+                    color:red;
+                }
+                &-leave-form{
+                    color:red;
+                }
+                &-leave-active{
+                    color:red;
+                }
+                &-leave-to{
+                    color:red;
+                }
+            }
+        </style>
         <button @click="add"> {{num}} </button>
-        <hello $num="num" --if="num%2===0">
+        <div .box  --if="num%2 === 0" --transition="'test'">
+        </div>
     `,
     create() {
-        var num = useNumber(666)
+        var num = useNumber(30)
         function add() {
             num.plus()
         }

@@ -11,6 +11,8 @@ export function mount(vnode: Vnode, container: any, anchor: any = null) {
         case Nodes.HTML_ELEMENT:
             mountElement(vnode, container, anchor)
             break
+        case Nodes.SVG_ELEMENT:
+            mountElement(vnode, container, anchor, true)
         case Nodes.TEXT:
             mountText(vnode, container, anchor)
             break
@@ -38,13 +40,20 @@ import { processHook, LifecycleHooks } from '@crush/core'
 import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
 
-function mountElement(vnode: any, container: any, anchor: any) {
+function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = false) {
     const { type, props, children } = vnode
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
-    var el = vnode.el = docCreateElement(type)
-    mountAttributes(el, props)
+    const el = vnode.el = docCreateElement(type, isSVG)
+    mountAttributes(el, props, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
+
+    if (vnode.transition) {
+        debugger
+    }
+
+    // 同步插入即可
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)
     mountChildren(children, el, anchor)
@@ -54,4 +63,12 @@ function mountText(vnode: any, container: any, anchor: any) {
     var el = docCreateText(vnode.children)
     vnode.el = el
     insertElement(el, container, anchor)
+}
+
+
+function elementEnterTransition(el: Element, transition: any) {
+    const type = transition.type // css , animation
+    if (type === 'css') {
+
+    }
 }

@@ -49,8 +49,10 @@ import {
 import { renderSlot } from './common/renderSlot'
 
 import { injectDirectives } from '@crush/core'
+import { createSVGElement } from '@crush/core'
 
 export default {
+    createSVGElement,
     injectDirectives,
     important,
     getCurrentScope,

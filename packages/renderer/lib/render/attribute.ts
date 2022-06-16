@@ -38,11 +38,11 @@ import { updateDeclaration } from "./declaration";
 import { normalizeClass, normalizeStyle } from "@crush/core";
 
 
-export function mountAttributes(el: any, props: any) {
-    updateAttributes(el, emptyObject, props)
+export function mountAttributes(el: any, props: any,isSVG:boolean) {
+    updateAttributes(el, emptyObject, props,isSVG)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any) {
+export function updateAttributes(el: any, pProps: any, nProps: any,isSVG = false) {
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of unionkeys(pProps, nProps)) {

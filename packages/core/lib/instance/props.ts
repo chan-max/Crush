@@ -1,15 +1,29 @@
 
-import { arrayToMap, emptyObject, isArray } from "@crush/common";
+import { arrayToMap, emptyObject, isArray, isObject } from "@crush/common";
 
 /*
     当传入不合理的props时
 */
 
-export function normalizePropsOptions(options: any[] | Record<string, any>) {
+export function normalizePropsOptions(options: any) {
+    if (isArray(options)) {
+        options = arrayToMap(options, emptyObject)
+    } else {
+        for (let key in options) {
+            if (!isObject(options[key])) {
+                options[key] = {
+                    type: options[key]
+                }
+            }
+        }
+    }
+    return options
+}
+
+export function normalizeEmitsOptions(options: any[] | Record<string, any>) {
     if (isArray(options)) {
         return arrayToMap(options, emptyObject)
     } else {
         return options
     }
 }
-

@@ -2,7 +2,7 @@ import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 
 import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
 
-import renderMethods from "../renderMethods"
+import renderMethods from "../renderMethodsExport"
 import { processdom } from "../common/processdom"
 
 import { processHook } from '@crush/core'

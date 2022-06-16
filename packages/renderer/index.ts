@@ -1,5 +1,5 @@
 export * from './lib/dom'
-export * from './lib/renderMethods'
+export * from './lib/renderMethodsExport'
 export * from './lib/style'
 export * from './lib/builtIn/cssFunction'
 export * from './lib/common/assets'
