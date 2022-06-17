@@ -6,7 +6,15 @@ import { effect } from "./packages/core";
 
 import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
 
+const transition = (props,slots) => {
+    var res = slots.default()
+    return res
+}
+
 var root = {
+    components: {
+        transition
+    },
     template: `
         <style>
             .box{
@@ -14,30 +22,17 @@ var root = {
                 height:200px;
                 background-color:black;
             }
-            .test{
-                &-enter-form{
-                    color:red;
+            .transition{
+                &-enter{
+                    animation:rollIn 1s;
                 }
-                &-enter-active{
-                    color:red;
-                }
-                &-enter-to{
-                    color:red;
-                }
-                &-leave-form{
-                    color:red;
-                }
-                &-leave-active{
-                    color:red;
-                }
-                &-leave-to{
-                    color:red;
+                &-leave{
+                    animation:rollOut 1s;
                 }
             }
         </style>
         <button @click="add"> {{num}} </button>
-        <div .box  --if="num%2 === 0" --transition="'test'">
-        </div>
+        <div .box  --if="num%2 === 0" --transition=""></div>
     `,
     create() {
         var num = useNumber(30)
@@ -47,6 +42,9 @@ var root = {
         return {
             num, add
         }
+    },
+    mounted() {
+        var box = document.querySelector('.box')
     }
 }
 

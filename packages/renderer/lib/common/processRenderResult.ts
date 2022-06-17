@@ -16,14 +16,16 @@ function processStringRender(source: string | number, key: any) {
         createText(source, key)
 }
 
-export function processdom(node: any, key?: any): null | any[] {
+
+
+export function processRenderResult(node: any, parentKey?: any): null | any[] {
 
     if (!node) {
         return null
     }
 
     if (isString(node) || isNumber(node)) {
-        node = processStringRender(node, key)
+        node = processStringRender(node, parentKey)
     }
 
     if (!isArray(node)) {
@@ -37,18 +39,20 @@ export function processdom(node: any, key?: any): null | any[] {
         if (!child) return // 空节点筛除  
 
         if (child.nodeType === Nodes.FRAGMENT) {
-            /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
-            flattedNode = flattedNode.concat(processdom(child.children, child.key))
+            /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
+                当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
+            */
+            flattedNode = flattedNode.concat(processRenderResult(child.children, child.key))
         } else {
-            if (key) {
-                child.patchKey = key + '_' + child.key
+            if (parentKey) {
+                child.patchKey = parentKey + '_' + child.key
             } else {
                 child.patchKey = child.key
             }
 
-            if (child.nodeType === Nodes.HTML_ELEMENT) {
+            if (child.nodeType === Nodes.HTML_ELEMENT || child.nodeType === Nodes.SVG_ELEMENT) {
                 // 子节点递归处理
-                child.children = processdom(child.children)
+                child.children = processRenderResult(child.children)
             }
 
 

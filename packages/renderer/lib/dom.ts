@@ -3,8 +3,8 @@
 
 const svgNS = 'http://www.w3.org/2000/svg';
 
-export const addClass = (el: HTMLElement, className: string) => el.classList.add(className)
-export const removeClass = (el: HTMLElement, className: string) => el.classList.remove(className)
+export const addClass = (el: Element, className: string) => el.classList.add(className)
+export const removeClass = (el: Element, className: string) => el.classList.remove(className)
 
 export const docCreateElement = (tagName: string, isSVG: boolean = false) => isSVG ? document.createElementNS(svgNS, tagName) : document.createElement(tagName)
 export const docCreateComment = (text: string) => document.createComment(text)

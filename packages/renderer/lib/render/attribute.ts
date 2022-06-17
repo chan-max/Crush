@@ -5,9 +5,9 @@ import { removeClass, addClass, addEventListener, removeEventListener, setAttrib
 
 import { unionkeys } from "./common";
 
-export function updateClass(el: any, pClass: any, nClass: any,) {
-    pClass ||= emptyObject
-    nClass ||= emptyObject
+export function updateClass(el: Element, pClass: any, nClass: any,) {
+    pClass = normalizeClass(pClass)
+    nClass = normalizeClass(nClass)
     for (let className of unionkeys(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
@@ -19,11 +19,11 @@ export function updateClass(el: any, pClass: any, nClass: any,) {
     }
 }
 
-export function mountClass(_class: any, el: HTMLElement) {
-    updateClass(emptyObject, _class, el)
+export function mountClass(el: Element, _class: any) {
+    updateClass(el, emptyObject, _class)
 }
 
-export function unmountClass(el: HTMLElement) {
+export function unmountClass(el: Element) {
     el.className = ''
 }
 
@@ -38,11 +38,11 @@ import { updateDeclaration } from "./declaration";
 import { normalizeClass, normalizeStyle } from "@crush/core";
 
 
-export function mountAttributes(el: any, props: any,isSVG:boolean) {
-    updateAttributes(el, emptyObject, props,isSVG)
+export function mountAttributes(el: any, props: any, isSVG: boolean) {
+    updateAttributes(el, emptyObject, props, isSVG)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any,isSVG = false) {
+export function updateAttributes(el: any, pProps: any, nProps: any, isSVG = false) {
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of unionkeys(pProps, nProps)) {
@@ -56,7 +56,7 @@ export function updateAttributes(el: any, pProps: any, nProps: any,isSVG = false
         } else if (propName === keyOf(Nodes.STYLE)) {
             updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
         } else if (propName === keyOf(Nodes.CLASS)) {
-            updateClass(el, normalizeClass(pValue), normalizeClass(nValue))
+            updateClass(el, pValue, nValue)
         } else if (propName in el) { // dom props
             (pValue !== nValue) && (el[propName] = nValue)
         } else {

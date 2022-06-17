@@ -3,7 +3,7 @@ import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
 
 import renderMethods from "../renderMethodsExport"
-import { processdom } from "../common/processdom"
+import { processRenderResult } from "../common/processRenderResult"
 
 import { processHook } from '@crush/core'
 
@@ -106,7 +106,7 @@ export function mountComponent(vnode: any, container: Element, anchor: Element |
         setCurrentInstance(null)
 
         // 处理树
-        nextTree = processdom(nextTree)
+        nextTree = processRenderResult(nextTree)
 
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nextComponent, prevComponent)
         patch(vnode, nextTree, container, anchor)

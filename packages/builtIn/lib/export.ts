@@ -1,6 +1,6 @@
-import { show } from "./directives/show"
-import { model } from "./directives/model"
-import { transition } from "./directives/transition"
+import { show } from "./directiveShow"
+import { model } from "./directiveFormModel"
+import { transition } from "./directiveTransition"
 
 export const builtInComponents = {}
 

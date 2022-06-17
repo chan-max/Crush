@@ -435,7 +435,7 @@
     /*
         处理结果返回始终是数组
     */
-    function processdom(node, key = null) {
+    function processRenderResult(node, key = null) {
         if (!node) {
             return null;
         }
@@ -448,7 +448,7 @@
                 return; // 空节点筛除  
             if (child.nodeType === 1 /* FRAGMENT */) {
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
-                flattedNode = flattedNode.concat(processdom(child.children, child.key));
+                flattedNode = flattedNode.concat(processRenderResult(child.children, child.key));
             }
             else {
                 if (key) {
@@ -459,7 +459,7 @@
                 }
                 if (child.nodeType === 13 /* HTML_ELEMENT */) {
                     // 子节点递归处理
-                    child.children = processdom(child.children);
+                    child.children = processRenderResult(child.children);
                 }
                 if (child.nodeType === 16 /* STYLE */) {
                     child.children = flatRules(child.children, null, child.patchKey);
@@ -1995,7 +1995,7 @@
             console.log(nextTree);
             setCurrentInstance(null);
             // 处理树
-            nextTree = processdom(nextTree);
+            nextTree = processRenderResult(nextTree);
             processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nextComponent, prevComponent);
             patch(vnode, nextTree, container, anchor);
             processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nextComponent, prevComponent);
@@ -4409,7 +4409,7 @@
     exports.perspective = perspective;
     exports.processComponent = processComponent;
     exports.processHook = processHook;
-    exports.processdom = processdom;
+    exports.processRenderResult = processRenderResult;
     exports.queueJob = queueJob;
     exports.radialGradient = radialGradient;
     exports.reactive = reactive;

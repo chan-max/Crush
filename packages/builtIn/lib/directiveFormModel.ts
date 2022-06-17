@@ -24,7 +24,7 @@ export const model = {
         debugger
     },
     updated() {
-
+        
     },
     beforeUnmount() {
 

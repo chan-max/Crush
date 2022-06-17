@@ -1,7 +1,7 @@
 import { Vnode } from "../vnode/dom";
 import { Nodes } from "@crush/const";
 import {
-    docCreateElement, docCreateText, insertElement
+    docCreateElement, docCreateText, insertElement, onceListener
 } from '../dom'
 import { mountAttributes } from "./attribute"
 import { mountComponent } from "./mountComponent";
@@ -39,9 +39,10 @@ import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
+import { enterCssTransition } from "./transtion";
 
 function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = false) {
-    const { type, props, children } = vnode
+    const { type, props, children, transition } = vnode
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // create 
     const el = vnode.el = docCreateElement(type, isSVG)
@@ -49,11 +50,8 @@ function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = 
     processHook(LifecycleHooks.CREATED, vnode)
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
 
-    if (vnode.transition) {
-        debugger
-    }
+    transition && transitionMount(el, transition)
 
-    // 同步插入即可
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)
     mountChildren(children, el, anchor)
@@ -66,9 +64,3 @@ function mountText(vnode: any, container: any, anchor: any) {
 }
 
 
-function elementEnterTransition(el: Element, transition: any) {
-    const type = transition.type // css , animation
-    if (type === 'css') {
-
-    }
-}

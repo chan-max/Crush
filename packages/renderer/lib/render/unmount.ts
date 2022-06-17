@@ -3,6 +3,7 @@ import { processHook, LifecycleHooks } from "@crush/core"
 
 import { removeElement } from '../dom'
 import { unmountRenderComponent } from "./renderComponent"
+import { leaveCssTransition } from "./transtion"
 import { unmountComponent } from './unmountComponent'
 
 export function unmount(vnode: any, container: any, anchor: any) {
@@ -32,12 +33,12 @@ export function unmountChildren(children: any) {
 }
 
 function unmountElement(vnode: any) {
+    const { el, transition } = vnode
     processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
     if (vnode.children && vnode.nodeType !== Nodes.STYLE) {
         unmountChildren(vnode.children)
     }
 
-    const el = vnode.el
-    removeElement(vnode.el)
+    transition ? transitionUnmount(el, transition) : removeElement(el)
     processHook(LifecycleHooks.UNMOUNTED, vnode)
 }

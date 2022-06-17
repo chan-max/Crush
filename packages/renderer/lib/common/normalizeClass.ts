@@ -1,12 +1,12 @@
 
-import { isFunction, isArray, isObject, isString } from "@crush/common"
+import { isFunction, isArray, isObject, isString, emptyObject } from "@crush/common"
 import { parseInlineClass } from "@crush/compiler"
 import {
     extend
 } from './extend'
 
 // normalized class always will be a map with true value
-export function normalizeClass(rawClass: any): any {
+export function normalizeClass(rawClass: any): Record<string, any> {
     /*
         crush class support 
         string
@@ -22,6 +22,8 @@ export function normalizeClass(rawClass: any): any {
         return extend(...rawClass.map(normalizeClass))
     } else if (isFunction(rawClass)) {
         return normalizeClass(rawClass())
+    } else {
+        return emptyObject
     }
 }
 
