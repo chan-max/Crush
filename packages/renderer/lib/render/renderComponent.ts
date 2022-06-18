@@ -11,6 +11,7 @@ export function mountRenderComponent(vnode: any, container: any, anchor: any) {
 }
 
 export function updateRenderComponent(p: any, n: any, container: any, anchor: any) {
+    console.log('update render component');
     const { type, props, children } = n
     const renderResult = type.call(null, props, children)
     const next = processRenderResult(renderResult)

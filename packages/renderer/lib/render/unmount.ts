@@ -3,7 +3,7 @@ import { processHook, LifecycleHooks } from "@crush/core"
 
 import { removeElement } from '../dom'
 import { unmountRenderComponent } from "./renderComponent"
-import { leaveCssTransition } from "./transtion"
+import { transitionUnmount } from "./transitionRender"
 import { unmountComponent } from './unmountComponent'
 
 export function unmount(vnode: any, container: any, anchor: any) {

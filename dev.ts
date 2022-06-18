@@ -6,33 +6,21 @@ import { effect } from "./packages/core";
 
 import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
 
-const transition = (props,slots) => {
-    var res = slots.default()
-    return res
-}
+
 
 var root = {
-    components: {
-        transition
+    components:{
+        tom:{
+            template:`
+            <h6> tom </h6>
+            <slot>`
+        }
     },
     template: `
-        <style>
-            .box{
-                width:200px;
-                height:200px;
-                background-color:black;
-            }
-            .transition{
-                &-enter{
-                    animation:rollIn 1s;
-                }
-                &-leave{
-                    animation:rollOut 1s;
-                }
-            }
-        </style>
         <button @click="add"> {{num}} </button>
-        <div .box  --if="num%2 === 0" --transition=""></div>
+        <tom>
+            {{num}}
+        </tom>
     `,
     create() {
         var num = useNumber(30)
@@ -53,3 +41,14 @@ var app = createApp(root)
 console.log('app', app);
 var instance = app.mount('#app')
 console.log(instance);
+
+var c = ref(1)
+window.c = c
+
+var c1 = computed(() => c.value*2)
+var c2 = computed(() => c1.value*2)
+var c3 = computed(() => c2.value*2)
+
+effect(() => {
+    console.log(c3.value);
+})

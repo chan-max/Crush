@@ -39,11 +39,13 @@ import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
-import { enterCssTransition } from "./transtion";
+import { transitionMount } from "./transitionRender";
 
 function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = false) {
-    const { type, props, children, transition } = vnode
+    // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
+    // 2
+    const { type, props, children, transition } = vnode
     // create 
     const el = vnode.el = docCreateElement(type, isSVG)
     mountAttributes(el, props, isSVG)

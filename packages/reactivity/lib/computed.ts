@@ -2,9 +2,9 @@ import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
 import { createReactiveEffect } from "./effect";
 import { trackRef, triggerRef } from "./ref";
 
-export const computed = (getter: any) => new Computed(getter)
+export const computed = (getter: any) => new ComputedRef(getter)
 
-class Computed {
+class ComputedRef {
     [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_COMPUTED] = true;
     [ReactiveFlags.IS_REF] = true
