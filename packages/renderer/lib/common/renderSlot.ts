@@ -2,7 +2,7 @@ import { getCurrentInstance } from "../render/mountComponent";
 
 export function renderSlot(name: string, scope: any, fallback: any, key: any) {
     const instance = getCurrentInstance()
-    let slot = instance.slots[name] || fallback
+    let slot = instance?.slots?.[name] || fallback
     if (!slot) {
         return null
     } else {

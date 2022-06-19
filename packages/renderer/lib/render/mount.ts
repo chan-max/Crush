@@ -6,32 +6,32 @@ import {
 import { mountAttributes } from "./attribute"
 import { mountComponent } from "./mountComponent";
 
-export function mount(vnode: Vnode, container: any, anchor: any = null) {
+export function mount(vnode: Vnode, container: any, anchor: any, parent: any) {
     switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
-            mountElement(vnode, container, anchor)
+            mountElement(vnode, container, anchor, parent)
             break
         case Nodes.SVG_ELEMENT:
-            mountElement(vnode, container, anchor, true)
+            mountElement(vnode, container, anchor, parent, true)
         case Nodes.TEXT:
-            mountText(vnode, container, anchor)
+            mountText(vnode, container, anchor,parent)
             break
         case Nodes.COMPONENT:
-            mountComponent(vnode, container, anchor)
+            mountComponent(vnode, container, anchor,parent)
             break
         case Nodes.RENDER_COMPONENT:
-            mountRenderComponent(vnode, container, anchor)
+            mountRenderComponent(vnode, container, anchor,parent)
             break
         case Nodes.STYLE:
-            mountStyleSheet(vnode, container, anchor)
+            mountStyleSheet(vnode, container, anchor,parent)
             break
     }
 }
 
-export function mountChildren(children: any, container: any, anchor: any) {
+export function mountChildren(children: any, container: any, anchor: any, parent: any) {
     if (!children) return
     children.forEach((child: any) => {
-        mount(child, container, anchor)
+        mount(child, container, anchor, parent)
     });
 }
 
@@ -41,7 +41,7 @@ import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
 import { transitionMount } from "./transitionRender";
 
-function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = false) {
+function mountElement(vnode: any, container: any, anchor: any, parent: any, isSVG: boolean = false) {
     // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // 2
@@ -56,10 +56,10 @@ function mountElement(vnode: any, container: any, anchor: any, isSVG: boolean = 
 
     insertElement(el, container, anchor)
     processHook(LifecycleHooks.MOUNTED, vnode)
-    mountChildren(children, el, anchor)
+    mountChildren(children, el, anchor, parent)
 }
 
-function mountText(vnode: any, container: any, anchor: any) {
+function mountText(vnode: any, container: any, anchor: any,parent:any) {
     var el = docCreateText(vnode.children)
     vnode.el = el
     insertElement(el, container, anchor)

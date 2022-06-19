@@ -16,7 +16,7 @@ import {
     LifecycleHooks
 } from './lifecycle'
 
-import { isFunction, emptyArray } from '@crush/common'
+import { isFunction, emptyArray, emptyObject } from '@crush/common'
 import { callHook } from './lifecycle'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
@@ -72,8 +72,9 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
                 var bindings: any = {
                     directive: dir, //保留原始指令
                     value,
-                    _arguments: _arguments && setOwnKey(_arguments),
-                    modifiers: modifiers && setOwnKey(modifiers)
+                    _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
+                    modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
+                    oldValue: null
                 }
                 if (previous) {
                     // 如果更新的话两个节点的指令应该完全相同

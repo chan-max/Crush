@@ -10,32 +10,32 @@ import {
 } from './unmount'
 import { update, updateChildren } from './update'
 
-export const patch = (current: any, next: any, container: any, anchor: any = null) => {
+export const patch = (current: any, next: any, container: any, anchor: any, parent: any) => {
     if (!current) {
         if (next) {
-            isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor)
+            isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent)
         } else {
             // nothing todo
         }
     } else {
         if (!next) {
             // 卸载当前节点
-            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor)
+            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor, parent)
         } else {
             if (isArray(current)) {
-                updateChildren(current, isArray(next) ? next : [next], container, anchor)
+                updateChildren(current, isArray(next) ? next : [next], container, anchor, parent)
             } else {
                 if (isArray(next)) {
-                    updateChildren([current], next, container, anchor)
+                    updateChildren([current], next, container, anchor, parent)
                 } else {
                     // 两个单节点 ， 但key可能不同 
                     if (current.type === next.type && current.patchKey === next.patchKey) {
                         // 类型相同，直接更新
-                        update(current, next, container, anchor)
+                        update(current, next, container, anchor, parent)
                     } else {
                         // 类型不同。先卸载，在挂载
-                        unmount(current, container, anchor)
-                        mount(next, container, anchor)
+                        unmount(current, container, anchor, parent)
+                        mount(next, container, anchor, parent)
                     }
                 }
             }

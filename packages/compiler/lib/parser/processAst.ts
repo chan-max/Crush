@@ -1,11 +1,12 @@
 import { camelize, isArray } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
-import { toArrowFunction } from "../stringify"
+import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
 import { parseText } from "./parseText"
 import { parseInlineClass, parseInlineStyle } from "./specialAttr"
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
+import { model } from "@crush/builtin/lib/directiveFormModel"
 // legal variable name
 var varRE = /^\w+$/
 // arrow function
@@ -144,8 +145,25 @@ const builtInDirectives: any = {
         ast.slotScope = attr.value
     },
     model(attr: any, ast: any) {
-        debugger
-        // 是否需要支持动态的 model type 类型
+        // 是否需要支持动态的 input type 类型 , 如果需要支持动态 ，就需要在指令中判断类型 , 暂不支持
+        attr.type = Nodes.CUSTOM_DIRECTIVE
+        const modelValue = attr.value
+        // change model value
+        ast.attributes.push({
+            type: Nodes.ATTRIBUTE,
+            property: '_changeModelValue',
+            value: toArrowFunction(`${modelValue} = _`, '_'),
+            isDynamicValue: true,
+        })
+        switch (ast?.attributeMap?.type?.value || 'text') {
+            case 'text':
+                attr.property = 'modelText'
+                break
+            case 'color':
+                attr.property = 'modelColor'
+                break
+        }
+        ast.customDirectives.push(attr)
     }
 }
 
@@ -194,11 +212,12 @@ function processAttribute(ast: any) {
             const dirHandler = builtInDirectives[attribute.property]
             const isCustomDirective = isDynamicProperty || !dirHandler
             if (isCustomDirective) {
-                // 自定义指令会作为props的一部分
+                // 自定义指令不会作为props的一部分
                 attribute.type = Nodes.CUSTOM_DIRECTIVE;
                 (ast.customDirectives ||= []).push(attribute)
             } else {
                 ast.directives ||= []
+                ast.customDirectives ||= []
                 dirHandler(attribute, ast)
             }
         } else if (flag === '#') {

@@ -40,11 +40,11 @@ function setScopeData(scope: any, data: any) {
 }
 
 
-export function mountComponent(vnode: any, container: Element, anchor: Element | null = null) {
+export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
 
     const { type, props, children }: any = vnode
 
-    const instance = createComponentInstance(type)
+    const instance = createComponentInstance(type, parent)
 
     const { scope } = instance
 
@@ -109,7 +109,7 @@ export function mountComponent(vnode: any, container: Element, anchor: Element |
         nextTree = processRenderResult(nextTree)
 
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nextComponent, prevComponent)
-        patch(vnode, nextTree, container, anchor)
+        patch(vnode, nextTree, container, anchor, instance)
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nextComponent, prevComponent)
 
         instance.isMounted = true

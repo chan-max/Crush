@@ -25,6 +25,8 @@ const isPromise = (value: any) => {
     return isObject(value) && isFunction(value.then) && isFunction(value.catch);
 };
 
+const isDate = (value: any) => value instanceof Date
+
 const isArray = Array.isArray
 
 export {

@@ -89,7 +89,7 @@ export class App {
         // mount root component
         var component = createComponent(options, null, null)
         this.rootComponent = component
-        var instance = mountComponent(component, container)
+        var instance = mountComponent(component, container, null, null)
         // instance.root = instance
         this.rootInstance = instance
         this.isMounted = true

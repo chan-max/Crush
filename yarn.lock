@@ -322,6 +322,15 @@
 "@crush/common@^0.0.0", "@crush/common@1.0.0", "@crush/common@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\common":
   "resolved" "file:packages/common"
   "version" "0.0.0"
+  dependencies:
+    "@crush/animate" "^0.0.0"
+    "@crush/builtin" "^0.0.0"
+    "@crush/compiler" "^0.0.0"
+    "@crush/const" "^0.0.0"
+    "@crush/core" "^0.0.0"
+    "@crush/reactivity" "^0.0.0"
+    "@crush/renderer" "^0.0.0"
+    "@crush/scheduler" "^0.0.0"
 
 "@crush/compiler@^0.0.0", "@crush/compiler@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\compiler":
   "resolved" "file:packages/compiler"
@@ -2641,6 +2650,11 @@
   "integrity" "sha512-jyCETtSl3VMZMWeRo7iY1FL19ges1t55hMo5yaam4Jrsm5EPL89UQkoQRyiI+Yf4k8r2ZpdngkV8hr1lIdjb3Q=="
   "resolved" "https://registry.npmjs.org/dateformat/-/dateformat-3.0.3.tgz"
   "version" "3.0.3"
+
+"dayjs@^1.11.3":
+  "integrity" "sha512-xxwlswWOlGhzgQ4TKzASQkUhqERI3egRNqgV4ScR8wlANA/A9tZ7miXa44vTTKEq5l7vWoL5G57bG3zA+Kow0A=="
+  "resolved" "https://registry.npmjs.org/dayjs/-/dayjs-1.11.3.tgz"
+  "version" "1.11.3"
 
 "debug@^3.2.6":
   "integrity" "sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ=="

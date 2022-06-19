@@ -8,7 +8,7 @@ import { createScope, } from "./scope";
 import { createInstanceEventEmitter } from "@crush/renderer/lib/render/componentListener";
 
 
-export const createComponentInstance = (options: any): ComponentInstance => new ComponentInstance(options)
+export const createComponentInstance = (options: any, parent: any): ComponentInstance => new ComponentInstance(options, parent)
 
 // 用class 的话this指向有问题
 export class ComponentInstance {
@@ -40,7 +40,11 @@ export class ComponentInstance {
     updated: any
     events: any
     app: any
-    constructor(options: any) {
+    parent: any
+    root: any
+    
+    emit:any
+    constructor(options: any, parent: any) {
         const {
             render,
             createRender,
@@ -60,7 +64,8 @@ export class ComponentInstance {
             propsOptions,
             emitsOptions,
         } = options
-
+        this.parent = parent
+        this.root = parent ? parent.root : this
         this.beforeCreate = shallowCloneArray(beforeCreate)
         this.create = shallowCloneArray(create)
         this.created = shallowCloneArray(created)

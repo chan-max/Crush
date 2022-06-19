@@ -25,6 +25,7 @@
     "@vitejs/plugin-vue": "^2.2.4",
     "axios": "^0.26.0",
     "concurrently": "^7.0.0",
+    "dayjs": "^1.11.3",
     "express": "^4.17.2",
     "highlight.js": "^11.4.0",
     "marked": "^4.0.12",

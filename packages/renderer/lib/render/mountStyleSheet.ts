@@ -3,15 +3,15 @@
     mountStyleSheet will create a style element
 */
 
-import { isArray, isNumber, isString,hyphenate } from "@crush/common"
+import { isArray, isNumber, isString, hyphenate } from "@crush/common"
 
 import { Nodes } from "@crush/const"
 import { docCreateElement, insertElement } from "../dom"
 
-export const mountStyleSheet = (vnode: any, container: any, anchor: any) => {
+export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent: any) => {
     const { props, children } = vnode
     var el: any = docCreateElement('style')
-    mountAttributes(el, props)
+    mountAttributes(el, props, false)
     vnode.el = el
     insertElement(el, container, anchor)
     var sheet = el.sheet

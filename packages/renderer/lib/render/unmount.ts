@@ -6,7 +6,7 @@ import { unmountRenderComponent } from "./renderComponent"
 import { transitionUnmount } from "./transitionRender"
 import { unmountComponent } from './unmountComponent'
 
-export function unmount(vnode: any, container: any, anchor: any) {
+export function unmount(vnode: any, container: any, anchor: any, parent: any) {
     switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
             unmountElement(vnode)

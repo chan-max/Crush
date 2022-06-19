@@ -1,14 +1,15 @@
 import { show } from "./directiveShow"
-import { model } from "./directiveFormModel"
+import { modelText } from "./directiveFormModel"
 import { transition } from "./directiveTransition"
 import { showComponent } from "./componentShow"
 
-export const builtInComponents = {
+
+export const builtInComponents:any = {
     show: showComponent
 }
 
 export const builtInDirectives = {
     show,
-    model,
+    modelText,
     transition
 }

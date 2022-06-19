@@ -5,7 +5,7 @@ import { updateAttributes } from "./attribute"
 import { patch } from "./patch"
 import { updateComponent } from './updateComponent'
 
-export function update(p: any, n: any, container: any, anchor: any) {
+export function update(p: any, n: any, container: any, anchor: any, parent: any) {
     switch (n.nodeType) {
         case Nodes.TEXT:
             updateText(p, n)
@@ -17,10 +17,10 @@ export function update(p: any, n: any, container: any, anchor: any) {
             updateStyleSheet(p, n,)
             break
         case Nodes.COMPONENT:
-            updateComponent(p, n, container, anchor)
+            updateComponent(p, n, container, anchor, parent)
             break
         case Nodes.RENDER_COMPONENT:
-            updateRenderComponent(p, n, container, anchor)
+            updateRenderComponent(p, n, container, anchor, parent)
             break
     }
 }
@@ -48,18 +48,18 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
     updateAttributes(el, p.props, n.props)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
-    updateChildren(p.children, n.children, container, anchor)
+    updateChildren(p.children, n.children, container, anchor, parent)
 }
 
 
-export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any) {
+export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any, parent: any) {
     var {
         p, n
     } = sortChildren(pChildren, nChildren, false)
 
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
-        patch(p[i], n[i], container, getAnchor(p, i + 1))
+        patch(p[i], n[i], container, getAnchor(p, i + 1), parent)
     }
 }
 

@@ -7,20 +7,39 @@ import { effect } from "./packages/core";
 import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
 
 
+import dayjs from 'dayjs'
+debugger
+var day = dayjs()
+
+console.log(day.year());
+
+
+
+
+
+var jerry = {
+    template: `jerry`,
+    create() {
+        console.log(this.$instance);
+        
+    }
+}
 
 var root = {
-    components:{
-        tom:{
-            template:`
+    components: {
+        tom: {
+            components: {
+                jerry
+            },
+            template: `
             <h6> tom </h6>
-            <slot>`
+            <jerry>
+            `
         }
     },
     template: `
-        <button @click="add"> {{num}} </button>
+        <h4 @click="add"> {{num}} </h4>
         <tom>
-            {{num}}
-        </tom>
     `,
     create() {
         var num = useNumber(30)
@@ -40,15 +59,4 @@ var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
-console.log(instance);
 
-var c = ref(1)
-window.c = c
-
-var c1 = computed(() => c.value*2)
-var c2 = computed(() => c1.value*2)
-var c3 = computed(() => c2.value*2)
-
-effect(() => {
-    console.log(c3.value);
-})
