@@ -5,13 +5,20 @@ import { ref } from "./packages/reactivity/lib/ref";
 import { effect } from "./packages/core";
 
 import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
+import { useDate, dateFormatRE } from "@crush/reactivity/lib/custom/date";
 
 
-import dayjs from 'dayjs'
-debugger
-var day = dayjs()
+var d = useDate()
+window.d = d
+effect(() => {
+    console.log( d.format('YYYY --- MM --- MMM - MMMM -- DD -- HH -- mm -- ss')    );
+})
 
-console.log(day.year());
+
+
+
+
+
 
 
 
@@ -21,7 +28,7 @@ var jerry = {
     template: `jerry`,
     create() {
         console.log(this.$instance);
-        
+
     }
 }
 
