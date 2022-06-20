@@ -8,11 +8,15 @@ import { useColor, useNumber, useString, useBoolean } from "./packages/reactivit
 import { useDate, dateFormatRE } from "@crush/reactivity/lib/custom/date";
 
 
+
 var d = useDate()
 window.d = d
-effect(() => {
-    console.log( d.format('YYYY --- MM --- MMM - MMMM -- DD -- HH -- mm -- ss')    );
-})
+
+console.log(d.date());
+
+
+
+
 
 
 

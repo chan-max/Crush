@@ -1,4 +1,4 @@
-import { emptyObject } from "@crush/common"
+import { emptyObject, isUndefined } from "@crush/common"
 import { Ref } from "../ref"
 
 
@@ -14,49 +14,121 @@ var quarter = ['spring', 'summer', 'autumn', 'winter']
 
 class DateRef extends Ref {
     constructor(date: Date) {
-        super(date)
+        super(date, { sensitive: true })
     }
 
-    year() {
-        const date = this.value // getter
-        return date.getFullYear()
+    clone() {
+        return useDate(this._value) // _value 不会收集依赖
     }
 
-    month() {
-        const date: Date = this.value // getter
-        return date.getMonth() + 1  // ! 
+    get(key: string) {
+        return Reflect.get(this, key).call(this)
     }
+
+    
+
+    year(setYear?: number | string) {
+        if (isUndefined(setYear)) {
+            // getter
+            return this.value.getFullYear()
+        } else {
+            // 不应该收集依赖
+            this._value.setFullYear(Number(setYear))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
+    }
+
+    month(setMonth?: number | string) {
+        if (isUndefined(setMonth)) {
+            // getter
+            return this.value.getMonth() + 1
+        } else {
+            // 不应该收集依赖
+            this._value.setMonth(Number(setMonth) - 1)
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
+    }
+
+    
 
     // monthday
-    date() {
-        const date: Date = this.value // getter
-        return date.getDate()
+    date(setDate?: number | string) {
+        if (isUndefined(setDate)) {
+            // getter
+            return this.value.getDate()
+        } else {
+            // 不应该收集依赖
+            this._value.setDate(Number(setDate))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
     }
 
     // weekday
-    day() {
-        const date: Date = this.value // getter
-        return date.getDay()
+    day(setDay?: string | number) {
+        if (isUndefined(setDay)) {
+            // getter
+            return this.value.getDay()
+        } else {
+            debugger
+        }
     }
 
-    hour() {
-        const date: Date = this.value // getter
-        return date.getHours()
+    hour(setHour?: string | number) {
+        if (isUndefined(setHour)) {
+            // getter
+            return this.value.getHours()
+        } else {
+            // 不应该收集依赖
+            this._value.setHours(Number(setHour))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
     }
 
-    minute() {
-        const date: Date = this.value // getter
-        return date.getMinutes()
+    minute(setMinutes?: string | number) {
+        if (isUndefined(setMinutes)) {
+            // getter
+            return this.value.getMinutes()
+        } else {
+            // 不应该收集依赖
+            this._value.setMinutes(Number(setMinutes))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
     }
 
-    second() {
-        const date: Date = this.value // getter
-        return date.getSeconds()
+    second(setSecond?: string | number) {
+        if (isUndefined(setSecond)) {
+            // getter
+            return this.value.getSeconds()
+        } else {
+            // 不应该收集依赖
+            this._value.setSeconds(Number(setSecond))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
     }
 
-    milliSecond() {
-        const date: Date = this.value // getter
-        return date.getMilliseconds()
+    milliSecond(setMilliseconds?: number | string) {
+        if (isUndefined(setMilliseconds)) {
+            // getter
+            return this.value.getMilliseconds()
+        } else {
+            // 不应该收集依赖
+            this._value.setMilliseconds(Number(setMilliseconds))
+            // use sensitive force trigger
+            this.value = this.value
+            return this
+        }
     }
 
     format(template: string, customKeywords: any = emptyObject) {
