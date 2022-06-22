@@ -20,6 +20,8 @@ export enum ComponentOptions {
     BEFORE_UNMOUNT = 'beforeUnmount',
     UNMOUNTED = 'unmounted',
 
+    BEFORE_PATCH = 'beforePatch',
+
     TEMPLATE = 'template',
     RENDER = 'render',
 

@@ -89,7 +89,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     let prevComponent: any = null, nextComponent = vnode
     // component update fn
     function update(next?: any) { // !传入next代表为非自更新
-        const { isMounted, vnode } = instance
+        const { isMounted, vnode: pVnode, beforePatch } = instance
         // 每次 更新生成新树
 
         if (next) {
@@ -101,19 +101,17 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         }
 
         setCurrentInstance(instance)
-        var nextTree = render()
-        console.log(nextTree);
+        let nVnode = render(scope)
         setCurrentInstance(null)
-
         // 处理树
-        nextTree = processRenderResult(nextTree)
-
+        nVnode = processRenderResult(nVnode)
+        instance.renderingVnode = nVnode
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nextComponent, prevComponent)
-        patch(vnode, nextTree, container, anchor, instance)
+        if (beforePatch) { beforePatch(pVnode, nVnode) }
+        patch(pVnode, nVnode, container, anchor, instance)
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nextComponent, prevComponent)
-
+        instance.vnode = nVnode
         instance.isMounted = true
-        instance.vnode = nextTree
     }
 
     //  call at every update

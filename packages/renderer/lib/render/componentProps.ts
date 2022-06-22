@@ -14,7 +14,6 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
         let pValue = pProps[prop]
         let nValue = nProps[prop]
-        if (pValue === nValue) continue
         if (prop.startsWith('_')) {
             // 组件保留属性 skip
         } else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {

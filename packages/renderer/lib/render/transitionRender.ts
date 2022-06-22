@@ -7,50 +7,37 @@ import { addClass, onceListener, removeClass, removeElement } from "../dom"
     duration : 可传时间毫秒 ，slow , fast , normal 等修饰符 , 进入时间和离开时间
 */
 
-export function transitionMount(el: Element, transition: any) {
-    const name = transition.name || 'transition'
-    const enterClass = `${name}-enter`
-    const enterFromClass = `${name}-enter-from`
-    const enterToClass = `${name}-enter-to`
-    addClass(el, enterClass)
-    addClass(el, enterFromClass)
-    requestAnimationFrame(() => {
-        addClass(el, enterToClass)
-        removeClass(el, enterFromClass)
-    })
-
-    const doEnter = () => {
-        removeClass(el, enterToClass)
-        removeClass(el, enterClass)
+export function transitionEnter(vnode: any) {
+    const { transition, el, patchKey } = vnode
+    // 此时的el 是新创建的el，与正在卸载的不是一个元素，所以要想办法拿到之前的元素（正在执行离开动画的元素，并让他直接卸载即可）
+    let ile = isLeavingElementMap[patchKey]
+    if (ile) {
+        transition.cancelLeave(ile)
+        removeElement(ile)
+        isLeavingElementMap[patchKey] = null
     }
-    onceListener(el, 'transitionend', doEnter)
-    onceListener(el, 'animationend', doEnter)
+    el.entering = true
+    transition.enter(el)
+    onceListener(el, 'transitionend', () => {
+        transition.finishEnter(el)
+        el.entering = false
+    })
 }
 
 
+export const isLeavingElementMap: any = {}
 
-export function transitionUnmount(el: Element, transition: any) {
-    const name = transition.name || 'transition'
-    const leaveClass = `${name}-leave`
-    const leaveFromClass = `${name}-leave-from`
-    const leaveToClass = `${name}-leave-to`
-    addClass(el, leaveFromClass)
-    addClass(el, leaveClass)
-    document.body.offsetHeight
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            addClass(el, leaveToClass)
-            removeClass(el, leaveFromClass)
-        })
-    })
-
-    const doLeave = () => {
-        removeClass(el, leaveToClass)
-        removeClass(el, leaveClass)
-        // 手动卸载
+export function transitionLeave(vnode: any) {
+    const { transition, el, patchKey } = vnode
+    if (el.entering) {
+        transition.cancelEnter(el)
+    }
+    transition.leave(el)
+    isLeavingElementMap[patchKey] = el
+    onceListener(el, 'transitionend', () => {
+        transition.finishLeave(el)
+        isLeavingElementMap[patchKey] = null
         removeElement(el)
-    }
-
-    onceListener(el, 'transitionend', doLeave)
-    onceListener(el, 'animationend', doLeave)
+    })
 }
+

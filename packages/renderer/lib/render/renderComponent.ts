@@ -20,6 +20,6 @@ export function updateRenderComponent(p: any, n: any, container: any, anchor: an
     patch(prev, next, container, anchor, parent)
 }
 
-export function unmountRenderComponent(vnode: any, container: any, anchor: any) {
+export function unmountRenderComponent(vnode: any, container: any, anchor: any, parent: any) {
     patch(vnode.vnode, null, container, anchor, parent)
 }

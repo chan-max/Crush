@@ -5,11 +5,9 @@ import { getCurrentInstance } from "../render/mountComponent"
 
 export function getComponent(name: string) {
     var component = getCurrentInstance().components?.[name] || getCurrentApp().components[name]
-
     if (!component) {
         error(`cant find compnent ${name}`)
     }
-
     return component
 }
 

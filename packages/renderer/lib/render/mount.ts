@@ -14,16 +14,16 @@ export function mount(vnode: Vnode, container: any, anchor: any, parent: any) {
         case Nodes.SVG_ELEMENT:
             mountElement(vnode, container, anchor, parent, true)
         case Nodes.TEXT:
-            mountText(vnode, container, anchor,parent)
+            mountText(vnode, container, anchor, parent)
             break
         case Nodes.COMPONENT:
-            mountComponent(vnode, container, anchor,parent)
+            mountComponent(vnode, container, anchor, parent)
             break
         case Nodes.RENDER_COMPONENT:
-            mountRenderComponent(vnode, container, anchor,parent)
+            mountRenderComponent(vnode, container, anchor, parent)
             break
         case Nodes.STYLE:
-            mountStyleSheet(vnode, container, anchor,parent)
+            mountStyleSheet(vnode, container, anchor, parent)
             break
     }
 }
@@ -39,7 +39,7 @@ import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
-import { transitionMount } from "./transitionRender";
+import { transitionEnter, } from "./transitionRender";
 
 function mountElement(vnode: any, container: any, anchor: any, parent: any, isSVG: boolean = false) {
     // 1
@@ -50,16 +50,20 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     const el = vnode.el = docCreateElement(type, isSVG)
     mountAttributes(el, props, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
+
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
 
-    transition && transitionMount(el, transition)
+    if (transition) {
+        transitionEnter(vnode)
+    }
 
     insertElement(el, container, anchor)
+
     processHook(LifecycleHooks.MOUNTED, vnode)
     mountChildren(children, el, anchor, parent)
 }
 
-function mountText(vnode: any, container: any, anchor: any,parent:any) {
+function mountText(vnode: any, container: any, anchor: any, parent: any) {
     var el = docCreateText(vnode.children)
     vnode.el = el
     insertElement(el, container, anchor)

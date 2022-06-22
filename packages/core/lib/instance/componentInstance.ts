@@ -17,7 +17,8 @@ export class ComponentInstance {
     uid = uid()
     scope = createScope(this)
     render: any
-    vnode: any
+    vnode: any // 当前所处的vnode
+    renderingVnode: any // 即将挂载到页面的vnode
     slots: any
     props: any
     attrs: any
@@ -42,8 +43,8 @@ export class ComponentInstance {
     app: any
     parent: any
     root: any
-    
-    emit:any
+    emit: any
+    beforePatch: any
     constructor(options: any, parent: any) {
         const {
             render,
@@ -57,6 +58,7 @@ export class ComponentInstance {
             unmounted,
             beforeUpdate,
             updated,
+            beforePatch,
             mixins,
             components,
             directives,
@@ -76,12 +78,14 @@ export class ComponentInstance {
         this.beforeUnmount = shallowCloneArray(beforeUnmount)
         this.unmounted = shallowCloneArray(unmounted)
         this.customOptions = customOptions
+        this.beforePatch = beforePatch
         this.propsOptions = propsOptions || emptyObject
         this.emitsOptions = emitsOptions || emptyObject
         this.components = components
         this.directives = directives
         this.render = render
         this.createRender = createRender
+        this.emit = createInstanceEventEmitter(this)
         let app = getCurrentApp()
         this.app = app
         injectMixins(this, mixins)

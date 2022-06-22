@@ -1,6 +1,8 @@
 import { skewX, translate3d } from "@crush/renderer"
 import { keyframe, keyframes } from "@crush/renderer"
 
+
+
 export const lightSpeedInRight = keyframes('lightSpeedInRight', [
     keyframe(0, {
         transform: [translate3d('100%', 0, 0), skewX(-30)],
