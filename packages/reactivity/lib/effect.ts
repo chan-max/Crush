@@ -1,63 +1,56 @@
 import { emptyObject } from "@crush/common"
+import { ReactiveFlags } from "./common"
 
 
-export const enum TrackTypes {
-    SIZE,
-    ADD,
-    DELETE,
-    ITERATE,
-    TARGET_TO_KEY,
-    HAS,
-    DELETE_PROPERTY,
-    OWNKEYS,
-    ARRAY_TRIGGER,
-    ARRAY_TRACK,
-
-    SET,
-    GET,
-
-    CLEAR,
-
-    REF
-}
 
 export const TARGET_MAP = new WeakMap()
 
-export function track(type: TrackTypes, target: any, key?: any) {
+export function getDepsMap(target: any) {
+    let depsMap = TARGET_MAP.get(target)
+    if (!depsMap) {
+        depsMap = new Map()
+        TARGET_MAP.set(target, depsMap);
+    }
+    return depsMap
+}
+
+export function getDeps(target: any, key: any) {
+    let depsMap = getDepsMap(target)
+    let deps = depsMap.get(key);
+    if (!deps) {
+        deps = new Set()
+        depsMap.set(key, deps);
+    }
+    return deps
+}
+
+export function track(target: any, key?: any) {
     let activeEffect = getActiveEffect()
     if (!activeEffect) return
-    if (type === TrackTypes.TARGET_TO_KEY) {
-        let depsMap = TARGET_MAP.get(target)
-        if (!depsMap) {
-            depsMap = new Map()
-            TARGET_MAP.set(target, depsMap);
-        }
-        let deps = depsMap.get(key);
-        if (!deps) {
-            deps = new Set()
-            depsMap.set(key, deps);
-        }
-        deps.add(activeEffect)
-        // 用于清除依赖
-        activeEffect.deps.push(deps)
-    } else {
-        debugger
-    }
+    let deps = getDeps(target, key)
+    deps.add(activeEffect)
+    // 用于清除依赖
+    activeEffect.deps.push(deps)
 }
 
 
-export function trigger(type: TrackTypes, target: any, key?: any) {
-    if (type === TrackTypes.TARGET_TO_KEY) {
-        const depsMap = TARGET_MAP.get(target);
-        if (!depsMap) return;
-        var deps = depsMap.get(key)
-        if (!deps) return
-        // 克隆一份，防止死循环
-        deps = new Set(deps)
-        deps.forEach((effect: any) => effect.triggerRun())
-    } else {
-        debugger
+export const targetChangeCollectSymbol = Symbol('target has changed')
+
+export function trigger(target: any, key: any) {
+
+    if (key !== targetChangeCollectSymbol) {
+        // 防止递归
+        trigger(target, targetChangeCollectSymbol)
     }
+
+    let deps = getDeps(target, key)
+    deps.forEach((dep: any) => {
+        if (isEffect(dep)) {
+            dep.triggerRun()
+        } else {
+            dep()
+        }
+    })
 }
 
 
@@ -66,7 +59,13 @@ export const getActiveEffect = () => effectStack[effectStack.length - 1]
 export const setActiveEffect = (effect: ReactiveEffect) => effectStack.push(effect)
 export const deleteActiveEffect = () => effectStack.pop()
 
+export function isEffect(value: any) {
+    return value && value[ReactiveFlags.IS_EFFECT]
+}
+
 export class ReactiveEffect {
+
+    [ReactiveFlags.IS_EFFECT] = true
 
     // 记录副作用依赖了那些变量
     deps: any = []

@@ -4,13 +4,49 @@ import { computed } from "./packages/reactivity/lib/computed";
 import { ref } from "./packages/reactivity/lib/ref";
 import { effect } from "./packages/core";
 
-import { useColor, useNumber, useString, useBoolean } from "./packages/reactivity/lib/useData";
 import { useDate, dateFormatRE } from "@crush/reactivity/lib/custom/date";
+import { useNumber } from "@crush/reactivity/lib/custom/number";
+import { watchRef } from "@crush/reactivity/lib/watchRef";
+import { shallowWatchReactive } from "@crush/reactivity/lib/watchReactive";
+
+var p = reactive({
+    a: 1,
+})
+
+window.p = p
+
+shallowWatchReactive(p, (a, b, c) => {
+    console.log('change key', a);
+    console.log('new value', b);
+    console.log('old value', c);
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 var jerry = {
     template: `jerry`,
     create() {
+
     }
 }
 
@@ -48,7 +84,8 @@ var root = {
                 }
             }
         </style>
-        <button @click="add"> {{num}} </button>
+        <button @click="add"> + </button>
+        <button @click="sub"> - </button>
         <transition-group>
             <div .box  --for="i in num">{{i}}</div>
         </transition-group>
@@ -58,8 +95,11 @@ var root = {
         function add() {
             num.plus()
         }
+        function sub() {
+            num.minus()
+        }
         return {
-            num, add
+            num, add, sub
         }
     },
     mounted() {

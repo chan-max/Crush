@@ -2,7 +2,7 @@ import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
-import { TrackTypes, track, trigger, } from './effect'
+import { track, trigger, } from './effect'
 
 // global state
 let _isReadonly = false
@@ -13,10 +13,22 @@ let _key: any
 export const getLastVisitTarget = () => _target
 export const getLastVisitKey = () => _key
 
+let _lastSetTarget: any
+let _lastSetKey: any
+let _lastSetOldValue: any
+let _lastSetNewValue: any
+
+export const getLastSetTarget = () => _lastSetTarget // 获取上一个修改的目标
+export const getLastSetKey = () => _lastSetKey // 获取上一个修改的key
+export const getLastSetOldValue = () => _lastSetOldValue // 获取上一个修改前的旧值
+export const getLastSetNewValue = () => _lastSetNewValue // 获取上一个修改后的新值
+
+
+
 const collectionHandlers: Record<string, any> = {
     get size() {
         //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
-        track(TrackTypes.SIZE, _target)
+        debugger
         return _target.size
     },
     // set weakset
@@ -25,7 +37,7 @@ const collectionHandlers: Record<string, any> = {
             return warn(_target, 'is readonly , cant add');
         }
         var result = _target.add(value)
-        trigger(TrackTypes.ADD, _target)
+        debugger
         // 返回set对象本身
         return result
     },
@@ -35,7 +47,7 @@ const collectionHandlers: Record<string, any> = {
             return warn(_target, 'is readonly cant clear');
         }
         _target.clear()
-        trigger(TrackTypes.CLEAR, _target)
+        debugger
     },
     // map weakmap set weakset
     delete(key: any) {
@@ -44,33 +56,33 @@ const collectionHandlers: Record<string, any> = {
         }
         const result = _target.delete(key)
         if (result) { // 返回为 true 为删除成功
-            trigger(TrackTypes.DELETE, _target, key)
+            trigger(_target, key)
         }
         return result
     },
     // map set
     entries() {
-        track(TrackTypes.ITERATE, _target)
+        debugger
         return _target.entries()
     },
     // map set
     forEach(fn: any) {
-        track(TrackTypes.ITERATE, _target)
+        debugger
         return _target.forEach(fn)
     },
     // set map weakset weakmap
     has(key: any) {
-        track(TrackTypes.HAS, _target, key)
+        track(_target, key)
         return _target.has(key)
     },
     // map set
     keys() {
-        track(TrackTypes.ITERATE, _target)
+        debugger
         return _target.keys()
     },
     // map set
     values() {
-        track(TrackTypes.ITERATE, _target)
+        debugger
         return _target.values()
     },
     // map weakmap
@@ -79,13 +91,13 @@ const collectionHandlers: Record<string, any> = {
             return warn(_target, 'is readonly , cant set');
         }
         var result = _target.set(key, value)
-        trigger(TrackTypes.SET, _target, key)
+        trigger(_target, key)
         return result
     },
     // map weakmap
     get(key: any) {
         if (!_isReadonly) {
-            track(TrackTypes.GET, _target, key)
+            track(_target, key)
         }
         var value = _target.get(key)
         return _isShallow ? value : reactive(value)
@@ -95,7 +107,7 @@ const collectionHandlers: Record<string, any> = {
 
 function arrayHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
-        trigger(TrackTypes.ARRAY_TRACK, _target)
+        debugger
     }
     let result = _target[_key](...args)
     return result
@@ -106,7 +118,7 @@ function arrayHandlerWithTrigger(...args: any[]) {
         return warn(`${_target}is readonly cant ${_key}`);
     }
     let result = _target[_key](...args)
-    trigger(TrackTypes.ARRAY_TRIGGER, _target)
+    debugger
     return result
 }
 
@@ -123,16 +135,16 @@ const arrayHandlers: Record<string, any> = {
     splice: arrayHandlerWithTrigger
 };
 
-const SYMBOL_ITERATOR = Symbol.iterator
 
 const specialKeyHandler: Record<string, any> = {
-    [SYMBOL_ITERATOR]: (value: Function) => {
+    [Symbol.iterator]: (value: Function) => {
         // should track ?
-        track(TrackTypes.ITERATE, _target)
+        debugger
         return value.bind(_target)
     }
 }
 
+// 可用于收集依赖的key
 const isProxyKey = (target: any, key: any) => !(key in target) || hasOwn(target, key)
 
 function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boolean) {
@@ -164,7 +176,7 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
         } else if (isProxyKey(target, key)) {
             // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
             if (!isReadonly) {
-                track(TrackTypes.TARGET_TO_KEY, target, key)
+                track(target, key)
             }
             var value = Reflect.get(target, key, receiver)
 
@@ -200,8 +212,13 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
         }
         if (isProxyKey(target, key)) {
             // 不允许设置非自身属性
+            _lastSetTarget = target
+            _lastSetKey = key
+            _lastSetOldValue = Reflect.get(target, key, receiver)
+            _lastSetNewValue = newValue
+
             Reflect.set(target, key, newValue, receiver)
-            trigger(TrackTypes.TARGET_TO_KEY, target, key)
+            trigger(target, key)
         }
         return true
     }
@@ -215,7 +232,7 @@ function has(target: any, key: any) {
     if (hasOwn(target, key)) {
         // has 的收集 ， 只有在key删除时才会触发 
         //! bug 使用 with 访问值时会先进入has 在进入get
-        track(TrackTypes.TARGET_TO_KEY, target, key)
+        track(target, key)
     }
     return Reflect.has(target, key);
 }
@@ -224,7 +241,8 @@ function ownKeys(target: any) {
     /*
         for ? in target
     */
-    track(TrackTypes.ITERATE, target)
+    console.log('track ownKeys');
+
     return Reflect.ownKeys(target);
 }
 
@@ -232,7 +250,7 @@ function deleteProperty(target: any, key: any) {
     // 为 true 表示删除成功
     const result = Reflect.deleteProperty(target, key);
     if (result && hasOwn(target, key)) {
-        trigger(TrackTypes.TARGET_TO_KEY, target, key)
+        trigger(target, key)
     }
     return result;
 }

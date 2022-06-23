@@ -1,12 +1,14 @@
 import { emptyObject } from "@crush/common";
 import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
-import { getActiveEffect, TARGET_MAP, track, TrackTypes, trigger, ReactiveEffect } from "./effect"
+import { getActiveEffect, TARGET_MAP, track,  trigger, ReactiveEffect, isEffect } from "./effect"
 
 export const ref = (value: any, options?: any) => new Ref(value, options)
 
 export class Ref {
     [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_REF] = true
+
+    oldValue:any // 保存旧值
 
     _value: any
 
@@ -28,7 +30,7 @@ export class Ref {
         if (this._value === newValue && !this.sensitive) {
             return
         }
-
+        this.oldValue = this._value
         this._value = newValue
         // trigger
         triggerRef(this)
@@ -36,26 +38,41 @@ export class Ref {
 }
 
 
-export function trackRef(ref: any) {
-    var activeEffect = getActiveEffect()
-    if (!activeEffect) {
-        return
-    }
 
+export const getRefDeps = (ref: any): Set<any> => {
     var deps = TARGET_MAP.get(ref)
     if (!deps) {
         deps = new Set()
         TARGET_MAP.set(ref, deps)
     }
+    return deps
+}
+
+
+
+export function trackRef(ref: any) {
+    var activeEffect = getActiveEffect()
+    if (!activeEffect) {
+        return
+    }
+    var deps = getRefDeps(ref)
     deps.add(activeEffect)
 }
 
 export function triggerRef(ref: any) {
-    var deps = TARGET_MAP.get(ref)
-    if (!deps) {
-        return
-    }
-    deps.forEach((effect: ReactiveEffect) => effect.triggerRun())
+    var deps = getRefDeps(ref)
+    deps.forEach((dep: any) => {
+        if (isEffect(dep)) {
+            dep.triggerRun()
+        } else {
+            dep()
+        }
+    })
+}
+
+// 清除所有与当前ref相关的依赖
+export const cleaarRefDeps = (ref: Ref) => {
+    getRefDeps(ref).clear()
 }
 
 
