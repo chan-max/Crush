@@ -1,4 +1,4 @@
-import { createApp, h, hasOwn, isReactive, isRef, onCreated, onMounted, removeElement } from "./packages/core";
+import { createApp, h, hasOwn, isReactive, isRef, onCreated, onMounted, onSet, removeElement } from "./packages/core";
 import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 import { computed } from "./packages/reactivity/lib/computed";
 import { ref } from "./packages/reactivity/lib/ref";
@@ -7,21 +7,20 @@ import { effect } from "./packages/core";
 import { useDate, dateFormatRE } from "@crush/reactivity/lib/custom/date";
 import { useNumber } from "@crush/reactivity/lib/custom/number";
 import { watchRef } from "@crush/reactivity/lib/watchRef";
-import { shallowWatchReactive } from "@crush/reactivity/lib/watchReactive";
+import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watchReactive";
 
 var p = reactive({
-    a: 1,
+    x: 666,
+    y: {
+        z: 666
+    }
 })
 
 window.p = p
 
-shallowWatchReactive(p, (a, b, c) => {
-    console.log('change key', a);
-    console.log('new value', b);
-    console.log('old value', c);
+watchReactive(p, () => {
+    console.log('ok');
 })
-
-
 
 
 
@@ -110,4 +109,5 @@ var root = {
 var app = createApp(root)
 
 console.log('app', app);
-var instance = app.mount('#app')
+// var instance = app.mount('#app')
+

@@ -34,18 +34,24 @@ export function track(target: any, key?: any) {
 }
 
 
-export const targetChangeCollectSymbol = Symbol('target has changed')
+/* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
+export const watchDepsSymbol = Symbol('target has changed')
 
 export function trigger(target: any, key: any) {
 
-    if (key !== targetChangeCollectSymbol) {
+    if (key !== watchDepsSymbol) {
         // 防止递归
-        trigger(target, targetChangeCollectSymbol)
+        trigger(target, watchDepsSymbol)
     }
 
-    let deps = getDeps(target, key)
-    deps.forEach((dep: any) => {
+    let deps = getDeps(target, key);
+
+    // copy 防止死循环
+    [...deps].forEach((dep: any) => {
         if (isEffect(dep)) {
+            if (dep == getActiveEffect()) {
+                return
+            }
             dep.triggerRun()
         } else {
             dep()

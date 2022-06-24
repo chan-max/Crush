@@ -109,6 +109,7 @@ function arrayHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
         debugger
     }
+
     let result = _target[_key](...args)
     return result
 }
@@ -117,8 +118,10 @@ function arrayHandlerWithTrigger(...args: any[]) {
     if (_isReadonly) {
         return warn(`${_target}is readonly cant ${_key}`);
     }
-    let result = _target[_key](...args)
-    debugger
+    // 用数组修改前的key作为触发依赖
+    let oldKeys = Object.keys(_target)
+    let result = _target[_key](...args);
+    [...oldKeys, 'length'].forEach((key: any) => trigger(_target, key))
     return result
 }
 
@@ -143,6 +146,7 @@ const specialKeyHandler: Record<string, any> = {
         return value.bind(_target)
     }
 }
+
 
 // 可用于收集依赖的key
 const isProxyKey = (target: any, key: any) => !(key in target) || hasOwn(target, key)
@@ -203,6 +207,14 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
     }
 }
 
+
+export const onSetCallbacks = new Set()
+// 注册一个回调函数，当响应式的值改变后触发回掉 => 参数 ： target，key ， newValue ， oldValue
+export function onSet(cb: any) {
+    onSetCallbacks.add(cb)
+    return () => onSetCallbacks.delete(cb)
+}
+
 export function createSetter(isReadonly: boolean = false, isShallow: boolean = false) {
     return (target: any, key: any, newValue: any, receiver: any) => {
         // 返回 false 时会报错
@@ -212,10 +224,18 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
         }
         if (isProxyKey(target, key)) {
             // 不允许设置非自身属性
+
+            let oldValue = Reflect.get(target, key, receiver)
+
             _lastSetTarget = target
             _lastSetKey = key
-            _lastSetOldValue = Reflect.get(target, key, receiver)
+
+            /* 当旧值是一个对象，但变成了基本类型后，则视为一次解绑 */
+            _lastSetOldValue = oldValue
+
             _lastSetNewValue = newValue
+
+            onSetCallbacks.forEach((cb: any) => cb(target, key, newValue, oldValue))
 
             Reflect.set(target, key, newValue, receiver)
             trigger(target, key)

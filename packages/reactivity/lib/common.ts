@@ -1,3 +1,4 @@
+import { typeOf } from "@crush/common"
 
 
 
@@ -13,6 +14,20 @@ export const enum ReactiveFlags {
 
 export const ReactiveTypeSymbol = Symbol('ReactiveType')
 
+// 可被代理的类型 ， 响应式或只读
+export function isProxyType(value: any) {
+    switch (typeOf(value)) {
+        case ReactiveTypes.ARRAY:
+        case ReactiveTypes.OBJECT:
+        case ReactiveTypes.MAP:
+        case ReactiveTypes.SET:
+        case ReactiveTypes.WEAK_MAP:
+        case ReactiveTypes.WEAK_SET:
+            return true
+        default:
+            return false
+    }
+}
 
 export enum ReactiveTypes {
     OBJECT = 'Object',
