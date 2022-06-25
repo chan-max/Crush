@@ -21,18 +21,26 @@ var jerry = {
 var root = {
     template: /*html*/`
         <style>
-            @media  screen , (min-width:500px){
-                h1{
-                    color:red;
-                }
+            html{
+                height:100%;
             }
+            body{
+                margin:0;
+                height:100%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+            }
+           h1{
+                animation : slideOutDown 2s infinite;
+           }
         </style>
         <h1> 666 </h1>
     `,
     create({
         $self
     }: any) {
-        
+
     },
 }
 
@@ -40,4 +48,5 @@ var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
+
 

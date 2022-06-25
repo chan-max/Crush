@@ -1,4 +1,4 @@
-import { mount } from '@crush/renderer'
+import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
 import { flash } from './animations/flash'
 import {
@@ -17,30 +17,13 @@ import { flip, flipInX, flipInY, flipOutX, flipOutY } from './animations/flipper
 import { lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt } from './animations/lightsspeed'
 import { bounce } from './animations/bounce'
 
-// copy animate.css
+import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/sliding'
 
-var animations = {
-    bounce,
-    jackInTheBox,
-    hinge,
-    flash,
-    backInUp,
-    backInDown,
-    backInLeft,
-    backInRight,
-    rollIn,
-    rollOut,
-    flip,
-    flipInX,
-    flipInY,
-    flipOutX,
-    flipOutY,
-    lightSpeedInLeft,
-    lightSpeedInRight,
-    lightSpeedOutLeft,
-    lightSpeedOutRigt
+const animationFrames = {
+    slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp
 }
 
-export const checkBuiltInAnimations = () => Object.keys(animations)
+const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))
 
-export const installAnimation = () => mount(createStyleSheet(null, Object.values(animations)), document.head)
+
+export const installAnimation = () => mount(createStyleSheet(null, animations), document.head)

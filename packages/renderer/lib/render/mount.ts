@@ -7,7 +7,7 @@ import {
 import { mountAttributes } from "./attribute"
 import { mountComponent } from "./mountComponent";
 
-export function mount(vnode: any, container: any, anchor: any, parent: any) {
+export function mount(vnode: any, container: any, anchor: any = null, parent: any = null) {
     switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
             mountElement(vnode, container, anchor, parent)
