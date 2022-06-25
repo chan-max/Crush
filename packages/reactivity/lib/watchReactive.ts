@@ -54,7 +54,6 @@ export function watchReactive(reactiveData: any, callback: any) {
             return
         }
         // 解绑
-        debugger
         let oldValueDeps = getDeps(oldValue, watchDepsSymbol)
         oldValueDeps.delete(cb)
         targets.delete(oldValue)

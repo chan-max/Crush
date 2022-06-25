@@ -5,7 +5,7 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 import { MixinType } from "../instance/mixin"
 import { PluginType } from "../instance/plugin"
-import { mountComponent, unmountComponent } from "@crush/renderer"
+import { mount, mountComponent, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
@@ -89,7 +89,7 @@ export class App {
         // mount root component
         var component = createComponent(options, null, null)
         this.rootComponent = component
-        var instance = mountComponent(component, container, null, null)
+        var instance = mount(component, container, null, null)
         // instance.root = instance
         this.rootInstance = instance
         this.isMounted = true

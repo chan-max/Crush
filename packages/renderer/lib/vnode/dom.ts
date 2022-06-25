@@ -24,7 +24,6 @@ function createNode(nodeType: Nodes): any {
 
 const COMPONENT_TYPE = Symbol('ComponentType')
 
-
 function createComponent(type: any, props: any, children: any, key: any = uid()) {
     let componentFlag = type[COMPONENT_TYPE]
     if (!componentFlag) {
@@ -69,7 +68,7 @@ export function createSVGElement(tagName: string, props: any, children: any, key
 
 
 export const Text = Symbol('Text')
-export const Comment = Symbol('Comment')
+
 // the key is for other node
 function createText(text: any, key = uid()) {
     var node = createNode(Nodes.TEXT)
@@ -79,16 +78,17 @@ function createText(text: any, key = uid()) {
     return node
 }
 
+export const Comment = Symbol('Comment')
 export function createComment(text: any, key = uid()) {
     return {
         type: Comment,
         nodeType: Nodes.HTML_COMMENT,
-        text, key
+        children:text,
+         key
     }
 }
 
 const Fragment = Symbol('Fragment')
-
 function createFragment(children: any, key = uid()) {
     const f = createNode(Nodes.FRAGMENT)
     f.type = Fragment

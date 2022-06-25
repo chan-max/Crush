@@ -14,7 +14,7 @@
   "description": "",
   "private": false,
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "test": "jest",
     "docsdev": "cd packages/docs & npm run dev",
     "build": "rollup -c"

@@ -6,7 +6,8 @@ import {
     createElement,
     createText,
     createFragment,
-    createComponent
+    createComponent,
+    createComment
 } from './vnode/dom'
 
 import { important } from './common/important'
@@ -52,6 +53,7 @@ import { injectDirectives } from '@crush/core'
 import { createSVGElement } from '@crush/core'
 
 export default {
+    createComment,
     createSVGElement,
     injectDirectives,
     important,

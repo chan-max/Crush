@@ -1,14 +1,17 @@
 import { emptyObject } from "@crush/common";
 import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
-import { getActiveEffect, TARGET_MAP, track,  trigger, ReactiveEffect, isEffect } from "./effect"
+import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect } from "./effect"
 
 export const ref = (value: any, options?: any) => new Ref(value, options)
+
+export const createRefValueSetter = (ref: Ref) => (newValue: any) => ref.value = newValue
+
 
 export class Ref {
     [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_REF] = true
 
-    oldValue:any // 保存旧值
+    oldValue: any // 保存旧值
 
     _value: any
 

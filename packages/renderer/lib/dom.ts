@@ -10,7 +10,7 @@ export const docCreateElement = (tagName: string, isSVG: boolean = false) => isS
 export const docCreateComment = (text: string) => document.createComment(text)
 export const docCreateText = (text: string) => document.createTextNode(text)
 export const setText = (textEl: Element, text: any) => textEl.nodeValue = text
-export const insertElement = (child: Element | Text, parent: Element, anchor: Element | null = null) => {
+export const insertElement = (child: Element | Text | Comment, parent: Element, anchor: Element | null = null) => {
     /* 可能传入不合理的anchor */
     if (anchor && anchor.parentElement !== parent) {
         anchor = null
@@ -34,7 +34,7 @@ export const removeEventListener = (el: Element, event: string, handler: any, op
 export function onceListener(el: Element, event: string, handler: Function, options: any = null) {
     var onceHandler = () => {
         handler()
-        removeEventListener(el, event, onceHandler,options)
+        removeEventListener(el, event, onceHandler, options)
     }
     addEventListener(el, event, onceHandler, options)
 }

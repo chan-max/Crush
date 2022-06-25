@@ -11,10 +11,15 @@ export function unmount(vnode: any, container: any, anchor: any, parent: any) {
         case Nodes.HTML_ELEMENT:
             unmountElement(vnode)
             break
+        case Nodes.HTML_COMMENT:
+            removeElement(vnode.el)
+            break
         case Nodes.STYLE:
-            unmountElement(vnode,)
+            unmountElement(vnode)
+            break
         case Nodes.SVG_ELEMENT:
             unmountElement(vnode)
+            break
         case Nodes.TEXT:
             removeElement(vnode.el)
             break

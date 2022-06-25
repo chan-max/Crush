@@ -185,6 +185,8 @@ function genSlotContent(node: any, context: any) {
 
 function genNode(node: any, context: any): any {
     switch (node.type) {
+        case Nodes.HTML_COMMENT:
+            return context.callRenderFn(renderMethodsNameMap.createComment, toBackQuotes(node.children), uid())
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:

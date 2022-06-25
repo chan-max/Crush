@@ -22,6 +22,9 @@ export function update(p: any, n: any, container: any, anchor: any, parent: any)
         case Nodes.RENDER_COMPONENT:
             updateRenderComponent(p, n, container, anchor, parent)
             break
+        case Nodes.HTML_COMMENT:
+            // comment dont update
+            break
     }
 }
 

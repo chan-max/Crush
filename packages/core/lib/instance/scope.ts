@@ -19,7 +19,7 @@ const scopeProperties: any = {
     $parent: (instance: any) => instance.parent,
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
-    
+    $self: (instance: any) => instance.scope,
     // evnets
     $emit: (instance: any) => instance.emit, // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),

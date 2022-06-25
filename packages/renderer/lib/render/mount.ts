@@ -1,12 +1,13 @@
 import { Vnode } from "../vnode/dom";
 import { Nodes } from "@crush/const";
 import {
+    docCreateComment,
     docCreateElement, docCreateText, insertElement, onceListener
 } from '../dom'
 import { mountAttributes } from "./attribute"
 import { mountComponent } from "./mountComponent";
 
-export function mount(vnode: Vnode, container: any, anchor: any, parent: any) {
+export function mount(vnode: any, container: any, anchor: any, parent: any) {
     switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
             mountElement(vnode, container, anchor, parent)
@@ -16,6 +17,8 @@ export function mount(vnode: Vnode, container: any, anchor: any, parent: any) {
         case Nodes.TEXT:
             mountText(vnode, container, anchor, parent)
             break
+        case Nodes.HTML_COMMENT:
+            insertElement(vnode.el = docCreateComment(vnode.children), container, anchor)
         case Nodes.COMPONENT:
             mountComponent(vnode, container, anchor, parent)
             break
