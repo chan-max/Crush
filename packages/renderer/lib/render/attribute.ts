@@ -1,7 +1,7 @@
 
 import { emptyObject, isArray } from "@crush/common";
 import { keyOf, Nodes } from "@crush/const";
-import { removeClass, addClass, addEventListener, removeEventListener, setAttribute, removeAttribute } from "../dom";
+import { removeClass, addClass, addListener, removeListener, setAttribute, removeAttribute } from "../dom";
 
 import { unionkeys } from "./common";
 
@@ -75,9 +75,9 @@ import { arrayHandler } from './componentListener'
 */
 function updateNativeEvents(el: HTMLElement, event: string, pHandler: any, nHandler: any, options: any) {
     arrayHandler(pHandler).forEach((ph: any) => {
-        removeEventListener(el, event, ph, options)
+        removeListener(el, event, ph, options)
     });
     arrayHandler(nHandler).forEach((nh: any) => {
-        addEventListener(el, event, nh, options)
+        addListener(el, event, nh, options)
     });
 }

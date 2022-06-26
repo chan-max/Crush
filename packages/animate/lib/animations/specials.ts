@@ -4,7 +4,7 @@ import {
     rotate3d, scale, translate3d
 } from '@crush/renderer'
 
-export const hinge = keyframes('hinge', [
+export const hinge = [
     keyframe(0, {
         animationTimingFunction: 'ease-in-out'
     }),
@@ -22,9 +22,9 @@ export const hinge = keyframes('hinge', [
         transform: translate3d(0, '700px', 0),
         opacity: 0
     })
-])
+]
 
-export const jackInTheBox = keyframes('jackInTheBox', [
+export const jackInTheBox = [
     keyframe(0, {
         opacity: 0,
         transform: [scale(0.1), rotate(30)],
@@ -40,11 +40,11 @@ export const jackInTheBox = keyframes('jackInTheBox', [
         opacity: 1,
         transform: scale(1),
     })
-])
+]
 
 
 
-export const rollIn = keyframes('rollIn', [
+export const rollIn = [
     keyframe(0, {
         opacity: 0,
         transform: [translate3d('-100%', 0, 0), rotate3d(0, 0, 1, -120)]
@@ -53,14 +53,14 @@ export const rollIn = keyframes('rollIn', [
         opacity: 1,
         transform: translate3d(0, 0, 0)
     })
-])
+]
 
-export const rollOut = keyframes('rollOut', [
+export const rollOut = [
     keyframe(0, {
         opacity: 1,
     }),
     keyframe(100, {
         opacity: 0,
-        transform:  [translate3d('100%', 0, 0), rotate3d(0, 0, 1, 120)]
+        transform: [translate3d('100%', 0, 0), rotate3d(0, 0, 1, 120)]
     })
-])
+]

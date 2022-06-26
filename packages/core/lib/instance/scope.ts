@@ -16,6 +16,7 @@ const scopeProperties: any = {
     $root: (instance: any) => instance.root,
     $attrs: (instance: any) => instance.attrs,
     $slots: (instance: any) => instance.slots,
+    $props: (instance: any) => instance.props,
     $parent: (instance: any) => instance.parent,
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),

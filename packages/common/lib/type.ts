@@ -1,6 +1,6 @@
 
 function isNumber(value: any) {
-    return typeof value === 'number' && value !== NaN
+    return typeof value === 'number' && !isNaN(value)
 }
 
 function isString(value: any): boolean {

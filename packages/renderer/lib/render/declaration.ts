@@ -2,7 +2,7 @@ import {
     isArray,
     isString,
     isObject,
-    emptyObject ,
+    emptyObject,
     camelize, hyphenate,
 } from '@crush/common'
 
@@ -92,8 +92,13 @@ export function getStyleValue(style: CSSStyleDeclaration, key: string) {
     return isImportant ? important(value) : value
 }
 
+
 export function getElementStyleValue(el: HTMLElement, key: string) {
     return getStyleValue(el.style, key)
+}
+
+export function getElementComputedStyleValue(el: HTMLElement, key: string) {
+    return getStyleValue(window.getComputedStyle(el), key)
 }
 
 export function getStyle(style: CSSStyleDeclaration, keys: Record<string, any> | string[] | string): Record<string, any> {

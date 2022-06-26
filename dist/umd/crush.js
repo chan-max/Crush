@@ -195,14 +195,14 @@
     };
     const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value);
     const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
-    const addEventListener = (el, event, handler, options = null) => el.addEventListener(event, handler, options);
-    const removeEventListener = (el, event, handler, options = null) => el.removeEventListener(event, handler, options);
+    const addListener = (el, event, handler, options = null) => el.addListener(event, handler, options);
+    const removeListener = (el, event, handler, options = null) => el.removeListener(event, handler, options);
     function onceListener(el, event, handler, options = null) {
         var onceHandler = () => {
             handler();
-            removeEventListener(el, event, onceHandler, options);
+            removeListener(el, event, onceHandler, options);
         };
-        addEventListener(el, event, onceHandler, options);
+        addListener(el, event, onceHandler, options);
     }
 
     function createNode(nodeType) {
@@ -864,10 +864,10 @@
     */
     function updateNativeEvents(el, event, pHandler, nHandler, options) {
         arrayHandler(pHandler).forEach((ph) => {
-            removeEventListener(el, event, ph, options);
+            removeListener(el, event, ph, options);
         });
         arrayHandler(nHandler).forEach((nh) => {
-            addEventListener(el, event, nh, options);
+            addListener(el, event, nh, options);
         });
     }
 
@@ -4237,7 +4237,7 @@
     exports.Ref = Ref;
     exports.TARGET_MAP = TARGET_MAP;
     exports.addClass = addClass;
-    exports.addEventListener = addEventListener;
+    exports.addListener = addListener;
     exports.addInstanceListener = addInstanceListener;
     exports.appendMedium = appendMedium;
     exports.arrayHandler = arrayHandler;
@@ -4422,7 +4422,7 @@
     exports.removeAttribute = removeAttribute;
     exports.removeClass = removeClass;
     exports.removeElement = removeElement;
-    exports.removeEventListener = removeEventListener;
+    exports.removeListener = removeListener;
     exports.removeFromArray = removeFromArray;
     exports.removeInstanceListener = removeInstanceListener;
     exports.renderList = renderList;

@@ -43,6 +43,7 @@ function unmountElement(vnode: any) {
     if (vnode.children && vnode.nodeType !== Nodes.STYLE) {
         unmountChildren(vnode.children)
     }
+
     if (transition) {
         transitionLeave(vnode)
     } else {

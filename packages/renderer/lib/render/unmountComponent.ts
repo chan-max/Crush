@@ -5,6 +5,6 @@ export const unmountComponent = (component: any, container: any, anchor: any = n
     const { instance } = component
     const { vnode } = instance
     processHook(LifecycleHooks.BEFORE_UNMOUNT, component)
-    patch(vnode, null, container, anchor)
+    patch(vnode, null, container, anchor, parent)
     processHook(LifecycleHooks.UNMOUNTED, component)
 }

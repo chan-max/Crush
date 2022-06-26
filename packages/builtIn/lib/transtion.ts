@@ -14,7 +14,7 @@ export const transitionComponent = {
     },
     beforeUpdate({ $instance: { renderingVnode } }: any) {
         const transtion = createTransition({})
-        renderingVnode.forEach((vnode: any) => {
+       renderingVnode && renderingVnode.forEach((vnode: any) => {
             vnode.transition = transtion
         });
     }
@@ -26,6 +26,7 @@ function arrayDifference(arr1: any[], arr2: any[]) {
     return f1.concat(f2)
 }
 
+// 第一次进入任何元素都不会过渡
 export const transitionGroupComponent = {
     props: {},
     render: ({ $slots }: any) => $slots.default(),

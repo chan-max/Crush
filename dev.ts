@@ -1,4 +1,4 @@
-import { createApp, h, hasOwn, isReactive, isRef, onCreated, onMounted, onSet, removeElement } from "./packages/core";
+import { createApp, doKeyframesAnimation, getElementStyle, h, hasOwn, important, isReactive, isRef, mountDeclaration, onCreated, onMounted, onSet, removeElement, setElementStyleDeclaration } from "./packages/core";
 import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 import { computed } from "./packages/reactivity/lib/computed";
 import { ref } from "./packages/reactivity/lib/ref";
@@ -21,25 +21,20 @@ var jerry = {
 var root = {
     template: /*html*/`
         <style>
-            html{
-                height:100%;
+            .box{
+                width:200px;
+                height:200px;
+                background-color:gray;
             }
-            body{
-                margin:0;
-                height:100%;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-            }
-           h1{
-                animation : slideOutDown 2s infinite;
-           }
         </style>
-        <h1> 666 </h1>
+        <button @click="add"> {{x}} </button>
+        <div .box> 666 </div>
     `,
     create({
         $self
     }: any) {
+        $self.x = 0
+        $self.add = () => $self.x++
 
     },
 }
@@ -48,5 +43,13 @@ var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
+
+let box = document.querySelector('.box')
+
+let stop = doKeyframesAnimation(box, {
+    name: 'rollIn',
+    duration: '1s',
+})
+
 
 

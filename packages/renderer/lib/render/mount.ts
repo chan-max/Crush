@@ -56,11 +56,14 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
 
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
 
-    if (transition) {
-        transitionEnter(vnode)
-    }
 
-    insertElement(el, container, anchor)
+    let insertFn = () => insertElement(el, container, anchor)
+
+    if (transition) {
+        transitionEnter(vnode,insertFn)
+    }else{
+        insertFn()
+    }
 
     processHook(LifecycleHooks.MOUNTED, vnode)
     mountChildren(children, el, anchor, parent)

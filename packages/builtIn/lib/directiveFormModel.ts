@@ -18,7 +18,7 @@ export const model = {
 export const modelText = {
     created(el: any, _: any, vnode: any) {
         const changeModelValue = vnode.props._changeModelValue
-        el.addEventListener('input', () => {
+        el.addListener('input', () => {
             changeModelValue(el.value)
         })
     }
