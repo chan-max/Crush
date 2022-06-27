@@ -22,30 +22,53 @@ export class TransitionDescription {
 
     name: any
 
-    // hooks
-    beforeEnter: any
+    duration: any // css一般不需要
 
+    // hooks
+    onBeforeEnter: any
+    onEnter: any
+    onAfterEnter: any
+    onEnterCancelled: any
+    onBeforeLeave: any
+    onLeave: any
+    onAfterLeave: any
+    onLeaveCancelled: any
 
     initOptions(transitionOptions: any) {
         transitionOptions ||= emptyObject
-        this.name = transitionOptions.name || 'transition'
         const {
             type,
             name,
+            duration,
             // hooks
-            beforeEnter,
-            enter,
-            afterEnter,
-            enterCancelled,
-            boforeLeave,
-            leave,
-            afterLeave,
-            leaveCancelled
+            onBeforeEnter,
+            onEnter,
+            onAfterEnter,
+            onEnterCancelled,
+            onBeforeLeave,
+            onLeave,
+            onAfterLeave,
+            onLeaveCancelled
         } = transitionOptions
+        this.name = name || 'transition'
+        this.type = type || 'css'
+        this.duration = duration
+        this.onBeforeEnter = onBeforeEnter
+        this.onEnter = onEnter
+        this.onAfterEnter = onAfterEnter
+        this.onEnterCancelled = onEnterCancelled
+        this.onBeforeLeave = onBeforeLeave
+        this.onLeave = onLeave
+        this.onAfterLeave = onAfterLeave
+        this.onLeaveCancelled = onLeaveCancelled
     }
 
     update(transitionOptions: any) {
         this.initOptions(transitionOptions)
+    }
+
+    beforeEnter(el: any) {
+        
     }
 
     doEnter(el: any) {
@@ -65,6 +88,10 @@ export class TransitionDescription {
     cancelEnter(el: any) {
         console.log('cancel enter');
         this.finishEnter(el)
+    }
+
+    beforeLeave(el: any) {
+
     }
 
     doLeave(el: any) {

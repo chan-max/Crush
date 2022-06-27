@@ -1,12 +1,12 @@
 import { show } from "./directiveShow"
 import { modelText } from "./directiveFormModel"
 import { showComponent } from "./componentShow"
-import { transitionComponent, transitionGroupComponent } from "./transtion"
+import { transitionComponent, transitionGroupComponent } from "./transition"
 
 
 export const builtInComponents: any = {
     show: showComponent,
-    transtion: transitionComponent,
+    transition: transitionComponent,
     transitionGroup: transitionGroupComponent
 }
 

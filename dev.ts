@@ -11,31 +11,16 @@ import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watch
 import { useBoolean } from "@crush/reactivity/lib/custom/boolean";
 
 
-var jerry = {
-    template: `jerry`,
-    create() {
-
-    }
-}
-
 var root = {
     template: /*html*/`
-        <style>
-            .box{
-                width:200px;
-                height:200px;
-                background-color:gray;
-            }
-        </style>
         <button @click="add"> {{x}} </button>
-        <div .box> 666 </div>
+        <div .box --if="x%2 === 0"> 666 </div>
     `,
     create({
         $self
     }: any) {
         $self.x = 0
         $self.add = () => $self.x++
-
     },
 }
 
@@ -43,13 +28,6 @@ var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
-
-let box = document.querySelector('.box')
-
-let stop = doKeyframesAnimation(box, {
-    name: 'rollIn',
-    duration: '1s',
-})
 
 
 
