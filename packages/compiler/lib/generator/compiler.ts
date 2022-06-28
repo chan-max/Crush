@@ -78,7 +78,7 @@ export function compile(template: string) {
     var context = new CodeGenerator()
     // 初始化所有渲染方法
 
-    var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentScope))
+    var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentRenderScope))
     const renderCode: any = genNodes(ast as any[], context)
 
     const content = `

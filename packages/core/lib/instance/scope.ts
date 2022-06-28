@@ -1,4 +1,4 @@
-import { hasOwn, warn } from "@crush/common";
+import { hasOwn, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
 import { addInstanceListener, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
@@ -11,6 +11,7 @@ const protoMethods = {
 
 
 const scopeProperties: any = {
+    $uid: (instance: any) => instance.uid,
     $instance: (instance: any) => instance,
     $el: (instance: any) => instance.vnode,
     $root: (instance: any) => instance.root,
@@ -21,6 +22,7 @@ const scopeProperties: any = {
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     $self: (instance: any) => instance.scope,
+    $forceUpdate:(instance: any) => instance.update,
     // evnets
     $emit: (instance: any) => instance.emit, // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
@@ -30,22 +32,19 @@ const scopeProperties: any = {
     $listeners: (instance: any) => (event: string) => getInstancetEventListeners(instance, event)
 }
 
-export function defineScopePropertyGetter(key: string, getter: any) {
+export function defineScopeProperty(key: string, getter: any) {
     scopeProperties[key] = getter
 }
 
+// inject scope property
 export function createScope(instance: any) {
     const scope = reactive(Object.create(protoMethods))
     return new Proxy(scope, {
         get(target: any, key: any, receiver: any) {
-            if (key === Symbol.unscopables) {
-                return
-            }
             if (hasOwn(scopeProperties, key)) {
                 return scopeProperties[key](instance)
             }
-            var result = Reflect.get(target, key, receiver)
-            return isRef(result) ? result.value : result
+            return Reflect.get(target, key, receiver)
         },
         set(target: any, key: any, newValue: any, receiver: any) {
             if (hasOwn(scopeProperties, key)) {
@@ -53,6 +52,24 @@ export function createScope(instance: any) {
             } else {
                 return Reflect.set(target, key, newValue, receiver)
             }
+        }
+    })
+}
+
+
+
+// process ref
+export function createRenderScope(instanceScope: any) {
+    return new Proxy(instanceScope, {
+        get(target: any, key: any, receiver: any) {
+            if (key === Symbol.unscopables) {
+                return
+            }
+
+            // todo magic variables
+
+            var result = Reflect.get(target, key, receiver)
+            return isRef(result) ? result.value : result
         }
     })
 }

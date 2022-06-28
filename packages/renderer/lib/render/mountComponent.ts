@@ -31,6 +31,10 @@ export function getCurrentScope() {
     return getCurrentInstance().scope
 }
 
+export function getCurrentRenderScope() {
+    return getCurrentInstance().renderScope
+}
+
 function setScopeData(scope: any, data: any) {
     if (!isObject(data)) { return }
     for (let key in data) {
@@ -46,12 +50,12 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     const instance = createComponentInstance(type, parent)
 
-    const { scope } = instance
+    const { scope, renderScope } = instance
 
     callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
 
     vnode.instance = instance
-
+    instance.componentVnode = vnode
     setCurrentInstance(instance)
 
     // 初次创建前应该把 slot props 方法等挂载到作用域上
@@ -73,12 +77,14 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     */
     let render: any
     if (instance.render) {
-        render = instance.render.bind(scope)
+        render = instance.render.bind(renderScope)
     } else if (instance.createRender) {
         render = instance.createRender(renderMethods)
     } else {
         render = emptyFunction
     }
+
+    instance.render = render
 
     setCurrentInstance(null)
 
@@ -86,30 +92,35 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     // component update
 
-    let prevComponent: any = null, nextComponent = vnode
     // component update fn
-    function update(next?: any) { // !传入next代表为非自更新
-        const { isMounted, vnode: pVnode, beforePatch } = instance
+    function update() { // !传入next代表为非自更新
+        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, update, render } = instance
         // 每次 更新生成新树
-
-        if (next) {
-            prevComponent = nextComponent
-            nextComponent = next
-        } else {
-            // 自更新时重置 prevComponent ， 防止钩子调用出错
-            prevComponent = null
-        }
-
         setCurrentInstance(instance)
         let nVnode = render(scope)
         setCurrentInstance(null)
         // 处理树
+
+        let pComponentVnode, nComponentVnode
+
+        if (updatingComponentVnode) { // 非自更新，两个节点对比更新
+            nComponentVnode = updatingComponentVnode
+            pComponentVnode = componentVnode
+            // 把新节点存到实例上
+            instance.componentVnode = nComponentVnode
+        } else {
+            nComponentVnode = componentVnode
+        }
+
+        // 清理vnode 
+        instance.updatingComponentVnode = null
+
         nVnode = processRenderResult(nVnode)
         instance.renderingVnode = nVnode
-        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nextComponent, prevComponent)
+        processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
         if (beforePatch) { beforePatch(pVnode, nVnode) }
         patch(pVnode, nVnode, container, anchor, instance)
-        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nextComponent, prevComponent)
+        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nComponentVnode, pComponentVnode)
         instance.vnode = nVnode
         instance.isMounted = true
     }

@@ -268,8 +268,9 @@ function ownKeys(target: any) {
 
 function deleteProperty(target: any, key: any) {
     // 为 true 表示删除成功
+    const isOwn = hasOwn(target, key)
     const result = Reflect.deleteProperty(target, key);
-    if (result && hasOwn(target, key)) {
+    if (result && isOwn) {
         trigger(target, key)
     }
     return result;

@@ -74,7 +74,6 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
                     value,
                     _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
                     modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
-                    oldValue: null
                 }
                 if (previous) {
                     // 如果更新的话两个节点的指令应该完全相同

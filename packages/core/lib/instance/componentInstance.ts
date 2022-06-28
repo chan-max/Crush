@@ -4,7 +4,7 @@ import { getCurrentApp } from "../app/app";
 import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
-import { createScope, } from "./scope";
+import { createRenderScope, createScope, } from "./scope";
 import { createInstanceEventEmitter } from "@crush/renderer/lib/render/componentListener";
 
 
@@ -15,9 +15,12 @@ export class ComponentInstance {
     update: any
     isMounted: any
     uid = uid()
-    scope = createScope(this)
+    scope: any
+    renderScope: any
     render: any
     vnode: any // 当前所处的vnode
+    componentVnode: any//组件虚拟节点
+    updatingComponentVnode: any
     renderingVnode: any // 即将挂载到页面的vnode
     slots: any
     props: any
@@ -86,6 +89,9 @@ export class ComponentInstance {
         this.render = render
         this.createRender = createRender
         this.emit = createInstanceEventEmitter(this)
+        let scope = createScope(this)
+        this.scope = scope
+        this.renderScope = createRenderScope(scope)
         let app = getCurrentApp()
         this.app = app
         injectMixins(this, mixins)

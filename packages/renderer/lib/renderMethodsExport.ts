@@ -1,6 +1,7 @@
 
 import {
-    getCurrentScope
+    getCurrentScope,
+    getCurrentRenderScope
 } from './render/mountComponent'
 import {
     createElement,
@@ -53,6 +54,7 @@ import { injectDirectives } from '@crush/core'
 import { createSVGElement } from '@crush/core'
 
 export default {
+    getCurrentRenderScope,
     createComment,
     createSVGElement,
     injectDirectives,

@@ -4041,7 +4041,7 @@
         $events: (instance) => getInstanceEvents(instance),
         $listeners: (instance) => (event) => getInstancetEventListeners(instance, event)
     };
-    function defineScopePropertyGetter(key, getter) {
+    function defineScopeProperty(key, getter) {
         scopeProperties[key] = getter;
     }
     function createScope(instance) {
@@ -4286,7 +4286,7 @@
     exports.createText = createText;
     exports.cubicBezier = cubicBezier;
     exports.declare = declare;
-    exports.defineScopePropertyGetter = defineScopePropertyGetter;
+    exports.defineScopeProperty = defineScopeProperty;
     exports.deleteActiveEffect = deleteActiveEffect;
     exports.deleteKeyframe = deleteKeyframe;
     exports.deleteMedium = deleteMedium;
