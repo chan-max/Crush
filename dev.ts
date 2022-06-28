@@ -10,7 +10,6 @@ import { watchRef } from "@crush/reactivity/lib/watchRef";
 import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watchReactive";
 import { useBoolean } from "@crush/reactivity/lib/custom/boolean";
 
-
 var root = {
     template: /*html*/`
         <button @click="add"> {{x}} </button>
