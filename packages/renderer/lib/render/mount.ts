@@ -51,7 +51,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     const { type, props, children, transition } = vnode
     // create 
     const el = vnode.el = docCreateElement(type, isSVG)
-    mountAttributes(el, props, isSVG)
+    mountAttributes(el, props, parent, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
 
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
@@ -60,8 +60,8 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     let insertFn = () => insertElement(el, container, anchor)
 
     if (transition) {
-        transitionEnter(vnode,insertFn)
-    }else{
+        transitionEnter(vnode, insertFn)
+    } else {
         insertFn()
     }
 

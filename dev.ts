@@ -17,34 +17,21 @@ effect(() => {
 })
 
 var root = {
-    directives:{
-        x:{
-            beforeUpdate(a,b,c,d){
-                debugger
-            }
-        }
-    },
-    components: {
-        tom: {
-            props:['y'],
-            template: `
-                <h1 @click="add"> tom{{x}}  props: {{y}}</h1>
-
-            `,
-            create() {
-                this.x = 0
-                this.add = () => this.x++
-            }
-        }
+    components:{
+        tom:{template:`tom`}
     },
     template: /*html*/`
-        <button @click="add"> y {{y}} </button>
-        <tom --x $y>
+        <button @click="add" ref="btn"> y {{y}} </button>
+        <tom ref="tom" x="666">
     `,
     create() {
         this.y = 666
         this.add = () => this.y++
     },
+    mounted(){
+        console.log(this.$refs);
+        
+    }
 }
 
 

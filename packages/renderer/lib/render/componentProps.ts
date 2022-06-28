@@ -16,6 +16,13 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
         let nValue = nProps[prop]
         if (prop.startsWith('_')) {
             // 组件保留属性 skip
+        } else if (prop === 'ref') {
+            // ref component
+            let refs = instance.parent.refs ||= {}
+            if (nValue !== pValue) {
+                pValue && (refs[pValue] = null);
+                nValue && (refs[nValue] = instance);
+            }
         } else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
             // 未定义
             let attrs = instance.attrs ||= {}
@@ -27,7 +34,6 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                 _arguments,
                 modifiers
             } = parseEventName(prop)
-            debugger
             updateInstanceListeners(instance, event, pValue, nValue)
         } else {
             // props
@@ -54,4 +60,5 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
         }
     }
 }
+
 

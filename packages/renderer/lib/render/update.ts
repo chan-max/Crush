@@ -1,5 +1,5 @@
 import { Nodes } from "@crush/const"
-import { processHook, LifecycleHooks } from "@crush/core"
+import { processHook, LifecycleHooks, ComponentInstance } from "@crush/core"
 
 import { updateAttributes } from "./attribute"
 import { patch } from "./patch"
@@ -11,7 +11,7 @@ export function update(p: any, n: any, container: any, anchor: any, parent: any)
             updateText(p, n)
             break
         case Nodes.HTML_ELEMENT:
-            updateHTMLElement(p, n, container, anchor)
+            updateHTMLElement(p, n, container, anchor, parent)
             break
         case Nodes.STYLE:
             updateStyleSheet(p, n,)
@@ -43,12 +43,10 @@ function updateText(p: any, n: any) {
 }
 
 
-function updateHTMLElement(p: any, n: any, container: any, anchor: any) {
-
-    var el = n.el = p.el
-
+function updateHTMLElement(p: any, n: any, container: any, anchor: any, parent: ComponentInstance) {
+    const el = n.el = p.el
     processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
-    updateAttributes(el, p.props, n.props)
+    updateAttributes(el, p.props, n.props,parent)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor, parent)

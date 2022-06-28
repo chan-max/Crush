@@ -1,4 +1,4 @@
-import { typeOf } from "@crush/common"
+import { isUndefined, typeOf } from "@crush/common"
 
 
 
@@ -9,7 +9,7 @@ export const enum ReactiveFlags {
     IS_READONLY = 'isReadonly',
     IS_REF = 'isRef',
     IS_COMPUTED = 'isComputed',
-    IS_EFFECT = 'isEffect'
+    IS_EFFECT = 'isEffect',
 }
 
 export const ReactiveTypeSymbol = Symbol('ReactiveType')
@@ -27,6 +27,13 @@ export function isProxyType(value: any) {
         default:
             return false
     }
+}
+
+export function markRaw(data: any) {
+    if (isProxyType(data)) {
+        data[ReactiveTypeSymbol] = true
+    }
+    return data
 }
 
 export enum ReactiveTypes {

@@ -94,7 +94,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     // component update fn
     function update() { // !传入next代表为非自更新
-        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, update, render } = instance
+        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance
         // 每次 更新生成新树
         setCurrentInstance(instance)
         let nVnode = render(scope)
@@ -118,11 +118,15 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         nVnode = processRenderResult(nVnode)
         instance.renderingVnode = nVnode
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
+
         if (beforePatch) { beforePatch(pVnode, nVnode) }
+        
         patch(pVnode, nVnode, container, anchor, instance)
-        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nComponentVnode, pComponentVnode)
+
         instance.vnode = nVnode
         instance.isMounted = true
+
+        processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nComponentVnode, pComponentVnode)
     }
 
     //  call at every update

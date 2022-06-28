@@ -25,6 +25,7 @@ export class ComponentInstance {
     slots: any
     props: any
     attrs: any
+    refs:any
     customOptions: any
     propsOptions: any
     emitsOptions: any

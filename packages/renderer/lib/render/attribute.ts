@@ -35,33 +35,46 @@ import {
 } from '../common/event'
 
 import { updateDeclaration } from "./declaration";
-import { normalizeClass, normalizeStyle } from "@crush/core";
+import { ComponentInstance, normalizeClass, normalizeStyle } from "@crush/core";
 
 
-export function mountAttributes(el: any, props: any, isSVG: boolean) {
-    updateAttributes(el, emptyObject, props, isSVG)
+export function mountAttributes(el: any, props: any, instance: ComponentInstance, isSVG: boolean,) {
+    updateAttributes(el, emptyObject, props, instance, isSVG,)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any, isSVG = false) {
+export function updateAttributes(el: any, pProps: any, nProps: any, instance: ComponentInstance, isSVG = false,) {
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of unionkeys(pProps, nProps)) {
         var pValue = pProps[propName]
         var nValue = nProps[propName]
-        if (propName.startsWith('_')) {
-            // 保留属性
-        } else if (isEvent(propName)) {
-            var { event, options } = parseNativeEventName(propName)
-            updateNativeEvents(el, event, pValue, nValue, options)
-        } else if (propName === keyOf(Nodes.STYLE)) {
-            updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
-        } else if (propName === keyOf(Nodes.CLASS)) {
-            updateClass(el, pValue, nValue)
-        } else if (propName in el) { // dom props
-            (pValue !== nValue) && (el[propName] = nValue)
-        } else {
-            // attribute
-            (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
+        switch (propName) {
+            case 'style':
+                updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
+                break
+            case 'class':
+            case 'className':
+                updateClass(el, pValue, nValue)
+                break
+            case 'ref':
+                let refs = instance.refs ||= {}
+                if (nValue !== pValue) {
+                    pValue && (refs[pValue] = null)
+                    nValue && (refs[nValue] = el)
+                }
+                break
+            default:
+                if (propName.startsWith('_')) {
+                    // 保留属性
+                } else if (isEvent(propName)) {
+                    var { event, options } = parseNativeEventName(propName)
+                    updateNativeEvents(el, event, pValue, nValue, options)
+                } else if (propName in el) { // dom props
+                    (pValue !== nValue) && (el[propName] = nValue)
+                } else {
+                    // attribute
+                    (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
+                }
         }
     }
 }

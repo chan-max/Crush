@@ -3,6 +3,7 @@ import { isRef, reactive } from "@crush/reactivity";
 import { addInstanceListener, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { nextTick } from "@crush/scheduler";
+import { ComponentInstance } from "./componentInstance";
 
 const protoMethods = {
     ...cssMethods
@@ -11,9 +12,24 @@ const protoMethods = {
 
 
 const scopeProperties: any = {
-    $uid: (instance: any) => instance.uid,
-    $instance: (instance: any) => instance,
-    $el: (instance: any) => instance.vnode,
+    $uid: (instance: ComponentInstance) => instance.uid,
+    $instance: (instance: ComponentInstance) => instance,
+    $refs: (instance: ComponentInstance) => {
+        let { isMounted, refs } = instance
+        if (!isMounted) {
+            warn('component is not mounted , cant use refs')
+            return null
+        }
+        return refs
+    },
+    $el: (instance: any) => {
+        let { vnode, isMounted } = instance
+        if (!isMounted || !vnode) {
+            return null
+        }
+        let el = vnode.map((_vnode: any) => _vnode.el)
+        return el.length === 1 ? el[0] : el
+    },
     $root: (instance: any) => instance.root,
     $attrs: (instance: any) => instance.attrs,
     $slots: (instance: any) => instance.slots,
@@ -22,7 +38,7 @@ const scopeProperties: any = {
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     $self: (instance: any) => instance.scope,
-    $forceUpdate:(instance: any) => instance.update,
+    $forceUpdate: (instance: any) => instance.update,
     // evnets
     $emit: (instance: any) => instance.emit, // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
