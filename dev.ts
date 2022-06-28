@@ -10,15 +10,11 @@ import { watchRef } from "@crush/reactivity/lib/watchRef";
 import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watchReactive";
 import { useBoolean } from "@crush/reactivity/lib/custom/boolean";
 
-var arr = reactive([1, 2, 3, 4, 5, 6])
-
-effect(() => {
-    console.log(arr);
-})
+var obj = reactive({ a: 66, b: { c: 798456 } })
 
 var root = {
-    components:{
-        tom:{template:`tom`}
+    components: {
+        tom: { template: `tom` }
     },
     template: /*html*/`
         <button @click="add" ref="btn"> y {{y}} </button>
@@ -28,10 +24,6 @@ var root = {
         this.y = 666
         this.add = () => this.y++
     },
-    mounted(){
-        console.log(this.$refs);
-        
-    }
 }
 
 
