@@ -17,7 +17,8 @@
     "dev": "vite --host 0.0.0.0",
     "test": "jest",
     "docsdev": "cd packages/docs & npm run dev",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "docs": "vitepress dev docs"
   },
   "author": "chan",
   "license": "MIT",
@@ -29,8 +30,10 @@
     "express": "^4.17.2",
     "highlight.js": "^11.4.0",
     "marked": "^4.0.12",
+    "n": "^8.2.0",
     "rollup-plugin-typescript2": "^0.31.1",
-    "vite": "^2.7.2"
+    "vite": "^2.7.2",
+    "vitepress": "^1.0.0-alpha.4"
   },
   "repository": {
     "url": "https://github.com/chan-max/Crush"
