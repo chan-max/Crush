@@ -9,29 +9,26 @@ import { useNumber } from "@crush/reactivity/lib/custom/number";
 import { watchRef } from "@crush/reactivity/lib/watchRef";
 import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watchReactive";
 import { useBoolean } from "@crush/reactivity/lib/custom/boolean";
-
-var obj = reactive({ a: 66, b: { c: 798456 } })
+import { useRefState } from "@crush/core/lib/instance/refState";
 
 var root = {
-    components: {
-        tom: { template: `tom` }
-    },
+
     template: /*html*/`
-        <button @click="add" ref="btn"> y {{y}} </button>
-        <tom ref="tom" x="666">
+        <button @click="setTitle(title+'!')" > {{title}} </button>
     `,
     create() {
-        this.y = 666
-        this.add = () => this.y++
+        let { title, setTitle, onTitleChange } = useRefState('title')
+        onTitleChange((newValue,oldValue) => {
+            document.title = newValue
+            console.log(newValue,oldValue);
+        })
     },
 }
-
 
 
 var app = createApp(root)
 
 console.log('app', app);
 var instance = app.mount('#app')
-
 
 
