@@ -68,7 +68,8 @@ export class App {
     plugins: Set<PluginType> = new Set()
     use(plugin: PluginType, ...options: any[]) {
         if (this.plugins.has(plugin)) return
-        (isFunction(plugin) ? plugin : plugin.install)(this, ...options)
+        let install = isFunction(plugin) ? plugin : plugin.install
+        install.call(plugin, this, ...options)
     }
 
     container: Element | null = null

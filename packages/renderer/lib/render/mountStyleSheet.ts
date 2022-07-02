@@ -11,7 +11,7 @@ import { docCreateElement, insertElement } from "../dom"
 export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent: any) => {
     const { props, children } = vnode
     var el: any = docCreateElement('style')
-    mountAttributes(el, props, false)
+    mountAttributes(el, props, parent, false)
     vnode.el = el
     insertElement(el, container, anchor)
     var sheet = el.sheet

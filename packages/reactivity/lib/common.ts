@@ -14,6 +14,11 @@ export const enum ReactiveFlags {
 
 export const ReactiveTypeSymbol = Symbol('ReactiveType')
 
+// ref 或 reactive
+export function isProxy(value: any) {
+    return value && value[ReactiveTypeSymbol]
+}
+
 // 可被代理的类型 ， 响应式或只读
 export function isProxyType(value: any) {
     switch (typeOf(value)) {
@@ -61,6 +66,3 @@ export function isRef(value: any) {
     return value && value[ReactiveFlags.IS_REF]
 }
 
-export function isProxy(value: any) {
-    return value && value[ReactiveTypeSymbol]
-}

@@ -48,9 +48,9 @@ const scopeProperties: any = {
     $listeners: (instance: any) => (event: string) => getInstancetEventListeners(instance, event)
 }
 
-export function defineScopeProperty(key: string, getter: any) {
-    scopeProperties[key] = getter
-}
+export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter
+
+
 
 // inject scope property
 export function createScope(instance: any) {

@@ -30,48 +30,18 @@ var Crush = (function (exports) {
     };
 
     // compiler required : 
-    /*
-        model types :
-        checkbox
-        color
-        date
-        rang
-    */
-    const model = {
-        created(el) {
-            debugger;
-        },
-        beforeMount() {
-        },
-        mounted() {
-        },
-        beforeUpdate(el, infos, vnode) {
-            vnode.props._assigner;
-            debugger;
-        },
-        updated() {
-        },
-        beforeUnmount() {
-        },
-        unmounted() {
+    const modelText = {
+        created(el, _, vnode) {
+            const changeModelValue = vnode.props._changeModelValue;
+            el.addListener('input', () => {
+                changeModelValue(el.value);
+            });
         }
     };
 
-    /*
-        transition for single Element
-    */
-    const transition = {
-        beforeMount(el, bindings, vnode) {
-            debugger;
-        }
-    };
-
-    const builtInComponents = {};
-    const builtInDirectives$1 = {
-        show,
-        model,
-        transition
-    };
+    function showComponent(props, slots) {
+        return slots.default();
+    }
 
     const cache = (fn) => {
         const cache = Object.create(null);
@@ -141,7 +111,7 @@ var Crush = (function (exports) {
     }
 
     function isNumber(value) {
-        return typeof value === 'number' && value !== NaN;
+        return typeof value === 'number' && !isNaN(value);
     }
     function isString(value) {
         return typeof value === 'string';
@@ -155,6 +125,9 @@ var Crush = (function (exports) {
         // ! do not toLowerCase
         return objectToString.call(value).slice(8, -1);
     }
+    const isPromise = (value) => {
+        return isObject(value) && isFunction(value.then) && isFunction(value.catch);
+    };
     const isArray = Array.isArray;
 
     const camelizeRE = /-(\w)/g;
@@ -192,8 +165,8 @@ var Crush = (function (exports) {
     };
     const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value);
     const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
-    const addListener = (el, event, handler, options = null) => el.addListener(event, handler, options);
-    const removeListener = (el, event, handler, options = null) => el.removeListener(event, handler, options);
+    const addListener = (el, event, handler, options = null) => el.addEventListener(event, handler, options);
+    const removeListener = (el, event, handler, options = null) => el.removeEventListener(event, handler, options);
     function onceListener(el, event, handler, options = null) {
         var onceHandler = () => {
             handler();
@@ -201,6 +174,129 @@ var Crush = (function (exports) {
         };
         addListener(el, event, onceHandler, options);
     }
+
+    /*
+        duration
+        timingFunction
+        delay
+    */
+    const createTransition = (transitionOptions) => new TransitionDescription(transitionOptions);
+    //! 多个元素可能共享同一个过渡描述实例，所以调用相关方法需要手动传入对应得元素
+    class TransitionDescription {
+        constructor(transitionOptions) {
+            this.initOptions(transitionOptions);
+        }
+        type; // css / animation
+        name;
+        duration; // css一般不需要
+        // hooks
+        onBeforeEnter;
+        onEnter;
+        onAfterEnter;
+        onEnterCancelled;
+        onBeforeLeave;
+        onLeave;
+        onAfterLeave;
+        onLeaveCancelled;
+        initOptions(transitionOptions) {
+            transitionOptions ||= emptyObject;
+            const { type, name, duration, 
+            // hooks
+            onBeforeEnter, onEnter, onAfterEnter, onEnterCancelled, onBeforeLeave, onLeave, onAfterLeave, onLeaveCancelled } = transitionOptions;
+            this.name = name || 'transition';
+            this.type = type || 'css';
+            this.duration = duration;
+            this.onBeforeEnter = onBeforeEnter;
+            this.onEnter = onEnter;
+            this.onAfterEnter = onAfterEnter;
+            this.onEnterCancelled = onEnterCancelled;
+            this.onBeforeLeave = onBeforeLeave;
+            this.onLeave = onLeave;
+            this.onAfterLeave = onAfterLeave;
+            this.onLeaveCancelled = onLeaveCancelled;
+        }
+        update(transitionOptions) {
+            this.initOptions(transitionOptions);
+        }
+        beforeEnter(el) {
+        }
+        doEnter(el) {
+            addClass(el, `${this.name}-enter`);
+            addClass(el, `${this.name}-enter-from`);
+            requestAnimationFrame(() => {
+                addClass(el, `${this.name}-enter-to`);
+                removeClass(el, `${this.name}-enter-from`);
+            });
+        }
+        finishEnter(el) {
+            removeClass(el, `${this.name}-enter-to`);
+            removeClass(el, `${this.name}-enter`);
+        }
+        cancelEnter(el) {
+            console.log('cancel enter');
+            this.finishEnter(el);
+        }
+        beforeLeave(el) {
+        }
+        doLeave(el) {
+            addClass(el, `${this.name}-leave-from`);
+            document.body.offsetHeight;
+            addClass(el, `${this.name}-leave`);
+            requestAnimationFrame(() => {
+                addClass(el, `${this.name}-leave-to`);
+                removeClass(el, `${this.name}-leave-from`);
+            });
+        }
+        finishLeave(el) {
+            removeClass(el, `${this.name}-leave-to`);
+            removeClass(el, `${this.name}-leave`);
+        }
+        cancelLeave(el) {
+            console.log('cancelLeave');
+            this.finishLeave(el);
+        }
+    }
+
+    const transitionComponent = {
+        props: {},
+        render: ({ $slots }) => $slots.default(),
+        beforeMount({ $instance: { scope, renderingVnode } }) {
+            const transtion = createTransition({});
+            renderingVnode.forEach((vnode) => {
+                vnode.transition = transtion;
+            });
+        },
+        beforeUpdate({ $instance: { renderingVnode } }) {
+            const transtion = createTransition({});
+            renderingVnode && renderingVnode.forEach((vnode) => {
+                vnode.transition = transtion;
+            });
+        }
+    };
+    // 第一次进入任何元素都不会过渡
+    const transitionGroupComponent = {
+        props: {},
+        render: ({ $slots }) => $slots.default(),
+        beforeUpdate({ $instance: { scope, vnode, renderingVnode } }) {
+            const transtion = createTransition({});
+            const mountList = renderingVnode.filter((patchKey) => !vnode.map((_) => _.patchKey).includes(patchKey));
+            const unmountList = vnode.filter((patchKey) => !renderingVnode.map((_) => _.patchKey).includes(patchKey));
+            const transitionList = mountList.concat(unmountList);
+            transitionList.forEach((_) => {
+                _.transition = transtion;
+            });
+        }
+    };
+
+    const builtInComponents = {
+        show: showComponent,
+        transition: transitionComponent,
+        transitionGroup: transitionGroupComponent
+    };
+    const builtInDirectives$1 = {
+        show,
+        modelText,
+    };
 
     function createNode(nodeType) {
         return {
@@ -211,16 +307,39 @@ var Crush = (function (exports) {
             children: null
         };
     }
-    function createComponent(type, props, slots, key = uid()) {
-        var component = createNode(14 /* COMPONENT */);
-        component.type = type;
-        component.props = props;
-        component.children = slots;
-        component.key = key;
-        return component;
+    const COMPONENT_TYPE = Symbol('ComponentType');
+    function createComponent(type, props, children, key = uid()) {
+        let componentFlag = type[COMPONENT_TYPE];
+        if (!componentFlag) {
+            // stateful component
+            if (isObject(type)) {
+                componentFlag = 14 /* COMPONENT */;
+                resolveOptions(type);
+            }
+            else if (isFunction(type)) {
+                // render component
+                componentFlag = 15 /* RENDER_COMPONENT */;
+            }
+            mark(type, COMPONENT_TYPE, componentFlag);
+        }
+        return {
+            nodeType: componentFlag,
+            type,
+            props,
+            children,
+            key
+        };
     }
     function createElement(tagName, props, children, key = uid()) {
         var node = createNode(13 /* HTML_ELEMENT */);
+        node.type = tagName;
+        node.props = props;
+        node.children = children;
+        node.key = key;
+        return node;
+    }
+    function createSVGElement(tagName, props, children, key = uid()) {
+        var node = createNode(9 /* SVG_ELEMENT */);
         node.type = tagName;
         node.props = props;
         node.children = children;
@@ -236,6 +355,15 @@ var Crush = (function (exports) {
         node.key = key;
         return node;
     }
+    const Comment = Symbol('Comment');
+    function createComment(text, key = uid()) {
+        return {
+            type: Comment,
+            nodeType: 10 /* HTML_COMMENT */,
+            children: text,
+            key
+        };
+    }
     const Fragment = Symbol('Fragment');
     function createFragment(children, key = uid()) {
         const f = createNode(1 /* FRAGMENT */);
@@ -246,7 +374,7 @@ var Crush = (function (exports) {
     }
 
     var createStyleSheet = (props, children, key = uid()) => {
-        var node = createNode(16 /* STYLE */);
+        var node = createNode(17 /* STYLE */);
         node.props = props;
         node.children = children;
         node.key = key;
@@ -255,41 +383,41 @@ var Crush = (function (exports) {
     };
     var createStyle = (selector, children, key) => {
         return {
-            nodeType: 25 /* STYLE_RULE */,
+            nodeType: 26 /* STYLE_RULE */,
             selector,
             children,
             key
         };
     };
     var createMedia = (media, children, key) => ({
-        nodeType: 21 /* MEDIA_RULE */,
+        nodeType: 22 /* MEDIA_RULE */,
         media,
         children,
         key
     });
     var createKeyframes = (keyframes, children, key = uid()) => {
-        var node = createNode(23 /* KEYFRAMES_RULE */);
+        var node = createNode(24 /* KEYFRAMES_RULE */);
         node.keyframes = keyframes;
         node.children = children;
         node.key = key;
         return node;
     };
     var createKeyframe = (keyframe, children, key = uid()) => {
-        var node = createNode(26 /* KEYFRAME_RULE */);
+        var node = createNode(27 /* KEYFRAME_RULE */);
         node.keyframe = keyframe;
         node.children = children;
         node.key = key;
         return node;
     };
     var createSupports = (supports, children, key) => ({
-        nodeType: 22 /* SUPPORTS_RULE */,
+        nodeType: 23 /* SUPPORTS_RULE */,
         supports,
         children,
         key
     });
     var createDeclaration = (children, key) => {
         return {
-            nodeType: 28 /* DECLARATION */,
+            nodeType: 29 /* DECLARATION */,
             /*
                 render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
             */
@@ -315,7 +443,7 @@ var Crush = (function (exports) {
             rule.patchKey = patchKey;
             rule.parent = parent;
             switch (rule.nodeType) {
-                case 25 /* STYLE_RULE */:
+                case 26 /* STYLE_RULE */:
                     flattedRules.push(rule);
                     var _children = rule.children;
                     rule.children = null;
@@ -323,22 +451,22 @@ var Crush = (function (exports) {
                         doFlat(_children, flattedRules, rule);
                     }
                     break;
-                case 28 /* DECLARATION */:
+                case 29 /* DECLARATION */:
                     if (!rule.parent) {
                         debugger;
                         // 声明不再任何样式规则或媒体规则下时,应该报错
                     }
-                    else if (rule.parent.nodeType === 25 /* STYLE_RULE */) {
+                    else if (rule.parent.nodeType === 26 /* STYLE_RULE */) {
                         (rule.parent.children ||= []).push(rule);
                     }
-                    else if (rule.parent.nodeType === 26 /* KEYFRAME_RULE */) {
+                    else if (rule.parent.nodeType === 27 /* KEYFRAME_RULE */) {
                         (rule.parent.children ||= []).push(rule);
                     }
                     else {
                         /*
                             当一条样式声明不时样式规则的子节点
                         */
-                        if (rule.parent.nodeType === 21 /* MEDIA_RULE */) {
+                        if (rule.parent.nodeType === 22 /* MEDIA_RULE */) {
                             /*
                                 一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
                                 此时和一直寻找parent的选择器
@@ -360,15 +488,15 @@ var Crush = (function (exports) {
                         }
                     }
                     continue;
-                case 21 /* MEDIA_RULE */:
+                case 22 /* MEDIA_RULE */:
                     rule.children = flatRules(rule.children, rule);
                     flattedRules.push(rule);
                     break;
-                case 22 /* SUPPORTS_RULE */:
+                case 23 /* SUPPORTS_RULE */:
                     rule.children = flatRules(rule.children);
                     flattedRules.push(rule);
                     break;
-                case 23 /* KEYFRAMES_RULE */:
+                case 24 /* KEYFRAMES_RULE */:
                     rule.children = flatRules(rule.children);
                     /*
                         在此处需要把动画下的每一帧的样式处理成对象形式
@@ -379,7 +507,7 @@ var Crush = (function (exports) {
                     });
                     flattedRules.push(rule);
                     break;
-                case 26 /* KEYFRAME_RULE */:
+                case 27 /* KEYFRAME_RULE */:
                     /* 需要和styleRule处理方式一样 */
                     flattedRules.push(rule);
                     var _children = rule.children;
@@ -407,7 +535,7 @@ var Crush = (function (exports) {
         */
         var result = [];
         flatted.forEach((rule) => {
-            if (rule.nodeType === 25 /* STYLE_RULE */) {
+            if (rule.nodeType === 26 /* STYLE_RULE */) {
                 /*
                     children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                     并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
@@ -432,9 +560,18 @@ var Crush = (function (exports) {
     /*
         处理结果返回始终是数组
     */
-    function processRenderResult(node, key = null) {
+    function processStringRender(source, key) {
+        source = String(source);
+        return source.startsWith('! ') ?
+            createComment(source.slice(2), key) :
+            createText(source, key);
+    }
+    function processRenderResult(node, parentKey) {
         if (!node) {
             return null;
+        }
+        if (isString(node) || isNumber(node)) {
+            node = processStringRender(node, parentKey);
         }
         if (!isArray(node)) {
             node = [node];
@@ -444,21 +581,23 @@ var Crush = (function (exports) {
             if (!child)
                 return; // 空节点筛除  
             if (child.nodeType === 1 /* FRAGMENT */) {
-                /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key */
+                /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
+                    当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
+                */
                 flattedNode = flattedNode.concat(processRenderResult(child.children, child.key));
             }
             else {
-                if (key) {
-                    child.patchKey = key + '_' + child.key;
+                if (parentKey) {
+                    child.patchKey = parentKey + '_' + child.key;
                 }
                 else {
                     child.patchKey = child.key;
                 }
-                if (child.nodeType === 13 /* HTML_ELEMENT */) {
+                if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */) {
                     // 子节点递归处理
                     child.children = processRenderResult(child.children);
                 }
-                if (child.nodeType === 16 /* STYLE */) {
+                if (child.nodeType === 17 /* STYLE */) {
                     child.children = flatRules(child.children, null, child.patchKey);
                 }
                 flattedNode.push(child);
@@ -466,57 +605,6 @@ var Crush = (function (exports) {
         });
         return flattedNode;
     }
-
-    /*
-        input nodeType return nodeKeyword
-        input nodeKeyword return nodeType
-    */
-    exports.NodesMap = void 0;
-    (function (NodesMap) {
-        NodesMap[NodesMap["if"] = 3] = "if";
-        NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
-        NodesMap[NodesMap["else"] = 5] = "else";
-        NodesMap[NodesMap["for"] = 6] = "for";
-        NodesMap[NodesMap["slot"] = 34] = "slot";
-        NodesMap[NodesMap["outlet"] = 35] = "outlet";
-        NodesMap[NodesMap["..."] = 29] = "...";
-        NodesMap[NodesMap["@"] = 20] = "@";
-        NodesMap[NodesMap["--"] = 31] = "--";
-        NodesMap[NodesMap["media"] = 21] = "media";
-        NodesMap[NodesMap["keyframes"] = 23] = "keyframes";
-        NodesMap[NodesMap["supports"] = 22] = "supports";
-        NodesMap[NodesMap["style"] = 16] = "style";
-        NodesMap[NodesMap["class"] = 17] = "class";
-        NodesMap[NodesMap["template"] = 2] = "template";
-        NodesMap[NodesMap["element"] = 11] = "element";
-        NodesMap[NodesMap["component"] = 15] = "component";
-        NodesMap[NodesMap["model"] = 36] = "model";
-    })(exports.NodesMap || (exports.NodesMap = {}));
-    function keyOf(nodeType) {
-        return exports.NodesMap[nodeType];
-    }
-
-    const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
-        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
-        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
-        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
-        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
-        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
-        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
-        'option,output,progress,select,textarea,details,dialog,menu,' +
-        'summary,template,blockquote,iframe,tfoot,area,base,br,col,embed,hr,img,input,link,meta,param,source,track,wbr';
-    const isHTMLTag = makeMap(HTML_TAGS);
-    const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,' +
-        'defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,' +
-        'feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,' +
-        'feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,' +
-        'feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,' +
-        'fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,' +
-        'foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,' +
-        'mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,' +
-        'polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,' +
-        'text,textPath,title,tspan,unknown,use,view';
-    const isSVGTag = makeMap(SVG_TAGS);
 
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
     const isReservedProp = (key) => key.startsWith(`_`);
@@ -645,7 +733,7 @@ var Crush = (function (exports) {
         if (isArray(keyframe)) {
             return keyframe.map(normalizeKeyText).join(',');
         }
-        if (isNumberString(keyframe)) {
+        if (isNumber(Number(keyframe))) {
             // 为数字或者数字字符串
             return `${keyframe}%`;
         }
@@ -723,6 +811,9 @@ var Crush = (function (exports) {
     function getElementStyleValue(el, key) {
         return getStyleValue(el.style, key);
     }
+    function getElementComputedStyleValue(el, key) {
+        return getStyleValue(window.getComputedStyle(el), key);
+    }
     function getStyle(style, keys) {
         if (isObject(keys)) {
             keys = Object.keys(keys);
@@ -743,12 +834,12 @@ var Crush = (function (exports) {
         return getStyle(window.getComputedStyle(el), keys);
     }
 
-    const globalComponentListeners = new WeakMap();
+    const globalInstanceEventListeners = new WeakMap();
     function getInstanceEvents(instance) {
-        let listenersMap = globalComponentListeners.get(instance);
+        let listenersMap = globalInstanceEventListeners.get(instance);
         if (!listenersMap) {
             listenersMap = new Map();
-            globalComponentListeners.set(instance, listenersMap);
+            globalInstanceEventListeners.set(instance, listenersMap);
         }
         return listenersMap;
     }
@@ -813,46 +904,57 @@ var Crush = (function (exports) {
     // native events
 
     function updateClass(el, pClass, nClass) {
-        pClass ||= emptyObject;
-        nClass ||= emptyObject;
+        pClass = normalizeClass(pClass);
+        nClass = normalizeClass(nClass);
         for (let className of unionkeys(pClass, nClass)) {
             var p = pClass[className];
             var n = nClass[className];
             p ? (n || removeClass(el, className)) : (n && addClass(el, className));
         }
     }
-    function mountClass(_class, el) {
-        updateClass(emptyObject, _class, el);
+    function mountClass(el, _class) {
+        updateClass(el, emptyObject, _class);
     }
     function unmountClass(el) {
         el.className = '';
     }
-    function mountAttributes(el, props) {
-        updateAttributes(el, emptyObject, props);
+    function mountAttributes(el, props, instance, isSVG) {
+        updateAttributes(el, emptyObject, props, instance, isSVG);
     }
-    function updateAttributes(el, pProps, nProps) {
+    function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
         pProps ||= emptyObject;
         nProps ||= emptyObject;
         for (let propName of unionkeys(pProps, nProps)) {
             var pValue = pProps[propName];
             var nValue = nProps[propName];
-            if (propName.startsWith('_')) ;
-            else if (isEvent(propName)) {
-                var { event, options } = parseNativeEventName(propName);
-                updateNativeEvents(el, event, pValue, nValue, options);
-            }
-            else if (propName === keyOf(16 /* STYLE */)) {
-                updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue));
-            }
-            else if (propName === keyOf(17 /* CLASS */)) {
-                updateClass(el, normalizeClass(pValue), normalizeClass(nValue));
-            }
-            else if (propName in el) { // dom props
-                (pValue !== nValue) && (el[propName] = nValue);
-            }
-            else {
-                // attribute
-                (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
+            switch (propName) {
+                case 'style':
+                    updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue));
+                    break;
+                case 'class':
+                case 'className':
+                    updateClass(el, pValue, nValue);
+                    break;
+                case 'ref':
+                    let refs = instance.refs ||= {};
+                    if (nValue !== pValue) {
+                        pValue && (refs[pValue] = null);
+                        nValue && (refs[nValue] = el);
+                    }
+                    break;
+                default:
+                    if (propName.startsWith('_')) ;
+                    else if (isEvent(propName)) {
+                        var { event, options } = parseNativeEventName(propName);
+                        updateNativeEvents(el, event, pValue, nValue, options);
+                    }
+                    else if (propName in el) { // dom props
+                        (pValue !== nValue) && (el[propName] = nValue);
+                    }
+                    else {
+                        // attribute
+                        (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
+                    }
             }
         }
     }
@@ -871,10 +973,10 @@ var Crush = (function (exports) {
     /*
         mountStyleSheet will create a style element
     */
-    const mountStyleSheet = (vnode, container, anchor) => {
+    const mountStyleSheet = (vnode, container, anchor, parent) => {
         const { props, children } = vnode;
         var el = docCreateElement('style');
-        mountAttributes(el, props);
+        mountAttributes(el, props, parent, false);
         vnode.el = el;
         insertElement(el, container, anchor);
         var sheet = el.sheet;
@@ -887,19 +989,19 @@ var Crush = (function (exports) {
     }
     function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
         switch (rule.nodeType) {
-            case 25 /* STYLE_RULE */:
+            case 26 /* STYLE_RULE */:
                 mountStyleRule(sheet, rule, vnode, index);
                 break;
-            case 21 /* MEDIA_RULE */:
+            case 22 /* MEDIA_RULE */:
                 mountMediaRule(sheet, rule, vnode, index);
                 break;
-            case 22 /* SUPPORTS_RULE */:
+            case 23 /* SUPPORTS_RULE */:
                 mountSupportsRule(sheet, rule, vnode, index);
                 break;
-            case 23 /* KEYFRAMES_RULE */:
+            case 24 /* KEYFRAMES_RULE */:
                 mountKeyframesRule(sheet, rule, vnode, index);
                 break;
-            case 26 /* KEYFRAME_RULE */:
+            case 27 /* KEYFRAME_RULE */:
                 mountKeyframeRule(sheet, rule, vnode, index);
                 break;
         }
@@ -956,41 +1058,114 @@ var Crush = (function (exports) {
         }
     }
 
-    function mount(vnode, container, anchor = null) {
+    function mountRenderComponent(vnode, container, anchor, parent) {
+        const { type, props, children } = vnode;
+        const renderResult = type.call(null, props, children);
+        const next = processRenderResult(renderResult);
+        vnode.vnode = next; // 保存当前组件的树
+        patch(null, next, container, anchor, parent);
+    }
+    function updateRenderComponent(p, n, container, anchor, parent) {
+        console.log('update render component');
+        const { type, props, children } = n;
+        const renderResult = type.call(null, props, children);
+        const next = processRenderResult(renderResult);
+        n.vnode = next; //
+        const prev = p.vnode;
+        patch(prev, next, container, anchor, parent);
+    }
+    function unmountRenderComponent(vnode, container, anchor, parent) {
+        patch(vnode.vnode, null, container, anchor, parent);
+    }
+
+    // appear ，当前袁旭
+    /*
+        duration : 可传时间毫秒 ，slow , fast , normal 等修饰符 , 进入时间和离开时间
+    */
+    const isLeavingElementMap = {};
+    function transitionEnter(vnode, insertFn) {
+        const { transition, el, patchKey } = vnode;
+        // 此时的el 是新创建的el，与正在卸载的不是一个元素，所以要想办法拿到之前的元素（正在执行离开动画的元素，并让他直接卸载即可）
+        let ile = isLeavingElementMap[patchKey];
+        // 移除之前离开动画没执行完的元素
+        if (ile) {
+            transition.cancelLeave(ile);
+            removeElement(ile);
+            isLeavingElementMap[patchKey] = null;
+        }
+        el.entering = true;
+        insertFn();
+        transition.doEnter(el);
+        onceListener(el, 'transitionend', () => {
+            transition.finishEnter(el);
+            el.entering = false;
+        });
+    }
+    function transitionLeave(vnode) {
+        const { transition, el, patchKey } = vnode;
+        if (el.entering) {
+            transition.cancelEnter(el);
+        }
+        transition.doLeave(el);
+        isLeavingElementMap[patchKey] = el;
+        onceListener(el, 'transitionend', () => {
+            transition.finishLeave(el);
+            isLeavingElementMap[patchKey] = null;
+            removeElement(el);
+        });
+    }
+
+    function mount(vnode, container, anchor = null, parent = null) {
         switch (vnode.nodeType) {
             case 13 /* HTML_ELEMENT */:
-                mountElement(vnode, container, anchor);
+                mountElement(vnode, container, anchor, parent);
                 break;
+            case 9 /* SVG_ELEMENT */:
+                mountElement(vnode, container, anchor, parent, true);
             case 12 /* TEXT */:
                 mountText(vnode, container, anchor);
                 break;
+            case 10 /* HTML_COMMENT */:
+                insertElement(vnode.el = docCreateComment(vnode.children), container, anchor);
             case 14 /* COMPONENT */:
-                mountComponent(vnode, container, anchor);
+                mountComponent(vnode, container, anchor, parent);
                 break;
-            case 16 /* STYLE */:
-                mountStyleSheet(vnode, container, anchor);
+            case 15 /* RENDER_COMPONENT */:
+                mountRenderComponent(vnode, container, anchor, parent);
+                break;
+            case 17 /* STYLE */:
+                mountStyleSheet(vnode, container, anchor, parent);
                 break;
         }
     }
-    function mountChildren(children, container, anchor) {
+    function mountChildren(children, container, anchor, parent) {
         if (!children)
             return;
         children.forEach((child) => {
-            mount(child, container, anchor);
+            mount(child, container, anchor, parent);
         });
     }
-    function mountElement(vnode, container, anchor) {
-        const { type, props, children } = vnode;
+    function mountElement(vnode, container, anchor, parent, isSVG = false) {
+        // 1
+        processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
+        // 2
+        const { type, props, children, transition } = vnode;
         // create 
-        var el = vnode.el = docCreateElement(type);
-        mountAttributes(el, props);
+        const el = vnode.el = docCreateElement(type, isSVG);
+        mountAttributes(el, props, parent, isSVG);
         processHook("created" /* CREATED */, vnode);
         processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
-        insertElement(el, container, anchor);
+        let insertFn = () => insertElement(el, container, anchor);
+        if (transition) {
+            transitionEnter(vnode, insertFn);
+        }
+        else {
+            insertFn();
+        }
         processHook("mounted" /* MOUNTED */, vnode);
-        mountChildren(children, el, anchor);
+        mountChildren(children, el, anchor, parent);
     }
-    function mountText(vnode, container, anchor) {
+    function mountText(vnode, container, anchor, parent) {
         var el = docCreateText(vnode.children);
         vnode.el = el;
         insertElement(el, container, anchor);
@@ -1000,22 +1175,32 @@ var Crush = (function (exports) {
         const { instance } = component;
         const { vnode } = instance;
         processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
-        patch(vnode, null, container, anchor);
+        patch(vnode, null, container, anchor, parent);
         processHook("unmounted" /* UNMOUNTED */, component);
     };
 
-    function unmount(vnode, container, anchor) {
+    function unmount(vnode, container, anchor, parent) {
         switch (vnode.nodeType) {
             case 13 /* HTML_ELEMENT */:
                 unmountElement(vnode);
                 break;
-            case 16 /* STYLE */:
-                unmountElement(vnode, true);
+            case 10 /* HTML_COMMENT */:
+                removeElement(vnode.el);
+                break;
+            case 17 /* STYLE */:
+                unmountElement(vnode);
+                break;
+            case 9 /* SVG_ELEMENT */:
+                unmountElement(vnode);
+                break;
             case 12 /* TEXT */:
                 removeElement(vnode.el);
                 break;
             case 14 /* COMPONENT */:
                 unmountComponent(vnode, container, anchor);
+                break;
+            case 15 /* RENDER_COMPONENT */:
+                unmountRenderComponent(vnode, container, anchor, parent);
                 break;
         }
     }
@@ -1023,13 +1208,18 @@ var Crush = (function (exports) {
         // 卸载过程目前不需要锚点
         children.forEach(unmount);
     }
-    function unmountElement(vnode, isStyle = false) {
+    function unmountElement(vnode) {
+        const { el, transition } = vnode;
         processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
-        if (vnode.children && !isStyle) {
+        if (vnode.children && vnode.nodeType !== 17 /* STYLE */) {
             unmountChildren(vnode.children);
         }
-        vnode.el;
-        removeElement(vnode.el);
+        if (transition) {
+            transitionLeave(vnode);
+        }
+        else {
+            removeElement(el);
+        }
         processHook("unmounted" /* UNMOUNTED */, vnode);
     }
 
@@ -1042,9 +1232,15 @@ var Crush = (function (exports) {
         for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
             let pValue = pProps[prop];
             let nValue = nProps[prop];
-            if (pValue === nValue)
-                continue;
             if (prop.startsWith('_')) ;
+            else if (prop === 'ref') {
+                // ref component
+                let refs = instance.parent.refs ||= {};
+                if (nValue !== pValue) {
+                    pValue && (refs[pValue] = null);
+                    nValue && (refs[nValue] = instance);
+                }
+            }
             else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
                 // 未定义
                 let attrs = instance.attrs ||= {};
@@ -1053,7 +1249,6 @@ var Crush = (function (exports) {
             else if (isEvent(prop)) {
                 // events
                 var { event, _arguments, modifiers } = parseEventName(prop);
-                debugger;
                 updateInstanceListeners(instance, event, pValue, nValue);
             }
             else {
@@ -1080,12 +1275,14 @@ var Crush = (function (exports) {
         }
     }
 
-    const updateComponent = (p, n, container, anchor) => {
+    const updateComponent = (p, n, container, anchor, parent) => {
         // 进入update 则patchkey一定相同
-        var instance = n.instance = p.instance;
-        updateComponentProps(instance, p.props, n.props);
-        // update props ...
-        instance.update(n);
+        const { instance, props: pProps } = p;
+        n.instance = instance;
+        updateComponentProps(instance, pProps, n.props);
+        // update slots ... 不需要更新slot
+        // 把新节点存到更新方法上，有该节点代表为外部更新，而非自更新
+        instance.updatingComponentVnode = n;
     };
 
     /*
@@ -1205,18 +1402,18 @@ var Crush = (function (exports) {
             else {
                 // update
                 switch (nRule.nodeType) {
-                    case 25 /* STYLE_RULE */:
+                    case 26 /* STYLE_RULE */:
                         updateStyleRule(pRule, nRule);
                         break;
-                    case 21 /* MEDIA_RULE */:
+                    case 22 /* MEDIA_RULE */:
                         updateMediaRule(pRule, nRule, vnode);
                         break;
-                    case 22 /* SUPPORTS_RULE */:
+                    case 23 /* SUPPORTS_RULE */:
                         // supports can't update 
                         deleteRule(sheet, cursor);
                         mountRule(sheet, nRule, vnode, cursor);
                         break;
-                    case 23 /* KEYFRAMES_RULE */:
+                    case 24 /* KEYFRAMES_RULE */:
                         updateKeyframesRule(pRule, nRule);
                         break;
                 }
@@ -1294,19 +1491,23 @@ var Crush = (function (exports) {
         }
     }
 
-    function update(p, n, container, anchor) {
+    function update(p, n, container, anchor, parent) {
         switch (n.nodeType) {
             case 12 /* TEXT */:
                 updateText(p, n);
                 break;
             case 13 /* HTML_ELEMENT */:
-                updateHTMLElement(p, n, container);
+                updateHTMLElement(p, n, container, anchor, parent);
                 break;
-            case 16 /* STYLE */:
+            case 17 /* STYLE */:
                 updateStyleSheet(p, n);
                 break;
             case 14 /* COMPONENT */:
                 updateComponent(p, n);
+                break;
+            case 15 /* RENDER_COMPONENT */:
+                updateRenderComponent(p, n, container, anchor, parent);
+                break;
         }
     }
     function updateText(p, n) {
@@ -1315,19 +1516,19 @@ var Crush = (function (exports) {
             el.textContent = n.children;
         }
     }
-    function updateHTMLElement(p, n, container, anchor) {
-        var el = n.el = p.el;
+    function updateHTMLElement(p, n, container, anchor, parent) {
+        const el = n.el = p.el;
         processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
-        updateAttributes(el, p.props, n.props);
+        updateAttributes(el, p.props, n.props, parent);
         processHook("updated" /* UPDATED */, n, p);
         // updated hooks should be called here ? or after children update
-        updateChildren(p.children, n.children, container);
+        updateChildren(p.children, n.children, container, anchor, parent);
     }
-    function updateChildren(pChildren, nChildren, container, anchor) {
+    function updateChildren(pChildren, nChildren, container, anchor, parent) {
         var { p, n } = sortChildren(pChildren, nChildren, false);
         var max = Math.max(p.length, n.length);
         for (let i = 0; i < max; i++) {
-            patch(p[i], n[i], container, getAnchor(p, i + 1));
+            patch(p[i], n[i], container, getAnchor(p, i + 1), parent);
         }
     }
     /*
@@ -1342,35 +1543,35 @@ var Crush = (function (exports) {
         }
     }
 
-    const patch = (current, next, container, anchor = null) => {
+    const patch = (current, next, container, anchor, parent) => {
         if (!current) {
             if (next) {
-                isArray(next) ? mountChildren(next, container, anchor) : mount(next, container, anchor);
+                isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent);
             }
         }
         else {
             if (!next) {
                 // 卸载当前节点
-                isArray(current) ? unmountChildren(current) : unmount(current, container, anchor);
+                isArray(current) ? unmountChildren(current) : unmount(current, container, anchor, parent);
             }
             else {
                 if (isArray(current)) {
-                    updateChildren(current, isArray(next) ? next : [next], container);
+                    updateChildren(current, isArray(next) ? next : [next], container, anchor, parent);
                 }
                 else {
                     if (isArray(next)) {
-                        updateChildren([current], next, container);
+                        updateChildren([current], next, container, anchor, parent);
                     }
                     else {
                         // 两个单节点 ， 但key可能不同 
                         if (current.type === next.type && current.patchKey === next.patchKey) {
                             // 类型相同，直接更新
-                            update(current, next, container);
+                            update(current, next, container, anchor, parent);
                         }
                         else {
                             // 类型不同。先卸载，在挂载
-                            unmount(current, container, anchor);
-                            mount(next, container, anchor);
+                            unmount(current, container, anchor, parent);
+                            mount(next, container, anchor, parent);
                         }
                     }
                 }
@@ -1379,6 +1580,26 @@ var Crush = (function (exports) {
     };
 
     const ReactiveTypeSymbol = Symbol('ReactiveType');
+    // 可被代理的类型 ， 响应式或只读
+    function isProxyType(value) {
+        switch (typeOf(value)) {
+            case exports.ReactiveTypes.ARRAY:
+            case exports.ReactiveTypes.OBJECT:
+            case exports.ReactiveTypes.MAP:
+            case exports.ReactiveTypes.SET:
+            case exports.ReactiveTypes.WEAK_MAP:
+            case exports.ReactiveTypes.WEAK_SET:
+                return true;
+            default:
+                return false;
+        }
+    }
+    function markRaw(data) {
+        if (isProxyType(data)) {
+            data[ReactiveTypeSymbol] = true;
+        }
+        return data;
+    }
     exports.ReactiveTypes = void 0;
     (function (ReactiveTypes) {
         ReactiveTypes["OBJECT"] = "Object";
@@ -1405,50 +1626,62 @@ var Crush = (function (exports) {
     }
 
     const TARGET_MAP = new WeakMap();
-    function track(type, target, key) {
+    function getDepsMap(target) {
+        let depsMap = TARGET_MAP.get(target);
+        if (!depsMap) {
+            depsMap = new Map();
+            TARGET_MAP.set(target, depsMap);
+        }
+        return depsMap;
+    }
+    function getDeps(target, key) {
+        let depsMap = getDepsMap(target);
+        let deps = depsMap.get(key);
+        if (!deps) {
+            deps = new Set();
+            depsMap.set(key, deps);
+        }
+        return deps;
+    }
+    function track(target, key) {
         let activeEffect = getActiveEffect();
         if (!activeEffect)
             return;
-        if (type === 4 /* TARGET_TO_KEY */) {
-            let depsMap = TARGET_MAP.get(target);
-            if (!depsMap) {
-                depsMap = new Map();
-                TARGET_MAP.set(target, depsMap);
-            }
-            let deps = depsMap.get(key);
-            if (!deps) {
-                deps = new Set();
-                depsMap.set(key, deps);
-            }
-            deps.add(activeEffect);
-            // 用于清除依赖
-            activeEffect.deps.push(deps);
-        }
-        else {
-            debugger;
-        }
+        let deps = getDeps(target, key);
+        deps.add(activeEffect);
+        // 用于清除依赖
+        activeEffect.deps.push(deps);
     }
-    function trigger(type, target, key) {
-        if (type === 4 /* TARGET_TO_KEY */) {
-            const depsMap = TARGET_MAP.get(target);
-            if (!depsMap)
-                return;
-            var deps = depsMap.get(key);
-            if (!deps)
-                return;
-            // 克隆一份，防止死循环
-            deps = new Set(deps);
-            deps.forEach((effect) => effect.triggerRun());
+    /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
+    const watchDepsSymbol = Symbol('target has changed');
+    function trigger(target, key) {
+        if (key !== watchDepsSymbol) {
+            // 防止递归
+            trigger(target, watchDepsSymbol);
         }
-        else {
-            debugger;
-        }
+        let deps = getDeps(target, key);
+        // copy 防止死循环
+        [...deps].forEach((dep) => {
+            if (isEffect(dep)) {
+                if (dep == getActiveEffect()) {
+                    return;
+                }
+                dep.triggerRun();
+            }
+            else {
+                dep();
+            }
+        });
     }
     const effectStack = [];
     const getActiveEffect = () => effectStack[effectStack.length - 1];
     const setActiveEffect = (effect) => effectStack.push(effect);
     const deleteActiveEffect = () => effectStack.pop();
+    function isEffect(value) {
+        return value && value["isEffect" /* IS_EFFECT */];
+    }
     class ReactiveEffect {
+        ["isEffect" /* IS_EFFECT */] = true;
         // 记录副作用依赖了那些变量
         deps = [];
         effectFn;
@@ -1499,10 +1732,18 @@ var Crush = (function (exports) {
     let _key;
     const getLastVisitTarget = () => _target;
     const getLastVisitKey = () => _key;
+    let _lastSetTarget;
+    let _lastSetKey;
+    let _lastSetOldValue;
+    let _lastSetNewValue;
+    const getLastSetTarget = () => _lastSetTarget; // 获取上一个修改的目标
+    const getLastSetKey = () => _lastSetKey; // 获取上一个修改的key
+    const getLastSetOldValue = () => _lastSetOldValue; // 获取上一个修改前的旧值
+    const getLastSetNewValue = () => _lastSetNewValue; // 获取上一个修改后的新值
     const collectionHandlers = {
         get size() {
             //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
-            track(0 /* SIZE */, _target);
+            debugger;
             return _target.size;
         },
         // set weakset
@@ -1511,7 +1752,7 @@ var Crush = (function (exports) {
                 return warn(_target, 'is readonly , cant add');
             }
             var result = _target.add(value);
-            trigger(1 /* ADD */, _target);
+            debugger;
             // 返回set对象本身
             return result;
         },
@@ -1521,7 +1762,7 @@ var Crush = (function (exports) {
                 return warn(_target, 'is readonly cant clear');
             }
             _target.clear();
-            trigger(12 /* CLEAR */, _target);
+            debugger;
         },
         // map weakmap set weakset
         delete(key) {
@@ -1530,33 +1771,33 @@ var Crush = (function (exports) {
             }
             const result = _target.delete(key);
             if (result) { // 返回为 true 为删除成功
-                trigger(2 /* DELETE */, _target, key);
+                trigger(_target, key);
             }
             return result;
         },
         // map set
         entries() {
-            track(3 /* ITERATE */, _target);
+            debugger;
             return _target.entries();
         },
         // map set
         forEach(fn) {
-            track(3 /* ITERATE */, _target);
+            debugger;
             return _target.forEach(fn);
         },
         // set map weakset weakmap
         has(key) {
-            track(5 /* HAS */, _target, key);
+            track(_target, key);
             return _target.has(key);
         },
         // map set
         keys() {
-            track(3 /* ITERATE */, _target);
+            debugger;
             return _target.keys();
         },
         // map set
         values() {
-            track(3 /* ITERATE */, _target);
+            debugger;
             return _target.values();
         },
         // map weakmap
@@ -1565,13 +1806,13 @@ var Crush = (function (exports) {
                 return warn(_target, 'is readonly , cant set');
             }
             var result = _target.set(key, value);
-            trigger(10 /* SET */, _target, key);
+            trigger(_target, key);
             return result;
         },
         // map weakmap
         get(key) {
             if (!_isReadonly) {
-                track(11 /* GET */, _target, key);
+                track(_target, key);
             }
             var value = _target.get(key);
             return _isShallow ? value : reactive(value);
@@ -1579,7 +1820,7 @@ var Crush = (function (exports) {
     };
     function arrayHandlerWithTrack(...args) {
         if (!_isReadonly) { // 非只读才会收集
-            trigger(9 /* ARRAY_TRACK */, _target);
+            debugger;
         }
         let result = _target[_key](...args);
         return result;
@@ -1588,8 +1829,10 @@ var Crush = (function (exports) {
         if (_isReadonly) {
             return warn(`${_target}is readonly cant ${_key}`);
         }
+        // 用数组修改前的key作为触发依赖
+        let oldKeys = Object.keys(_target);
         let result = _target[_key](...args);
-        trigger(8 /* ARRAY_TRIGGER */, _target);
+        [...oldKeys, 'length'].forEach((key) => trigger(_target, key));
         return result;
     }
     const arrayHandlers = {
@@ -1604,14 +1847,14 @@ var Crush = (function (exports) {
         unshift: arrayHandlerWithTrigger,
         splice: arrayHandlerWithTrigger
     };
-    const SYMBOL_ITERATOR = Symbol.iterator;
     const specialKeyHandler = {
-        [SYMBOL_ITERATOR]: (value) => {
+        [Symbol.iterator]: (value) => {
             // should track ?
-            track(3 /* ITERATE */, _target);
+            debugger;
             return value.bind(_target);
         }
     };
+    // 可用于收集依赖的key
     const isProxyKey = (target, key) => !(key in target) || hasOwn(target, key);
     function createGetter(isReadonly, isShallow, isCollection) {
         return (target, key, receiver) => {
@@ -1642,7 +1885,7 @@ var Crush = (function (exports) {
             else if (isProxyKey(target, key)) {
                 // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
                 if (!isReadonly) {
-                    track(4 /* TARGET_TO_KEY */, target, key);
+                    track(target, key);
                 }
                 var value = Reflect.get(target, key, receiver);
                 if (isShallow) {
@@ -1663,6 +1906,12 @@ var Crush = (function (exports) {
             return value;
         };
     }
+    const onSetCallbacks = new Set();
+    // 注册一个回调函数，当响应式的值改变后触发回掉 => 参数 ： target，key ， newValue ， oldValue
+    function onSet(cb) {
+        onSetCallbacks.add(cb);
+        return () => onSetCallbacks.delete(cb);
+    }
     function createSetter(isReadonly = false, isShallow = false) {
         return (target, key, newValue, receiver) => {
             // 返回 false 时会报错
@@ -1672,8 +1921,15 @@ var Crush = (function (exports) {
             }
             if (isProxyKey(target, key)) {
                 // 不允许设置非自身属性
+                let oldValue = Reflect.get(target, key, receiver);
+                _lastSetTarget = target;
+                _lastSetKey = key;
+                /* 当旧值是一个对象，但变成了基本类型后，则视为一次解绑 */
+                _lastSetOldValue = oldValue;
+                _lastSetNewValue = newValue;
+                onSetCallbacks.forEach((cb) => cb(target, key, newValue, oldValue));
                 Reflect.set(target, key, newValue, receiver);
-                trigger(4 /* TARGET_TO_KEY */, target, key);
+                trigger(target, key);
             }
             return true;
         };
@@ -1686,7 +1942,7 @@ var Crush = (function (exports) {
         if (hasOwn(target, key)) {
             // has 的收集 ， 只有在key删除时才会触发 
             //! bug 使用 with 访问值时会先进入has 在进入get
-            track(4 /* TARGET_TO_KEY */, target, key);
+            track(target, key);
         }
         return Reflect.has(target, key);
     }
@@ -1694,14 +1950,15 @@ var Crush = (function (exports) {
         /*
             for ? in target
         */
-        track(3 /* ITERATE */, target);
+        console.log('track ownKeys');
         return Reflect.ownKeys(target);
     }
     function deleteProperty(target, key) {
         // 为 true 表示删除成功
+        const isOwn = hasOwn(target, key);
         const result = Reflect.deleteProperty(target, key);
-        if (result && hasOwn(target, key)) {
-            trigger(4 /* TARGET_TO_KEY */, target, key);
+        if (result && isOwn) {
+            trigger(target, key);
         }
         return result;
     }
@@ -1796,12 +2053,16 @@ var Crush = (function (exports) {
         return createProxy(value, true, true);
     }
 
-    const ref = (value) => new Ref(value);
+    const ref = (value, options) => new Ref(value, options);
+    const createRefValueSetter = (ref) => (newValue) => ref.value = newValue;
     class Ref {
         [ReactiveTypeSymbol] = true;
         ["isRef" /* IS_REF */] = true;
+        oldValue; // 保存旧值
         _value;
-        constructor(value) {
+        sensitive;
+        constructor(value, options = emptyObject) {
+            this.sensitive = options.sensitive;
             this._value = value;
         }
         get value() {
@@ -1810,88 +2071,47 @@ var Crush = (function (exports) {
             return this._value;
         }
         set value(newValue) {
-            if (this._value === newValue) {
-                // sensitive 
+            // 当 sensitive ，为true时 ， 当值试图从一个值变为另一个相同的值时，即使基本类型或引用类型全等，也会视为一次改变，触发依赖
+            if (this._value === newValue && !this.sensitive) {
                 return;
             }
+            this.oldValue = this._value;
             this._value = newValue;
             // trigger
             triggerRef(this);
         }
     }
-    function trackRef(ref) {
-        var activeEffect = getActiveEffect();
-        if (!activeEffect) {
-            return;
-        }
+    const getRefDeps = (ref) => {
         var deps = TARGET_MAP.get(ref);
         if (!deps) {
             deps = new Set();
             TARGET_MAP.set(ref, deps);
         }
+        return deps;
+    };
+    function trackRef(ref) {
+        var activeEffect = getActiveEffect();
+        if (!activeEffect) {
+            return;
+        }
+        var deps = getRefDeps(ref);
         deps.add(activeEffect);
     }
     function triggerRef(ref) {
-        var deps = TARGET_MAP.get(ref);
-        if (!deps) {
-            return;
-        }
-        deps.forEach((effect) => effect.triggerRun());
+        var deps = getRefDeps(ref);
+        deps.forEach((dep) => {
+            if (isEffect(dep)) {
+                dep.triggerRun();
+            }
+            else {
+                dep();
+            }
+        });
     }
-
-    class ReactiveBoolean extends Ref {
-        constructor(value) {
-            super(value);
-        }
-        toggle() {
-            return this.value = !this.value;
-        }
-        toTrue() {
-            return this.value = true;
-        }
-        toFalse() {
-            return this.value = false;
-        }
-    }
-    function useBoolean(value = true) {
-        return new ReactiveBoolean(value);
-    }
-    class ReactiveString extends Ref {
-        constructor(value) {
-            super(value);
-        }
-        concat(...values) {
-            return this.value.concat(...values);
-        }
-        padEnd(targetLength, padString) {
-            return this.value = this.value.padEnd(targetLength, padString);
-        }
-    }
-    function useString(value = 'hello world') {
-        return new ReactiveString(value);
-    }
-    class ReactiveNumber extends Ref {
-        constructor(value) {
-            super(value);
-        }
-        plus(value = 1) {
-            return this.value += value;
-        }
-        minus(value = 1) {
-            return this.value -= value;
-        }
-        multiply(value = 1) {
-            return this.value *= value;
-        }
-        devide(value = 1) {
-            return this.value /= value;
-        }
-    }
-    function useNumber(value) {
-        return new ReactiveNumber(value);
-    }
-    function useColor() {
-    }
+    // 清除所有与当前ref相关的依赖
+    const cleaarRefDeps = (ref) => {
+        getRefDeps(ref).clear();
+    };
 
     var nextTick = (fn, args = undefined) => {
         var p = Promise.resolve(args);
@@ -1920,6 +2140,9 @@ var Crush = (function (exports) {
     function getCurrentScope() {
         return getCurrentInstance().scope;
     }
+    function getCurrentRenderScope() {
+        return getCurrentInstance().renderScope;
+    }
     function setScopeData(scope, data) {
         if (!isObject(data)) {
             return;
@@ -1929,24 +2152,13 @@ var Crush = (function (exports) {
             scope[key] = data[key];
         }
     }
-    function mountComponent(component, container, anchor = null) {
-        switch (processComponent(component.type)[COMPONENT_TYPE]) {
-            case 0 /* OPTIONS_COMPONENT */:
-                return mountComponent(component, container, anchor);
-            case 3 /* RENDER_COMPONENT */:
-                return mountRenderComponent();
-            case 1 /* ASYNC_COMPONENT */:
-                return mountAsyncComponent();
-            case 2 /* RESOLVED_ASYNC_COMPONENT */:
-                return mountResolvedAsyncComponent();
-        }
-    }
-    function mountComponent(component, container, anchor = null) {
-        const { type, props, children } = component;
-        const instance = createComponentInstance(type);
-        const { scope } = instance;
+    function mountComponent(vnode, container, anchor, parent) {
+        const { type, props, children } = vnode;
+        const instance = createComponentInstance(type, parent);
+        const { scope, renderScope } = instance;
         callHook("beforeCreate" /* BEFORE_CREATE */, instance, { binding: scope }, scope);
-        component.instance = instance;
+        vnode.instance = instance;
+        instance.componentVnode = vnode;
         setCurrentInstance(instance);
         // 初次创建前应该把 slot props 方法等挂载到作用域上
         // 先挂载props ，这样 create hook中才能访问
@@ -1963,7 +2175,7 @@ var Crush = (function (exports) {
         */
         let render;
         if (instance.render) {
-            render = instance.render.bind(scope);
+            render = instance.render.bind(renderScope);
         }
         else if (instance.createRender) {
             render = instance.createRender(renderMethods);
@@ -1971,33 +2183,40 @@ var Crush = (function (exports) {
         else {
             render = emptyFunction;
         }
+        instance.render = render;
         setCurrentInstance(null);
-        processHook("created" /* CREATED */, component);
+        processHook("created" /* CREATED */, vnode);
         // component update
-        let prevComponent = null, nextComponent = component;
         // component update fn
-        function update(next) {
-            const { isMounted, vnode } = instance;
+        function update() {
+            const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance;
             // 每次 更新生成新树
-            if (next) {
-                prevComponent = nextComponent;
-                nextComponent = next;
-            }
-            else {
-                // 自更新时重置 prevComponent ， 防止钩子调用出错
-                prevComponent = null;
-            }
             setCurrentInstance(instance);
-            var nextTree = render();
-            console.log(nextTree);
+            let nVnode = render(scope);
             setCurrentInstance(null);
             // 处理树
-            nextTree = processRenderResult(nextTree);
-            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nextComponent, prevComponent);
-            patch(vnode, nextTree, container, anchor);
-            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nextComponent, prevComponent);
+            let pComponentVnode, nComponentVnode;
+            if (updatingComponentVnode) { // 非自更新，两个节点对比更新
+                nComponentVnode = updatingComponentVnode;
+                pComponentVnode = componentVnode;
+                // 把新节点存到实例上
+                instance.componentVnode = nComponentVnode;
+            }
+            else {
+                nComponentVnode = componentVnode;
+            }
+            // 清理vnode 
+            instance.updatingComponentVnode = null;
+            nVnode = processRenderResult(nVnode);
+            instance.renderingVnode = nVnode;
+            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nComponentVnode, pComponentVnode);
+            if (beforePatch) {
+                beforePatch(pVnode, nVnode);
+            }
+            patch(pVnode, nVnode, container, anchor, instance);
+            instance.vnode = nVnode;
             instance.isMounted = true;
-            instance.vnode = nextTree;
+            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nComponentVnode, pComponentVnode);
         }
         //  call at every update
         instance.update = update;
@@ -2005,13 +2224,6 @@ var Crush = (function (exports) {
         // 手动渲染
         rednerEffect.run();
         return instance;
-    }
-    function mountRenderComponent(component, container, anchor) {
-        debugger;
-    }
-    function mountAsyncComponent(component, container, anchor) {
-    }
-    function mountResolvedAsyncComponent(component, container, anchor) {
     }
 
     var iterableFlag = Symbol.iterator;
@@ -2047,8 +2259,13 @@ var Crush = (function (exports) {
         return results;
     }
 
-    function display(displayData) {
-        return displayData;
+    function customDisplay() {
+    }
+    function display(data) {
+        if (isObject(data) || isArray(data)) {
+            return JSON.stringify(data);
+        }
+        return data;
     }
 
     function getComponent(name) {
@@ -2066,6 +2283,11 @@ var Crush = (function (exports) {
         return directive;
     }
 
+    /*
+        examples
+        x ... scope.x
+        { x : x } => { x : scope.x }
+    */
     function setScopeExp(exp) {
         return exp;
     }
@@ -2273,6 +2495,57 @@ var Crush = (function (exports) {
         return ast;
     }
 
+    /*
+        input nodeType return nodeKeyword
+        input nodeKeyword return nodeType
+    */
+    exports.NodesMap = void 0;
+    (function (NodesMap) {
+        NodesMap[NodesMap["if"] = 3] = "if";
+        NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
+        NodesMap[NodesMap["else"] = 5] = "else";
+        NodesMap[NodesMap["for"] = 6] = "for";
+        NodesMap[NodesMap["slot"] = 35] = "slot";
+        NodesMap[NodesMap["outlet"] = 36] = "outlet";
+        NodesMap[NodesMap["..."] = 30] = "...";
+        NodesMap[NodesMap["@"] = 21] = "@";
+        NodesMap[NodesMap["--"] = 32] = "--";
+        NodesMap[NodesMap["media"] = 22] = "media";
+        NodesMap[NodesMap["keyframes"] = 24] = "keyframes";
+        NodesMap[NodesMap["supports"] = 23] = "supports";
+        NodesMap[NodesMap["style"] = 17] = "style";
+        NodesMap[NodesMap["class"] = 18] = "class";
+        NodesMap[NodesMap["template"] = 2] = "template";
+        NodesMap[NodesMap["element"] = 11] = "element";
+        NodesMap[NodesMap["component"] = 16] = "component";
+        NodesMap[NodesMap["model"] = 37] = "model";
+    })(exports.NodesMap || (exports.NodesMap = {}));
+    function keyOf(nodeType) {
+        return exports.NodesMap[nodeType];
+    }
+
+    const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
+        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
+        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
+        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
+        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
+        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
+        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
+        'option,output,progress,select,textarea,details,dialog,menu,' +
+        'summary,template,blockquote,iframe,tfoot,area,base,br,col,embed,hr,img,input,link,meta,param,source,track,wbr';
+    const isHTMLTag = makeMap(HTML_TAGS);
+    const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,' +
+        'defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,' +
+        'feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,' +
+        'feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,' +
+        'feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,' +
+        'fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,' +
+        'foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,' +
+        'mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,' +
+        'polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,' +
+        'text,textPath,title,tspan,unknown,use,view';
+    const isSVGTag = makeMap(SVG_TAGS);
+
     const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
     function parseIterator(expression) {
         const [_, items, iterable] = extIteratorExp.exec(expression);
@@ -2311,20 +2584,6 @@ var Crush = (function (exports) {
         return texts;
     };
 
-    const inlineStyleDelimiter = /\s*[:;]\s*/;
-    function parseInlineStyle(styleString) {
-        var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
-        var l = chips.length;
-        var styleMap = {};
-        while (l) {
-            styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1]);
-            l -= 2;
-        }
-        return styleMap;
-    }
-    const inlineClassDelimiter = /\s+/;
-    const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
-
     // we can use $(exp) as a dynamic content
     var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
     function parseSelector(selector) {
@@ -2354,7 +2613,7 @@ var Crush = (function (exports) {
             if (scanner.startsWith('}')) {
                 closing = true;
             }
-            else if (scanner.startsWith(keyOf(20 /* AT */))) {
+            else if (scanner.startsWith(keyOf(21 /* AT */))) {
                 /*
                     media conditions
                 */
@@ -2363,21 +2622,21 @@ var Crush = (function (exports) {
                 current = {
                     type
                 };
-                if (type === 21 /* MEDIA_RULE */) {
+                if (type === 22 /* MEDIA_RULE */) {
                     current.media = content;
                 }
-                else if (type === 23 /* KEYFRAMES_RULE */) {
+                else if (type === 24 /* KEYFRAMES_RULE */) {
                     current.keyframes = content;
                 }
-                else if (type === 22 /* SUPPORTS_RULE */) {
+                else if (type === 23 /* SUPPORTS_RULE */) {
                     current.supports = content;
                 }
             }
             else if (scanner.expect('/*')) ;
-            else if (scanner.startsWith(keyOf(29 /* MIXIN */))) {
+            else if (scanner.startsWith(keyOf(30 /* MIXIN */))) {
                 var [mixin] = scanner.exec(mixinRE);
                 var m = {
-                    type: 29 /* MIXIN */,
+                    type: 30 /* MIXIN */,
                     mixin
                 };
                 (declarationGroup ||= []).push(m);
@@ -2413,7 +2672,7 @@ var Crush = (function (exports) {
                     try to get the selector
                 */
                 current = {
-                    type: 25 /* STYLE_RULE */,
+                    type: 26 /* STYLE_RULE */,
                     selector: parseSelector(exResult[0])
                 };
             }
@@ -2439,7 +2698,7 @@ var Crush = (function (exports) {
                 declaration.isImportant = endFlag === '!';
                 (declarationGroup ||= []).push({
                     declaration,
-                    type: 28 /* DECLARATION */
+                    type: 29 /* DECLARATION */
                 });
                 continue;
             }
@@ -2449,7 +2708,7 @@ var Crush = (function (exports) {
             }
             /* process the relation , with cascading struct */
             if (declarationGroup) {
-                var asb = { type: 27 /* DECLARATION_GROUP */ };
+                var asb = { type: 28 /* DECLARATION_GROUP */ };
                 asb.children = declarationGroup;
                 asb.parent = parent;
                 (parent.children ||= []).push(asb);
@@ -2483,10 +2742,10 @@ var Crush = (function (exports) {
     const processRules = (rules, isKeyframe = false) => {
         rules.forEach((rule) => {
             switch (rule.type) {
-                case 25 /* STYLE_RULE */:
+                case 26 /* STYLE_RULE */:
                     const { selector, parent } = rule;
                     if (isKeyframe) {
-                        rule.type = 26 /* KEYFRAME_RULE */;
+                        rule.type = 27 /* KEYFRAME_RULE */;
                     }
                     else {
                         var extendSelectors = parent?.selectors;
@@ -2502,11 +2761,11 @@ var Crush = (function (exports) {
                 case 4 /* ELSE_IF */:
                 case 5 /* ELSE */:
                 case 6 /* FOR */:
-                case 21 /* MEDIA_RULE */:
-                case 22 /* SUPPORTS_RULE */:
+                case 22 /* MEDIA_RULE */:
+                case 23 /* SUPPORTS_RULE */:
                     rule.selectors = rule.parent?.selectors;
                     break;
-                case 23 /* KEYFRAMES_RULE */:
+                case 24 /* KEYFRAMES_RULE */:
                     isKeyframe = true;
                     break;
             }
@@ -2560,13 +2819,13 @@ var Crush = (function (exports) {
         },
         // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
         slot(ast) {
-            ast.type = 34 /* SLOT */;
+            ast.type = 35 /* SLOT */;
             // 插槽名称支持动态， 作用域不支持动态
             // ! slot need : slotName , isDynamicSlot 
-            ast.type = 34 /* SLOT */;
+            ast.type = 35 /* SLOT */;
             const attr = ast.attributeMap;
             if (attr?.name) {
-                attr.name.type = 38 /* SKIP */;
+                attr.name.type = 39 /* SKIP */;
                 ast.slotName = attr.name.value;
                 ast.isDynamicSlot = attr.name.isDynamicValue;
             }
@@ -2575,12 +2834,12 @@ var Crush = (function (exports) {
             }
         },
         component(ast) {
-            ast.type = 15 /* DYNAMIC_COMPONENT */;
+            ast.type = 16 /* DYNAMIC_COMPONENT */;
             const is = ast.attributeMap.is;
             const { isDynamicValue, value } = is;
             ast.is = value;
             ast.isDynamicIs = isDynamicValue;
-            is.type = 38 /* SKIP */;
+            is.type = 39 /* SKIP */;
         },
         element(ast) {
             ast.type = 11 /* DYNAMIC_ELEMENT */;
@@ -2588,10 +2847,10 @@ var Crush = (function (exports) {
             const { isDynamicValue, value } = is;
             ast.is = value;
             ast.isDynamicIs = isDynamicValue;
-            is.type = 38 /* SKIP */;
+            is.type = 39 /* SKIP */;
         },
         style(ast) {
-            ast.type = 16 /* STYLE */;
+            ast.type = 17 /* STYLE */;
             var template = ast.children?.[0].children;
             if (template) {
                 var styleAst = parseCSS(template);
@@ -2647,29 +2906,46 @@ var Crush = (function (exports) {
             /*
                 注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
             */
-            attr.type = 38 /* SKIP */;
+            attr.type = 39 /* SKIP */;
             // 定义插槽无动态插槽 , 第一个参数为slot的名称
             ast.defineSlotName = attr?._arguments?.[0];
             ast.slotScope = attr.value;
         },
         model(attr, ast) {
-            debugger;
-            // 是否需要支持动态的 model type 类型
+            // 是否需要支持动态的 input type 类型 , 如果需要支持动态 ，就需要在指令中判断类型 , 暂不支持
+            attr.type = 34 /* CUSTOM_DIRECTIVE */;
+            const modelValue = attr.value;
+            // change model value
+            ast.attributes.push({
+                type: 7 /* ATTRIBUTE */,
+                property: '_changeModelValue',
+                value: toArrowFunction(`${modelValue} = _`, '_'),
+                isDynamicValue: true,
+            });
+            switch (ast?.attributeMap?.type?.value || 'text') {
+                case 'text':
+                    attr.property = 'modelText';
+                    break;
+                case 'color':
+                    attr.property = 'modelColor';
+                    break;
+            }
+            ast.customDirectives.push(attr);
         }
     };
     const builtInAttributes = {
         style(attr, ast) {
-            attr.type = 16 /* STYLE */;
-            attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value);
+            attr.type = 17 /* STYLE */;
+            // attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
         },
         class(attr, ast) {
-            attr.type = 17 /* CLASS */;
-            attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value);
+            attr.type = 18 /* CLASS */;
+            // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
         }
     };
     const builtInEvents = {
         hook(attr, ast) {
-            attr.type = 38 /* SKIP */;
+            attr.type = 39 /* SKIP */;
             const hooks = attr._arguments;
             hooks.forEach((hook) => {
                 ast.attributes.push({
@@ -2690,7 +2966,7 @@ var Crush = (function (exports) {
             var { flag, isDynamicProperty } = attribute;
             if (flag === '@') {
                 // event
-                attribute.type = 24 /* EVENT */;
+                attribute.type = 25 /* EVENT */;
                 attribute.isHandler = isHandler(attribute.value);
                 if (!isDynamicProperty && builtInEvents[attribute.property]) {
                     // 保留事件
@@ -2701,12 +2977,13 @@ var Crush = (function (exports) {
                 const dirHandler = builtInDirectives[attribute.property];
                 const isCustomDirective = isDynamicProperty || !dirHandler;
                 if (isCustomDirective) {
-                    // 自定义指令会作为props的一部分
-                    attribute.type = 33 /* CUSTOM_DIRECTIVE */;
+                    // 自定义指令不会作为props的一部分
+                    attribute.type = 34 /* CUSTOM_DIRECTIVE */;
                     (ast.customDirectives ||= []).push(attribute);
                 }
                 else {
                     ast.directives ||= [];
+                    ast.customDirectives ||= [];
                     dirHandler(attribute, ast);
                 }
             }
@@ -2720,7 +2997,7 @@ var Crush = (function (exports) {
             }
             else if (flag === '.') {
                 // class shourthand
-                attribute.type = 17 /* CLASS */;
+                attribute.type = 18 /* CLASS */;
                 attribute.value = attribute.property;
                 attribute.property = 'class';
                 attribute.isDynamicValue = attribute.isDynamicProperty;
@@ -2795,7 +3072,8 @@ var Crush = (function (exports) {
         injectDirective: '',
         injectDirectives: '',
         injectReservedProps: '',
-        createMap: ''
+        createMap: '',
+        getCurrentRenderScope: ''
     };
     const renderMethodsNameMap = Object.entries(rfs).reduce((res, [name, method]) => {
         res[name] = name;
@@ -2947,6 +3225,8 @@ var Crush = (function (exports) {
     }
     function genNode(node, context) {
         switch (node.type) {
+            case 10 /* HTML_COMMENT */:
+                return context.callRenderFn(renderMethodsNameMap.createComment, toBackQuotes(node.children), uid());
             case 3 /* IF */:
             case 4 /* ELSE_IF */:
             case 5 /* ELSE */:
@@ -2960,10 +3240,10 @@ var Crush = (function (exports) {
                     code = genDirectives(code, node.dirs, context);
                 }
                 return code;
-            case 34 /* SLOT */:
+            case 35 /* SLOT */:
                 const { slotName, isDynamicSlot, children } = node;
                 return context.callRenderFn(renderMethodsNameMap.renderSlot, isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
-            case 35 /* OUTLET */:
+            case 36 /* OUTLET */:
                 return genNodes(node.children, context);
             case 11 /* DYNAMIC_ELEMENT */:
                 var { is, isDynamicIs } = node;
@@ -2976,9 +3256,10 @@ var Crush = (function (exports) {
                 code = genDirs(code, node, context);
                 return code;
             case 9 /* SVG_ELEMENT */:
-                debugger;
-                return context.callRenderFn(renderMethodsNameMap.createSVGElement);
-            case 15 /* DYNAMIC_COMPONENT */:
+                var code = context.callRenderFn(renderMethodsNameMap.createSVGElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+                code = genDirs(code, node, context);
+                return code;
+            case 16 /* DYNAMIC_COMPONENT */:
                 var { is, isDynamicIs } = node;
                 var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is));
                 // 动态组件不会提升
@@ -2997,23 +3278,23 @@ var Crush = (function (exports) {
                 return code;
             case 12 /* TEXT */:
                 return genText(node.children, context);
-            case 16 /* STYLE */:
+            case 17 /* STYLE */:
                 var props = genProps(node, context);
                 var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId());
                 code = genDirs(code, node, context);
                 return code;
-            case 25 /* STYLE_RULE */:
+            case 26 /* STYLE_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
-            case 21 /* MEDIA_RULE */:
+            case 22 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
                 return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId());
-            case 23 /* KEYFRAMES_RULE */:
+            case 24 /* KEYFRAMES_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
-            case 26 /* KEYFRAME_RULE */:
+            case 27 /* KEYFRAME_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
-            case 22 /* SUPPORTS_RULE */:
+            case 23 /* SUPPORTS_RULE */:
                 return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
-            case 27 /* DECLARATION_GROUP */:
+            case 28 /* DECLARATION_GROUP */:
                 return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId());
         }
     }
@@ -3067,11 +3348,11 @@ var Crush = (function (exports) {
         var res = [];
         var lastIsDeclaration = false;
         declarationGroup.forEach((declaration) => {
-            if (declaration.type === 29 /* MIXIN */) {
+            if (declaration.type === 30 /* MIXIN */) {
                 res.push(declaration.mixin);
                 lastIsDeclaration = false;
             }
-            else if (declaration.type === 28 /* DECLARATION */) {
+            else if (declaration.type === 29 /* DECLARATION */) {
                 var target;
                 if (lastIsDeclaration) {
                     target = res[res.length - 1];
@@ -3124,7 +3405,7 @@ var Crush = (function (exports) {
         var props = {};
         attributes.forEach((attr) => {
             switch (attr.type) {
-                case 24 /* EVENT */:
+                case 25 /* EVENT */:
                     var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
                     value ||= property; // 简写形似
                     const handlerKey = isDynamicProperty ?
@@ -3140,11 +3421,11 @@ var Crush = (function (exports) {
                     }
                     props[handlerKey] = callback;
                     break;
-                case 17 /* CLASS */:
+                case 18 /* CLASS */:
                     var _class = props.class ||= [];
                     _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     break;
-                case 16 /* STYLE */:
+                case 17 /* STYLE */:
                     var style = props.style ||= [];
                     style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     break;
@@ -3204,7 +3485,7 @@ var Crush = (function (exports) {
         console.log('nodeast', ast);
         var context = new CodeGenerator();
         // 初始化所有渲染方法
-        var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentScope));
+        var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentRenderScope));
         const renderCode = genNodes(ast, context);
         const content = `
         with(${SCOPE}){
@@ -3219,6 +3500,20 @@ var Crush = (function (exports) {
         console.log(rf);
         return rf;
     }
+
+    const inlineStyleDelimiter = /\s*[:;]\s*/;
+    function parseInlineStyle(styleString) {
+        var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
+        var l = chips.length;
+        var styleMap = {};
+        while (l) {
+            styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1]);
+            l -= 2;
+        }
+        return styleMap;
+    }
+    const inlineClassDelimiter = /\s+/;
+    const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
 
     /* object extend */
     const extend = Object.assign;
@@ -3244,6 +3539,9 @@ var Crush = (function (exports) {
         else if (isFunction(rawClass)) {
             return normalizeClass(rawClass());
         }
+        else {
+            return emptyObject;
+        }
     }
 
     /*
@@ -3262,20 +3560,24 @@ var Crush = (function (exports) {
         }
     }
 
-    function renderSlot(name, scope, fallback, uid) {
+    function renderSlot(name, scope, fallback, key) {
         const instance = getCurrentInstance();
-        let slot = instance.slots[name] || fallback;
+        let slot = instance?.slots?.[name] || fallback;
         if (!slot) {
             return null;
         }
         else {
             slot = slot(scope);
         }
-        slot.key = uid; // 唯一插槽节点的key
+        // 这里返回的一定是单一节点（fragment），不会是数组形式
+        slot.key = key; // 唯一插槽节点的key
         return slot;
     }
 
     var renderMethods = {
+        getCurrentRenderScope,
+        createComment,
+        createSVGElement,
         injectDirectives,
         important,
         getCurrentScope,
@@ -3425,79 +3727,216 @@ var Crush = (function (exports) {
     function keyframe(name, keyframes) {
         return createKeyframe(name, keyframes);
     }
-
-    /*  think ?
-
+    /*
+        comment : ! 66666
     */
-    const nextFrame = (cb) => requestAnimationFrame(cb);
+    function h(type, props, children, key = uid()) {
+        if (isObject(type)) {
+            // state component
+            if (children && !isObject(children)) {
+                children = {
+                    default: children
+                };
+            }
+            return createComponent(type, props, children, key);
+        }
+        else if (isHTMLTag(type)) {
+            return createElement(type, props, children, key);
+        }
+        else if (isSVGTag(type)) {
+            return createSVGElement(type, props, children, key);
+        }
+    }
 
-    const flash = keyframes('flash', [
-        keyframe([0, 50, 100], {
-            opacity: 1
+    // 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
+    function doKeyframesAnimation(el, options, endCb, cancelCb) {
+        const { name, duration, timingFunction, delay, playState, fillMode, iterationCount, direction } = options;
+        const animationDeclaration = {
+            animationName: name,
+            animationDuration: isNumber(Number(duration)) ? duration + 'ms' : duration,
+            animationTimingFunction: timingFunction,
+            animationDelay: isNumber(Number(delay)) ? delay + 'ms' : delay,
+            animationPlayState: playState,
+            animationFillMode: fillMode,
+            animationIterationCount: iterationCount,
+            animationDirection: direction
+        };
+        let _name = getElementComputedStyleValue(el, 'animationName');
+        if (_name && _name !== 'none') {
+            // ! 注意执行时不应该存在元素本身或从继承来的animation属性
+            return;
+        }
+        // 动画执行结束后再还原属性
+        let copy = getElementStyle(el, animationDeclaration);
+        setElementStyleDeclaration(el, animationDeclaration);
+        let handler = () => {
+            // 重新设置之前的属性
+            setElementStyleDeclaration(el, copy);
+            if (endCb) {
+                endCb(el);
+            }
+        };
+        onceListener(el, 'animationend', handler);
+        let cancelled = false;
+        // stop animation , 只有动画成功执行才会返回取消方法
+        return () => {
+            if (cancelled) {
+                return;
+            }
+            setElementStyleDeclaration(el, copy);
+            removeListener(el, 'animationend', handler); // 手动移除侦听器
+            if (cancelCb) {
+                cancelCb(el);
+            }
+            cancelled = true;
+        };
+    }
+
+    const slideInDown = [keyframe('from', {
+            transform: translate3d(0, '-100%', 0),
+            visibility: 'visible'
         }),
-        keyframe([25, 75], {
+        keyframe('to', {
+            transform: translate3d(0, 0, 0)
+        })];
+    const slideInUp = [keyframe('from', {
+            transform: translate3d(0, '100%', 0),
+            visibility: 'visible'
+        }),
+        keyframe('to', {
+            transform: translate3d(0, 0, 0)
+        })];
+    const slideInLeft = [keyframe('from', {
+            transform: translate3d('-100%', 0, 0),
+            visibility: 'visible'
+        }),
+        keyframe('to', {
+            transform: translate3d(0, 0, 0)
+        })];
+    const slideInRight = [keyframe('from', {
+            transform: translate3d('100%', 0, 0),
+            visibility: 'visible'
+        }),
+        keyframe('to', {
+            transform: translate3d(0, 0, 0)
+        })];
+    const slideOutDown = [keyframe('from', {
+            transform: translate3d(0, 0, 0)
+        }),
+        keyframe('to', {
+            transform: translate3d(0, '100%', 0),
+            visibility: 'hidden'
+        })];
+    const slideOutUp = [keyframe('from', {
+            transform: translate3d(0, 0, 0)
+        }),
+        keyframe('to', {
+            transform: translate3d(0, '-100%', 0),
+            visibility: 'hidden'
+        })];
+    const slideOutLeft = [keyframe('from', {
+            transform: translate3d(0, 0, 0)
+        }),
+        keyframe('to', {
+            transform: translate3d('-100%', 0, 0),
+            visibility: 'hidden'
+        })];
+    const slideOutRight = [keyframe('from', {
+            transform: translate3d(0, 0, 0)
+        }),
+        keyframe('to', {
+            transform: translate3d('100%', 0, 0),
+            visibility: 'hidden'
+        })];
+
+    const zoomIn = [keyframe('from', {
+            transform: scale3d(0.3, 0.3, 0.3),
             opacity: 0
-        })
-    ]);
+        }), keyframe(50, {
+            opacity: 1
+        })];
+    const zoomInDown = [keyframe('from', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-1000px', 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe(60, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomInUp = [keyframe('from', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '1000px', 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe(60, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomInLeft = [keyframe('from', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d('-1000px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe(60, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d('10px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomInRight = [keyframe('from', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d('1000px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe(60, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d('-10px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomOut = [keyframe('from', {
+            opacity: 1
+        }), keyframe(40, {
+            opacity: 0,
+            transform: scale3d(0.3, 0.3, 0.3)
+        }), keyframe('to', {
+            opacity: 0
+        })];
+    const zoomOutDown = [keyframe(40, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe('to', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '2000px', 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomOutUp = [keyframe(40, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe('to', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-2000px', 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomOutLeft = [keyframe(40, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d('42px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe('to', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d('-2000px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
+    const zoomOutRight = [keyframe(40, {
+            opacity: 1,
+            transform: [scale3d(0.475, 0.475, 0.475), translate3d('-42px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+        }), keyframe('to', {
+            opacity: 0,
+            transform: [scale3d(0.1, 0.1, 0.1), translate3d('2000px', 0, 0)],
+            animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+        })];
 
-    const backInDown = keyframes('backInDown', [
-        keyframe(0, {
-            transform: [translateY('-1200px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(80, {
-            transform: [translateY('0px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(100, {
-            transform: scale(1),
-            opacity: 1
-        }),
-    ]);
-    const backInUp = keyframes('backInUp', [
-        keyframe(0, {
-            transform: [translateY('1200px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(80, {
-            transform: [translateY('0px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(100, {
-            transform: scale(1),
-            opacity: 1
-        }),
-    ]);
-    const backInLeft = keyframes('backInLeft', [
-        keyframe(0, {
-            transform: [translateX('-2000px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(80, {
-            transform: [translateX('0px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(100, {
-            transform: scale(1),
-            opacity: 1
-        }),
-    ]);
-    const backInRight = keyframes('backInRight', [
-        keyframe(0, {
-            transform: [translateX('2000px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(80, {
-            transform: [translateX('0px'), scale(0.7)],
-            opacity: 0.7
-        }),
-        keyframe(100, {
-            transform: scale(1),
-            opacity: 1
-        }),
-    ]);
-
-    const hinge = keyframes('hinge', [
+    const hinge = [
         keyframe(0, {
             animationTimingFunction: 'ease-in-out'
         }),
@@ -3514,8 +3953,8 @@ var Crush = (function (exports) {
             transform: translate3d(0, '700px', 0),
             opacity: 0
         })
-    ]);
-    const jackInTheBox = keyframes('jackInTheBox', [
+    ];
+    const jackInTheBox = [
         keyframe(0, {
             opacity: 0,
             transform: [scale(0.1), rotate(30)],
@@ -3531,8 +3970,8 @@ var Crush = (function (exports) {
             opacity: 1,
             transform: scale(1),
         })
-    ]);
-    const rollIn = keyframes('rollIn', [
+    ];
+    const rollIn = [
         keyframe(0, {
             opacity: 0,
             transform: [translate3d('-100%', 0, 0), rotate3d(0, 0, 1, -120)]
@@ -3541,8 +3980,8 @@ var Crush = (function (exports) {
             opacity: 1,
             transform: translate3d(0, 0, 0)
         })
-    ]);
-    const rollOut = keyframes('rollOut', [
+    ];
+    const rollOut = [
         keyframe(0, {
             opacity: 1,
         }),
@@ -3550,198 +3989,22 @@ var Crush = (function (exports) {
             opacity: 0,
             transform: [translate3d('100%', 0, 0), rotate3d(0, 0, 1, 120)]
         })
-    ]);
+    ];
 
-    const flip = keyframes('flip', [
-        keyframe(0, {
-            transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, -360)],
-            animationTimingFunction: 'ease-out'
-        }),
-        keyframe(40, {
-            transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, '150px'), rotate3d(0, 1, 0, -190)],
-            animationTimingFunction: 'ease-out'
-        }),
-        keyframe(50, {
-            transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, '150px'), rotate3d(0, 1, 0, -170)],
-            animationTimingFunction: 'ease-in'
-        }),
-        keyframe(80, {
-            transform: [perspective('400px'), scale3d(0.95, 0.95, 0.95), translate3d(0, 0, 0), rotate3d(0, 1, 0, 0)],
-            animationTimingFunction: 'ease-in'
-        }),
-        keyframe(100, {
-            transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, 0)],
-            animationTimingFunction: 'ease-in'
-        })
-    ]);
-    const flipInX = keyframes('flipInX', [
-        keyframe(0, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
-            animationTimingFunction: 'ease-in',
-            opacity: 0
-        }),
-        keyframe(40, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, -20)],
-            animationTimingFunction: 'ease-in'
-        }),
-        keyframe(60, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, 10)],
-            animationTimingFunction: 'ease-in',
-            opacity: 1
-        }),
-        keyframe(80, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, -5)],
-        }),
-        keyframe(100, {
-            transform: perspective('400px')
-        })
-    ]);
-    const flipInY = keyframes('flipInY', [
-        keyframe(0, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
-            animationTimingFunction: 'ease-in',
-            opacity: 0
-        }),
-        keyframe(40, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, -20)],
-            animationTimingFunction: 'ease-in'
-        }),
-        keyframe(60, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, 10)],
-            animationTimingFunction: 'ease-in',
-            opacity: 1
-        }),
-        keyframe(80, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, -5)],
-        }),
-        keyframe(100, {
-            transform: perspective('400px')
-        })
-    ]);
-    const flipOutX = keyframes('flipOutX', [
-        keyframe(0, {
-            transform: perspective('400px')
-        }),
-        keyframe(30, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, -20)],
-            opcaity: 1
-        }),
-        keyframe(100, {
-            transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
-            opcaity: 0
-        })
-    ]);
-    const flipOutY = keyframes('flipOutY', [
-        keyframe(0, {
-            transform: perspective('400px')
-        }),
-        keyframe(30, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, -20)],
-            opcaity: 1
-        }),
-        keyframe(100, {
-            transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
-            opcaity: 0
-        })
-    ]);
-
-    const lightSpeedInRight = keyframes('lightSpeedInRight', [
-        keyframe(0, {
-            transform: [translate3d('100%', 0, 0), skewX(-30)],
-            opacity: 0
-        }),
-        keyframe(60, {
-            transform: skewX(20),
-            opacity: 1
-        }),
-        keyframe(80, {
-            transform: skewX(-5)
-        }),
-        keyframe(100, {
-            transform: translate3d(0, 0, 0)
-        }),
-    ]);
-    const lightSpeedInLeft = keyframes('lightSpeedInLeft', [
-        keyframe(0, {
-            transform: [translate3d('-100%', 0, 0), skewX(30)],
-            opacity: 0
-        }),
-        keyframe(60, {
-            transform: skewX(-20),
-            opacity: 1
-        }),
-        keyframe(80, {
-            transform: skewX(5)
-        }),
-        keyframe(100, {
-            transform: translate3d(0, 0, 0)
-        }),
-    ]);
-    const lightSpeedOutRigt = keyframes('lightSpeedOutRight', [
-        keyframe(0, {
-            opacity: 1
-        }),
-        keyframe(100, {
-            transform: [translate3d('100%', 0, 0), skewX(30)],
-            opacity: 0
-        }),
-    ]);
-    const lightSpeedOutLeft = keyframes('lightSpeedOutLeft', [
-        keyframe(0, {
-            opacity: 1
-        }),
-        keyframe(100, {
-            transform: [translate3d('-100%', 0, 0), skewX(-30)],
-            opacity: 0
-        }),
-    ]);
-
-    const bounce = keyframes('bounce', [
-        keyframe([0, 20, 53, 100], {
-            animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1),
-            transform: translate3d(0, 0, 0)
-        }),
-        keyframe([40, 43], {
-            animationTimingFunction: cubicBezier(0.755, 0.05, 0.855, 0.06),
-            transform: [translate3d(0, '-30px', 0), scaleY(1.1)]
-        }),
-        keyframe(70, {
-            animationTimingFunction: cubicBezier(0.755, 0.05, 0.855, 0.06),
-            transform: [translate3d(0, '-15px', 0), scaleY(1.05)]
-        }),
-        keyframe(80, {
-            animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1),
-            transform: [translate3d(0, 0, 0), scaleY(0.95)]
-        }),
-        keyframe(90, {
-            transform: [translate3d(0, '-4px', 0), scaleY(1.02)]
-        })
-    ]);
-
-    // copy animate.css
-    var animations = {
-        bounce,
-        jackInTheBox,
-        hinge,
-        flash,
-        backInUp,
-        backInDown,
-        backInLeft,
-        backInRight,
-        rollIn,
-        rollOut,
-        flip,
-        flipInX,
-        flipInY,
-        flipOutX,
-        flipOutY,
-        lightSpeedInLeft,
-        lightSpeedInRight,
-        lightSpeedOutLeft,
-        lightSpeedOutRigt
+    const animationFrames = {
+        // slide
+        slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
+        // zoom
+        zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp,
+        // specials
+        hinge, jackInTheBox, rollIn, rollOut
     };
-    const checkBuiltInAnimations = () => Object.keys(animations);
-    const installAnimation = () => mount(createStyleSheet(null, Object.values(animations)), document.head);
+    const transitionKeyframes = {
+        roll: ['rollIn', 'rollOut']
+    };
+    // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
+    const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames));
+    const installAnimation = () => mount(createStyleSheet(null, animations), document.head);
 
     /*
         过渡动画逻辑
@@ -3818,7 +4081,7 @@ var Crush = (function (exports) {
             // mount root component
             var component = createComponent(options, null, null);
             this.rootComponent = component;
-            var instance = mountComponent(component, container);
+            var instance = mount(component, container, null, null);
             // instance.root = instance
             this.rootInstance = instance;
             this.isMounted = true;
@@ -3881,11 +4144,18 @@ var Crush = (function (exports) {
     */
     function normalizePropsOptions(options) {
         if (isArray(options)) {
-            return arrayToMap(options, emptyObject);
+            options = arrayToMap(options, emptyObject);
         }
         else {
-            return options;
+            for (let key in options) {
+                if (!isObject(options[key])) {
+                    options[key] = {
+                        type: options[key]
+                    };
+                }
+            }
         }
+        return options;
     }
 
     exports.ComponentOptions = void 0;
@@ -3900,6 +4170,7 @@ var Crush = (function (exports) {
         ComponentOptions["UPDATED"] = "updated";
         ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
         ComponentOptions["UNMOUNTED"] = "unmounted";
+        ComponentOptions["BEFORE_PATCH"] = "beforePatch";
         ComponentOptions["TEMPLATE"] = "template";
         ComponentOptions["RENDER"] = "render";
         ComponentOptions["PROPS"] = "props";
@@ -4022,14 +4293,33 @@ var Crush = (function (exports) {
         ...cssMethods
     };
     const scopeProperties = {
+        $uid: (instance) => instance.uid,
         $instance: (instance) => instance,
-        $el: (instance) => instance.vnode,
+        $refs: (instance) => {
+            let { isMounted, refs } = instance;
+            if (!isMounted) {
+                warn('component is not mounted , cant use refs');
+                return null;
+            }
+            return refs;
+        },
+        $el: (instance) => {
+            let { vnode, isMounted } = instance;
+            if (!isMounted || !vnode) {
+                return null;
+            }
+            let el = vnode.map((_vnode) => _vnode.el);
+            return el.length === 1 ? el[0] : el;
+        },
         $root: (instance) => instance.root,
         $attrs: (instance) => instance.attrs,
         $slots: (instance) => instance.slots,
+        $props: (instance) => instance.props,
         $parent: (instance) => instance.parent,
         $watch: (instance) => instance.watch,
         $nextTick: (instance) => nextTick.bind(instance.scope),
+        $self: (instance) => instance.scope,
+        $forceUpdate: (instance) => instance.update,
         // evnets
         $emit: (instance) => instance.emit,
         $on: (instance) => (event, handler) => addInstanceListener(instance, event, handler),
@@ -4041,18 +4331,15 @@ var Crush = (function (exports) {
     function defineScopeProperty(key, getter) {
         scopeProperties[key] = getter;
     }
+    // inject scope property
     function createScope(instance) {
         const scope = reactive(Object.create(protoMethods));
         return new Proxy(scope, {
             get(target, key, receiver) {
-                if (key === Symbol.unscopables) {
-                    return;
-                }
                 if (hasOwn(scopeProperties, key)) {
                     return scopeProperties[key](instance);
                 }
-                var result = Reflect.get(target, key, receiver);
-                return isRef(result) ? result.value : result;
+                return Reflect.get(target, key, receiver);
             },
             set(target, key, newValue, receiver) {
                 if (hasOwn(scopeProperties, key)) {
@@ -4064,19 +4351,37 @@ var Crush = (function (exports) {
             }
         });
     }
+    // process ref
+    function createRenderScope(instanceScope) {
+        return new Proxy(instanceScope, {
+            get(target, key, receiver) {
+                if (key === Symbol.unscopables) {
+                    return;
+                }
+                // todo magic variables
+                var result = Reflect.get(target, key, receiver);
+                return isRef(result) ? result.value : result;
+            }
+        });
+    }
 
-    const createComponentInstance = (options) => new ComponentInstance(options);
+    const createComponentInstance = (options, parent) => new ComponentInstance(options, parent);
     // 用class 的话this指向有问题
     class ComponentInstance {
         update;
         isMounted;
         uid = uid();
-        scope = createScope(this);
+        scope;
+        renderScope;
         render;
-        vnode;
+        vnode; // 当前所处的vnode
+        componentVnode; //组件虚拟节点
+        updatingComponentVnode;
+        renderingVnode; // 即将挂载到页面的vnode
         slots;
         props;
         attrs;
+        refs;
         customOptions;
         propsOptions;
         emitsOptions;
@@ -4096,8 +4401,14 @@ var Crush = (function (exports) {
         updated;
         events;
         app;
-        constructor(options) {
-            const { render, createRender, create, beforeCreate, created, beforeMount, mounted, beforeUnmount, unmounted, beforeUpdate, updated, mixins, components, directives, customOptions, propsOptions, emitsOptions, } = options;
+        parent;
+        root;
+        emit;
+        beforePatch;
+        constructor(options, parent) {
+            const { render, createRender, create, beforeCreate, created, beforeMount, mounted, beforeUnmount, unmounted, beforeUpdate, updated, beforePatch, mixins, components, directives, customOptions, propsOptions, emitsOptions, } = options;
+            this.parent = parent;
+            this.root = parent ? parent.root : this;
             this.beforeCreate = shallowCloneArray(beforeCreate);
             this.create = shallowCloneArray(create);
             this.created = shallowCloneArray(created);
@@ -4108,12 +4419,17 @@ var Crush = (function (exports) {
             this.beforeUnmount = shallowCloneArray(beforeUnmount);
             this.unmounted = shallowCloneArray(unmounted);
             this.customOptions = customOptions;
+            this.beforePatch = beforePatch;
             this.propsOptions = propsOptions || emptyObject;
             this.emitsOptions = emitsOptions || emptyObject;
             this.components = components;
             this.directives = directives;
             this.render = render;
             this.createRender = createRender;
+            this.emit = createInstanceEventEmitter(this);
+            let scope = createScope(this);
+            this.scope = scope;
+            this.renderScope = createRenderScope(scope);
             let app = getCurrentApp();
             this.app = app;
             injectMixins(this, mixins);
@@ -4168,8 +4484,8 @@ var Crush = (function (exports) {
                     var bindings = {
                         directive: dir,
                         value,
-                        _arguments: _arguments && setOwnKey(_arguments),
-                        modifiers: modifiers && setOwnKey(modifiers)
+                        _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
+                        modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
                     };
                     if (previous) {
                         // 如果更新的话两个节点的指令应该完全相同
@@ -4187,43 +4503,9 @@ var Crush = (function (exports) {
         }
     }
 
-    const COMPONENT_TYPE = Symbol('component_type');
-    // options component
-    function component(component) {
-        mark(component, COMPONENT_TYPE, 0 /* OPTIONS_COMPONENT */);
-        resolveOptions(component);
-        return component;
-    }
-    // ! 移除函数式有状态组件
-    function asyncComponent(source) {
-        if (isFunction(source)) {
-            source = {
-                resolved: false,
-                loader: source,
-                loadingComponent: '',
-                errorComponent: '',
-                timeout: 200
-            };
-        }
-        mark(source, COMPONENT_TYPE, 1 /* ASYNC_COMPONENT */);
-        return source;
-    }
-    function processComponent(source) {
-        if (source[COMPONENT_TYPE]) {
-            return source;
-        }
-        else if (isObject(source)) {
-            return component(source);
-        }
-        else if (isFunction(source)) {
-            mark(source, COMPONENT_TYPE, 3 /* RENDER_COMPONENT */);
-            return source;
-        }
-    }
-
     exports.$var = $var;
     exports.App = App;
-    exports.COMPONENT_TYPE = COMPONENT_TYPE;
+    exports.Comment = Comment;
     exports.ComponentInstance = ComponentInstance;
     exports.IMPORTANT = IMPORTANT;
     exports.IMPORTANT_KEY = IMPORTANT_KEY;
@@ -4233,13 +4515,13 @@ var Crush = (function (exports) {
     exports.ReactiveTypeSymbol = ReactiveTypeSymbol;
     exports.Ref = Ref;
     exports.TARGET_MAP = TARGET_MAP;
+    exports.Text = Text;
     exports.addClass = addClass;
-    exports.addListener = addListener;
     exports.addInstanceListener = addInstanceListener;
+    exports.addListener = addListener;
     exports.appendMedium = appendMedium;
     exports.arrayHandler = arrayHandler;
     exports.arrayToMap = arrayToMap;
-    exports.asyncComponent = asyncComponent;
     exports.attr = attr;
     exports.builtInComponents = builtInComponents;
     exports.builtInDirectives = builtInDirectives$1;
@@ -4248,11 +4530,11 @@ var Crush = (function (exports) {
     exports.callFn = callFn;
     exports.callHook = callHook;
     exports.camelize = camelize;
-    exports.checkBuiltInAnimations = checkBuiltInAnimations;
+    exports.cleaarRefDeps = cleaarRefDeps;
     exports.compile = compile;
-    exports.component = component;
     exports.conicGradient = conicGradient;
     exports.createApp = createApp;
+    exports.createComment = createComment;
     exports.createComponent = createComponent;
     exports.createComponentInstance = createComponentInstance;
     exports.createDeclaration = createDeclaration;
@@ -4271,6 +4553,9 @@ var Crush = (function (exports) {
     exports.createReactiveObject = createReactiveObject;
     exports.createReadonlyCollection = createReadonlyCollection;
     exports.createReadonlyObject = createReadonlyObject;
+    exports.createRefValueSetter = createRefValueSetter;
+    exports.createRenderScope = createRenderScope;
+    exports.createSVGElement = createSVGElement;
     exports.createScope = createScope;
     exports.createSetter = createSetter;
     exports.createShallowReactiveCollection = createShallowReactiveCollection;
@@ -4282,6 +4567,7 @@ var Crush = (function (exports) {
     exports.createSupports = createSupports;
     exports.createText = createText;
     exports.cubicBezier = cubicBezier;
+    exports.customDisplay = customDisplay;
     exports.declare = declare;
     exports.defineScopeProperty = defineScopeProperty;
     exports.deleteActiveEffect = deleteActiveEffect;
@@ -4291,6 +4577,7 @@ var Crush = (function (exports) {
     exports.destructur = destructur;
     exports.display = display;
     exports.doFlat = doFlat;
+    exports.doKeyframesAnimation = doKeyframesAnimation;
     exports.docCreateComment = docCreateComment;
     exports.docCreateElement = docCreateElement;
     exports.docCreateText = docCreateText;
@@ -4308,20 +4595,30 @@ var Crush = (function (exports) {
     exports.getComponent = getComponent;
     exports.getCurrentApp = getCurrentApp;
     exports.getCurrentInstance = getCurrentInstance;
+    exports.getCurrentRenderScope = getCurrentRenderScope;
     exports.getCurrentScope = getCurrentScope;
+    exports.getDeps = getDeps;
+    exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
     exports.getElementComputedStyle = getElementComputedStyle;
+    exports.getElementComputedStyleValue = getElementComputedStyleValue;
     exports.getElementStyle = getElementStyle;
     exports.getElementStyleValue = getElementStyleValue;
     exports.getEmptyObject = getEmptyObject;
     exports.getEventName = getEventName;
     exports.getInstanceEvents = getInstanceEvents;
     exports.getInstancetEventListeners = getInstancetEventListeners;
+    exports.getLastSetKey = getLastSetKey;
+    exports.getLastSetNewValue = getLastSetNewValue;
+    exports.getLastSetOldValue = getLastSetOldValue;
+    exports.getLastSetTarget = getLastSetTarget;
     exports.getLastVisitKey = getLastVisitKey;
     exports.getLastVisitTarget = getLastVisitTarget;
+    exports.getRefDeps = getRefDeps;
     exports.getReservedProp = getReservedProp;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
+    exports.h = h;
     exports.hasOwn = hasOwn;
     exports.hsl = hsl;
     exports.hsla = hsla;
@@ -4344,13 +4641,16 @@ var Crush = (function (exports) {
     exports.insertSupports = insertSupports;
     exports.installAnimation = installAnimation;
     exports.isArray = isArray;
+    exports.isEffect = isEffect;
     exports.isEvent = isEvent;
     exports.isFunction = isFunction;
     exports.isHTMLTag = isHTMLTag;
     exports.isNumber = isNumber;
     exports.isNumberString = isNumberString;
     exports.isObject = isObject;
+    exports.isPromise = isPromise;
     exports.isProxy = isProxy;
+    exports.isProxyType = isProxyType;
     exports.isReactive = isReactive;
     exports.isRef = isRef;
     exports.isReservedProp = isReservedProp;
@@ -4365,6 +4665,7 @@ var Crush = (function (exports) {
     exports.linearGradient = linearGradient;
     exports.makeMap = makeMap;
     exports.mark = mark;
+    exports.markRaw = markRaw;
     exports.max = max;
     exports.mergeSelectors = mergeSelectors;
     exports.mergeSplitedSelector = mergeSplitedSelector;
@@ -4379,10 +4680,8 @@ var Crush = (function (exports) {
     exports.mountDeclaration = mountDeclaration;
     exports.mountKeyframeRule = mountKeyframeRule;
     exports.mountRule = mountRule;
-    exports.mountComponent = mountComponent;
     exports.mountStyleRule = mountStyleRule;
     exports.mountStyleSheet = mountStyleSheet;
-    exports.nextFrame = nextFrame;
     exports.nextTick = nextTick;
     exports.normalizeClass = normalizeClass;
     exports.normalizeKeyText = normalizeKeyText;
@@ -4393,6 +4692,8 @@ var Crush = (function (exports) {
     exports.onBeforeUpdate = onBeforeUpdate;
     exports.onCreated = onCreated;
     exports.onMounted = onMounted;
+    exports.onSet = onSet;
+    exports.onSetCallbacks = onSetCallbacks;
     exports.onUnmounted = onUnmounted;
     exports.onUpdated = onUpdated;
     exports.onceInstanceListener = onceInstanceListener;
@@ -4404,7 +4705,6 @@ var Crush = (function (exports) {
     exports.parseStyleValue = parseStyleValue;
     exports.patch = patch;
     exports.perspective = perspective;
-    exports.processComponent = processComponent;
     exports.processHook = processHook;
     exports.processRenderResult = processRenderResult;
     exports.queueJob = queueJob;
@@ -4419,9 +4719,9 @@ var Crush = (function (exports) {
     exports.removeAttribute = removeAttribute;
     exports.removeClass = removeClass;
     exports.removeElement = removeElement;
-    exports.removeListener = removeListener;
     exports.removeFromArray = removeFromArray;
     exports.removeInstanceListener = removeInstanceListener;
+    exports.removeListener = removeListener;
     exports.renderList = renderList;
     exports.renderSlot = renderSlot;
     exports.resolveOptions = resolveOptions;
@@ -4471,6 +4771,7 @@ var Crush = (function (exports) {
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
     exports.trackRef = trackRef;
+    exports.transitionKeyframes = transitionKeyframes;
     exports.translate3d = translate3d;
     exports.translateX = translateX;
     exports.translateY = translateY;
@@ -4494,11 +4795,8 @@ var Crush = (function (exports) {
     exports.updateDeclaration = updateDeclaration;
     exports.updateInstanceListeners = updateInstanceListeners;
     exports.updateStyleSheet = updateStyleSheet;
-    exports.useBoolean = useBoolean;
-    exports.useColor = useColor;
-    exports.useNumber = useNumber;
-    exports.useString = useString;
     exports.warn = warn;
+    exports.watchDepsSymbol = watchDepsSymbol;
     exports.withEventModifiers = withEventModifiers;
 
     Object.defineProperty(exports, '__esModule', { value: true });
