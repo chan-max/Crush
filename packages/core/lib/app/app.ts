@@ -9,6 +9,7 @@ import { mount, mountComponent, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
+import { NULL } from "@crush/compiler"
 
 var currentApp: App
 
@@ -19,24 +20,28 @@ export function getCurrentApp(): App {
     return currentApp
 }
 
-function normalizeContainer(container: any): Element {
-    if (isString(container)) {
-        container = document.querySelector(container)
-    }
-    if (!(container instanceof Element)) {
-        error('not legal container')
-    }
-    return container
+
+export interface AppOptions {
+    container: string | HTMLElement
 }
 
 export class App {
 
     isMounted = false
 
-    rootOptions: ComponentType
+    inlineTemplate: string
 
-    constructor(rootOptions: ComponentType) {
-        this.rootOptions = rootOptions
+    container: Element
+
+    constructor(appOptions: AppOptions) {
+        let {
+            container
+        } = appOptions
+
+        this.container = isString(container) ? document.querySelector(container as any) : container
+        this.inlineTemplate = this.container.innerHTML
+        this.container.innerHTML = ''
+
         // 安装动画
         this.use(installAnimation)
         currentApp = this
@@ -72,32 +77,11 @@ export class App {
         install.call(plugin, this, ...options)
     }
 
-    container: Element | null = null
-    rootInstance: any
-    useSelectorTemplate: boolean = false
-    rootComponent: any
-    mount(container: string | Element) {
-        container = normalizeContainer(container)
-        // todo validate legal container 
-        this.container = container as Element
-        var options = this.rootOptions
-        if (!options.template && !options.render) {
-            options.template = container.innerHTML
-            this.useSelectorTemplate = true
+    render(component: any) {
+        if (!component.template && !component.render) {
+            component.template = this.inlineTemplate
         }
-        // clear page template
-        container.innerHTML = ''
-        // mount root component
-        var component = createComponent(options, null, null)
-        this.rootComponent = component
-        var instance = mount(component, container, null, null)
-        // instance.root = instance
-        this.rootInstance = instance
+        mount(createComponent(component, null, null), this.container)
         this.isMounted = true
-        return instance
-    }
-
-    unmount() {
-        unmountComponent(this.rootComponent, this.container)
     }
 }

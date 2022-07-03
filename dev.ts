@@ -11,27 +11,21 @@ import { shallowWatchReactive, watchReactive } from "@crush/reactivity/lib/watch
 import { useBoolean } from "@crush/reactivity/lib/custom/boolean";
 import { useRefState } from "@crush/core/lib/instance/refState";
 import { createRouter } from "./packages/router/lib/router";
+import { watchComputed } from "@crush/reactivity/lib/watchComputed";
 
+var app = createApp({
+    container: '#app',
+})
 
+console.log(app);
 
-var root = {
-
-    template: /*html*/`
+app.render({
+    template:/*html*/`
+    <div>
         666
-    `,
-    create(scope) {
-        debugger
-        console.log(scope.$router);
-    },
-}
+    </div>
+    `
+})
 
-
-
-var app = createApp(root)
-
-app.use(router)
-
-console.log('app', app);
-var instance = app.mount('#app')
 
 

@@ -1,7 +1,26 @@
 # 响应式
 
-以下响应式api并非与组件强行绑定，可单独使用
-
 ## 基础
+
+### reactive
+### readonly
+### shallowReactive
+### shallowReadonly
+### isReactive
+### isReadonly
+
+### ref
+### isRef
+
+## 数据侦测
+
+### watchReactive
+### shallowWatchReactive
+### watchRef
+### watchComputed
+
+## 副作用
+
+### createReactiveEffect
 
 ## 深入

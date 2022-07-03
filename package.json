@@ -18,7 +18,7 @@
     "test": "jest",
     "docsdev": "cd packages/docs & npm run dev",
     "build": "rollup -c",
-    "docs": "vitepress dev docs"
+    "docs": "docsify serve ./docs"
   },
   "author": "chan",
   "license": "MIT",
