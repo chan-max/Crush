@@ -21,10 +21,41 @@ console.log(app);
 
 app.render({
     template:/*html*/`
-    <div>
+    <style>
+        .transition{
+            &-enter{
+                transition:all 2s;
+                &-from{
+                    background-color:red;
+                }
+                &-to{
+                    background-color:pink;
+                }
+            }
+            &-leave{
+                transition:all 2s;
+                &-from{
+                    background-color:green;
+                }
+                &-to{
+                    background-color:blue;
+                }
+            }
+        }
+        .box{
+            width:200px;
+            height:200px;
+            border: 5px solid black;
+        }
+    </style>
+    <button @click="setCount( count + 3 )"> {{count}} </button>
+    <div .box  --transition="" --show="count %2 == 0">
         666
     </div>
-    `
+    `,
+    create() {
+        let { count, setCount, onCountChange } = useRefState(0)
+    }
 })
 
 

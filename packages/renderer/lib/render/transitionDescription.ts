@@ -14,9 +14,7 @@ export const createTransition = (transitionOptions: any) => new TransitionDescri
 //! 多个元素可能共享同一个过渡描述实例，所以调用相关方法需要手动传入对应得元素
 
 export class TransitionDescription {
-    constructor(transitionOptions: any) {
-        this.initOptions(transitionOptions)
-    }
+
 
     type: any // css / animation
 
@@ -33,6 +31,10 @@ export class TransitionDescription {
     onLeave: any
     onAfterLeave: any
     onLeaveCancelled: any
+
+    constructor(transitionOptions: any) {
+        this.initOptions(transitionOptions)
+    }
 
     initOptions(transitionOptions: any) {
         transitionOptions ||= emptyObject
@@ -68,7 +70,7 @@ export class TransitionDescription {
     }
 
     beforeEnter(el: any) {
-        
+
     }
 
     doEnter(el: any) {

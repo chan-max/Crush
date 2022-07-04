@@ -1,4 +1,4 @@
-import { emptyArray } from "@crush/common"
+import { emptyArray, emptyObject } from "@crush/common"
 import { Nodes } from "@crush/const"
 import { createTransition } from "@crush/renderer/lib/render/transitionDescription"
 
@@ -6,21 +6,21 @@ import { createTransition } from "@crush/renderer/lib/render/transitionDescripti
 export const transitionComponent = {
     props: {},
     render: ({ $slots }: any) => $slots.default(),
-    beforeMount({ $instance: { scope, renderingVnode } }: any) {
-        const transtion = createTransition({})
+    beforeMount({ $instance: { scope, renderingVnode }, $props }: any) {
+        const transtion = createTransition($props)
         renderingVnode.forEach((vnode: any) => {
             vnode.transition = transtion
         });
     },
     beforeUpdate({ $instance: { renderingVnode } }: any) {
         const transtion = createTransition({})
-       renderingVnode && renderingVnode.forEach((vnode: any) => {
+        renderingVnode && renderingVnode.forEach((vnode: any) => {
             vnode.transition = transtion
         });
     }
 }
 
-function arrayDifference(arr1: any[], arr2: any[]) {
+export function arrayDifference(arr1: any[], arr2: any[]) {
     let f1 = arr1.filter((i1: any) => !arr2.includes(i1))
     let f2 = arr2.filter((i2: any) => !arr1.includes(i2))
     return f1.concat(f2)
@@ -39,4 +39,24 @@ export const transitionGroupComponent = {
             _.transition = transtion
         })
     }
+}
+
+/*
+    --transition.fast=""
+
+*/
+
+
+
+export const transitionDirective = {
+    beforeCreate(_: any, { value }: any, vnode: any) {
+        vnode.transition = createTransition(value)
+    },
+    beforeUpdate(_: any, bindings: any, nVnode: any, pVnode: any) {
+        
+    }
+}
+
+export const transitionGroupDirective = {
+
 }

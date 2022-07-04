@@ -9,14 +9,16 @@ function setDisplay(el: any, show: boolean) {
     }
 }
 
-export const show = {
-    beforeMount(el: any, { value }: any) {
+export const showDirective = {
+    beforeMount(el: any, { value }: any, { transition }: any) {
         el._display = el.style.display
         setDisplay(el, value)
     },
-    updated(el: Element, { value, oldValue }: any) {
-        if (!value !== !oldValue) {
-            setDisplay(el, value)
+    updated(el: Element, { value, oldValue }: any, n: any, p: any) {
+        if (!value === !oldValue) {
+            return
         }
+        
+
     }
 }
