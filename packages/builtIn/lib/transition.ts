@@ -1,6 +1,6 @@
 import { emptyArray, emptyObject } from "@crush/common"
 import { Nodes } from "@crush/const"
-import { createTransition } from "@crush/renderer/lib/render/transitionDescription"
+import { createTransition } from "@crush/renderer/lib/render/processTranstion"
 
 
 export const transitionComponent = {
@@ -12,8 +12,8 @@ export const transitionComponent = {
             vnode.transition = transtion
         });
     },
-    beforeUpdate({ $instance: { renderingVnode } }: any) {
-        const transtion = createTransition({})
+    beforeUpdate({ $instance: { renderingVnode }, $props }: any) {
+        const transtion = createTransition($props)
         renderingVnode && renderingVnode.forEach((vnode: any) => {
             vnode.transition = transtion
         });
@@ -30,8 +30,8 @@ export function arrayDifference(arr1: any[], arr2: any[]) {
 export const transitionGroupComponent = {
     props: {},
     render: ({ $slots }: any) => $slots.default(),
-    beforeUpdate({ $instance: { scope, vnode, renderingVnode } }: any) {
-        const transtion = createTransition({})
+    beforeUpdate({ $instance: { scope, vnode, renderingVnode }, $props }: any) {
+        const transtion = createTransition($props)
         const mountList = renderingVnode.filter((patchKey: any) => !vnode.map((_: any) => _.patchKey).includes(patchKey))
         const unmountList = vnode.filter((patchKey: any) => !renderingVnode.map((_: any) => _.patchKey).includes(patchKey))
         const transitionList = mountList.concat(unmountList)
@@ -52,8 +52,10 @@ export const transitionDirective = {
     beforeCreate(_: any, { value }: any, vnode: any) {
         vnode.transition = createTransition(value)
     },
-    beforeUpdate(_: any, bindings: any, nVnode: any, pVnode: any) {
-        
+    beforeUpdate(_: any, { value }: any, nVnode: any, pVnode: any) {
+        const transition = pVnode.transition
+        transition.update(value)
+        nVnode.transition = transition // extend
     }
 }
 

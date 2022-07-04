@@ -37,6 +37,9 @@ export function onceListener(el: Element, event: string, handler: Function, opti
         removeListener(el, event, onceHandler, options)
     }
     addListener(el, event, onceHandler, options)
+
+    // 注销事件
+    return () => removeListener(el,event,onceHandler,options)
 }
 
 

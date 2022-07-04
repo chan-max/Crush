@@ -44,26 +44,28 @@ import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
 import { transitionEnter, } from "./transitionRender";
 
+
+
 function mountElement(vnode: any, container: any, anchor: any, parent: any, isSVG: boolean = false) {
     // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // 2
-    const { type, props, children, transition } = vnode
+    const { type, props, children, transition, patchKey } = vnode
     // create 
-    const el = vnode.el = docCreateElement(type, isSVG)
+    const el: any = vnode.el = docCreateElement(type, isSVG)
+    el._vnode = vnode
     mountAttributes(el, props, parent, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
 
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
 
-
-    let insertFn = () => insertElement(el, container, anchor)
-
+    // 进入动画不影响节点的插入
     if (transition) {
-        transitionEnter(vnode, insertFn)
+        transition.enter(el, () => insertElement(el, container, anchor))
     } else {
-        insertFn()
+        insertElement(el, container, anchor)
     }
+
 
     processHook(LifecycleHooks.MOUNTED, vnode)
     mountChildren(children, el, anchor, parent)

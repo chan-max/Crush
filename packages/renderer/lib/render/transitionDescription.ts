@@ -1,5 +1,5 @@
 import { emptyObject } from "@crush/common"
-import { addClass, removeClass, removeElement } from "../dom"
+import { addClass, onceListener, removeClass, removeElement } from "../dom"
 
 
 /*
@@ -8,10 +8,10 @@ import { addClass, removeClass, removeElement } from "../dom"
     delay
 */
 
-export const createTransition = (transitionOptions: any) => new TransitionDescription(transitionOptions)
-
 
 //! 多个元素可能共享同一个过渡描述实例，所以调用相关方法需要手动传入对应得元素
+
+let isLeavingElements: any = {}
 
 export class TransitionDescription {
 
@@ -33,10 +33,10 @@ export class TransitionDescription {
     onLeaveCancelled: any
 
     constructor(transitionOptions: any) {
-        this.initOptions(transitionOptions)
+        this.update(transitionOptions)
     }
 
-    initOptions(transitionOptions: any) {
+    update(transitionOptions: any) {
         transitionOptions ||= emptyObject
         const {
             type,
@@ -65,20 +65,30 @@ export class TransitionDescription {
         this.onLeaveCancelled = onLeaveCancelled
     }
 
-    update(transitionOptions: any) {
-        this.initOptions(transitionOptions)
-    }
 
     beforeEnter(el: any) {
 
     }
 
+    // doEnter 执行前，节点应该已经插入页面，或者是元素已经设为show
     doEnter(el: any) {
+
+        let { patchKey } = el._vnode
+        let ile = isLeavingElements[patchKey]
+
+        if (ile) {
+            this.cancelLeave(ile)
+        }
+        el.entering = true
         addClass(el, `${this.name}-enter`)
         addClass(el, `${this.name}-enter-from`)
         requestAnimationFrame(() => {
             addClass(el, `${this.name}-enter-to`)
             removeClass(el, `${this.name}-enter-from`)
+        })
+        onceListener(el, 'transitionend', () => {
+            this.finishEnter(el)
+            el.entering = false
         })
     }
 
@@ -88,21 +98,29 @@ export class TransitionDescription {
     }
 
     cancelEnter(el: any) {
-        console.log('cancel enter');
-        this.finishEnter(el)
+        removeClass(el, `${this.name}-enter-to`)
+        removeClass(el, `${this.name}-enter`)
     }
 
     beforeLeave(el: any) {
 
     }
 
-    doLeave(el: any) {
+    doLeave(el: any, callback: any) {
+        if (el.entering) {
+            this.cancelEnter(el)
+        }
+
         addClass(el, `${this.name}-leave-from`)
         document.body.offsetHeight
         addClass(el, `${this.name}-leave`)
         requestAnimationFrame(() => {
             addClass(el, `${this.name}-leave-to`)
             removeClass(el, `${this.name}-leave-from`)
+        })
+        onceListener(el, 'transitionend', () => {
+            this.finishLeave(el)
+            callback()
         })
     }
 

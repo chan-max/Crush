@@ -45,7 +45,7 @@ function unmountElement(vnode: any) {
     }
 
     if (transition) {
-        transitionLeave(vnode)
+        transition.leave(el, () => removeElement(el))
     } else {
         removeElement(el)
     }

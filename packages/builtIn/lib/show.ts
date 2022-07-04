@@ -1,3 +1,4 @@
+import { emptyObject } from "@crush/common"
 
 
 
@@ -14,11 +15,21 @@ export const showDirective = {
         el._display = el.style.display
         setDisplay(el, value)
     },
-    updated(el: Element, { value, oldValue }: any, n: any, p: any) {
+    updated(el: Element, { value, oldValue }: any, { transition }: any) {
         if (!value === !oldValue) {
             return
         }
-        
 
+        if (!transition) {
+            setDisplay(el, value)
+            return
+        }
+
+        if (value) {
+            transition.enter(el, () => setDisplay(el, value))
+        } else {
+            transition.leave(el, () => setDisplay(el, value))
+        }
     }
 }
+

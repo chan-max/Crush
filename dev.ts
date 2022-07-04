@@ -24,21 +24,21 @@ app.render({
     <style>
         .transition{
             &-enter{
-                transition:all 2s;
+                transition:all 4s;
                 &-from{
-                    background-color:red;
+                    background-color:#ff0000;
                 }
                 &-to{
-                    background-color:pink;
+                    background-color:#aa0000;
                 }
             }
             &-leave{
                 transition:all 2s;
                 &-from{
-                    background-color:green;
+                    background-color:#00ff00;
                 }
                 &-to{
-                    background-color:blue;
+                    background-color:#00aa00;
                 }
             }
         }
