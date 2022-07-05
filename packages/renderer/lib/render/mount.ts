@@ -42,7 +42,7 @@ import { processHook, LifecycleHooks } from '@crush/core'
 
 import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
-import { transitionEnter, } from "./transitionRender";
+
 
 
 
@@ -61,7 +61,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
 
     // 进入动画不影响节点的插入
     if (transition) {
-        transition.enter(el, () => insertElement(el, container, anchor))
+        transition.processMount(el, () => insertElement(el, container, anchor))
     } else {
         insertElement(el, container, anchor)
     }

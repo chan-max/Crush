@@ -24,7 +24,7 @@ app.render({
     <style>
         .transition{
             &-enter{
-                transition:all 4s;
+                transition:all 3s;
                 &-from{
                     background-color:#ff0000;
                 }
@@ -33,7 +33,7 @@ app.render({
                 }
             }
             &-leave{
-                transition:all 2s;
+                transition:all 3s;
                 &-from{
                     background-color:#00ff00;
                 }

@@ -1,8 +1,8 @@
 import { emptyObject } from "@crush/common"
-import { addClass, onceListener, removeClass } from "../dom"
+import { addClass, onceListener, removeClass, removeElement } from "../dom"
 
 //! class
-function bindEnterClass(el: Element, name: string) {
+export function bindEnterClass(el: Element, name: string) {
     addClass(el, `${name}-enter`)
     addClass(el, `${name}-enter-from`)
     requestAnimationFrame(() => {
@@ -11,12 +11,12 @@ function bindEnterClass(el: Element, name: string) {
     })
 }
 
-function removeEnterClass(el: Element, name: string) {
+export function removeEnterClass(el: Element, name: string) {
     removeClass(el, `${name}-enter-to`)
     removeClass(el, `${name}-enter`)
 }
 
-function bindLeaveClass(el: Element, name: string) {
+export function bindLeaveClass(el: Element, name: string) {
     addClass(el, `${name}-leave-from`)
     document.body.offsetHeight
     addClass(el, `${name}-leave`)
@@ -26,7 +26,7 @@ function bindLeaveClass(el: Element, name: string) {
     })
 }
 
-function removeLeaveClass(el: Element, name: string) {
+export function removeLeaveClass(el: Element, name: string) {
     removeClass(el, `${name}-leave-to`)
     removeClass(el, `${name}-leave`)
 }
@@ -44,6 +44,8 @@ class TransitionDesc {
     name: any
 
     duration: any // css一般不需要
+
+    appear: any
 
     // hooks
     onBeforeEnter: any
@@ -88,66 +90,78 @@ class TransitionDesc {
         this.onLeaveCancelled = onLeaveCancelled
     }
 
+    bindeEnterClass = (el: any) => bindEnterClass(el, this.name)
+    bindeLeaveClass = (el: any) => bindLeaveClass(el, this.name)
+    removeEnterClass = (el: any) => removeEnterClass(el, this.name)
+    removeLeaveClass = (el: any) => removeLeaveClass(el, this.name)
+
+    beforeEnter() { }
+    beforeLeave() { }
+
     cancelEnter() {
 
     }
 
-    canceleave() {
-
+    canceleave(el: any) {
+        console.log('cancel leave');
+        this.removeLeaveClass(el)
+        // 取消元素身上的侦听器
     }
 
     public enter(el: any, enterOp: any) {
+
+        // ! 新建节点插入时，leaving的元素和
         let { patchKey } = el._vnode
-
-        let ile = leavingElements[patchKey]
-
-        if (ile) {
-            // cancel leave
-            console.log('cancel leave');
-            el.leaveAction()
-            el.unbindLeaveListener()
-        }
 
         enteringElements[patchKey] = el
 
-        // beforeEnter
-        console.log('beforeEnter');
-
         enterOp()
         bindEnterClass(el, this.name)
-        console.log('enter');
-        let enterAction = () => {
+
+        onceListener(el, 'transitionend', () => {
             removeEnterClass(el, this.name)
             enteringElements[patchKey] = null
             console.log('afterEnter');
-        }
-        el.enterAction = enterAction
-        el.unbindEnterListener = onceListener(el, 'transitionend', enterAction)
+        })
     }
 
     public leave(el: any, leaveOp: any) {
         let { patchKey } = el._vnode
-
-        let iee = enteringElements[patchKey]
-
-        if (iee) {
-            console.log('cancel enter');
-            el.enterAction()
-            el.unbindEnterListener()
-        }
-
         leavingElements[patchKey] = el
 
         bindLeaveClass(el, this.name)
-
-        let leaveAction = () => {
+        onceListener(el, 'transitionend', () => {
             console.log('leave');
             removeLeaveClass(el, this.name)
             leaveOp()
             leavingElements[patchKey] = null
+        })
+    }
+
+
+    processMount(newEl: any, insertFn: any) {
+        insertFn()
+    }
+
+    processUnmount(el: any) {
+        removeElement(el)
+    }
+    // show
+    processShow(el: any, show: boolean) {
+        if (show) {
+            // enter
+            if (el._leaving) {
+                this.canceleave(el)
+            }
+            this.bindeEnterClass(el)
+
+
+        } else {
+            // leave
+
         }
-        el.leaveAction = leaveAction
-        el.unbindLeaveListener = onceListener(el, 'transitionend', leaveAction)
     }
 
 }
+
+

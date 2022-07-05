@@ -18,18 +18,12 @@ export const showDirective = {
     updated(el: Element, { value, oldValue }: any, { transition }: any) {
         if (!value === !oldValue) {
             return
-        }
-
-        if (!transition) {
+        } else if (!transition) {
             setDisplay(el, value)
-            return
-        }
-
-        if (value) {
-            transition.enter(el, () => setDisplay(el, value))
         } else {
-            transition.leave(el, () => setDisplay(el, value))
+            transition.processShow(el, value)
         }
     }
 }
+
 
