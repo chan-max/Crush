@@ -1,0 +1,16 @@
+declare const NULL = "null";
+declare const toBackQuotes: (_: string) => string;
+declare const toSingleQuotes: (_: string) => string;
+declare const objectStringify: (target: any) => string;
+declare const stringify: (target: any) => string;
+declare const toArrowFunction: (returned: string, ...params: string[]) => string;
+declare const toTernaryExp: (condition: string, ifTrue: string, ifFalse: string) => string;
+declare const toArray: (items: any) => string;
+declare const dynamicMapKey: (key: string) => string;
+declare const callFn: (fnName: string, ...params: string[]) => string;
+declare const ternaryExp: (condition: string, ifTrue: string, ifFalse: string) => string;
+declare function ternaryChains(conditions: string[], returns: string[], falseDefault?: string, index?: number): string;
+declare const destructur: (target: string) => string;
+declare var declare: (name: string, value: string) => string;
+declare const toReservedProp: (prop: string) => string;
+export { ternaryExp, ternaryChains, dynamicMapKey, toBackQuotes, toTernaryExp, toArray, toSingleQuotes, objectStringify, toArrowFunction, callFn, destructur, declare, NULL, stringify, toReservedProp };

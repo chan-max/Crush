@@ -1,0 +1,35 @@
+export declare function bindEnterClass(el: Element, name: string): void;
+export declare function removeEnterClass(el: Element, name: string): void;
+export declare function bindLeaveClass(el: Element, name: string): void;
+export declare function removeLeaveClass(el: Element, name: string): void;
+export declare const createTransition: (options: any) => TransitionDesc;
+declare class TransitionDesc {
+    type: any;
+    name: any;
+    duration: any;
+    appear: any;
+    onBeforeEnter: any;
+    onEnter: any;
+    onAfterEnter: any;
+    onEnterCancelled: any;
+    onBeforeLeave: any;
+    onLeave: any;
+    onAfterLeave: any;
+    onLeaveCancelled: any;
+    constructor(options: any);
+    update(options: any): void;
+    bindeEnterClass: (el: any) => void;
+    bindeLeaveClass: (el: any) => void;
+    removeEnterClass: (el: any) => void;
+    removeLeaveClass: (el: any) => void;
+    beforeEnter(): void;
+    beforeLeave(): void;
+    cancelEnter(): void;
+    canceleave(el: any): void;
+    enter(el: any, enterOp: any): void;
+    leave(el: any, leaveOp: any): void;
+    processMount(newEl: any, insertFn: any): void;
+    processUnmount(el: any): void;
+    processShow(el: any, show: boolean): void;
+}
+export {};

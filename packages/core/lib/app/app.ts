@@ -77,7 +77,7 @@ export class App {
         install.call(plugin, this, ...options)
     }
 
-    render(component: any) {
+    mount(component: any) {
         if (!component.template && !component.render) {
             component.template = this.inlineTemplate
         }

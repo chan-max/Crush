@@ -20,7 +20,7 @@ export type StyleValue = {
     important: boolean
 }
 
-export function parseStyleValue(rawValue: any): StyleValue {
+export function parseStyleValue(rawValue: any): any {
     var value, important = false
     if (rawValue === undefined || rawValue === null) {
         value = null

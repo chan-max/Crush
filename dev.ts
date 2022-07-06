@@ -19,7 +19,7 @@ var app = createApp({
 
 console.log(app);
 
-app.render({
+app.mount({
     template:/*html*/`
     <style>
         .transition{
@@ -49,7 +49,7 @@ app.render({
         }
     </style>
     <button @click="setCount( count + 3 )"> {{count}} </button>
-    <div .box  --transition="" --show="count %2 == 0">
+    <div .box --show="count %2 == 0">
         666
     </div>
     `,

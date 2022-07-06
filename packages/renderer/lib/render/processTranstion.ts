@@ -79,6 +79,7 @@ class TransitionDesc {
         } = options
         this.name = name || 'transition'
         this.type = type || 'css'
+        this.appear = this.appear || false
         this.duration = duration
         this.onBeforeEnter = onBeforeEnter
         this.onEnter = onEnter
@@ -99,13 +100,10 @@ class TransitionDesc {
     beforeLeave() { }
 
     cancelEnter() {
-
+        
     }
 
     canceleave(el: any) {
-        console.log('cancel leave');
-        this.removeLeaveClass(el)
-        // 取消元素身上的侦听器
     }
 
     public enter(el: any, enterOp: any) {

@@ -1,0 +1,60 @@
+import { getCurrentScope, getCurrentRenderScope } from './render/mountComponent';
+import { createElement, createText, createFragment, createComponent, createComment } from './vnode/dom';
+import { important } from './common/important';
+import { renderList } from './common/iterator';
+import { display } from './common/display';
+import { getDirective, getComponent } from './common/assets';
+import { mixin } from './common/mixin';
+import { normalizeClass } from './common/normalizeClass';
+import { normalizeStyle } from './common/normalizeStyle';
+import { renderSlot } from './common/renderSlot';
+import { injectDirectives } from '@crush/core';
+import { createSVGElement } from '@crush/core';
+declare const _default: {
+    getCurrentRenderScope: typeof getCurrentRenderScope;
+    createComment: typeof createComment;
+    createSVGElement: typeof createSVGElement;
+    injectDirectives: typeof injectDirectives;
+    important: typeof important;
+    getCurrentScope: typeof getCurrentScope;
+    createElement: typeof createElement;
+    createText: typeof createText;
+    renderList: typeof renderList;
+    createFragment: typeof createFragment;
+    display: typeof display;
+    getDirective: typeof getDirective;
+    getComponent: typeof getComponent;
+    createStyleSheet: (props: any, children: any, key?: any) => any;
+    createStyle: (selector: string, children: any, key: any) => {
+        nodeType: import("@crush/core").Nodes;
+        selector: string;
+        children: any;
+        key: any;
+    };
+    createDeclaration: (children: any, key: any) => {
+        nodeType: import("@crush/core").Nodes;
+        children: any;
+        key: any;
+    };
+    createKeyframe: (keyframe: any, children: any, key?: any) => any;
+    createKeyframes: (keyframes: any, children: any, key?: any) => any;
+    createMedia: (media: string, children: any, key: any) => {
+        nodeType: import("@crush/core").Nodes;
+        media: string;
+        children: any;
+        key: any;
+    };
+    createSupports: (supports: string, children: any, key: any) => {
+        nodeType: import("@crush/core").Nodes;
+        supports: string;
+        children: any;
+        key: any;
+    };
+    mixin: typeof mixin;
+    normalizeClass: typeof normalizeClass;
+    normalizeStyle: typeof normalizeStyle;
+    createComponent: typeof createComponent;
+    renderSlot: typeof renderSlot;
+    createMap: (entries: any) => Map<unknown, unknown>;
+};
+export default _default;

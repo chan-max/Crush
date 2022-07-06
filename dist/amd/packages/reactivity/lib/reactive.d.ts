@@ -1,0 +1,12 @@
+export declare const createReactiveObject: (value: any) => any;
+export declare const createReadonlyObject: (value: any) => any;
+export declare const createShallowReactiveObject: (value: any) => any;
+export declare const createShallowReadonlyObject: (value: any) => any;
+export declare const createReactiveCollection: (value: any) => any;
+export declare const createReadonlyCollection: (value: any) => any;
+export declare const createShallowReactiveCollection: (value: any) => any;
+export declare const createShallowReadonlyCollection: (value: any) => any;
+export declare function reactive(value: any): any;
+export declare function shallowReactive(value: any): any;
+export declare function readonly(value: any): any;
+export declare function shallowReadonly(value: any): any;

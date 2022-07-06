@@ -3,10 +3,10 @@ import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
 import { parseText } from "./parseText"
-import { parseInlineClass, parseInlineStyle } from "./specialAttr"
+
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
-import { model } from "@crush/builtin/lib/directiveFormModel"
+
 // legal variable name
 var varRE = /^\w+$/
 // arrow function
@@ -174,6 +174,7 @@ const builtInAttributes: any = {
     },
     class(attr: any, ast: any) {
         attr.type = Nodes.CLASS
+        
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
     }
 }

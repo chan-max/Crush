@@ -9,26 +9,6 @@
 var Crush = (function (exports) {
     'use strict';
 
-    function setDisplay(el, show) {
-        if (show) {
-            el.style.display = el._display;
-        }
-        else {
-            el.style.display = 'none';
-        }
-    }
-    const show = {
-        beforeMount(el, { value }) {
-            el._display = el.style.display;
-            setDisplay(el, value);
-        },
-        updated(el, { value, oldValue }) {
-            if (!value !== !oldValue) {
-                setDisplay(el, value);
-            }
-        }
-    };
-
     // compiler required : 
     const modelText = {
         created(el, _, vnode) {
@@ -39,9 +19,31 @@ var Crush = (function (exports) {
         }
     };
 
-    function showComponent(props, slots) {
-        return slots.default();
+    function setDisplay(el, show) {
+        if (show) {
+            el.style.display = el._display;
+        }
+        else {
+            el.style.display = 'none';
+        }
     }
+    const showDirective = {
+        beforeMount(el, { value }, { transition }) {
+            el._display = el.style.display;
+            setDisplay(el, value);
+        },
+        updated(el, { value, oldValue }, { transition }) {
+            if (!value === !oldValue) {
+                return;
+            }
+            else if (!transition) {
+                setDisplay(el, value);
+            }
+            else {
+                transition.processShow(el, value);
+            }
+        }
+    };
 
     const cache = (fn) => {
         const cache = Object.create(null);
@@ -173,22 +175,45 @@ var Crush = (function (exports) {
             removeListener(el, event, onceHandler, options);
         };
         addListener(el, event, onceHandler, options);
+        // 注销事件
+        return () => removeListener(el, event, onceHandler, options);
     }
 
-    /*
-        duration
-        timingFunction
-        delay
-    */
-    const createTransition = (transitionOptions) => new TransitionDescription(transitionOptions);
-    //! 多个元素可能共享同一个过渡描述实例，所以调用相关方法需要手动传入对应得元素
-    class TransitionDescription {
-        constructor(transitionOptions) {
-            this.initOptions(transitionOptions);
-        }
+    //! class
+    function bindEnterClass(el, name) {
+        addClass(el, `${name}-enter`);
+        addClass(el, `${name}-enter-from`);
+        requestAnimationFrame(() => {
+            addClass(el, `${name}-enter-to`);
+            removeClass(el, `${name}-enter-from`);
+        });
+    }
+    function removeEnterClass(el, name) {
+        removeClass(el, `${name}-enter-to`);
+        removeClass(el, `${name}-enter`);
+    }
+    function bindLeaveClass(el, name) {
+        addClass(el, `${name}-leave-from`);
+        document.body.offsetHeight;
+        addClass(el, `${name}-leave`);
+        requestAnimationFrame(() => {
+            addClass(el, `${name}-leave-to`);
+            removeClass(el, `${name}-leave-from`);
+        });
+    }
+    function removeLeaveClass(el, name) {
+        removeClass(el, `${name}-leave-to`);
+        removeClass(el, `${name}-leave`);
+    }
+    let leavingElements = {};
+    let enteringElements = {};
+    const createTransition = (options) => new TransitionDesc(options);
+    // 整个transtion描述不参与节点的真实挂载卸载，显示或隐藏
+    class TransitionDesc {
         type; // css / animation
         name;
         duration; // css一般不需要
+        appear;
         // hooks
         onBeforeEnter;
         onEnter;
@@ -198,13 +223,17 @@ var Crush = (function (exports) {
         onLeave;
         onAfterLeave;
         onLeaveCancelled;
-        initOptions(transitionOptions) {
-            transitionOptions ||= emptyObject;
+        constructor(options) {
+            this.update(options);
+        }
+        update(options) {
+            options ||= emptyObject;
             const { type, name, duration, 
             // hooks
-            onBeforeEnter, onEnter, onAfterEnter, onEnterCancelled, onBeforeLeave, onLeave, onAfterLeave, onLeaveCancelled } = transitionOptions;
+            onBeforeEnter, onEnter, onAfterEnter, onEnterCancelled, onBeforeLeave, onLeave, onAfterLeave, onLeaveCancelled } = options;
             this.name = name || 'transition';
             this.type = type || 'css';
+            this.appear = this.appear || false;
             this.duration = duration;
             this.onBeforeEnter = onBeforeEnter;
             this.onEnter = onEnter;
@@ -215,59 +244,68 @@ var Crush = (function (exports) {
             this.onAfterLeave = onAfterLeave;
             this.onLeaveCancelled = onLeaveCancelled;
         }
-        update(transitionOptions) {
-            this.initOptions(transitionOptions);
+        bindeEnterClass = (el) => bindEnterClass(el, this.name);
+        bindeLeaveClass = (el) => bindLeaveClass(el, this.name);
+        removeEnterClass = (el) => removeEnterClass(el, this.name);
+        removeLeaveClass = (el) => removeLeaveClass(el, this.name);
+        beforeEnter() { }
+        beforeLeave() { }
+        cancelEnter() {
         }
-        beforeEnter(el) {
+        canceleave(el) {
         }
-        doEnter(el) {
-            addClass(el, `${this.name}-enter`);
-            addClass(el, `${this.name}-enter-from`);
-            requestAnimationFrame(() => {
-                addClass(el, `${this.name}-enter-to`);
-                removeClass(el, `${this.name}-enter-from`);
+        enter(el, enterOp) {
+            // ! 新建节点插入时，leaving的元素和
+            let { patchKey } = el._vnode;
+            enteringElements[patchKey] = el;
+            enterOp();
+            bindEnterClass(el, this.name);
+            onceListener(el, 'transitionend', () => {
+                removeEnterClass(el, this.name);
+                enteringElements[patchKey] = null;
+                console.log('afterEnter');
             });
         }
-        finishEnter(el) {
-            removeClass(el, `${this.name}-enter-to`);
-            removeClass(el, `${this.name}-enter`);
-        }
-        cancelEnter(el) {
-            console.log('cancel enter');
-            this.finishEnter(el);
-        }
-        beforeLeave(el) {
-        }
-        doLeave(el) {
-            addClass(el, `${this.name}-leave-from`);
-            document.body.offsetHeight;
-            addClass(el, `${this.name}-leave`);
-            requestAnimationFrame(() => {
-                addClass(el, `${this.name}-leave-to`);
-                removeClass(el, `${this.name}-leave-from`);
+        leave(el, leaveOp) {
+            let { patchKey } = el._vnode;
+            leavingElements[patchKey] = el;
+            bindLeaveClass(el, this.name);
+            onceListener(el, 'transitionend', () => {
+                console.log('leave');
+                removeLeaveClass(el, this.name);
+                leaveOp();
+                leavingElements[patchKey] = null;
             });
         }
-        finishLeave(el) {
-            removeClass(el, `${this.name}-leave-to`);
-            removeClass(el, `${this.name}-leave`);
+        processMount(newEl, insertFn) {
+            insertFn();
         }
-        cancelLeave(el) {
-            console.log('cancelLeave');
-            this.finishLeave(el);
+        processUnmount(el) {
+            removeElement(el);
+        }
+        // show
+        processShow(el, show) {
+            if (show) {
+                // enter
+                if (el._leaving) {
+                    this.canceleave(el);
+                }
+                this.bindeEnterClass(el);
+            }
         }
     }
 
     const transitionComponent = {
         props: {},
         render: ({ $slots }) => $slots.default(),
-        beforeMount({ $instance: { scope, renderingVnode } }) {
-            const transtion = createTransition({});
+        beforeMount({ $instance: { scope, renderingVnode }, $props }) {
+            const transtion = createTransition($props);
             renderingVnode.forEach((vnode) => {
                 vnode.transition = transtion;
             });
         },
-        beforeUpdate({ $instance: { renderingVnode } }) {
-            const transtion = createTransition({});
+        beforeUpdate({ $instance: { renderingVnode }, $props }) {
+            const transtion = createTransition($props);
             renderingVnode && renderingVnode.forEach((vnode) => {
                 vnode.transition = transtion;
             });
@@ -277,8 +315,8 @@ var Crush = (function (exports) {
     const transitionGroupComponent = {
         props: {},
         render: ({ $slots }) => $slots.default(),
-        beforeUpdate({ $instance: { scope, vnode, renderingVnode } }) {
-            const transtion = createTransition({});
+        beforeUpdate({ $instance: { scope, vnode, renderingVnode }, $props }) {
+            const transtion = createTransition($props);
             const mountList = renderingVnode.filter((patchKey) => !vnode.map((_) => _.patchKey).includes(patchKey));
             const unmountList = vnode.filter((patchKey) => !renderingVnode.map((_) => _.patchKey).includes(patchKey));
             const transitionList = mountList.concat(unmountList);
@@ -287,15 +325,30 @@ var Crush = (function (exports) {
             });
         }
     };
+    /*
+        --transition.fast=""
+
+    */
+    const transitionDirective = {
+        beforeCreate(_, { value }, vnode) {
+            vnode.transition = createTransition(value);
+        },
+        beforeUpdate(_, { value }, nVnode, pVnode) {
+            const transition = pVnode.transition;
+            transition.update(value);
+            nVnode.transition = transition; // extend
+        }
+    };
 
     const builtInComponents = {
-        show: showComponent,
         transition: transitionComponent,
         transitionGroup: transitionGroupComponent
     };
     const builtInDirectives$1 = {
-        show,
+        show: showDirective,
         modelText,
+        transition: transitionDirective,
+        transitionGroup: transitionGroupComponent
     };
 
     function createNode(nodeType) {
@@ -1078,43 +1131,6 @@ var Crush = (function (exports) {
         patch(vnode.vnode, null, container, anchor, parent);
     }
 
-    // appear ，当前袁旭
-    /*
-        duration : 可传时间毫秒 ，slow , fast , normal 等修饰符 , 进入时间和离开时间
-    */
-    const isLeavingElementMap = {};
-    function transitionEnter(vnode, insertFn) {
-        const { transition, el, patchKey } = vnode;
-        // 此时的el 是新创建的el，与正在卸载的不是一个元素，所以要想办法拿到之前的元素（正在执行离开动画的元素，并让他直接卸载即可）
-        let ile = isLeavingElementMap[patchKey];
-        // 移除之前离开动画没执行完的元素
-        if (ile) {
-            transition.cancelLeave(ile);
-            removeElement(ile);
-            isLeavingElementMap[patchKey] = null;
-        }
-        el.entering = true;
-        insertFn();
-        transition.doEnter(el);
-        onceListener(el, 'transitionend', () => {
-            transition.finishEnter(el);
-            el.entering = false;
-        });
-    }
-    function transitionLeave(vnode) {
-        const { transition, el, patchKey } = vnode;
-        if (el.entering) {
-            transition.cancelEnter(el);
-        }
-        transition.doLeave(el);
-        isLeavingElementMap[patchKey] = el;
-        onceListener(el, 'transitionend', () => {
-            transition.finishLeave(el);
-            isLeavingElementMap[patchKey] = null;
-            removeElement(el);
-        });
-    }
-
     function mount(vnode, container, anchor = null, parent = null) {
         switch (vnode.nodeType) {
             case 13 /* HTML_ELEMENT */:
@@ -1149,18 +1165,19 @@ var Crush = (function (exports) {
         // 1
         processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
         // 2
-        const { type, props, children, transition } = vnode;
+        const { type, props, children, transition, patchKey } = vnode;
         // create 
         const el = vnode.el = docCreateElement(type, isSVG);
+        el._vnode = vnode;
         mountAttributes(el, props, parent, isSVG);
         processHook("created" /* CREATED */, vnode);
         processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
-        let insertFn = () => insertElement(el, container, anchor);
+        // 进入动画不影响节点的插入
         if (transition) {
-            transitionEnter(vnode, insertFn);
+            transition.processMount(el, () => insertElement(el, container, anchor));
         }
         else {
-            insertFn();
+            insertElement(el, container, anchor);
         }
         processHook("mounted" /* MOUNTED */, vnode);
         mountChildren(children, el, anchor, parent);
@@ -1215,7 +1232,7 @@ var Crush = (function (exports) {
             unmountChildren(vnode.children);
         }
         if (transition) {
-            transitionLeave(vnode);
+            transition.processUnmount(el);
         }
         else {
             removeElement(el);
@@ -1580,6 +1597,10 @@ var Crush = (function (exports) {
     };
 
     const ReactiveTypeSymbol = Symbol('ReactiveType');
+    // ref 或 reactive
+    function isProxy(value) {
+        return value && value[ReactiveTypeSymbol];
+    }
     // 可被代理的类型 ， 响应式或只读
     function isProxyType(value) {
         switch (typeOf(value)) {
@@ -1620,9 +1641,6 @@ var Crush = (function (exports) {
     }
     function isRef(value) {
         return value && value["isRef" /* IS_REF */];
-    }
-    function isProxy(value) {
-        return value && value[ReactiveTypeSymbol];
     }
 
     const TARGET_MAP = new WeakMap();
@@ -2112,6 +2130,184 @@ var Crush = (function (exports) {
     const cleaarRefDeps = (ref) => {
         getRefDeps(ref).clear();
     };
+
+    const computed = (getter) => new ComputedRef(getter);
+    class ComputedRef {
+        [ReactiveTypeSymbol] = true;
+        ["isComputed" /* IS_COMPUTED */] = true;
+        ["isRef" /* IS_REF */] = true;
+        cacheValue;
+        oldValue;
+        shouldCompute = true;
+        computedEffect;
+        constructor(getter) {
+            this.computedEffect = createReactiveEffect(getter, () => {
+                // 依赖的值变化后，触发调度器 , 一个computed依赖的副作用就是它所依赖的值的副作用
+                if (!this.shouldCompute) { // 缓存值
+                    this.shouldCompute = true;
+                    triggerRef(this);
+                }
+            });
+        }
+        get computedValue() {
+            this.shouldCompute = false;
+            this.oldValue = this.cacheValue;
+            return this.cacheValue = this.computedEffect.run();
+        }
+        get value() {
+            trackRef(this);
+            return this.shouldCompute ? this.computedValue : this.cacheValue;
+        }
+    }
+
+    /*
+        通问题
+        当改变被侦测的数据时，会去执行数据的依赖，但如果依赖中不止有watch注册的回调，还有其他的依赖，并且依赖触发后，依赖中又更改了其他响应式数据的值，这时通过
+        获取最近值来传递 watch 的参数不可靠
+    */
+    //! 回调中能拿到的数据有 改变的key ，改变的新值 ， 改变前的值
+    function shallowWatchReactive(data, callback) {
+        if (!isReactive(data)) {
+            return;
+        }
+        // 问题？ 新设置的key无法触发依赖，因为没收集
+        const rawData = toRaw(data);
+        var watchCallbackIsCalling = false, changeKey, changeNewValue, changeOldValue;
+        let cb = () => {
+            watchCallbackIsCalling = true;
+            callback.call(null, changeKey, changeNewValue, changeOldValue);
+            watchCallbackIsCalling = false;
+        };
+        let unSet = onSet((target, key, newValue, oldValue) => {
+            if (target === rawData) {
+                if (watchCallbackIsCalling) {
+                    // callback 中重新设置值会触发死递归
+                    error('cant set reactive data value in the watch callback');
+                }
+                else {
+                    // 设置的值是watchdata中的值，并且不是在回调函数中
+                    changeKey = key;
+                    changeNewValue = newValue;
+                    changeOldValue = oldValue;
+                }
+            }
+        });
+        const deps = getDeps(rawData, watchDepsSymbol);
+        deps.add(cb);
+        // unwatch
+        return () => {
+            unSet();
+            deps.delete(cb);
+        };
+    }
+    function watchReactive(reactiveData, callback) {
+        if (!isReactive(reactiveData)) {
+            return;
+        }
+        // 问题需要记录子数据脱离绑定的情况
+        // 保存当前 watch 的data中存在的所有 target 
+        // ! 当侦测一个reactive data时，回调中不应该再设置该属性的值否则会死循环
+        const targets = new Set();
+        collectTarget(reactiveData);
+        function collectTarget(data) {
+            if (!isReactive(data)) {
+                return;
+            }
+            targets.add(toRaw(data));
+            Object.values(data).forEach(collectTarget);
+        }
+        // watch的回调函数是否正在调用
+        var watchCallbackIsCalling = false, changeTarget, changeKey, changeNewValue, changeOldValue;
+        let cb = () => {
+            watchCallbackIsCalling = true;
+            callback.call(null, changeTarget, changeKey, changeNewValue, changeOldValue);
+            watchCallbackIsCalling = false;
+        };
+        targets.forEach((target) => {
+            let deps = getDeps(target, watchDepsSymbol);
+            deps.add(cb);
+        });
+        const unSet = onSet((target, key, newValue, oldValue) => {
+            if (targets.has(target)) {
+                if (watchCallbackIsCalling) {
+                    // callback 中重新设置值会触发死递归
+                    error('cant set reactive data value in the watch callback');
+                }
+                else {
+                    // 设置的值是watchdata中的值，并且不是在回调函数中
+                    changeTarget = target;
+                    changeKey = key;
+                    changeNewValue = newValue;
+                    changeOldValue = oldValue;
+                }
+            }
+            if (!targets.has(oldValue)) { // 当前更改的值与侦测目标无任何关系
+                return;
+            }
+            // 解绑
+            let oldValueDeps = getDeps(oldValue, watchDepsSymbol);
+            oldValueDeps.delete(cb);
+            targets.delete(oldValue);
+            // 增加新绑定值的依赖
+            if (targets.has(newValue)) {
+                // 此时是将观察对象中的值重新赋值给该对象的身上，不需要添加依赖
+                return;
+            }
+            if (isProxyType(newValue)) {
+                let newValueDeps = getDeps(newValue, watchDepsSymbol);
+                newValueDeps.add(cb);
+                targets.add(newValue);
+            }
+        });
+        // unwatch
+        return () => {
+            unSet();
+            targets.forEach((target) => {
+                let deps = getDeps(target, watchDepsSymbol);
+                deps.delete(cb);
+            });
+        };
+    }
+    // 指定侦测的目标和key值
+    function watchTargetKey(target, key, callback) {
+        if (!isReactive(target)) {
+            return;
+        }
+        const deps = getDeps(target, key);
+        var watchCallbackIsCalling = false, changeNewValue, changeOldValue;
+        let cb = () => {
+            watchCallbackIsCalling = true;
+            callback.call(null, changeNewValue, changeOldValue);
+            watchCallbackIsCalling = false;
+        };
+        const unSet = onSet((_target, _key, newValue, oldValue) => {
+            if (_target === target && _key === key) { // 侦听目标的对应key触发了
+                if (watchCallbackIsCalling) {
+                    // callback 中重新设置值会触发死递归
+                    error('cant set reactive data value in the watch callback');
+                }
+                else {
+                    // 设置的值是watchdata中的值，并且不是在回调函数中
+                    changeNewValue = newValue;
+                    changeOldValue = oldValue;
+                }
+            }
+        });
+        deps.add(cb);
+        // unwatch
+        return () => {
+            unSet();
+            deps.delete(cb);
+        };
+    }
+
+    function watchRef(ref, callback) {
+        const deps = getRefDeps(ref);
+        const watchEffect = () => callback.call(null, ref.value, ref.oldValue);
+        deps.add(watchEffect);
+        // unwatch
+        return () => deps.delete(watchEffect);
+    }
 
     var nextTick = (fn, args = undefined) => {
         var p = Promise.resolve(args);
@@ -4020,20 +4216,15 @@ var Crush = (function (exports) {
         }
         return currentApp;
     }
-    function normalizeContainer(container) {
-        if (isString(container)) {
-            container = document.querySelector(container);
-        }
-        if (!(container instanceof Element)) {
-            error('not legal container');
-        }
-        return container;
-    }
     class App {
         isMounted = false;
-        rootOptions;
-        constructor(rootOptions) {
-            this.rootOptions = rootOptions;
+        inlineTemplate;
+        container;
+        constructor(appOptions) {
+            let { container } = appOptions;
+            this.container = isString(container) ? document.querySelector(container) : container;
+            this.inlineTemplate = this.container.innerHTML;
+            this.container.innerHTML = '';
             // 安装动画
             this.use(installAnimation);
             currentApp = this;
@@ -4061,34 +4252,15 @@ var Crush = (function (exports) {
         use(plugin, ...options) {
             if (this.plugins.has(plugin))
                 return;
-            (isFunction(plugin) ? plugin : plugin.install)(this, ...options);
+            let install = isFunction(plugin) ? plugin : plugin.install;
+            install.call(plugin, this, ...options);
         }
-        container = null;
-        rootInstance;
-        useSelectorTemplate = false;
-        rootComponent;
-        mount(container) {
-            container = normalizeContainer(container);
-            // todo validate legal container 
-            this.container = container;
-            var options = this.rootOptions;
-            if (!options.template && !options.render) {
-                options.template = container.innerHTML;
-                this.useSelectorTemplate = true;
+        mount(component) {
+            if (!component.template && !component.render) {
+                component.template = this.inlineTemplate;
             }
-            // clear page template
-            container.innerHTML = '';
-            // mount root component
-            var component = createComponent(options, null, null);
-            this.rootComponent = component;
-            var instance = mount(component, container, null, null);
-            // instance.root = instance
-            this.rootInstance = instance;
+            mount(createComponent(component, null, null), this.container);
             this.isMounted = true;
-            return instance;
-        }
-        unmount() {
-            unmountComponent(this.rootComponent, this.container);
         }
     }
 
@@ -4328,9 +4500,7 @@ var Crush = (function (exports) {
         $events: (instance) => getInstanceEvents(instance),
         $listeners: (instance) => (event) => getInstancetEventListeners(instance, event)
     };
-    function defineScopeProperty(key, getter) {
-        scopeProperties[key] = getter;
-    }
+    const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
     // inject scope property
     function createScope(instance) {
         const scope = reactive(Object.create(protoMethods));
@@ -4507,6 +4677,7 @@ var Crush = (function (exports) {
     exports.App = App;
     exports.Comment = Comment;
     exports.ComponentInstance = ComponentInstance;
+    exports.ComputedRef = ComputedRef;
     exports.IMPORTANT = IMPORTANT;
     exports.IMPORTANT_KEY = IMPORTANT_KEY;
     exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;
@@ -4532,6 +4703,7 @@ var Crush = (function (exports) {
     exports.camelize = camelize;
     exports.cleaarRefDeps = cleaarRefDeps;
     exports.compile = compile;
+    exports.computed = computed;
     exports.conicGradient = conicGradient;
     exports.createApp = createApp;
     exports.createComment = createComment;
@@ -4751,6 +4923,7 @@ var Crush = (function (exports) {
     exports.shallowReadonly = shallowReadonly;
     exports.shallowReadonlyCollectionHandler = shallowReadonlyCollectionHandler;
     exports.shallowReadonlyHandler = shallowReadonlyHandler;
+    exports.shallowWatchReactive = shallowWatchReactive;
     exports.skew = skew;
     exports.skewX = skewX;
     exports.skewY = skewY;
@@ -4797,6 +4970,9 @@ var Crush = (function (exports) {
     exports.updateStyleSheet = updateStyleSheet;
     exports.warn = warn;
     exports.watchDepsSymbol = watchDepsSymbol;
+    exports.watchReactive = watchReactive;
+    exports.watchRef = watchRef;
+    exports.watchTargetKey = watchTargetKey;
     exports.withEventModifiers = withEventModifiers;
 
     Object.defineProperty(exports, '__esModule', { value: true });

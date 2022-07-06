@@ -1,0 +1,10 @@
+export declare const zoomIn: any[];
+export declare const zoomInDown: any[];
+export declare const zoomInUp: any[];
+export declare const zoomInLeft: any[];
+export declare const zoomInRight: any[];
+export declare const zoomOut: any[];
+export declare const zoomOutDown: any[];
+export declare const zoomOutUp: any[];
+export declare const zoomOutLeft: any[];
+export declare const zoomOutRight: any[];

@@ -1,0 +1,15 @@
+export declare function normalizeKeyText(keyframe: string | number | Array<string | number>): string;
+export declare const setKeyText: (keyframe: CSSKeyframeRule, key: string | number) => string;
+export declare const insertRule: (sheet: CSSStyleSheet, rule: string, index?: number) => number;
+export declare const insertStyle: (sheet: CSSStyleSheet, selector: string, index?: number | undefined) => number;
+export declare const insertMedia: (sheet: CSSStyleSheet, media: string, index?: number | undefined) => number;
+export declare const insertSupports: (sheet: CSSStyleSheet, supports: string, index?: number | undefined) => number;
+export declare const insertKeyframes: (sheet: CSSStyleSheet, keyframes: string, index?: number | undefined) => number;
+export declare const insertKeyframe: (sheet: CSSKeyframesRule, keyText: string | number | Array<string | number>) => void;
+export declare const deleteRule: (sheet: CSSStyleSheet, index: number) => void;
+export declare const deleteKeyframe: (keyframes: CSSKeyframesRule, keyText: string | number) => void;
+export declare const setSelector: (styleRule: CSSStyleRule, selector: string) => string;
+export declare const setKeyframesName: (keyframesRule: CSSKeyframesRule, name: string) => string;
+export declare const deleteMedium: (mediaRule: CSSMediaRule, medium: string) => void;
+export declare const appendMedium: (mediaRule: CSSMediaRule, medium: string) => void;
+export declare const setStyleProperty: (style: CSSStyleDeclaration, property: string, value: string, important?: boolean) => void;

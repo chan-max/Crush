@@ -59,7 +59,39 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     <li --for="i in 6"> {{i}} </li>
 ```
 
+### id 和 class 
 
+#### id 简写
+
+```
+    <div #app></div>
+    等同于
+    <div id="app"></div>
+
+    支持动态
+    <div #(exp)></div>
+    等同于
+    <div $id="exp"></div>
+```
+
+#### class 简写
+
+```
+    <div .box></div>
+    等同于
+    <div class="box"></div>
+
+    支持动态
+    <div .(exp)></div>
+    等同于
+    <div $class="exp"></div>
+
+
+    支持多个
+    <div .x .y .z></div>
+    等同于
+    <div class="x y z"></div>
+```
 
 ## css拓展
 
