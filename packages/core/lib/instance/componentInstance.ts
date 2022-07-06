@@ -25,7 +25,7 @@ export class ComponentInstance {
     slots: any
     props: any
     attrs: any
-    refs:any
+    refs: any
     customOptions: any
     propsOptions: any
     emitsOptions: any
@@ -49,6 +49,7 @@ export class ComponentInstance {
     root: any
     emit: any
     beforePatch: any
+    appearRecord: any
     constructor(options: any, parent: any) {
         const {
             render,

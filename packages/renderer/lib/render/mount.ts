@@ -47,6 +47,7 @@ import { mountRenderComponent } from "./renderComponent";
 
 
 function mountElement(vnode: any, container: any, anchor: any, parent: any, isSVG: boolean = false) {
+    vnode.instance = parent
     // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // 2

@@ -56,6 +56,10 @@ class TransitionDesc {
     onLeave: any
     onAfterLeave: any
     onLeaveCancelled: any
+    onBeforeAppear: any
+    onAppear: any
+    onAfterAppear: any
+    onAppearCancelled: any
 
     constructor(options: any) {
         this.update(options)
@@ -75,10 +79,15 @@ class TransitionDesc {
             onBeforeLeave,
             onLeave,
             onAfterLeave,
-            onLeaveCancelled
+            onLeaveCancelled,
+            onBeforeAppear,
+            onAppear,
+            onAfterAppear,
+            onAppearCancelled
         } = options
         this.name = name || 'transition'
         this.type = type || 'css'
+        // 该元素在组件中是否为第一次渲染
         this.appear = this.appear || false
         this.duration = duration
         this.onBeforeEnter = onBeforeEnter
@@ -89,6 +98,10 @@ class TransitionDesc {
         this.onLeave = onLeave
         this.onAfterLeave = onAfterLeave
         this.onLeaveCancelled = onLeaveCancelled
+        this.onBeforeAppear = onBeforeAppear
+        this.onAppear = onAppear
+        this.onAfterAppear = onAfterAppear
+        this.onAppearCancelled = onAppearCancelled
     }
 
     bindeEnterClass = (el: any) => bindEnterClass(el, this.name)
@@ -100,7 +113,7 @@ class TransitionDesc {
     beforeLeave() { }
 
     cancelEnter() {
-        
+
     }
 
     canceleave(el: any) {
@@ -137,22 +150,57 @@ class TransitionDesc {
     }
 
 
-    processMount(newEl: any, insertFn: any) {
+
+    public processMount(newEl: any, insertFn: any) {
+        let { patchKey, instance } = newEl._vnode
+        let appearRecord = instance.appearRecord ||= {}
+        let isAppear = !appearRecord[patchKey]
+
+        if (!this.appear && isAppear) {
+            // once process
+            // appear
+            insertFn()
+            appearRecord[patchKey] = true
+            return
+        }
+
+        let leavingEl = leavingElements[patchKey]
+
+        if (leavingEl) {
+            // 上个元素还没卸载完成（过渡中）
+
+        }
+
+
+        // beforeEnter
         insertFn()
+        newEl._entering = true
+        this.bindeEnterClass(newEl)
+
+        onceListener(newEl, 'transitionend', () => {
+            // after enter
+            this.removeEnterClass(newEl)
+            newEl._entering = true
+        })
+
+        appearRecord[patchKey] = true
     }
 
-    processUnmount(el: any) {
-        removeElement(el)
+    public processUnmount(el: any) {
+        this.bindeLeaveClass(el)
+        onceListener(el, 'transitionend', () => {
+            removeElement(el)
+        })
     }
-    // show
-    processShow(el: any, show: boolean) {
+
+    // show todo
+    public processShow(el: any, show: boolean) {
         if (show) {
             // enter
             if (el._leaving) {
                 this.canceleave(el)
             }
             this.bindeEnterClass(el)
-
 
         } else {
             // leave

@@ -49,7 +49,7 @@ app.mount({
         }
     </style>
     <button @click="setCount( count + 3 )"> {{count}} </button>
-    <div .box --show="count %2 == 0">
+    <div .box --if="count %2 == 0" --transition>
         666
     </div>
     `,
