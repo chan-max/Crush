@@ -2,7 +2,7 @@ import { emptyObject } from "@crush/common"
 
 
 
-function setDisplay(el: any, show: boolean) {
+export function setDisplay(el: any, show: boolean) {
     if (show) {
         el.style.display = el._display
     } else {
@@ -21,7 +21,7 @@ export const showDirective = {
         } else if (!transition) {
             setDisplay(el, value)
         } else {
-            transition.processShow(el, value)
+            value ? transition.processShow(el) : transition.processHide(el)
         }
     }
 }

@@ -46,7 +46,7 @@ function updateText(p: any, n: any) {
 function updateHTMLElement(p: any, n: any, container: any, anchor: any, parent: ComponentInstance) {
     const el = n.el = p.el
     processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
-    updateAttributes(el, p.props, n.props,parent)
+    updateAttributes(el, p.props, n.props, parent)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor, parent)
@@ -60,6 +60,7 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
 
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
+
         patch(p[i], n[i], container, getAnchor(p, i + 1), parent)
     }
 }
@@ -69,10 +70,27 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
 */
 function getAnchor(vnodes: any, index: number) {
     for (let i = index; i < vnodes.length; i++) {
-        var ref = vnodes[i]?.ref
-        if (ref) {
-            return ref
+        let nextSibiling = vnodes[i]
+
+        if (!nextSibiling) {
+            continue
         }
+        return getVnodeAnchor(nextSibiling)
     }
+}
+
+function getVnodeAnchor(vnode: any): any {
+    switch (vnode.nodeType) {
+        case Nodes.COMPONENT:
+            return getVnodeAnchor(vnode.instance.vnode[0])
+        case Nodes.RENDER_COMPONENT:
+            return getVnodeAnchor(vnode.vnode[0])
+        case Nodes.HTML_ELEMENT:
+        case Nodes.SVG_ELEMENT:
+        case Nodes.TEXT:
+        case Nodes.HTML_COMMENT:
+            return vnode.el
+    }
+    return null
 }
 

@@ -46,22 +46,21 @@ function setScopeData(scope: any, data: any) {
 
 export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
 
-    const { type, props, children }: any = vnode
-
-    const instance = createComponentInstance(type, parent)
-
-    const { scope, renderScope } = instance
-
-    callHook(LifecycleHooks.BEFORE_CREATE, instance, { binding: scope }, scope)
+    const instance = createComponentInstance(vnode.type, parent)
 
     vnode.instance = instance
     instance.componentVnode = vnode
+
+    const { scope, renderScope } = instance
+
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
+
     setCurrentInstance(instance)
 
     // 初次创建前应该把 slot props 方法等挂载到作用域上
     // 先挂载props ，这样 create hook中才能访问
-    mountComponentProps(instance, props)
-    instance.slots = children
+    mountComponentProps(instance, vnode.props)
+    instance.slots = vnode.children
 
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
 
@@ -117,10 +116,15 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
         nVnode = processRenderResult(nVnode)
         instance.renderingVnode = nVnode
+
+        if (vnode.transition) {
+            nVnode.forEach((_: any) => { _.transition = vnode.transition });
+        }
+
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
 
         if (beforePatch) { beforePatch(pVnode, nVnode) }
-        
+        console.log('新旧节点', pVnode, nVnode)
         patch(pVnode, nVnode, container, anchor, instance)
 
         instance.vnode = nVnode

@@ -1,4 +1,5 @@
-import { emptyObject } from "@crush/common"
+import { setDisplay } from "@crush/builtin/lib/show"
+import { emptyObject, initialUpperCase } from "@crush/common"
 import { addClass, onceListener, removeClass, removeElement } from "../dom"
 
 //! class
@@ -36,11 +37,17 @@ let enteringElements: any = {}
 
 export const createTransition = (options: any) => new TransitionDesc(options)
 
+function hasAppeared(el: any) {
+    let { patchKey, instance } = el._vnode
+    let appearRecord = instance.appearRecord ||= {}
+    return appearRecord[patchKey]
+}
+
 // 整个transtion描述不参与节点的真实挂载卸载，显示或隐藏
 class TransitionDesc {
 
     type: any // css / animation
-
+    
     name: any
 
     duration: any // css一般不需要
@@ -71,6 +78,7 @@ class TransitionDesc {
             type,
             name,
             duration,
+            appear,
             // hooks
             onBeforeEnter,
             onEnter,
@@ -88,7 +96,7 @@ class TransitionDesc {
         this.name = name || 'transition'
         this.type = type || 'css'
         // 该元素在组件中是否为第一次渲染
-        this.appear = this.appear || false
+        this.appear = appear || false
         this.duration = duration
         this.onBeforeEnter = onBeforeEnter
         this.onEnter = onEnter
@@ -109,54 +117,25 @@ class TransitionDesc {
     removeEnterClass = (el: any) => removeEnterClass(el, this.name)
     removeLeaveClass = (el: any) => removeLeaveClass(el, this.name)
 
+    callHook = (hookName: string, ...args: any) => {
+        let _this: any = this
+        let hook = _this[`on${initialUpperCase(hookName)}`]
+        if (hook) {
+            hook.call(_this, ...args)
+        }
+    }
+
     beforeEnter() { }
     beforeLeave() { }
-
-    cancelEnter() {
-
-    }
-
-    canceleave(el: any) {
-    }
-
-    public enter(el: any, enterOp: any) {
-
-        // ! 新建节点插入时，leaving的元素和
-        let { patchKey } = el._vnode
-
-        enteringElements[patchKey] = el
-
-        enterOp()
-        bindEnterClass(el, this.name)
-
-        onceListener(el, 'transitionend', () => {
-            removeEnterClass(el, this.name)
-            enteringElements[patchKey] = null
-            console.log('afterEnter');
-        })
-    }
-
-    public leave(el: any, leaveOp: any) {
-        let { patchKey } = el._vnode
-        leavingElements[patchKey] = el
-
-        bindLeaveClass(el, this.name)
-        onceListener(el, 'transitionend', () => {
-            console.log('leave');
-            removeLeaveClass(el, this.name)
-            leaveOp()
-            leavingElements[patchKey] = null
-        })
-    }
-
-
+    cancelEnter() {}
+    canceleave() {}
 
     public processMount(newEl: any, insertFn: any) {
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
-        let isAppear = !appearRecord[patchKey]
+        let appeared = appearRecord[patchKey]
 
-        if (!this.appear && isAppear) {
+        if (!this.appear && !appeared) {
             // once process
             // appear
             insertFn()
@@ -167,8 +146,9 @@ class TransitionDesc {
         let leavingEl = leavingElements[patchKey]
 
         if (leavingEl) {
-            // 上个元素还没卸载完成（过渡中）
-
+            // 上个元素还没卸载完成（过渡中） 直接卸载
+            removeElement(leavingEl)
+            leavingElements[patchKey] = null
         }
 
 
@@ -187,25 +167,58 @@ class TransitionDesc {
     }
 
     public processUnmount(el: any) {
+        let { patchKey } = el._vnode
+
+        if (el._entering) {
+            // 正在进入 ，取消进入动画
+            this.removeEnterClass(el)
+        }
+
+        leavingElements[patchKey] = el
         this.bindeLeaveClass(el)
         onceListener(el, 'transitionend', () => {
+            // 元素直接卸载就不需要卸载class了
             removeElement(el)
+            leavingElements[patchKey]
         })
     }
 
     // show todo
-    public processShow(el: any, show: boolean) {
-        if (show) {
-            // enter
-            if (el._leaving) {
-                this.canceleave(el)
-            }
-            this.bindeEnterClass(el)
-
-        } else {
-            // leave
-
+    public processShow(el: any) {
+        // appear 好像蹭挂载的就可以了
+        // enter
+        if (el._leaving) {
+            // cancel leave
+            this.removeLeaveClass(el)
+            el._leaving = false
+            // 此时如果进入进入动画的话，会使用过渡，而不是直接设为
+            // 按逻辑说应该设为none，但好像没必要
         }
+
+        el._entering = true
+        setDisplay(el, true)
+        this.bindeEnterClass(el)
+        onceListener(el, 'transitionend', () => {
+            this.removeEnterClass(el)
+            setDisplay(el, true)
+            el._entering = false
+        })
+    }
+
+    processHide(el: any) {
+        if (el._entering) {
+            // cancel
+            this.removeEnterClass(el)
+            el._entering = false
+        }
+
+        el._leaving = true
+        this.bindeLeaveClass(el)
+        onceListener(el, 'transitionend', () => {
+            this.removeLeaveClass(el)
+            el._leaving = false
+            setDisplay(el, false)
+        })
     }
 
 }

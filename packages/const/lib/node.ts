@@ -25,9 +25,8 @@ export const enum Nodes {
     HTML_ELEMENT,
     COMPONENT,
 
-
     RENDER_COMPONENT, // 纯渲染函数
-
+    
     DYNAMIC_COMPONENT,
 
     STYLE,

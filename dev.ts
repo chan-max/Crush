@@ -19,7 +19,26 @@ var app = createApp({
 
 console.log(app);
 
+
+const tom = {
+    template: ` 
+    <button @click="add"> add </button>
+    <div class="box" --if="x%2 === 0"> tom </div>
+    `,
+    create({ $self }: any) {
+        $self.x = 0
+        $self.add = () => $self.x++
+    }
+}
+
+function jerry() {
+    return h('div', { class: 'box' }, 'jerry')
+}
+
 app.mount({
+    components: {
+        tom, jerry
+    },
     template:/*html*/`
     <style>
         .transition{
@@ -29,7 +48,7 @@ app.mount({
                     background-color:#ff0000;
                 }
                 &-to{
-                    background-color:#aa0000;
+                    background-color:#220000;
                 }
             }
             &-leave{
@@ -38,7 +57,7 @@ app.mount({
                     background-color:#00ff00;
                 }
                 &-to{
-                    background-color:#00aa00;
+                    background-color:#002200;
                 }
             }
         }
@@ -50,8 +69,10 @@ app.mount({
     </style>
     <button @click="setCount( count + 3 )"> {{count}} </button>
     <div .box --if="count %2 == 0" --transition>
-        666
-    </div>
+    if
+</div>
+<tom --transition  --if="count %2 == 0">
+
     `,
     create() {
         let { count, setCount, onCountChange } = useRefState(0)
