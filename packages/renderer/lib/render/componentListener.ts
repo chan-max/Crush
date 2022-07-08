@@ -31,7 +31,7 @@ export function createInstanceEventEmitter(instance: any) {
     }
 }
 
-function emitInstancetEvent(instance: any, event: any, ...args: any[]) {
+export function emitInstancetEvent(instance: any, event: any, ...args: any[]) {
     const listeners = getInstancetEventListeners(instance, event)
     listeners.forEach((handler: Function) => {
         handler(...args)

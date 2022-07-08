@@ -53,7 +53,7 @@ export const transitionDirective = {
         vnode.transition = createTransition(value)
     },
     beforeUpdate(_: any, { value }: any, nVnode: any, pVnode: any) {
-        if(!pVnode){
+        if (!pVnode) {
             // 此时为组件自更新
             return
         }

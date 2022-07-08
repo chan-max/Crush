@@ -13,9 +13,7 @@ import { useRefState } from "@crush/core/lib/instance/refState";
 import { createRouter } from "./packages/router/lib/router";
 import { watchComputed } from "@crush/reactivity/lib/watchComputed";
 
-var app = createApp({
-    container: '#app',
-})
+var app = createApp({ container: '#app', })
 
 console.log(app);
 
@@ -40,42 +38,13 @@ app.mount({
         tom, jerry
     },
     template:/*html*/`
-    <style>
-        .transition{
-            &-enter{
-                transition:all 3s;
-                &-from{
-                    background-color:#ff0000;
-                }
-                &-to{
-                    background-color:#220000;
-                }
-            }
-            &-leave{
-                transition:all 3s;
-                &-from{
-                    background-color:#00ff00;
-                }
-                &-to{
-                    background-color:#002200;
-                }
-            }
-        }
-        .box{
-            width:200px;
-            height:200px;
-            border: 5px solid black;
-        }
-    </style>
-    <button @click="setCount( count + 3 )"> {{count}} </button>
-    <div .box --if="count %2 == 0" --transition>
-    if
-</div>
-<tom --transition  --if="count %2 == 0">
-
+    <button @click="$emit('x')"> {{count}} </button>
     `,
-    create() {
+    create({ $self }: any) {
         let { count, setCount, onCountChange } = useRefState(0)
+        $self.$on('x', () => {
+            console.log('okok');
+        })
     }
 })
 

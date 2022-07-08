@@ -5,8 +5,8 @@ import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@cr
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
-import { createInstanceEventEmitter } from "@crush/renderer/lib/render/componentListener";
-
+import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener, onceInstanceListener } from "@crush/renderer/lib/render/componentListener";
+import { emitInstancetEvent } from "@crush/renderer";
 
 export const createComponentInstance = (options: any, parent: any): ComponentInstance => new ComponentInstance(options, parent)
 
@@ -47,7 +47,6 @@ export class ComponentInstance {
     app: any
     parent: any
     root: any
-    emit: any
     beforePatch: any
     appearRecord: any
     constructor(options: any, parent: any) {
@@ -90,7 +89,6 @@ export class ComponentInstance {
         this.directives = directives
         this.render = render
         this.createRender = createRender
-        this.emit = createInstanceEventEmitter(this)
         let scope = createScope(this)
         this.scope = scope
         this.renderScope = createRenderScope(scope)
@@ -99,4 +97,5 @@ export class ComponentInstance {
         injectMixins(this, mixins)
         injectMixins(this, app.mixins)
     }
+
 }

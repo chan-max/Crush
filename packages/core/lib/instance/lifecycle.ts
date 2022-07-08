@@ -17,6 +17,12 @@ const enum LifecycleHooks {
     UPDATED = 'updated',
     BEFORE_UNMOUNT = 'beforeUnmount',
     UNMOUNTED = 'unmounted',
+
+    BEFORE_ROUTE_ENTER = 'beforeRouteEnter',
+    BEFORE_ROUTE_LEAVE = 'beforeRouteLeave',
+
+    ACTIVATED = 'activated',
+    DEACTIVATED = 'deactivated'
 }
 
 function injectHook(type: LifecycleHooks, target: any, hook: Function | Function[]) {

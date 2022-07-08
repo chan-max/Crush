@@ -33,6 +33,8 @@ export class App {
 
     container: Element
 
+    startTime: any
+
     constructor(appOptions: AppOptions) {
         let {
             container
@@ -75,6 +77,7 @@ export class App {
         if (this.plugins.has(plugin)) return
         let install = isFunction(plugin) ? plugin : plugin.install
         install.call(plugin, this, ...options)
+        this.plugins.add(plugin)
     }
 
     mount(component: any) {
@@ -83,5 +86,15 @@ export class App {
         }
         mount(createComponent(component, null, null), this.container)
         this.isMounted = true
+    }
+
+
+
+    record: any = {}
+    time(key: string) {
+        return this.record[key] = performance.now()
+    }
+    timeEnd(key: string) {
+        return performance.now() - this.record[key]
     }
 }

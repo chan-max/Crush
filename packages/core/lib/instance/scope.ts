@@ -1,6 +1,6 @@
 import { hasOwn, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
-import { addInstanceListener, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
+import { addInstanceListener, createInstanceEventEmitter, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
@@ -10,14 +10,12 @@ const protoMethods = {
 }
 
 
-
 const scopeProperties: any = {
-    $uid: (instance: ComponentInstance) => instance.uid,
+    $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
     $instance: (instance: ComponentInstance) => instance,
     $refs: (instance: ComponentInstance) => {
         let { isMounted, refs } = instance
         if (!isMounted) {
-            warn('component is not mounted , cant use refs')
             return null
         }
         return refs
@@ -40,7 +38,7 @@ const scopeProperties: any = {
     $self: (instance: any) => instance.scope,
     $forceUpdate: (instance: any) => instance.update,
     // evnets
-    $emit: (instance: any) => instance.emit, // init component instance
+    $emit: (instance: any) => createInstanceEventEmitter(instance), // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
     $off: (instance: any) => (event: string, handler: any) => removeInstanceListener(instance, event, handler),
     $once: (instance: any) => (event: string, handler: any) => onceInstanceListener(instance, event, handler),
