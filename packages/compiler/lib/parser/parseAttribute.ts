@@ -11,6 +11,7 @@ export function parseAttribute(attr: any) {
         return
     }
     var [flag, left, property, right, argumentStr, modifierStr, endFlag]: string[] = res
+
     attr.isBooleanProperty = isUndefined(value)
     attr.isDynamicProperty = !!(left && right)
     attr.isDynamicValue = flag === '$'
@@ -22,5 +23,6 @@ export function parseAttribute(attr: any) {
     attr.endFlag = endFlag
     attr.left = left
     attr.right = right
+
     return attr
 }

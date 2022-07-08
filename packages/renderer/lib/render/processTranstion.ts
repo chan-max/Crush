@@ -1,3 +1,4 @@
+import { doCSSAnimation } from "@crush/animate"
 import { setDisplay } from "@crush/builtin/lib/show"
 import { emptyObject, initialUpperCase } from "@crush/common"
 import { addClass, onceListener, removeClass, removeElement } from "../dom"
@@ -47,10 +48,13 @@ function hasAppeared(el: any) {
 class TransitionDesc {
 
     type: any // css / animation
-    
+
     name: any
 
     duration: any // css一般不需要
+
+    enterKeyframes: any
+    leaveKeyframes: any
 
     appear: any
 
@@ -91,7 +95,9 @@ class TransitionDesc {
             onBeforeAppear,
             onAppear,
             onAfterAppear,
-            onAppearCancelled
+            onAppearCancelled,
+            enterKeyframes,
+            leaveKeyframes,
         } = options
         this.name = name || 'transition'
         this.type = type || 'css'
@@ -110,6 +116,8 @@ class TransitionDesc {
         this.onAppear = onAppear
         this.onAfterAppear = onAfterAppear
         this.onAppearCancelled = onAppearCancelled
+        this.enterKeyframes = enterKeyframes
+        this.leaveKeyframes = leaveKeyframes
     }
 
     bindeEnterClass = (el: any) => bindEnterClass(el, this.name)
@@ -127,10 +135,11 @@ class TransitionDesc {
 
     beforeEnter() { }
     beforeLeave() { }
-    cancelEnter() {}
-    canceleave() {}
+    cancelEnter() { }
+    canceleave() { }
 
     public processMount(newEl: any, insertFn: any) {
+
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
         let appeared = appearRecord[patchKey]
@@ -146,41 +155,68 @@ class TransitionDesc {
         let leavingEl = leavingElements[patchKey]
 
         if (leavingEl) {
-            // 上个元素还没卸载完成（过渡中） 直接卸载
+            // 上个元素还没卸载完成（过渡中） 直接卸载 , 不管是css过渡还是动画过度，直接卸载即可
             removeElement(leavingEl)
             leavingElements[patchKey] = null
         }
 
-
         // beforeEnter
         insertFn()
-        newEl._entering = true
-        this.bindeEnterClass(newEl)
-
-        onceListener(newEl, 'transitionend', () => {
-            // after enter
-            this.removeEnterClass(newEl)
-            newEl._entering = true
-        })
-
         appearRecord[patchKey] = true
+
+        newEl._entering = true
+
+        if (this.type === 'animate') {
+            newEl.cancelKeyframes =  doCSSAnimation(newEl, {
+                name: this.enterKeyframes,
+                duration: this.duration
+            })
+            onceListener(newEl, 'animationend', () => {
+                // after enter
+                newEl._entering = true
+            })
+        } else if (this.type === 'css') {
+            this.bindeEnterClass(newEl)
+            onceListener(newEl, 'transitionend', () => {
+                // after enter
+                this.removeEnterClass(newEl)
+                newEl._entering = true
+            })
+        }
     }
 
     public processUnmount(el: any) {
         let { patchKey } = el._vnode
 
         if (el._entering) {
-            // 正在进入 ，取消进入动画
-            this.removeEnterClass(el)
+            // 正在进入 ，取消进入动画, 进入卸载东动画
+            if (this.type === 'css') {
+                this.removeEnterClass(el)
+            } else if (this.type === 'animate') {
+                el.cancelKeyframes()
+            }
         }
 
         leavingElements[patchKey] = el
-        this.bindeLeaveClass(el)
-        onceListener(el, 'transitionend', () => {
-            // 元素直接卸载就不需要卸载class了
-            removeElement(el)
-            leavingElements[patchKey]
-        })
+
+        if (this.type === 'css') {
+            this.bindeLeaveClass(el)
+            onceListener(el, 'transitionend', () => {
+                // 元素直接卸载就不需要卸载class了
+                removeElement(el)
+                leavingElements[patchKey] = null
+            })
+        } else if (this.type === 'animate') {
+            doCSSAnimation(el, {
+                name: this.leaveKeyframes,
+                duration: this.duration
+            })
+            onceListener(el, 'animationend', () => {
+                // 元素直接卸载就不需要卸载class了
+                removeElement(el)
+                leavingElements[patchKey] = null
+            })
+        }
     }
 
     // show todo

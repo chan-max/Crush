@@ -3944,7 +3944,7 @@ define(['exports'], (function (exports) { 'use strict';
     }
 
     // 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
-    function doKeyframesAnimation(el, options, endCb, cancelCb) {
+    function doCSSAnimation(el, options, endCb, cancelCb) {
         const { name, duration, timingFunction, delay, playState, fillMode, iterationCount, direction } = options;
         const animationDeclaration = {
             animationName: name,
@@ -4748,7 +4748,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.destructur = destructur;
     exports.display = display;
     exports.doFlat = doFlat;
-    exports.doKeyframesAnimation = doKeyframesAnimation;
+    exports.doCSSAnimation = doCSSAnimation;
     exports.docCreateComment = docCreateComment;
     exports.docCreateElement = docCreateElement;
     exports.docCreateText = docCreateText;

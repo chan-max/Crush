@@ -1,4 +1,4 @@
-import { createApp, doKeyframesAnimation, getElementStyle, h, hasOwn, important, isReactive, isRef, markRaw, mountDeclaration, onCreated, onMounted, onSet, removeElement, setElementStyleDeclaration } from "./packages/core";
+import { createApp, doCSSAnimation, getElementStyle, h, hasOwn, important, isReactive, isRef, markRaw, mountDeclaration, onCreated, onMounted, onSet, removeElement, setElementStyleDeclaration } from "./packages/core";
 import { reactive, readonly } from "./packages/reactivity/lib/reactive";
 import { computed } from "./packages/reactivity/lib/computed";
 import { ref } from "./packages/reactivity/lib/ref";
@@ -37,13 +37,25 @@ app.mount({
         tom, jerry
     },
     template:/*html*/`
-    <button @click="$emit('x')" --bind="{id:'uid'}"> {{count}} </button>
+    <style> 
+        .box{
+            width:200px;
+            height:200px;
+            background-color:gray;
+        }
+    </style>
+    <button @click="setCount(count + 1)" > {{count}} </button>
+    <div .box --transition="t" --if="count%2===0">
+    </div>
     `,
     create({ $self }: any) {
         let { count, setCount, onCountChange } = useRefState(0)
-        $self.$on('x', () => {
-            console.log('okok');
-        })
+        $self.t = {
+            type: 'animate',
+            duration: 4000,
+            enterKeyframes: 'rollIn',
+            leaveKeyframes: 'rollOut'
+        }
     }
 })
 

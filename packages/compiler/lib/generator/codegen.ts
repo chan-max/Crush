@@ -21,6 +21,7 @@ import {
 
 
 import {
+    camelize,
     emptyObject,
     uid,
     uStringId
@@ -360,11 +361,12 @@ function genDeclartion(declarationGroup: any[], context: any) {
             if (isDynamicProperty) {
                 // 动态的key不存在不合法情况
                 property = dynamicMapKey(property)
+            } else if (illegalKey) {
+                property = dynamicMapKey(toSingleQuotes(property))
             } else {
-                if (illegalKey) {
-                    property = dynamicMapKey(toSingleQuotes(property))
-                }
+                property = camelize(property)
             }
+
 
             if (!isDynamicValue) {
                 value = toBackQuotes(value)

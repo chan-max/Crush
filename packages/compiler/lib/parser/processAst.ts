@@ -7,6 +7,7 @@ import { parseText } from "./parseText"
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
 import { parseAttribute } from "./parseAttribute"
+import { transformWithEsbuild } from "vite"
 
 // legal variable name
 var varRE = /^\w+$/
@@ -196,9 +197,7 @@ const builtInEvents: any = {
 }
 
 const builtInRawAttributes: any = {
-    ['--bind']() {
-        debugger
-    }
+
 }
 
 function processAttribute(ast: any) {

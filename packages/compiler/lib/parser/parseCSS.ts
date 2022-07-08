@@ -113,8 +113,11 @@ export const parseCSS = (source: string): any => {
             /*
                 the last declaration must end with  " ; "
             */
-            var declaration: any = parseAttribute(exResult[0], exResult[1]);
-
+            var declaration: any = parseAttribute({
+                attribute: exResult[0],
+                value: exResult[1]
+            });
+            
             var {
                 property,
                 flag,
@@ -133,7 +136,7 @@ export const parseCSS = (source: string): any => {
             }
             //! important
             declaration.isImportant = endFlag === '!';
-            
+
             (declarationGroup ||= []).push({
                 declaration,
                 type: Nodes.DECLARATION
