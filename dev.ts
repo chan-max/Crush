@@ -17,11 +17,10 @@ var app = createApp({ container: '#app', })
 
 console.log(app);
 
-
 const tom = {
     template: ` 
     <button @click="add"> add </button>
-    <div class="box" --if="x%2 === 0"> tom </div>
+    <div class="box" --if="x%2 === 0" > tom </div>
     `,
     create({ $self }: any) {
         $self.x = 0
@@ -38,7 +37,7 @@ app.mount({
         tom, jerry
     },
     template:/*html*/`
-    <button @click="$emit('x')"> {{count}} </button>
+    <button @click="$emit('x')" --bind="{id:'uid'}"> {{count}} </button>
     `,
     create({ $self }: any) {
         let { count, setCount, onCountChange } = useRefState(0)
@@ -47,6 +46,7 @@ app.mount({
         })
     }
 })
+
 
 
 

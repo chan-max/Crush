@@ -6,6 +6,7 @@ import { parseText } from "./parseText"
 
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
+import { parseAttribute } from "./parseAttribute"
 
 // legal variable name
 var varRE = /^\w+$/
@@ -174,7 +175,7 @@ const builtInAttributes: any = {
     },
     class(attr: any, ast: any) {
         attr.type = Nodes.CLASS
-        
+
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
     }
 }
@@ -194,13 +195,28 @@ const builtInEvents: any = {
     }
 }
 
+const builtInRawAttributes: any = {
+    ['--bind']() {
+        debugger
+    }
+}
 
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
     for (let i = 0; i < attributes.length; i++) {
         var attribute = attributes[i]
-        var { flag, isDynamicProperty } = attribute
+        let { attribute: _attribute, value } = attribute
+
+        let rawHandler = builtInRawAttributes[_attribute]
+
+        if (rawHandler) {
+            rawHandler(attribute, ast)
+            continue
+        }
+
+        var { flag, isDynamicProperty }: any = parseAttribute(attribute)
+
         if (flag === '@') {
             // event
             attribute.type = Nodes.EVENT

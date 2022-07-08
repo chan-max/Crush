@@ -414,7 +414,6 @@ function genProps(node: any, context: any) {
                     modifiers
                 } = attr
                 value ||= property // 简写形似
-
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
                         dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :

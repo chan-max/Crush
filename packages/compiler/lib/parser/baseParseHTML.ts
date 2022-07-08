@@ -20,8 +20,8 @@ export function baseParseHTML(template: string) {
         if (scanner.startsWith('<')) {
             if (scanner.at(1) === '/') {
                 // tag close
-                var exRes:any =  scanner.exec(closeTagRE)
-                var closeTag =exRes[0]
+                var exRes: any = scanner.exec(closeTagRE)
+                var closeTag = exRes[0]
                 for (let i = ast.length - 1; i >= 0; i--) {
                     if (ast[i].closed) continue
                     if (ast[i].tag === closeTag) {
@@ -34,13 +34,13 @@ export function baseParseHTML(template: string) {
                     }
                 }
             } else if (scanner.at(1) === '!') {
-                var exRes:any = scanner.exec(htmlCommentRE)
+                var exRes: any = scanner.exec(htmlCommentRE)
                 ast.push({
                     tag: '!',
-                    children:exRes[0]
+                    children: exRes[0]
                 })
             } else {
-                var exRes:any = scanner.exec(openTagRE)
+                var exRes: any = scanner.exec(openTagRE)
                 tag = exRes[0]
                 modifiers = exRes[1]
                 inOpen = true
@@ -66,12 +66,13 @@ export function baseParseHTML(template: string) {
                 scanner.move(1)
             } else {
                 /* catch attribute */
-                var exRes:any = scanner.exec(attributeRE);
+                var exRes: any = scanner.exec(attributeRE);
                 var attribute = exRes[0]
-                var value = exRes[2]
-                const _attribute: any = parseAttribute(attribute, value);
-                (attributeMap ||= getEmptyObject())[_attribute.property] = _attribute;
-                (attributes ||= []).push(_attribute);
+                var value = exRes[2];
+                (attributes ||= []).push({
+                    attribute,
+                    value
+                });
             }
         } else {
             var textToken, text
