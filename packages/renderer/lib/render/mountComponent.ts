@@ -55,13 +55,14 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
 
+    // create
     setCurrentInstance(instance)
 
     // 初次创建前应该把 slot props 方法等挂载到作用域上
     // 先挂载props ，这样 create hook中才能访问
     mountComponentProps(instance, vnode.props)
     instance.slots = vnode.children
-
+    instance.props = vnode.props
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
 
     const createResults = callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)

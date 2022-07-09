@@ -28,15 +28,17 @@ export function arrayDifference(arr1: any[], arr2: any[]) {
 
 // 第一次进入任何元素都不会过渡
 export const transitionGroupComponent = {
-    props: {},
+    props: ['duration', 'type', 'enterKeyframes', 'leaveKeyframes', 'name'],
     render: ({ $slots }: any) => $slots.default(),
-    beforeUpdate({ $instance: { scope, vnode, renderingVnode }, $props }: any) {
-        const transtion = createTransition($props)
+    beforeUpdate({ $instance: { vnode, renderingVnode }, $props }: any) {
+        const transition = createTransition($props)
+        // always true
+        transition.appear = true
         const mountList = renderingVnode.filter((patchKey: any) => !vnode.map((_: any) => _.patchKey).includes(patchKey))
         const unmountList = vnode.filter((patchKey: any) => !renderingVnode.map((_: any) => _.patchKey).includes(patchKey))
         const transitionList = mountList.concat(unmountList)
         transitionList.forEach((_: any) => {
-            _.transition = transtion
+            _.transition = transition
         })
     }
 }

@@ -17,45 +17,26 @@ var app = createApp({ container: '#app', })
 
 console.log(app);
 
-const tom = {
-    template: ` 
-    <button @click="add"> add </button>
-    <div class="box" --if="x%2 === 0" > tom </div>
-    `,
-    create({ $self }: any) {
-        $self.x = 0
-        $self.add = () => $self.x++
-    }
-}
 
-function jerry() {
-    return h('div', { class: 'box' }, 'jerry')
-}
 
 app.mount({
-    components: {
-        tom, jerry
-    },
     template:/*html*/`
     <style> 
         .box{
             width:200px;
-            height:200px;
+            height:50px;
             background-color:gray;
+            margin:10px;
         }
     </style>
-    <button @click="setCount(count + 1)" > {{count}} </button>
-    <div .box --transition="t" --if="count%2===0">
-    </div>
+    <button @click="setCount(count + 1)" > add </button>
+    <button @click="setCount(count - 1)" > sub </button>
+    <transition-group enter-keyframes="rollIn" leave-keyframes="rollOut" type="animate" duration="2000">
+        <div --for="i in count" .box> {{ i }} </div>
+    </transition-group>
     `,
     create({ $self }: any) {
-        let { count, setCount, onCountChange } = useRefState(0)
-        $self.t = {
-            type: 'animate',
-            duration: 4000,
-            enterKeyframes: 'rollIn',
-            leaveKeyframes: 'rollOut'
-        }
+        let { count, setCount, onCountChange } = useRefState(3)
     }
 })
 

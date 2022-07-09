@@ -138,8 +138,9 @@ class TransitionDesc {
     cancelEnter() { }
     canceleave() { }
 
-    public processMount(newEl: any, insertFn: any) {
+    // 关于 transition group
 
+    public processMount(newEl: any, insertFn: any) {
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
         let appeared = appearRecord[patchKey]
@@ -171,6 +172,7 @@ class TransitionDesc {
                 name: this.enterKeyframes,
                 duration: this.duration
             })
+   
             onceListener(newEl, 'animationend', () => {
                 // after enter
                 newEl._entering = true
@@ -198,7 +200,7 @@ class TransitionDesc {
         }
 
         leavingElements[patchKey] = el
-
+        
         if (this.type === 'css') {
             this.bindeLeaveClass(el)
             onceListener(el, 'transitionend', () => {

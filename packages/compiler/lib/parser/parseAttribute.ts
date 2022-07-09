@@ -17,7 +17,7 @@ export function parseAttribute(attr: any) {
     attr.isDynamicValue = flag === '$'
     attr._arguments = argumentStr && argumentStr.split(':')
     attr.modifiers = modifierStr && modifierStr.split('.')
-    attr.property = property
+    attr.property = attr.isDynamicProperty ? property : camelize(property)
     attr.value = value
     attr.flag = flag
     attr.endFlag = endFlag
