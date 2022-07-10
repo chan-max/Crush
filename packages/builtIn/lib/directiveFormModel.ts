@@ -2,6 +2,8 @@
 
 // compiler required : 
 
+import { addListener } from "@crush/renderer"
+
 /*
     model types :
     checkbox
@@ -10,22 +12,23 @@
     rang
 */
 
-export const model = {
-}
-
 
 
 export const modelText = {
-    created(el: any, _: any, vnode: any) {
-        const changeModelValue = vnode.props._changeModelValue
-        el.addListener('input', () => {
-            changeModelValue(el.value)
+    beforeUpdate(el: any, { value }: any,) {
+        el.value = value;
+    },
+    created(el: any, { value }: any, vnode: any) {
+        const setter = vnode.props._setter
+        el.value = value;
+        addListener(el, 'input', () => {
+            setter(el.value)
         })
     }
 }
 
 export const modelRadio = {
-
+    
 }
 
 export const modelCheckbox = {
@@ -37,8 +40,8 @@ export const modelSelect = {
 }
 
 
-
-
 export const modelColor = {
-
+    created(el: any, binding: any, vnode: any) {
+        debugger
+    }
 }

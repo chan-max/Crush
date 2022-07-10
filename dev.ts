@@ -20,6 +20,11 @@ console.log(app);
 
 
 app.mount({
+    components: {
+        tom: {
+            template:`<h6> 123456789 </h6>`
+        }
+    },
     template:/*html*/`
     <style> 
         .box{
@@ -29,14 +34,11 @@ app.mount({
             margin:10px;
         }
     </style>
-    <button @click="setCount(count + 1)" > add </button>
-    <button @click="setCount(count - 1)" > sub </button>
-    <transition-group enter-keyframes="rollIn" leave-keyframes="rollOut" type="animate" duration="2000">
-        <div --for="i in count" .box> {{ i }} </div>
-    </transition-group>
+    <h6> {{ str }} </h6>
+    
     `,
     create({ $self }: any) {
-        let { count, setCount, onCountChange } = useRefState(3)
+        $self.str = 'hello'
     }
 })
 

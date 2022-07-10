@@ -179,6 +179,7 @@ function genSlotContent(node: any, context: any) {
     });
 
     if (_default) {
+        // ! 默认插槽不存在作用域插槽
         slots.default = toArrowFunction(genNodes(_default, context))
     }
     return stringify(slots)

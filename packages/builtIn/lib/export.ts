@@ -1,7 +1,7 @@
 
-import { modelText } from "./directiveFormModel"
+import { modelText, modelColor } from "./directiveFormModel"
 import { showDirective } from "./show"
-import { transitionComponent, transitionGroupComponent, transitionDirective } from "./transition"
+import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
 
 
 export const builtInComponents: any = {
@@ -10,8 +10,10 @@ export const builtInComponents: any = {
 }
 
 export const builtInDirectives = {
+    modelText: modelText,
+    modelTextarea: modelText,
+    modelColor,
     show: showDirective,
-    modelText,
     transition: transitionDirective,
-    transitionGroup: transitionGroupComponent
+    transitionGroup: transitionGroupDirective
 }

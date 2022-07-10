@@ -1,4 +1,4 @@
-import { camelize, isArray } from "@crush/common"
+import { camelize, initialUpperCase, isArray } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
@@ -7,7 +7,6 @@ import { parseText } from "./parseText"
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
 import { parseAttribute } from "./parseAttribute"
-import { transformWithEsbuild } from "vite"
 
 // legal variable name
 var varRE = /^\w+$/
@@ -34,12 +33,12 @@ const builtInTags: Record<string, any> = {
     },
     if(ast: any) {
         ast.type = Nodes.IF
-        ast.condition = ast.attributeMap['condition'].value
+        ast.condition = ast.rawAttributeMap.condition
         ast.isBranchStart = true
     },
     elseIf(ast: any) {
         ast.type = Nodes.ELSE_IF
-        ast.condition = ast.attributeMap['condition'].value
+        ast.condition = ast.rawAttributeMap.condition
         ast.isBranch = true
     },
     else(ast: any) {
@@ -48,7 +47,7 @@ const builtInTags: Record<string, any> = {
     },
     for(ast: any) {
         ast.type = Nodes.FOR
-        ast.iterator = parseIterator(ast.attributeMap['iterator'].value)
+        ast.iterator = parseIterator(ast.rawAttributeMap.iterator)
     },
     template(ast: any) {
         ast.type = Nodes.TEMPLATE
@@ -59,13 +58,14 @@ const builtInTags: Record<string, any> = {
         // 插槽名称支持动态， 作用域不支持动态
         // ! slot need : slotName , isDynamicSlot 
         ast.type = Nodes.SLOT
-        const attr = ast.attributeMap
-        if (attr?.name) {
-            attr.name.type = Nodes.SKIP
-            ast.slotName = attr.name.value
-            ast.isDynamicSlot = attr.name.isDynamicValue
+        let name = ast?.attributeMap?.name
+        name.type = Nodes.SKIP
+        if (name) {
+            ast.slotName = name.value
+            ast.isDynamicSlot = name.isDynamicValue
         } else {
             ast.slotName = 'default'
+            ast.isDynamicSlot = false
         }
     },
     component(ast: any) {
@@ -96,11 +96,27 @@ const builtInTags: Record<string, any> = {
     }
 }
 
-// 新策略指令作为props一部分
-const builtInDirectives: any = {
+// 
+const customDirectiveHandlers: any = {
+    model(attribute: any, ast: any) {
+        let modelType = ast.rawAttributeMap.type || 'text'
+        // transform 
+        attribute.property = `model${initialUpperCase(modelType)}`
+
+        ast.attributes.unshift({
+            type: Nodes.ATTRIBUTE,
+            property: '_setter',
+            value: toArrowFunction(`${attribute.value} = _`, '_'),
+            isDynamicValue: true,
+            isDynamicProperty: false
+        })
+    }
+}
+
+const builtInAttributes: any = {
     if(attr: any, ast: any) {
         attr.type = Nodes.IF
-        const directives = ast.directives
+        const directives = ast.directives ||= []
         if (!directives.length) {// 为元素的第一个指令
             ast.condition = attr.value
             ast.isBranchStart = true
@@ -146,37 +162,12 @@ const builtInDirectives: any = {
         ast.defineSlotName = attr?._arguments?.[0]
         ast.slotScope = attr.value
     },
-    model(attr: any, ast: any) {
-        // 是否需要支持动态的 input type 类型 , 如果需要支持动态 ，就需要在指令中判断类型 , 暂不支持
-        attr.type = Nodes.CUSTOM_DIRECTIVE
-        const modelValue = attr.value
-        // change model value
-        ast.attributes.push({
-            type: Nodes.ATTRIBUTE,
-            property: '_changeModelValue',
-            value: toArrowFunction(`${modelValue} = _`, '_'),
-            isDynamicValue: true,
-        })
-        switch (ast?.attributeMap?.type?.value || 'text') {
-            case 'text':
-                attr.property = 'modelText'
-                break
-            case 'color':
-                attr.property = 'modelColor'
-                break
-        }
-        ast.customDirectives.push(attr)
-    }
-}
-
-const builtInAttributes: any = {
     style(attr: any, ast: any) {
         attr.type = Nodes.STYLE
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
     },
     class(attr: any, ast: any) {
         attr.type = Nodes.CLASS
-
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
     }
 }
@@ -196,26 +187,23 @@ const builtInEvents: any = {
     }
 }
 
-const builtInRawAttributes: any = {
-
-}
 
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
+    let rawAttributeMap = ast.rawAttributeMap ||= {}
+    let attributeMap = ast.attributeMap ||= {}
+    attributes.forEach((attr: any) => {
+        rawAttributeMap[attr.attribute] = attr.value
+        // parseAttribute 不传入两个字符串是为了复用节点
+        let processedAttribute: any = parseAttribute(attr)
+        attributeMap[attr.property] = processedAttribute
+    });
+
+
     for (let i = 0; i < attributes.length; i++) {
-        var attribute = attributes[i]
-        let { attribute: _attribute, value } = attribute
-
-        let rawHandler = builtInRawAttributes[_attribute]
-
-        if (rawHandler) {
-            rawHandler(attribute, ast)
-            continue
-        }
-
-        var { flag, isDynamicProperty }: any = parseAttribute(attribute)
-
+        let attribute = attributes[i]
+        let { flag, isDynamicProperty } = attribute
         if (flag === '@') {
             // event
             attribute.type = Nodes.EVENT
@@ -225,16 +213,12 @@ function processAttribute(ast: any) {
                 builtInEvents[attribute.property](attribute, ast)
             }
         } else if (flag === '--') {
-            const dirHandler = builtInDirectives[attribute.property]
-            const isCustomDirective = isDynamicProperty || !dirHandler
-            if (isCustomDirective) {
-                // 自定义指令不会作为props的一部分
-                attribute.type = Nodes.CUSTOM_DIRECTIVE;
-                (ast.customDirectives ||= []).push(attribute)
-            } else {
-                ast.directives ||= []
-                ast.customDirectives ||= []
-                dirHandler(attribute, ast)
+            attribute.type = Nodes.CUSTOM_DIRECTIVE;
+            // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
+            const customDirectiveHandler = customDirectiveHandlers[attribute.property];
+            (ast.customDirectives ||= []).push(attribute);
+            if (!isDynamicProperty && customDirectiveHandler) {
+                customDirectiveHandler(attribute, ast)
             }
         } else if (flag === '#') {
             // id shorthand
@@ -251,11 +235,12 @@ function processAttribute(ast: any) {
             attribute.isDynamicValue = attribute.isDynamicProperty
             attribute.isDynamicProperty = false
         } else {
-            // normal property
+            // normal property , if for 等也会作为属性出现
             const attrHandler = builtInAttributes[attribute.property]
             if (!attrHandler || attribute.isDynamicProperty) {
                 attribute.type = Nodes.ATTRIBUTE
             } else {
+                ast.directives ||= []
                 attrHandler(attribute, ast)
             }
         }

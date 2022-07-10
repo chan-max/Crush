@@ -66,5 +66,7 @@ export const transitionDirective = {
 }
 
 export const transitionGroupDirective = {
-
+    beforeUpdate() {
+        debugger
+    }
 }

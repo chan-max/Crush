@@ -12,7 +12,6 @@ export function baseParseHTML(template: string) {
     var scanner = createScanner(template)
     var ast: any = [],
         attributes,
-        attributeMap, //! duplicate names will be overwritten
         inOpen,
         tag,
         modifiers;
@@ -54,14 +53,12 @@ export function baseParseHTML(template: string) {
                     tag,
                     closed: false,
                     attributes,
-                    attributeMap,
                     children: null,
                     modifiers: modifiers && modifiers.split(':')
                 })
                 tag = null
                 modifiers = null
                 attributes = null
-                attributeMap = null
                 inOpen = false
                 scanner.move(1)
             } else {
