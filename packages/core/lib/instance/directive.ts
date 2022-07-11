@@ -9,6 +9,8 @@ export type DirectiveType = {
     updated?: Function
     beforeUnmount?: Function
     unmounted?: Function
+    // dom el only
+    childrenMounted?: Function
 } | Function
 
 
@@ -52,7 +54,7 @@ function setOwnKey(arr: any[]) {
     return arr
 }
 
-export function processHook(type: LifecycleHooks, next: any, previous: any = undefined) {
+export function processHook(type: LifecycleHooks, next: any, previous: any = null) {
     // 在这不需要判断 两个节点的patchkey是否相同
     const isComponent = next.nodeType === Nodes.COMPONENT
     if (isComponent) {
@@ -90,4 +92,13 @@ export function processHook(type: LifecycleHooks, next: any, previous: any = und
     if (vnodeHook) {
         vnodeHook(isComponent ? next.instance.scope : next.el)
     }
+}
+
+
+function processComponentHook(type: LifecycleHooks, next: any, previous: any = null) {
+
+}
+
+function processElementHook(type: LifecycleHooks, next: any, previous: any = null) {
+
 }

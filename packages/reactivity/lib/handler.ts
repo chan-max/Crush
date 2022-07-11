@@ -2,7 +2,7 @@ import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
-import { track, trigger, } from './effect'
+import { track, trackTarget, trigger, } from './effect'
 
 // global state
 let _isReadonly = false
@@ -107,7 +107,7 @@ const collectionHandlers: Record<string, any> = {
 
 function arrayHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
-        debugger
+        trackTarget(_target)
     }
 
     let result = _target[_key](...args)
@@ -116,7 +116,8 @@ function arrayHandlerWithTrack(...args: any[]) {
 
 function arrayHandlerWithTrigger(...args: any[]) {
     if (_isReadonly) {
-        return warn(`${_target}is readonly cant ${_key}`);
+        // 只读不能修改
+        return
     }
     // 用数组修改前的key作为触发依赖
     let oldKeys = Object.keys(_target)
@@ -142,7 +143,7 @@ const arrayHandlers: Record<string, any> = {
 const specialKeyHandler: Record<string, any> = {
     [Symbol.iterator]: (value: Function) => {
         // should track ?
-        debugger
+        trackTarget(_target)
         return value.bind(_target)
     }
 }

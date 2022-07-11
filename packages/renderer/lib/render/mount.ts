@@ -67,9 +67,12 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
         insertElement(el, container, anchor)
     }
 
-
+    // mounted 后需不需要拿到子节点元素
     processHook(LifecycleHooks.MOUNTED, vnode)
+
     mountChildren(children, el, anchor, parent)
+
+    processHook(LifecycleHooks.CHILDREN_MOUNTED, vnode)
 }
 
 function mountText(vnode: any, container: any, anchor: any, parent: any) {

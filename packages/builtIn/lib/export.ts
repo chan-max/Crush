@@ -1,5 +1,5 @@
 
-import { modelText, modelColor } from "./directiveFormModel"
+import { modelText, modelColor, modelRadio, modelCheckbox, modelSelectOne, modelSelectMultiple } from "./model"
 import { showDirective } from "./show"
 import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
 
@@ -12,7 +12,11 @@ export const builtInComponents: any = {
 export const builtInDirectives = {
     modelText: modelText,
     modelTextarea: modelText,
-    modelColor,
+    modelCheckbox: modelCheckbox,
+    modelRadio: modelRadio,
+    modelColor: modelColor,
+    modelSelectOne: modelSelectOne,
+    modelSelectMultiple: modelSelectMultiple,
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective

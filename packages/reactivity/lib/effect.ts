@@ -5,6 +5,9 @@ import { ReactiveFlags } from "./common"
 
 export const TARGET_MAP = new WeakMap()
 
+// 清楚所有依赖 
+
+
 export function getDepsMap(target: any) {
     let depsMap = TARGET_MAP.get(target)
     if (!depsMap) {
@@ -35,13 +38,28 @@ export function track(target: any, key?: any) {
 
 
 /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-export const watchDepsSymbol = Symbol('target has changed')
+export const trackTargetSymbol = Symbol('target has changed')
+
+function getTargetDeps(target: any) {
+    return getDeps(target, trackTargetSymbol)
+}
+
+// 用于收集不确定的key目标依赖，当任意key改变都会出发此依赖
+export function trackTarget(target: any) {
+    let activeEffect = getActiveEffect()
+    if (!activeEffect) return
+    let deps = getTargetDeps(target)
+    deps.add(activeEffect)
+    // 用于清除依赖
+    activeEffect.deps.push(deps)
+}
+
 
 export function trigger(target: any, key: any) {
 
-    if (key !== watchDepsSymbol) {
+    if (key !== trackTargetSymbol) {
         // 防止递归
-        trigger(target, watchDepsSymbol)
+        trigger(target, trackTargetSymbol)
     }
 
     let deps = getDeps(target, key);

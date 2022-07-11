@@ -1671,11 +1671,11 @@ var Crush = (function (exports) {
         activeEffect.deps.push(deps);
     }
     /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-    const watchDepsSymbol = Symbol('target has changed');
+    const trackTargetSymbol = Symbol('target has changed');
     function trigger(target, key) {
-        if (key !== watchDepsSymbol) {
+        if (key !== trackTargetSymbol) {
             // 防止递归
-            trigger(target, watchDepsSymbol);
+            trigger(target, trackTargetSymbol);
         }
         let deps = getDeps(target, key);
         // copy 防止死循环
@@ -2192,7 +2192,7 @@ var Crush = (function (exports) {
                 }
             }
         });
-        const deps = getDeps(rawData, watchDepsSymbol);
+        const deps = getDeps(rawData, trackTargetSymbol);
         deps.add(cb);
         // unwatch
         return () => {
@@ -2224,7 +2224,7 @@ var Crush = (function (exports) {
             watchCallbackIsCalling = false;
         };
         targets.forEach((target) => {
-            let deps = getDeps(target, watchDepsSymbol);
+            let deps = getDeps(target, trackTargetSymbol);
             deps.add(cb);
         });
         const unSet = onSet((target, key, newValue, oldValue) => {
@@ -2245,7 +2245,7 @@ var Crush = (function (exports) {
                 return;
             }
             // 解绑
-            let oldValueDeps = getDeps(oldValue, watchDepsSymbol);
+            let oldValueDeps = getDeps(oldValue, trackTargetSymbol);
             oldValueDeps.delete(cb);
             targets.delete(oldValue);
             // 增加新绑定值的依赖
@@ -2254,7 +2254,7 @@ var Crush = (function (exports) {
                 return;
             }
             if (isProxyType(newValue)) {
-                let newValueDeps = getDeps(newValue, watchDepsSymbol);
+                let newValueDeps = getDeps(newValue, trackTargetSymbol);
                 newValueDeps.add(cb);
                 targets.add(newValue);
             }
@@ -2263,7 +2263,7 @@ var Crush = (function (exports) {
         return () => {
             unSet();
             targets.forEach((target) => {
-                let deps = getDeps(target, watchDepsSymbol);
+                let deps = getDeps(target, trackTargetSymbol);
                 deps.delete(cb);
             });
         };
@@ -4969,7 +4969,7 @@ var Crush = (function (exports) {
     exports.updateInstanceListeners = updateInstanceListeners;
     exports.updateStyleSheet = updateStyleSheet;
     exports.warn = warn;
-    exports.watchDepsSymbol = watchDepsSymbol;
+    exports.trackTargetSymbol = trackTargetSymbol;
     exports.watchReactive = watchReactive;
     exports.watchRef = watchRef;
     exports.watchTargetKey = watchTargetKey;

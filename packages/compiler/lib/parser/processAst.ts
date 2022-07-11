@@ -1,4 +1,4 @@
-import { camelize, initialUpperCase, isArray } from "@crush/common"
+import { camelize, hasOwn, initialUpperCase, isArray, isUndefined } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
@@ -99,7 +99,7 @@ const builtInTags: Record<string, any> = {
 // 
 const customDirectiveHandlers: any = {
     model(attribute: any, ast: any) {
-        let modelType = ast.rawAttributeMap.type || 'text'
+        let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap,'multiple') ? 'selectMultiple' : 'selectOne' ) : ast.rawAttributeMap.type || 'text'
         // transform 
         attribute.property = `model${initialUpperCase(modelType)}`
 

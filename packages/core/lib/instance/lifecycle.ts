@@ -18,11 +18,15 @@ const enum LifecycleHooks {
     BEFORE_UNMOUNT = 'beforeUnmount',
     UNMOUNTED = 'unmounted',
 
+    CHILDREN_MOUNTED = 'childrenMounted', // el only
+
     BEFORE_ROUTE_ENTER = 'beforeRouteEnter',
     BEFORE_ROUTE_LEAVE = 'beforeRouteLeave',
 
+    // keep alive
     ACTIVATED = 'activated',
     DEACTIVATED = 'deactivated'
+
 }
 
 function injectHook(type: LifecycleHooks, target: any, hook: Function | Function[]) {
@@ -64,9 +68,9 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
         scheduler
     } = options || emptyObject
     const hooksResults = hooks.map((hook: any) => {
-        return scheduler ? 
-        scheduler(hook, binding, ...args) : 
-        hook.apply(binding, args)
+        return scheduler ?
+            scheduler(hook, binding, ...args) :
+            hook.apply(binding, args)
     })
     // 返回钩子的调用结果
     return hooksResults

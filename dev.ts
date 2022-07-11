@@ -13,6 +13,7 @@ import { useRefState } from "@crush/core/lib/instance/refState";
 import { createRouter } from "./packages/router/lib/router";
 import { watchComputed } from "@crush/reactivity/lib/watchComputed";
 
+
 var app = createApp({ container: '#app', })
 
 console.log(app);
@@ -22,7 +23,7 @@ console.log(app);
 app.mount({
     components: {
         tom: {
-            template:`<h6> 123456789 </h6>`
+            template: `<h6> 123456789 </h6>`
         }
     },
     template:/*html*/`
@@ -34,11 +35,14 @@ app.mount({
             margin:10px;
         }
     </style>
-    <h6> {{ str }} </h6>
-    
+<h6 > {{selected}} </h6>
+<select --model="selected" multiple>
+<option for="i in options" $value="i" >{{i}}</option>
+</select>
     `,
     create({ $self }: any) {
-        $self.str = 'hello'
+        $self.options = ['a', 'b', 'c', 'd']
+        $self.selected = ['a']
     }
 })
 

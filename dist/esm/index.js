@@ -1668,11 +1668,11 @@ function track(target, key) {
     activeEffect.deps.push(deps);
 }
 /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-const watchDepsSymbol = Symbol('target has changed');
+const trackTargetSymbol = Symbol('target has changed');
 function trigger(target, key) {
-    if (key !== watchDepsSymbol) {
+    if (key !== trackTargetSymbol) {
         // 防止递归
-        trigger(target, watchDepsSymbol);
+        trigger(target, trackTargetSymbol);
     }
     let deps = getDeps(target, key);
     // copy 防止死循环
@@ -2189,7 +2189,7 @@ function shallowWatchReactive(data, callback) {
             }
         }
     });
-    const deps = getDeps(rawData, watchDepsSymbol);
+    const deps = getDeps(rawData, trackTargetSymbol);
     deps.add(cb);
     // unwatch
     return () => {
@@ -2221,7 +2221,7 @@ function watchReactive(reactiveData, callback) {
         watchCallbackIsCalling = false;
     };
     targets.forEach((target) => {
-        let deps = getDeps(target, watchDepsSymbol);
+        let deps = getDeps(target, trackTargetSymbol);
         deps.add(cb);
     });
     const unSet = onSet((target, key, newValue, oldValue) => {
@@ -2242,7 +2242,7 @@ function watchReactive(reactiveData, callback) {
             return;
         }
         // 解绑
-        let oldValueDeps = getDeps(oldValue, watchDepsSymbol);
+        let oldValueDeps = getDeps(oldValue, trackTargetSymbol);
         oldValueDeps.delete(cb);
         targets.delete(oldValue);
         // 增加新绑定值的依赖
@@ -2251,7 +2251,7 @@ function watchReactive(reactiveData, callback) {
             return;
         }
         if (isProxyType(newValue)) {
-            let newValueDeps = getDeps(newValue, watchDepsSymbol);
+            let newValueDeps = getDeps(newValue, trackTargetSymbol);
             newValueDeps.add(cb);
             targets.add(newValue);
         }
@@ -2260,7 +2260,7 @@ function watchReactive(reactiveData, callback) {
     return () => {
         unSet();
         targets.forEach((target) => {
-            let deps = getDeps(target, watchDepsSymbol);
+            let deps = getDeps(target, trackTargetSymbol);
             deps.delete(cb);
         });
     };
@@ -4670,4 +4670,4 @@ function processHook(type, next, previous = undefined) {
     }
 }
 
-export { $var, App, Comment, ComponentInstance, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives$1 as builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createNode, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doCSSAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getRefDeps, getReservedProp, getStyle, getStyleValue, h, hasOwn, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEffect, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processRenderResult, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toEventName, toNativeEventName, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackRef, transitionKeyframes, translate3d, translateX, translateY, trigger, triggerRef, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, warn, watchDepsSymbol, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, App, Comment, ComponentInstance, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives$1 as builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createNode, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doCSSAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getRefDeps, getReservedProp, getStyle, getStyleValue, h, hasOwn, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isEffect, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processRenderResult, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setScopeExp, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toArray, toArrowFunction, toBackQuotes, toEventName, toNativeEventName, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackRef, transitionKeyframes, translate3d, translateX, translateY, trigger, triggerRef, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, warn, trackTargetSymbol, watchReactive, watchRef, watchTargetKey, withEventModifiers };
