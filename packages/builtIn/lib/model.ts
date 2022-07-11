@@ -143,3 +143,14 @@ export const modelColor = {
     },
 }
 
+export const modelRange = {
+    created(el: HTMLInputElement, { value }: any, { props: { _setter } }: any) {
+        el.value = value
+        addListener(el, 'input', () => {
+            _setter(el.value)
+        })
+    },
+    beforeUpdate(el: HTMLInputElement, { value }: any) {
+        el.value = value
+    }
+}

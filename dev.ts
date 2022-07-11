@@ -18,8 +18,6 @@ var app = createApp({ container: '#app', })
 
 console.log(app);
 
-
-
 app.mount({
     components: {
         tom: {
@@ -35,14 +33,12 @@ app.mount({
             margin:10px;
         }
     </style>
-<h6 > {{selected}} </h6>
-<select --model="selected" multiple>
-<option for="i in options" $value="i" >{{i}}</option>
-</select>
+<h6 > {{ range }} </h6>
+<input type="range" --model="range">
     `,
     create({ $self }: any) {
-        $self.options = ['a', 'b', 'c', 'd']
-        $self.selected = ['a']
+        window.$self = $self
+        $self.range = '50'
     }
 })
 

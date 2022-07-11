@@ -41,6 +41,7 @@ class CodeGenerator {
             , RENDER_METHODS))
         return this.code
     }
+
     push = (code: string) => this.code += code
     unshift = (code: string) => this.code = code + this.code
     newLine = () => this.code += '\n'
@@ -61,6 +62,10 @@ class CodeGenerator {
     callRenderFn(fn: string, ...args: string[]): string {
         this.methods[fn] = true
         return callFn(fn, ...args)
+    }
+
+    setScope() {
+        
     }
 
 }
@@ -92,8 +97,8 @@ export function compile(template: string) {
     /*  
         the dom template ast will alwways return an array
     */
-   var rf = createFunction(context.getCode(), RENDER_METHODS)
-   console.log(rf);
+    var rf = createFunction(context.getCode(), RENDER_METHODS)
+    console.log(rf);
     return rf
 }
 
