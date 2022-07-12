@@ -111,7 +111,7 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
     /*
         there is no possible to exist else-if or else
     */
-    if (dirs.length === 0) {
+    if (!dirs || dirs.length === 0) {
         return target
     } else {
         // from end to start
@@ -119,7 +119,7 @@ const genDirectives = (target: string, dirs: any[], context: any): string => {
         dirs.pop()
         switch (dir.type) {
             case Nodes.IF:
-                target = genIf(target, dir.condition)
+                target = genIf(target, dir.value)
                 break
             case Nodes.FOR:
                 target = genForWithFragment(target, dir.iterator, context)
@@ -162,7 +162,7 @@ function genSlotContent(node: any, context: any) {
     /*
         关于插槽的定义 , 
         插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
-        如 <template --slot:header=""> ,
+        如 <template slot="header" slot-scope="x"> ,
         暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
     */
     if (!children) return NULL
@@ -171,6 +171,7 @@ function genSlotContent(node: any, context: any) {
 
     children.forEach((child: any) => {
         var { defineSlotName, slotScope } = child
+        // 作用域插槽只能在具名插槽上
         if (defineSlotName) {
             slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope)
         } else {
@@ -198,8 +199,8 @@ function genNode(node: any, context: any): any {
             return genForWithFragment(genNodes(node.children, context), node.iterator, context)
         case Nodes.TEMPLATE:
             var code = genNodes(node.children as any[], context)
-            if (node.dirs) { code = genDirectives(code, node.dirs, context) }
-            return code
+            // 只有模板上的保留属性会生效
+            return genDirectives(code, node.directives, context)
         case Nodes.SLOT:
             const { slotName, isDynamicSlot, children } = node
             return context.callRenderFn(

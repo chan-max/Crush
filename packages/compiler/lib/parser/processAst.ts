@@ -159,7 +159,8 @@ const builtInAttributes: any = {
         */
         attr.type = Nodes.SKIP
         // 定义插槽无动态插槽 , 第一个参数为slot的名称
-        ast.defineSlotName = attr?._arguments?.[0]
+        ast.defineSlotName = attr._arguments?.[0]
+        ast.isDynamicDefineSlotName = attr.isDynamicProperty
         ast.slotScope = attr.value
     },
     style(attr: any, ast: any) {
@@ -191,10 +192,9 @@ const builtInEvents: any = {
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
-    let rawAttributeMap = ast.rawAttributeMap ||= {}
+
     let attributeMap = ast.attributeMap ||= {}
     attributes.forEach((attr: any) => {
-        rawAttributeMap[attr.attribute] = attr.value
         // parseAttribute 不传入两个字符串是为了复用节点
         let processedAttribute: any = parseAttribute(attr)
         attributeMap[attr.property] = processedAttribute

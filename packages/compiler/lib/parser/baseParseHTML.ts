@@ -12,6 +12,7 @@ export function baseParseHTML(template: string) {
     var scanner = createScanner(template)
     var ast: any = [],
         attributes,
+        rawAttributeMap,
         inOpen,
         tag,
         modifiers;
@@ -53,12 +54,14 @@ export function baseParseHTML(template: string) {
                     tag,
                     closed: false,
                     attributes,
+                    rawAttributeMap,
                     children: null,
                     modifiers: modifiers && modifiers.split(':')
                 })
                 tag = null
                 modifiers = null
                 attributes = null
+                rawAttributeMap = null
                 inOpen = false
                 scanner.move(1)
             } else {
@@ -66,10 +69,8 @@ export function baseParseHTML(template: string) {
                 var exRes: any = scanner.exec(attributeRE);
                 var attribute = exRes[0]
                 var value = exRes[2];
-                (attributes ||= []).push({
-                    attribute,
-                    value
-                });
+                (attributes ||= []).push({ attribute, value });
+                (rawAttributeMap ||= {})[attribute] = value;
             }
         } else {
             var textToken, text

@@ -45,7 +45,7 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 指令适用于单个元素，标签适用于多个元素
 
 ```
-    <h6 --if="isLogin"> 已登录 </h6>
+    <h6 if="isLogin"> 已登录 </h6>
 
     <if condition="isLoign">
         <h1> 111 </h1>
@@ -56,7 +56,7 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 ### 循环渲染
 
 ```
-    <li --for="i in 6"> {{i}} </li>
+    <li for="i in 6"> {{i}} </li>
 ```
 
 ### id 和 class 

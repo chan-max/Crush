@@ -12,6 +12,7 @@ const protoMethods = {
 
 const scopeProperties: any = {
     $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
+    $uuid: () => uid(), // 每次访问均返回不同的id
     $instance: (instance: ComponentInstance) => instance,
     $refs: (instance: ComponentInstance) => {
         let { isMounted, refs } = instance
@@ -36,7 +37,11 @@ const scopeProperties: any = {
     $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     $self: (instance: any) => instance.scope,
-    $forceUpdate: (instance: any) => instance.update,
+    $forceUpdate: (instance: any) => {
+        if (!instance.isMounted) {
+            return instance.update
+        }
+    },
     // evnets
     $emit: (instance: any) => createInstanceEventEmitter(instance), // init component instance
     $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
