@@ -6,12 +6,14 @@ export declare const transitionComponent: {
 };
 export declare function arrayDifference(arr1: any[], arr2: any[]): any[];
 export declare const transitionGroupComponent: {
-    props: {};
+    props: string[];
     render: ({ $slots }: any) => any;
-    beforeUpdate({ $instance: { scope, vnode, renderingVnode }, $props }: any): void;
+    beforeUpdate({ $instance: { vnode, renderingVnode }, $props }: any): void;
 };
 export declare const transitionDirective: {
     beforeCreate(_: any, { value }: any, vnode: any): void;
     beforeUpdate(_: any, { value }: any, nVnode: any, pVnode: any): void;
 };
-export declare const transitionGroupDirective: {};
+export declare const transitionGroupDirective: {
+    beforeUpdate(): void;
+};

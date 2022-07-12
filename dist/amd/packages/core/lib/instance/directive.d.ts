@@ -7,6 +7,7 @@ export declare type DirectiveType = {
     updated?: Function;
     beforeUnmount?: Function;
     unmounted?: Function;
+    childrenMounted?: Function;
 } | Function;
 import { LifecycleHooks } from './lifecycle';
 export declare function injectDirectives(target: any, directives: any[]): any;

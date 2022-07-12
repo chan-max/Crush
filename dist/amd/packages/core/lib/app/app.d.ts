@@ -10,6 +10,7 @@ export declare class App {
     isMounted: boolean;
     inlineTemplate: string;
     container: Element;
+    startTime: any;
     constructor(appOptions: AppOptions);
     components: Record<string, ComponentType>;
     component(name: string, component: ComponentType): void;
@@ -20,4 +21,7 @@ export declare class App {
     plugins: Set<PluginType>;
     use(plugin: PluginType, ...options: any[]): void;
     mount(component: any): void;
+    record: any;
+    time(key: string): number;
+    timeEnd(key: string): number;
 }

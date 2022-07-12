@@ -34,7 +34,7 @@ export declare class ComponentInstance {
     app: any;
     parent: any;
     root: any;
-    emit: any;
     beforePatch: any;
+    appearRecord: any;
     constructor(options: any, parent: any);
 }

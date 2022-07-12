@@ -7,6 +7,8 @@ declare class TransitionDesc {
     type: any;
     name: any;
     duration: any;
+    enterKeyframes: any;
+    leaveKeyframes: any;
     appear: any;
     onBeforeEnter: any;
     onEnter: any;
@@ -16,20 +18,24 @@ declare class TransitionDesc {
     onLeave: any;
     onAfterLeave: any;
     onLeaveCancelled: any;
+    onBeforeAppear: any;
+    onAppear: any;
+    onAfterAppear: any;
+    onAppearCancelled: any;
     constructor(options: any);
     update(options: any): void;
     bindeEnterClass: (el: any) => void;
     bindeLeaveClass: (el: any) => void;
     removeEnterClass: (el: any) => void;
     removeLeaveClass: (el: any) => void;
+    callHook: (hookName: string, ...args: any) => void;
     beforeEnter(): void;
     beforeLeave(): void;
     cancelEnter(): void;
-    canceleave(el: any): void;
-    enter(el: any, enterOp: any): void;
-    leave(el: any, leaveOp: any): void;
+    canceleave(): void;
     processMount(newEl: any, insertFn: any): void;
     processUnmount(el: any): void;
-    processShow(el: any, show: boolean): void;
+    processShow(el: any): void;
+    processHide(el: any): void;
 }
 export {};

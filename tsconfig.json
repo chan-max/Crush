@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "declaration": true,
+        // "declaration": true,
         "useDefineForClassFields": true,
         "module": "ESNext",
         "lib": [

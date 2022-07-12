@@ -1,7 +1,9 @@
 import typescript from 'rollup-plugin-typescript2';
 import banner from 'rollup-plugin-banner'
-//console.log(replace(replacements));
 
+import { terser } from "rollup-plugin-terser";
+
+//console.log(replace(replacements));
 const entry = './packages/core/index.ts'
 
 const bannerContent = `
@@ -41,6 +43,7 @@ export default {
     plugins: [
         banner(bannerContent),
         typescript(),
+        terser(),
     ]
 
 };

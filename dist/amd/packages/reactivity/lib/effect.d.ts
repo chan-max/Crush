@@ -4,6 +4,7 @@ export declare function getDepsMap(target: any): any;
 export declare function getDeps(target: any, key: any): any;
 export declare function track(target: any, key?: any): void;
 export declare const trackTargetSymbol: unique symbol;
+export declare function trackTarget(target: any): void;
 export declare function trigger(target: any, key: any): void;
 export declare const getActiveEffect: () => ReactiveEffect;
 export declare const setActiveEffect: (effect: ReactiveEffect) => number;

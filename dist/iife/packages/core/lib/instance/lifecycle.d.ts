@@ -7,7 +7,12 @@ declare const enum LifecycleHooks {
     BEFORE_UPDATE = "beforeUpdate",
     UPDATED = "updated",
     BEFORE_UNMOUNT = "beforeUnmount",
-    UNMOUNTED = "unmounted"
+    UNMOUNTED = "unmounted",
+    CHILDREN_MOUNTED = "childrenMounted",
+    BEFORE_ROUTE_ENTER = "beforeRouteEnter",
+    BEFORE_ROUTE_LEAVE = "beforeRouteLeave",
+    ACTIVATED = "activated",
+    DEACTIVATED = "deactivated"
 }
 declare function injectHook(type: LifecycleHooks, target: any, hook: Function | Function[]): void;
 declare function injectMapHooks(target: any, mapHooks: any): any;
