@@ -170,6 +170,7 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
             case ReactiveFlags.IS_READONLY:
                 return isReadonly
             case ReactiveTypeSymbol:
+                // 所欲响应式数据都会有此标记
                 return true
         }
 

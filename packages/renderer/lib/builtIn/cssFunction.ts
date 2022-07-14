@@ -2,11 +2,40 @@
 
 // if you are using css function with dynamic binding , use camelized function name 
 
-import { isNumber } from "@crush/common"
+import { isNumber, isString } from "@crush/common"
+
+
+export function toPositiveValue<T>(value: any): any {
+    if (isNumber(value)) {
+        return value < 0 ? -value : value
+    } else {
+        return value.startsWith('-') ? value.slice(1) : value
+    }
+}
+
+export function toNegativeValue(value: any): any {
+    if (isNumber(value)) {
+        return value > 0 ? -value : value
+    } else {
+        return value.startsWith('-') ? value : '-' + value
+    }
+}
+
+export function toAbsoluteValue(value: any): any {
+    if (isNumber(value)) {
+        return Math.abs(value as number)
+    } else {
+        return value.startsWith('-') ? value.slice(1) : value
+    }
+}
+
+
 
 function addUnit(value: string | number, unit: string) {
     return isNumber(value) ? `${value + unit}` : value
 }
+
+
 
 function rgba(...rgba: number[]) {
     return `rgba(${rgba.join(',')})`

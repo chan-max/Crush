@@ -1,6 +1,11 @@
-import { createApp } from "./packages/core";
+import { watchComputed } from "@crush/reactivity/lib/watchComputed";
+import { createApp, reactive, ref } from "./packages/core";
 
-import { withScope } from "./packages/core";
+let p = reactive({ a: 1 })
+var r = ref(666)
+var c = computed(() => r.value * p.a)
+
+watchComputed(c,)
 
 
 
@@ -17,12 +22,14 @@ app.mount({
                 animation :  fadeOutBottomRight 2s infinite;
             }
         </style>
-        <div .box @click="add" >
+
+        <div .box ref="box" >
             {{count}}
         </div>
     `,
-    create({ $self }: any) {
+    create({ $self, $refs }: any) {
         $self.count = 0
         $self.add = () => $self.count++
+
     }
 })

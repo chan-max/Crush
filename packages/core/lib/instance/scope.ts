@@ -15,11 +15,7 @@ const scopeProperties: any = {
     $uuid: () => uid(), // 每次访问均返回不同的id
     $instance: (instance: ComponentInstance) => instance,
     $refs: (instance: ComponentInstance) => {
-        let { isMounted, refs } = instance
-        if (!isMounted) {
-            return null
-        }
-        return refs
+        return instance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
     },
     $el: (instance: any) => {
         let { vnode, isMounted } = instance
@@ -30,11 +26,11 @@ const scopeProperties: any = {
         return el.length === 1 ? el[0] : el
     },
     $root: (instance: any) => instance.root,
+    $props: (instance: any) => instance.props, // props包括 props， attrs 和 events
     $attrs: (instance: any) => instance.attrs,
     $slots: (instance: any) => instance.slots,
-    $props: (instance: any) => instance.props,
     $parent: (instance: any) => instance.parent,
-    $watch: (instance: any) => instance.watch,
+    $watch: (instance: any) => null,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     $self: (instance: any) => instance.scope,
     $forceUpdate: (instance: any) => {

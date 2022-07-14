@@ -34,6 +34,7 @@ export function isProxyType(value: any) {
     }
 }
 
+// 标记一个数据使其不会成为响应式数据
 export function markRaw(data: any) {
     if (isProxyType(data)) {
         data[ReactiveTypeSymbol] = true

@@ -4,6 +4,9 @@ import { trackRef, triggerRef } from "./ref";
 
 export const computed = (getter: any) => new ComputedRef(getter)
 
+export const isComputed = (value: any) => value && value[ReactiveFlags.IS_COMPUTED]
+
+
 export class ComputedRef {
     [ReactiveTypeSymbol] = true;
     [ReactiveFlags.IS_COMPUTED] = true;
@@ -11,7 +14,7 @@ export class ComputedRef {
 
     cacheValue: any
 
-    oldValue:any
+    oldValue: any
 
     shouldCompute = true
 

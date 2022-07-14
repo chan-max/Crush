@@ -12,7 +12,7 @@ function normalizeMs() {
 }
 
 export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cancelCb?: any) {
-
+    
     const {
         name,
         duration,
