@@ -172,7 +172,6 @@ class TransitionDesc {
                 name: this.enterKeyframes,
                 duration: this.duration
             })
-   
             onceListener(newEl, 'animationend', () => {
                 // after enter
                 newEl._entering = true

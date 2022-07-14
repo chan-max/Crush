@@ -1,24 +1,55 @@
 import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
 
-
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'
 import { zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp } from './animations/zoom'
-
 import { hinge, jackInTheBox, rollIn, rollOut } from './animations/specials'
+import { bounce, bounceIn, bounceInDown, bounceInLeft, bounceInRight, bounceInUp, bounceOut, bounceOutDown, bounceOutLeft, bounceOutRight, bounceOutUp } from './animations/bounce'
+import { swing } from './animations/swing'
+import { flash } from './animations/flash'
+import { shakeX, shakeY } from './animations/shake'
+import { pulse } from './animations/pulse'
+import { backInDown, backInLeft, backInRight, backInUp, backOutDown, backOutLeft, backOutRight, backOutUp } from './animations/back'
+import { flip, flipInX, flipInY, flipOutX, flipOutY } from './animations/flippers'
+import { headShake } from './animations/headShake'
+import { lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt } from './animations/lightsspeed'
+import { rubberBand } from './animations/rubberBand'
+import { heartBeat } from './animations/heartBeat'
+import { wobble } from './animations/wobble'
 
 const animationFrames = {
-    // slide
+    // slide 滑动
     slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
-    // zoom
+    // zoom 缩放
     zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp,
-    // specials
-    hinge, jackInTheBox, rollIn, rollOut
+    // specials 特殊动画
+    hinge, jackInTheBox, rollIn, rollOut,
+    // 弹跳
+    bounce, bounceIn, bounceInDown, bounceInLeft, bounceInRight, bounceInUp, bounceOut, bounceOutDown, bounceOutLeft, bounceOutRight, bounceOutUp,
+    // 摇摆
+    swing,
+    // 闪烁
+    flash,
+    // 抖动
+    shakeX, shakeY,
+    // 脉搏
+    pulse,
+    // 出场
+    backInDown, backInLeft, backInRight, backInUp, backOutDown, backOutLeft, backOutRight, backOutUp,
+    // 翻动
+    flip, flipInX, flipInY, flipOutX, flipOutY,
+    // 摇头
+    headShake,
+    // 光速
+    lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt,
+    // 橡皮筋
+    rubberBand,
+    // 心跳
+    heartBeat,
+    // 摇晃
+    wobble
 }
 
-export const transitionKeyframes = {
-    roll: ['rollIn', 'rollOut']
-}
 
 // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
 const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))

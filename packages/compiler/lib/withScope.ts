@@ -1,5 +1,8 @@
 
 
+function setScope(variable: string, scope: string) {
+    return scope + '.' + variable
+}
 
 type Expression = {
     content: string
@@ -35,26 +38,30 @@ function extractStringTokens(exp: string): Expression[] {
 
 
 
-function setScope(variable: string, scope: string) {
-    return scope + '.' + variable
+
+
+
+
+
+
+const variableRE = /[\$_a-zA-Z][a-zA-Z0-9]*/g
+
+function replaceVariable(expression: string, scope: string) {
+    return expression.replace(variableRE, (variable) => {
+        return setScope(variable, scope)
+    })
 }
 
-
-
-function extractTemplateStringTokens(expression:string) {
-    let i = expression.indexOf('`')
-    
-    return 666
-}
 
 const enum WithScopeSteps {
     START = 0,
 
     PROCESS_STRING,
 
-    PROCESS_TEMPLATE_STRING,
+    // PROCESS_TEMPLATE_STRING,
 
-    COMPLETE
+    REPLACE_VARIABLE,
+
 }
 
 
@@ -72,12 +79,8 @@ export function withScope(expression: string, scope: string = 'Crush', stepsInde
         case WithScopeSteps.PROCESS_STRING:
             let stringTokens = extractStringTokens(expression)
             return expressionTokensToResult(stringTokens, scope, stepsIndex + 1)
-        case WithScopeSteps.PROCESS_TEMPLATE_STRING:
-            let templateStringTokens = extractTemplateStringTokens(expression)
-            return expression
-        case WithScopeSteps.COMPLETE:
-            debugger
-            return expression
+        case WithScopeSteps.REPLACE_VARIABLE:
+            return replaceVariable(expression, scope)
     }
     return ''
 }

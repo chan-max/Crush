@@ -1,7 +1,7 @@
 import { perspective, rotate3d, scale3d, translate3d } from "@crush/renderer";
 import { keyframe, keyframes } from "@crush/renderer";
 
-export const flip = keyframes('flip', [
+export const flip = [
     keyframe(0, {
         transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, -360)],
         animationTimingFunction: 'ease-out'
@@ -22,9 +22,9 @@ export const flip = keyframes('flip', [
         transform: [perspective('400px'), scale3d(1, 1, 1), translate3d(0, 0, 0), rotate3d(0, 1, 0, 0)],
         animationTimingFunction: 'ease-in'
     })
-])
+]
 
-export const flipInX = keyframes('flipInX', [
+export const flipInX = [
     keyframe(0, {
         transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
         animationTimingFunction: 'ease-in',
@@ -45,9 +45,9 @@ export const flipInX = keyframes('flipInX', [
     keyframe(100, {
         transform: perspective('400px')
     })
-])
+]
 
-export const flipInY = keyframes('flipInY', [
+export const flipInY = [
     keyframe(0, {
         transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
         animationTimingFunction: 'ease-in',
@@ -68,9 +68,9 @@ export const flipInY = keyframes('flipInY', [
     keyframe(100, {
         transform: perspective('400px')
     })
-])
+]
 
-export const flipOutX = keyframes('flipOutX', [
+export const flipOutX = [
     keyframe(0, {
         transform: perspective('400px')
     }),
@@ -82,9 +82,9 @@ export const flipOutX = keyframes('flipOutX', [
         transform: [perspective('400px'), rotate3d(1, 0, 0, 90)],
         opcaity: 0
     })
-])
+]
 
-export const flipOutY = keyframes('flipOutY', [
+export const flipOutY = [
     keyframe(0, {
         transform: perspective('400px')
     }),
@@ -96,4 +96,4 @@ export const flipOutY = keyframes('flipOutY', [
         transform: [perspective('400px'), rotate3d(0, 1, 0, 90)],
         opcaity: 0
     })
-])
+]

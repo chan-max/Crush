@@ -128,6 +128,10 @@ function scaleY(n: number) {
     return `scaleY(${n})`
 }
 
+function scaleX(n: number) {
+    return `scaleX(${n})`
+}
+
 export {
     rgba,
     rgb,
@@ -151,6 +155,7 @@ export {
     skewX,
     skewY,
     scaleY,
+    scaleX,
     rotateY,
     conicGradient,
     linearGradient,
