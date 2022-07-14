@@ -14,7 +14,7 @@ app.mount({
                 width:300px;
                 height:300px;
                 background-color:red;
-                animation : bounceOutUp 2s infinite;
+                animation :  fadeOutBottomRight 2s infinite;
             }
         </style>
         <div .box @click="add" >

@@ -49,3 +49,42 @@
 -  bounceOutLeft 向左弹跳离开
 -  bounceOutRight 向右弹跳离开
 -  bounceOutUp 向上弹跳离开
+
+- rotateIn
+- rotateInDownLeft
+- rotateInDownRight
+- rotateInUpLeft
+- rotateInUpRight
+
+- rotateOut
+- rotateOutDownLeft
+- rotateOutDownRight
+- rotateOutUpLeft
+- rotateOutUpRight
+
+- fadeIn
+- fadeInDown
+- fadeInDownBig
+- fadeInLeft
+- fadeInLeftBig
+- fadeInRight
+- fadeInRightBig
+- fadeInUp
+- fadeInUpBig
+- fadeInTopLeft
+- fadeInTopRight
+- fadeInBottomLeft
+- fadeInBottomRight
+
+- fadeOut
+- fadeOutDown
+- fadeOutDownBig
+- fadeOutLeft
+- fadeOutLeftBig
+- fadeOutRight
+- fadeOutRightBig
+- fadeOutUp
+- fadeOutUpBig
+- fadeOutTopLeft
+- fadeOutTopRight
+- fadeOutBottomRight
