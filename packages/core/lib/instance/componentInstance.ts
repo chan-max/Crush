@@ -5,16 +5,76 @@ import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@cr
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
-import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener, onceInstanceListener } from "@crush/renderer/lib/render/componentListener";
-import { emitInstancetEvent } from "@crush/renderer";
+import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener, onceInstanceListener, getInstanceEvents } from "@crush/renderer/lib/render/componentListener";
 
-export const createComponentInstance = (options: any, parent: any): ComponentInstance => new ComponentInstance(options, parent)
+import { createInstanceWatch } from "./watch";
 
-// 用class 的话this指向有问题
-export class ComponentInstance {
+export const createComponentInstance = (options: any, parent: any) => {
+    let app = getCurrentApp()
+    let instance: ComponentInstance = {
+        app,
+        parent,
+        uid: uid(),
+        update: null,
+        isMounted: false,
+        scope: null,
+        renderScope: null,
+        vnode: null, // 当前所处的vnode
+        componentVnode: null,//组件虚拟节点
+        updatingComponentVnode: null,
+        renderingVnode: null, // 即将挂载到页面的vnode
+        slots: null,
+        props: null,
+        attrs: null,
+        refs: null,
+        events: null,
+        root: null,
+        appearRecord: null,
+        emit: null,
+        on: null,
+        off: null,
+        once: null,
+        watch: null,
+        render: options.render,
+        customOptions: options.customOptions,
+        propsOptions: options.propsOptions,
+        emitsOptions: options.emitsOptions,
+        createRender: options.createRender,
+        components: options.components,
+        directives: options.directives,
+        // hooks will always be an array
+        create: shallowCloneArray(options.create),
+        beforeCreate: shallowCloneArray(options.beforeCreate),
+        created: shallowCloneArray(options.created),
+        beforeMount: shallowCloneArray(options.beforeMount),
+        mounted: shallowCloneArray(options.mounted),
+        beforeUnmount: shallowCloneArray(options.beforeUnmount),
+        unmounted: shallowCloneArray(options.unmounted),
+        beforeUpdate: shallowCloneArray(options.beforeUpdate),
+        updated: shallowCloneArray(options.updated),
+        beforePatch: shallowCloneArray(options.beforePatch),
+    }
+
+    injectMixins(instance, options.mixins)
+    injectMixins(instance, app.mixins)
+
+    instance.root = parent ? parent.root : instance
+    instance.scope = createScope(instance)
+    instance.renderScope = createRenderScope(instance.scope)
+    instance.emit = createInstanceEventEmitter(instance)
+    instance.on = (event: string, handler: any) => addInstanceListener(instance, event, handler)
+    instance.off = (event: string, handler: any) => removeInstanceListener(instance, event, handler)
+    instance.once = (event: string, handler: any) => onceInstanceListener(instance, event, handler)
+    instance.events = getInstanceEvents(instance)
+    instance.watch = createInstanceWatch(instance)
+    return instance
+}
+
+
+export interface ComponentInstance {
     update: any
     isMounted: any
-    uid = uid()
+    uid: number
     scope: any
     renderScope: any
     render: any
@@ -32,7 +92,6 @@ export class ComponentInstance {
     createRender: any
     components: any
     directives: any
-    rootCreate: any
     // hooks will always be an array
     create: any
     beforeCreate: any
@@ -48,54 +107,10 @@ export class ComponentInstance {
     parent: any
     root: any
     beforePatch: any
-    appearRecord: any
-    constructor(options: any, parent: any) {
-        const {
-            render,
-            createRender,
-            create,
-            beforeCreate,
-            created,
-            beforeMount,
-            mounted,
-            beforeUnmount,
-            unmounted,
-            beforeUpdate,
-            updated,
-            beforePatch,
-            mixins,
-            components,
-            directives,
-            customOptions,
-            propsOptions,
-            emitsOptions,
-        } = options
-        this.parent = parent
-        this.root = parent ? parent.root : this
-        this.beforeCreate = shallowCloneArray(beforeCreate)
-        this.create = shallowCloneArray(create)
-        this.created = shallowCloneArray(created)
-        this.beforeMount = shallowCloneArray(beforeMount)
-        this.mounted = shallowCloneArray(mounted)
-        this.beforeUpdate = shallowCloneArray(beforeUpdate)
-        this.updated = shallowCloneArray(updated)
-        this.beforeUnmount = shallowCloneArray(beforeUnmount)
-        this.unmounted = shallowCloneArray(unmounted)
-        this.customOptions = customOptions
-        this.beforePatch = beforePatch
-        this.propsOptions = propsOptions || emptyObject
-        this.emitsOptions = emitsOptions || emptyObject
-        this.components = components
-        this.directives = directives
-        this.render = render
-        this.createRender = createRender
-        let scope = createScope(this)
-        this.scope = scope
-        this.renderScope = createRenderScope(scope)
-        let app = getCurrentApp()
-        this.app = app
-        injectMixins(this, mixins)
-        injectMixins(this, app.mixins)
-    }
-
+    appearRecord: any,
+    emit: any,
+    on: any,
+    off: any,
+    once: any
+    watch: any
 }

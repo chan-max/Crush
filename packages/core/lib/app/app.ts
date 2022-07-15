@@ -46,7 +46,7 @@ export class App {
         this.inlineTemplate = container.innerHTML
         this.container.innerHTML = ''
 
-        if (!this.rootComponent.template) {
+        if (!this.rootComponent.template && !this.rootComponent.render) {
             this.rootComponent.template = this.inlineTemplate
         }
 

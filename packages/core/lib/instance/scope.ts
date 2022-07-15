@@ -30,7 +30,7 @@ const scopeProperties: any = {
     $attrs: (instance: any) => instance.attrs,
     $slots: (instance: any) => instance.slots,
     $parent: (instance: any) => instance.parent,
-    $watch: (instance: any) => null,
+    $watch: (instance: any) => instance.watch,
     $nextTick: (instance: any) => nextTick.bind(instance.scope),
     $self: (instance: any) => instance.scope,
     $forceUpdate: (instance: any) => {
@@ -39,11 +39,11 @@ const scopeProperties: any = {
         }
     },
     // evnets
-    $emit: (instance: any) => createInstanceEventEmitter(instance), // init component instance
-    $on: (instance: any) => (event: string, handler: any) => addInstanceListener(instance, event, handler),
-    $off: (instance: any) => (event: string, handler: any) => removeInstanceListener(instance, event, handler),
-    $once: (instance: any) => (event: string, handler: any) => onceInstanceListener(instance, event, handler),
-    $events: (instance: any) => getInstanceEvents(instance),
+    $emit: (instance: any) => instance.emit, // init component instance
+    $on: (instance: any) => instance.on,
+    $off: (instance: any) => instance.off,
+    $once: (instance: any) => instance.once,
+    $events: (instance: any) => instance.events,
     $listeners: (instance: any) => (event: string) => getInstancetEventListeners(instance, event)
 }
 

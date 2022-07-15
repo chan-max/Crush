@@ -3,7 +3,7 @@ import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
 
 import renderMethods from "../renderMethodsExport"
-import { processRenderResult } from "../common/processRenderResult"
+import { flatNodes } from "./flatNodes"
 
 import { processHook } from '@crush/core'
 
@@ -115,7 +115,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         // 清理vnode 
         instance.updatingComponentVnode = null
 
-        nVnode = processRenderResult(nVnode)
+        nVnode = flatNodes(nVnode)
         instance.renderingVnode = nVnode
 
         if (vnode.transition) {
@@ -130,7 +130,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
         instance.vnode = nVnode
         instance.isMounted = true
-
+        instance.renderingVnode = null
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nComponentVnode, pComponentVnode)
     }
 

@@ -1,14 +1,16 @@
 import { uid } from "@crush/common"
-import { Nodes } from "@crush/const"
-import { createNode } from './dom'
+
+import { Nodes } from "@crush/core"
+
 
 var createStyleSheet = (props: any, children: any, key: any = uid()) => {
-    var node = createNode(Nodes.STYLE)
-    node.props = props
-    node.children = children
-    node.key = key
-    node.type = 'style' // used for diff
-    return node
+    return {
+        nodeType: Nodes.STYLE,
+        type: 'style',
+        children,
+        props,
+        key,
+    }
 }
 
 var createStyle = (selector: string, children: any, key: any) => {
@@ -28,20 +30,22 @@ var createMedia = (media: string, children: any, key: any) => ({
 })
 
 
-var createKeyframes = (keyframes: any, children: any, key: any = uid()) => {
-    var node = createNode(Nodes.KEYFRAMES_RULE)
-    node.keyframes = keyframes
-    node.children = children
-    node.key = key
-    return node
+export function createKeyframes(keyframes: any, children: any, key: any = uid()) {
+    return {
+        type: Nodes.KEYFRAMES_RULE,
+        keyframes,
+        children,
+        key
+    }
 }
 
-var createKeyframe = (keyframe: any, children: any, key: any = uid()) => {
-    var node = createNode(Nodes.KEYFRAME_RULE)
-    node.keyframe = keyframe
-    node.children = children
-    node.key = key
-    return node
+function createKeyframe(keyframe: any, children: any, key: any = uid()) {
+    return {
+        key,
+        keyframe,
+        children,
+        nodeType: Nodes.KEYFRAME_RULE,
+    }
 }
 
 
@@ -70,7 +74,6 @@ export {
     createStyle,
     createDeclaration,
     createKeyframe,
-    createKeyframes,
     createMedia,
     createSupports,
 }

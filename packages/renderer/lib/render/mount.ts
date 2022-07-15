@@ -1,4 +1,4 @@
-import { Vnode } from "../vnode/dom";
+
 import { Nodes } from "@crush/const";
 import {
     docCreateComment,
