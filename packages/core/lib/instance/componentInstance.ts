@@ -12,6 +12,7 @@ import { createInstanceWatch } from "./watch";
 export const createComponentInstance = (options: any, parent: any) => {
     let app = getCurrentApp()
     let instance: ComponentInstance = {
+
         app,
         parent,
         uid: uid(),
@@ -35,6 +36,7 @@ export const createComponentInstance = (options: any, parent: any) => {
         off: null,
         once: null,
         watch: null,
+        renderEffect: null,
         render: options.render,
         customOptions: options.customOptions,
         propsOptions: options.propsOptions,
@@ -112,5 +114,6 @@ export interface ComponentInstance {
     on: any,
     off: any,
     once: any
-    watch: any
+    watch: any,
+    renderEffect: any
 }

@@ -1,5 +1,8 @@
 import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
+import { Nodes } from '@crush/const'
+export const xxx = () => Nodes.AT
+
 
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'
 import { zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp } from './animations/zoom'
@@ -18,6 +21,7 @@ import { heartBeat } from './animations/heartBeat'
 import { wobble } from './animations/wobble'
 import { rotateIn, rotateInDownLeft, rotateInDownRight, rotateInUpLeft, rotateInUpRight, rotateOut, rotateOutDownLeft, rotateOutDownRight, rotateOutUpLeft, rotateOutUpRight } from './animations/rotate'
 import { fadeIn, fadeInBottomLeft, fadeInBottomRight, fadeInDown, fadeInDownBig, fadeInLeft, fadeInLeftBig, fadeInRight, fadeInRightBig, fadeInTopLeft, fadeInTopRight, fadeInUp, fadeInUpBig, fadeOut, fadeOutBottomLeft, fadeOutBottomRight, fadeOutDown, fadeOutDownBig, fadeOutLeft, fadeOutLeftBig, fadeOutRight, fadeOutRightBig, fadeOutTopLeft, fadeOutTopRight, fadeOutUp, fadeOutUpBig, } from './animations/fade'
+
 
 const animationFrames = {
     // slide 滑动

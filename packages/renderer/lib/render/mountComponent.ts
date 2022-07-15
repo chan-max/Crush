@@ -139,6 +139,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     const rednerEffect = createReactiveEffect(update, queueJob)
     // 手动渲染
+    instance.renderEffect = rednerEffect
     rednerEffect.run()
     return instance
 }

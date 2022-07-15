@@ -30,9 +30,9 @@ var createMedia = (media: string, children: any, key: any) => ({
 })
 
 
-export function createKeyframes(keyframes: any, children: any, key: any = uid()) {
+function createKeyframes(keyframes: any, children: any, key: any = uid()){
     return {
-        type: Nodes.KEYFRAMES_RULE,
+        nodeType: Nodes.KEYFRAMES_RULE,
         keyframes,
         children,
         key
@@ -41,10 +41,10 @@ export function createKeyframes(keyframes: any, children: any, key: any = uid())
 
 function createKeyframe(keyframe: any, children: any, key: any = uid()) {
     return {
+        nodeType: Nodes.KEYFRAME_RULE,
         key,
         keyframe,
         children,
-        nodeType: Nodes.KEYFRAME_RULE,
     }
 }
 
@@ -76,4 +76,5 @@ export {
     createKeyframe,
     createMedia,
     createSupports,
+    createKeyframes
 }

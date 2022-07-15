@@ -43,7 +43,7 @@ export default {
     plugins: [
         banner(bannerContent),
         typescript(),
-        terser(),
+        // terser(),
     ]
 
 };
