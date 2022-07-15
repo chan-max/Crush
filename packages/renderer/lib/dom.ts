@@ -10,6 +10,7 @@ export const docCreateElement = (tagName: string, isSVG: boolean = false) => isS
 export const docCreateComment = (text: string) => document.createComment(text)
 export const docCreateText = (text: string) => document.createTextNode(text)
 export const setText = (textEl: Element, text: any) => textEl.nodeValue = text
+
 export const insertElement = (child: Element | Text | Comment, parent: Element, anchor: Element | null = null) => {
     /* 可能传入不合理的anchor */
     if (anchor && anchor.parentElement !== parent) {
@@ -23,6 +24,14 @@ export const removeElement = (el: Element) => {
     if (parent) {
         parent.removeChild(el);
     }
+}
+
+// 重新挂载一个元素
+export function remountElement(el: HTMLElement) {
+    let parent = el.parentElement
+    let anchor = el.nextElementSibling
+    removeElement(el)
+    insertElement(el, parent as Element, anchor)
 }
 
 export const setAttribute = (el: Element, attribute: string, value: string) => el.setAttribute(attribute, value)
@@ -39,7 +48,7 @@ export function onceListener(el: Element, event: string, handler: Function, opti
     addListener(el, event, onceHandler, options)
 
     // 注销事件
-    return () => removeListener(el,event,onceHandler,options)
+    return () => removeListener(el, event, onceHandler, options)
 }
 
 

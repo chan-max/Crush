@@ -21,32 +21,37 @@ export function getCurrentApp(): App {
 }
 
 
-export interface AppOptions {
-    container: string | HTMLElement
-}
 
 export class App {
 
     isMounted = false
 
-    inlineTemplate: string
+    inlineTemplate: any
 
-    container: Element
+    container: any
 
-    startTime: any
+    rootComponent: any
 
-    constructor(appOptions: AppOptions) {
-        let {
-            container
-        } = appOptions
+    constructor(rootComponent: any) {
 
-        this.container = isString(container) ? document.querySelector(container as any) : container
-        this.inlineTemplate = this.container.innerHTML
-        this.container.innerHTML = ''
+        this.rootComponent = rootComponent
 
         // 安装动画
         this.use(installAnimation)
         currentApp = this
+    }
+
+    mount(container: any) {
+        this.container = isString(container) ? document.querySelector(container as any) : container
+        this.inlineTemplate = container.innerHTML
+        this.container.innerHTML = ''
+
+        if (!this.rootComponent.template) {
+            this.rootComponent.template = this.inlineTemplate
+        }
+
+        mount(createComponent(this.rootComponent, null, null), this.container)
+        this.isMounted = true
     }
 
     // globalProperty
@@ -80,13 +85,7 @@ export class App {
         this.plugins.add(plugin)
     }
 
-    mount(component: any) {
-        if (!component.template && !component.render) {
-            component.template = this.inlineTemplate
-        }
-        mount(createComponent(component, null, null), this.container)
-        this.isMounted = true
-    }
+
 
 
 

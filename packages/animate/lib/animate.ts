@@ -7,12 +7,20 @@ import { getElementComputedStyle, getElementComputedStyleValue, getElementStyle,
 
 // 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
 
-function normalizeMs() {
-
+function normalizeMs(value: any) {
+    return isNumber(Number(value)) ? value + 'ms' : value
 }
 
 export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cancelCb?: any) {
-    
+
+    let _name = getElementComputedStyleValue(el, 'animationName')
+
+    if (_name && _name !== 'none') {
+        // ! 元素本身不应该存在动画名称属性
+        return
+    }
+
+
     const {
         name,
         duration,
@@ -20,7 +28,7 @@ export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cance
         delay,
         playState,
         fillMode,
-        iterationCount,
+        iterationCount,  // infinite 无限次时 结束回调失效
         direction
     } = options
 
@@ -35,18 +43,14 @@ export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cance
         animationDirection: direction
     }
 
-    let _name = getElementComputedStyleValue(el, 'animationName')
 
-    if (_name && _name !== 'none') {
-        // ! 注意执行时不应该存在元素本身或从继承来的animation属性
-        return
-    }
 
     // 动画执行结束后再还原属性
     let copy = getElementStyle(el, animationDeclaration)
+
     setElementStyleDeclaration(el, animationDeclaration)
 
-    let handler = () => {
+    let animationCompleteHandler = () => {
         // 重新设置之前的属性
         setElementStyleDeclaration(el, copy)
         if (endCb) {
@@ -54,7 +58,7 @@ export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cance
         }
     }
 
-    onceListener(el, 'animationend', handler)
+    onceListener(el, 'animationend', animationCompleteHandler)
 
     let cancelled = false
     // stop animation , 只有动画成功执行才会返回取消方法
@@ -63,7 +67,7 @@ export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cance
             return
         }
         setElementStyleDeclaration(el, copy)
-        removeListener(el, 'animationend', handler) // 手动移除侦听器
+        removeListener(el, 'animationend', animationCompleteHandler) // 手动移除侦听器
         if (cancelCb) {
             cancelCb(el)
         }

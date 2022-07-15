@@ -1,7 +1,7 @@
 import { doCSSAnimation } from "@crush/animate"
 import { setDisplay } from "@crush/builtin/lib/show"
 import { emptyObject, initialUpperCase } from "@crush/common"
-import { addClass, onceListener, removeClass, removeElement } from "../dom"
+import { addClass, onceListener, remountElement, removeClass, removeElement } from "../dom"
 
 //! class
 export function bindEnterClass(el: Element, name: string) {
@@ -232,9 +232,15 @@ class TransitionDesc {
             // 按逻辑说应该设为none，但好像没必要
         }
 
+
         el._entering = true
         setDisplay(el, true)
+
+        // 解决bug，让元素重新挂载一次
+        remountElement(el)
+
         this.bindeEnterClass(el)
+        
         onceListener(el, 'transitionend', () => {
             this.removeEnterClass(el)
             setDisplay(el, true)
@@ -257,7 +263,6 @@ class TransitionDesc {
             setDisplay(el, false)
         })
     }
-
 }
 
 
