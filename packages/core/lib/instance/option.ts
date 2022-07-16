@@ -20,6 +20,10 @@ export enum ComponentOptions {
 
     BEFORE_PATCH = 'beforePatch',
 
+    // keepalive
+    ACTIVATED = 'activated',
+    DEACTIVATED = 'deactivated',
+
     TEMPLATE = 'template',
     RENDER = 'render',
 
@@ -31,7 +35,9 @@ export enum ComponentOptions {
 
     MIXINS = 'mixins',
     COMPOENNTS = 'components',
-    DIRECTIVES = 'directives'
+    DIRECTIVES = 'directives',
+
+
 }
 
 
@@ -62,6 +68,9 @@ export function resolveOptions(options: any) {
             case ComponentOptions.UPDATED:
             case ComponentOptions.BEFORE_UNMOUNT:
             case ComponentOptions.UNMOUNTED:
+            case ComponentOptions.BEFORE_PATCH:
+            case ComponentOptions.ACTIVATED:
+            case ComponentOptions.DEACTIVATED:
                 // 转换为数组形式
                 if (value && !isArray(value)) {
                     options[key] = [value]

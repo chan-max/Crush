@@ -4,6 +4,6 @@ export const keepAliveComponent = {
 
 }
 
-export const keepaliveDirective = {
+export const keepAliveDirective = {
     
 }
