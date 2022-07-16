@@ -21,6 +21,7 @@ function isHandler(exp: string) {
     return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp)
 }
 
+
 const builtInTags: Record<string, any> = {
     ''(ast: any) {
         ast.type = Nodes.TEXT
@@ -50,6 +51,9 @@ const builtInTags: Record<string, any> = {
         ast.iterator = parseIterator(ast.rawAttributeMap.iterator)
     },
     template(ast: any) {
+        ast.type = Nodes.TEMPLATE
+    },
+    fragment(ast: any) {
         ast.type = Nodes.TEMPLATE
     },
     // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
@@ -96,10 +100,10 @@ const builtInTags: Record<string, any> = {
     }
 }
 
-// 
+// 由外界注入的指令 ， 还需要额外处理
 const customDirectiveHandlers: any = {
     model(attribute: any, ast: any) {
-        let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap,'multiple') ? 'selectMultiple' : 'selectOne' ) : ast.rawAttributeMap.type || 'text'
+        let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : ast.rawAttributeMap.type || 'text'
         // transform 
         attribute.property = `model${initialUpperCase(modelType)}`
 
@@ -157,6 +161,7 @@ const builtInAttributes: any = {
         /*
             注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
         */
+
         attr.type = Nodes.SKIP
         // 定义插槽无动态插槽 , 第一个参数为slot的名称
         ast.defineSlotName = attr._arguments?.[0]
@@ -200,7 +205,6 @@ function processAttribute(ast: any) {
         attributeMap[attr.property] = processedAttribute
     });
 
-
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i]
         let { flag, isDynamicProperty } = attribute
@@ -213,6 +217,7 @@ function processAttribute(ast: any) {
                 builtInEvents[attribute.property](attribute, ast)
             }
         } else if (flag === '--') {
+            // 所有带 -- 一定是外界注入的指令
             attribute.type = Nodes.CUSTOM_DIRECTIVE;
             // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
             const customDirectiveHandler = customDirectiveHandlers[attribute.property];
@@ -221,7 +226,12 @@ function processAttribute(ast: any) {
                 customDirectiveHandler(attribute, ast)
             }
         } else if (flag === '#') {
-            // id shorthand
+            /*
+                <div #app> </div> => <div #app> </div>
+                <template #header></template> =>  <template slot:header></template>
+                <Hello #app> => ref ??
+            */
+            debugger
             attribute.type = Nodes.ATTRIBUTE
             attribute.value = attribute.property
             attribute.property = 'id'
@@ -252,20 +262,21 @@ export function processAst(ast: any) {
         ast.forEach(processAst)
         return
     }
-    const tag = ast.tag
-    const tagName = camelize(tag)
-    ast.tagName = tagName
-    processAttribute(ast)
-    if (builtInTags[tagName]) {
-        builtInTags[tagName](ast)
-    } else if (isHTMLTag(tagName)) {
-        ast.type = Nodes.HTML_ELEMENT
-    } else if (isSVGTag(tagName)) {
-        ast.type = Nodes.SVG_ELEMENT
-    } else {
-        ast.type = Nodes.COMPONENT
+    const tagName = ast.tagName = camelize(ast.tag)
+
+    let builtInTagHandler = builtInTags[tagName]
+
+    if (!builtInTagHandler) {
+        ast.type = isHTMLTag(tagName) ? Nodes.HTML_ELEMENT : isSVGTag(tagName) ? Nodes.SVG_ELEMENT : Nodes.COMPONENT
     }
+    // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
+    processAttribute(ast)
+
+    if (builtInTagHandler) {
+        builtInTagHandler(ast)
+    }
+
     if (!ast.ignoreChildren && ast.children) {
         processAst(ast.children)
     }
-}
+} 

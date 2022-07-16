@@ -12,7 +12,7 @@ export function parseInlineStyle(styleString: string): Record<string, string> {
     var l = chips.length
     var styleMap: Record<string, any> = {}
     while (l) {
-        styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1])
+        styleMap[camelize(chips[l - 2])] = chips[l - 1]
         l -= 2
     }
     return styleMap

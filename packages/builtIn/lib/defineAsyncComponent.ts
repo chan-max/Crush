@@ -29,24 +29,17 @@ export function defineAsyncComponent(source: AsyncComponentOptions) {
 
     return {
         render() {
-            debugger
             if (loaded.value) {
                 if (error.value) {
-                    return errorComponent ? h(errorComponent) : null
+                    return errorComponent ? h(errorComponent) : '! component load failed'
                 } else {
                     return h(loadedComponent)
                 }
             } else {
-
                 loader().then((result: any) => {
-                    if (result[Symbol.toStringTag] === 'Module') {
-                        loadedComponent = result.default
-                    } else {
-                        loadedComponent = result
-                    }
+                    loadedComponent = result[Symbol.toStringTag] === 'Module' ? result.default : result
                 }).catch((err: any) => {
-                    error.value = true
-                    onError && onError(err)
+                    error.value = true; onError && onError(err)
                 }).finally(() => {
                     loaded.value = true
                 })
@@ -55,9 +48,6 @@ export function defineAsyncComponent(source: AsyncComponentOptions) {
                 return loadingComponent ? h(loadingComponent) : '! component is loading'
             }
         },
-        create() {
-            window.scope = this
-        }
     }
 }
 

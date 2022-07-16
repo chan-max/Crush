@@ -23,7 +23,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                 pValue && (refs[pValue] = null);
                 nValue && (refs[nValue] = instance);
             }
-        } else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
+        } else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
             // 未定义
             let attrs = instance.attrs ||= {}
             attrs[prop] = nValue

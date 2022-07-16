@@ -14,5 +14,7 @@ export function normalizeStyle(style: any) {
     } else if (isArray(style)) {
         style = style.map(normalizeStyle)
         return extend(...style)
+    } else {
+        return style
     }
 }

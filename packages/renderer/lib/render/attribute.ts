@@ -42,7 +42,7 @@ export function mountAttributes(el: any, props: any, instance: ComponentInstance
     updateAttributes(el, emptyObject, props, instance, isSVG,)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any, instance: ComponentInstance, isSVG = false,) {
+export function updateAttributes(el: any, pProps: any, nProps: any, instance: ComponentInstance, isSVG = false) {
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of unionkeys(pProps, nProps)) {

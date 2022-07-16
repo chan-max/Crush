@@ -1,12 +1,10 @@
 import { isArray } from "@crush/common";
 import { ComponentType } from "./component";
-import {
-    injectMixins
-} from './mixin'
+
 import {
     compile
 } from '@crush/compiler'
-import { normalizePropsOptions } from "./props";
+import { normalizeEmitsOptions, normalizePropsOptions } from "./props";
 
 export enum ComponentOptions {
     BEFORE_CREATE = 'beforeCreate',
@@ -29,12 +27,17 @@ export enum ComponentOptions {
 
     EMITS = 'emits',
 
+    NAME = 'name',
+
     MIXINS = 'mixins',
     COMPOENNTS = 'components',
     DIRECTIVES = 'directives'
 }
 
-export function resolveOptions(options: ComponentType | any) {
+
+
+
+export function resolveOptions(options: any) {
     for (let key in options) {
         const value = options[key]
         switch (key) {
@@ -42,7 +45,7 @@ export function resolveOptions(options: ComponentType | any) {
                 options.propsOptions = normalizePropsOptions(value)
                 break
             case ComponentOptions.EMITS:
-                options.emitsOptions = normalizePropsOptions(value)
+                options.emitsOptions = normalizeEmitsOptions(value)
                 break
             case ComponentOptions.TEMPLATE:
                 options.createRender = compile(value as string)
@@ -68,16 +71,18 @@ export function resolveOptions(options: ComponentType | any) {
                 break
             case ComponentOptions.DIRECTIVES:
                 break
-            //! remove to create instance
-            // case ComponentOptions.MIXINS:
-            //     var mixins = value
-            //     injectMixins(options, mixins as any[])
-            //     break
+            case ComponentOptions.NAME:
+                break
             default:
                 /*custom options*/
                 const customOptions = options.customOptions ||= {}
                 customOptions[key] = value
                 break
+        }
+
+        // 组件定义了name 可以递归
+        if(options[ComponentOptions.NAME]){
+            (options[ComponentOptions.COMPOENNTS] ||= {})[options[ComponentOptions.NAME]] = options
         }
     }
 }
