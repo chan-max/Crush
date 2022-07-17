@@ -1,4 +1,4 @@
-import { camelize, hasOwn, initialUpperCase, isArray, isUndefined } from "@crush/common"
+import { camelize, hasOwn, hyphenate, initialUpperCase, isArray, isUndefined } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
@@ -231,9 +231,10 @@ function processAttribute(ast: any) {
                 <template #header></template> =>  <template slot:header></template>
                 <Hello #app> => ref ??
             */
-            debugger
+
             attribute.type = Nodes.ATTRIBUTE
-            attribute.value = attribute.property
+            // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+            attribute.value = hyphenate(attribute.property)
             attribute.property = 'id'
             attribute.isDynamicValue = attribute.isDynamicProperty
             attribute.isDynamicProperty = false

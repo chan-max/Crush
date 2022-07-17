@@ -3,7 +3,7 @@ import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
 
 import renderMethods from "../renderMethodsExport"
-import { flatNodes } from "./flatNodes"
+import { processVnodePrerender } from "./processVnodePrerender"
 
 import { processHook } from '@crush/core'
 
@@ -115,7 +115,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         // 清理vnode 
         instance.updatingComponentVnode = null
 
-        nVnode = flatNodes(nVnode)
+        nVnode = processVnodePrerender(nVnode)
         instance.renderingVnode = nVnode
 
         if (vnode.transition) {

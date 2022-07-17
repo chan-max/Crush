@@ -343,7 +343,7 @@ define(['exports'], (function (exports) { 'use strict';
         source = String(source);
         return source.startsWith('! ') ? createComment(source.slice(2), key) : createText(source, key);
     }
-    function flatNodes(node, parentKey) {
+    function processVnodePrerender(node, parentKey) {
         if (!isArray(node)) {
             node = [node];
         }
@@ -358,7 +358,7 @@ define(['exports'], (function (exports) { 'use strict';
                 /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
                     当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
                 */
-                flattedNode = flattedNode.concat(flatNodes(child.children, child.key));
+                flattedNode = flattedNode.concat(processVnodePrerender(child.children, child.key));
             }
             else {
                 if (parentKey) {
@@ -369,7 +369,7 @@ define(['exports'], (function (exports) { 'use strict';
                 }
                 if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */) {
                     // 子节点递归处理
-                    child.children = flatNodes(child.children);
+                    child.children = processVnodePrerender(child.children);
                 }
                 if (child.nodeType === 17 /* STYLE */) {
                     child.children = flatRules(child.children, null, child.patchKey);
@@ -828,14 +828,14 @@ define(['exports'], (function (exports) { 'use strict';
     function mountRenderComponent(vnode, container, anchor, parent) {
         const { type, props, children } = vnode;
         const renderResult = type.call(null, props, children);
-        const next = flatNodes(renderResult);
+        const next = processVnodePrerender(renderResult);
         vnode.vnode = next; // 保存当前组件的树
         patch(null, next, container, anchor, parent);
     }
     function updateRenderComponent(p, n, container, anchor, parent) {
         const { type, props, children } = n;
         const renderResult = type.call(null, props, children);
-        const next = flatNodes(renderResult);
+        const next = processVnodePrerender(renderResult);
         n.vnode = next; //
         const prev = p.vnode;
         patch(prev, next, container, anchor, parent);
@@ -2157,7 +2157,7 @@ define(['exports'], (function (exports) { 'use strict';
             }
             // 清理vnode 
             instance.updatingComponentVnode = null;
-            nVnode = flatNodes(nVnode);
+            nVnode = processVnodePrerender(nVnode);
             instance.renderingVnode = nVnode;
             if (vnode.transition) {
                 nVnode.forEach((_) => { _.transition = vnode.transition; });
@@ -5716,7 +5716,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.exec = exec;
     exports.execCaptureGroups = execCaptureGroups;
     exports.extend = extend;
-    exports.flatNodes = flatNodes;
+    exports.processVnodePrerender = processVnodePrerender;
     exports.flatRules = flatRules;
     exports.getActiveEffect = getActiveEffect;
     exports.getComponent = getComponent;

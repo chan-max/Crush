@@ -341,7 +341,7 @@ function processStringRender(source, key) {
     source = String(source);
     return source.startsWith('! ') ? createComment(source.slice(2), key) : createText(source, key);
 }
-function flatNodes(node, parentKey) {
+function processVnodePrerender(node, parentKey) {
     if (!isArray(node)) {
         node = [node];
     }
@@ -356,7 +356,7 @@ function flatNodes(node, parentKey) {
             /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
                 当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
             */
-            flattedNode = flattedNode.concat(flatNodes(child.children, child.key));
+            flattedNode = flattedNode.concat(processVnodePrerender(child.children, child.key));
         }
         else {
             if (parentKey) {
@@ -367,7 +367,7 @@ function flatNodes(node, parentKey) {
             }
             if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */) {
                 // 子节点递归处理
-                child.children = flatNodes(child.children);
+                child.children = processVnodePrerender(child.children);
             }
             if (child.nodeType === 17 /* STYLE */) {
                 child.children = flatRules(child.children, null, child.patchKey);
@@ -826,14 +826,14 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
 function mountRenderComponent(vnode, container, anchor, parent) {
     const { type, props, children } = vnode;
     const renderResult = type.call(null, props, children);
-    const next = flatNodes(renderResult);
+    const next = processVnodePrerender(renderResult);
     vnode.vnode = next; // 保存当前组件的树
     patch(null, next, container, anchor, parent);
 }
 function updateRenderComponent(p, n, container, anchor, parent) {
     const { type, props, children } = n;
     const renderResult = type.call(null, props, children);
-    const next = flatNodes(renderResult);
+    const next = processVnodePrerender(renderResult);
     n.vnode = next; //
     const prev = p.vnode;
     patch(prev, next, container, anchor, parent);
@@ -2155,7 +2155,7 @@ function mountComponent(vnode, container, anchor, parent) {
         }
         // 清理vnode 
         instance.updatingComponentVnode = null;
-        nVnode = flatNodes(nVnode);
+        nVnode = processVnodePrerender(nVnode);
         instance.renderingVnode = nVnode;
         if (vnode.transition) {
             nVnode.forEach((_) => { _.transition = vnode.transition; });
@@ -5626,4 +5626,4 @@ function processHook(type, next, previous = null) {
     }
 }
 
-export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doCSSAnimation, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatNodes, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getRefDeps, getReservedProp, getStyle, getStyleValue, h, hasOwn, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComputed, isEffect, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toEventName, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackRef, trackTarget, trackTargetSymbol, translate3d, translateX, translateY, trigger, triggerRef, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
+export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doCSSAnimation, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, processVnodePrerender, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getRefDeps, getReservedProp, getStyle, getStyleValue, h, hasOwn, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComputed, isEffect, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toEventName, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackRef, trackTarget, trackTargetSymbol, translate3d, translateX, translateY, trigger, triggerRef, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };

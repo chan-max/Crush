@@ -54,13 +54,10 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any, parent: 
 
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any, parent: any) {
-    var {
-        p, n
-    } = sortChildren(pChildren, nChildren, false)
+    var {p, n } = sortChildren(pChildren, nChildren, false)
 
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
-
         patch(p[i], n[i], container, getAnchor(p, i + 1), parent)
     }
 }
@@ -73,6 +70,7 @@ function getAnchor(vnodes: any, index: number) {
         let nextSibiling = vnodes[i]
 
         if (!nextSibiling) {
+            // 这里可能出现为空是因为排序时增加的空节点
             continue
         }
         return getVnodeAnchor(nextSibiling)
@@ -80,6 +78,9 @@ function getAnchor(vnodes: any, index: number) {
 }
 
 function getVnodeAnchor(vnode: any): any {
+    if (!vnode) {
+        return null
+    }
     switch (vnode.nodeType) {
         case Nodes.COMPONENT:
             return getVnodeAnchor(vnode.instance.vnode[0])

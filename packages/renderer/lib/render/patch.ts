@@ -15,7 +15,7 @@ export const patch = (current: any, next: any, container: any, anchor: any, pare
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent)
         } else {
-            // nothing todo
+            return
         }
     } else {
         if (!next) {

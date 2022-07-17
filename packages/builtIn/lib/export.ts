@@ -2,12 +2,12 @@
 import { modelText, modelColor, modelRadio, modelCheckbox, modelSelectOne, modelSelectMultiple, modelRange } from "./model"
 import { showDirective } from "./show"
 import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
-import { teleport } from "./teleport"
+import { Teleport } from "./teleport"
 
 export const builtInComponents: any = {
     transition: transitionComponent,
     transitionGroup: transitionGroupComponent,
-    teleport
+    Teleport
 }
 
 export const builtInDirectives = {

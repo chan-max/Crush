@@ -10,7 +10,7 @@ export type AsyncComponentOptions = {
     onError?: any // 失败回调
 }
 
-export function defineAsyncComponent(source: AsyncComponentOptions) {
+export function defineAsyncComponent(source: AsyncComponentOptions | Function) {
     if (isFunction(source)) {
         source = { loader: source }
     }
@@ -20,7 +20,7 @@ export function defineAsyncComponent(source: AsyncComponentOptions) {
         error: errorComponent,
         loading: loadingComponent,
         onError
-    } = source
+    } = source as AsyncComponentOptions
 
     let loadedComponent: any = null
 
@@ -42,7 +42,6 @@ export function defineAsyncComponent(source: AsyncComponentOptions) {
             }).finally(() => {
                 loaded.value = true
             })
-
             // 未加载完成时 渲染加载中组件 或默认渲染一个 注释节点
             return loadingComponent ? h(loadingComponent) : '! component is loading'
         }
