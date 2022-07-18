@@ -1,7 +1,7 @@
 import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
 import { Nodes } from '@crush/const'
-export const xxx = () => Nodes.AT
+
 
 
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'

@@ -50,6 +50,7 @@ const removeFromArray = (arr, item) => {
     return true;
 };
 const shallowCloneArray = (arr) => arr && [...arr];
+
 function mark(target, key, value = true) {
     Object.defineProperty(target, key, {
         value,
@@ -62,12 +63,12 @@ function mark(target, key, value = true) {
 function exec(target, extractor) {
     return extractor.exec(target);
 }
+
 function execCaptureGroups(target, extractor) {
     var res = exec(target, extractor);
     if (!res) {
         return null;
-    }
-    else {
+    } else {
         var [_, ...captureGroups] = res;
         return captureGroups;
     }
@@ -76,6 +77,7 @@ function execCaptureGroups(target, extractor) {
 function isNumber(value) {
     return typeof value === 'number' && !isNaN(value);
 }
+
 function isString(value) {
     return typeof value === 'string';
 }
@@ -84,6 +86,7 @@ const isObject = (value) => objectToString.call(value) === '[object Object]';
 const isUndefined = (value) => typeof value === 'undefined';
 const isFunction = (value) => typeof value === 'function';
 const objectToString = Object.prototype.toString;
+
 function typeOf(value) {
     // ! do not toLowerCase
     return objectToString.call(value).slice(8, -1);
@@ -137,6 +140,7 @@ const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value)
 const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
 const addListener = (el, event, handler, options = null) => el.addEventListener(event, handler, options);
 const removeListener = (el, event, handler, options = null) => el.removeEventListener(event, handler, options);
+
 function onceListener(el, event, handler, options = null) {
     var onceHandler = () => {
         handler();
@@ -149,7 +153,7 @@ function onceListener(el, event, handler, options = null) {
 
 var createStyleSheet = (props, children, key = uid()) => {
     return {
-        nodeType: 17 /* STYLE */,
+        nodeType: 17 /* STYLE */ ,
         type: 'style',
         children,
         props,
@@ -158,43 +162,45 @@ var createStyleSheet = (props, children, key = uid()) => {
 };
 var createStyle = (selector, children, key) => {
     return {
-        nodeType: 26 /* STYLE_RULE */,
+        nodeType: 26 /* STYLE_RULE */ ,
         selector,
         children,
         key
     };
 };
 var createMedia = (media, children, key) => ({
-    nodeType: 22 /* MEDIA_RULE */,
+    nodeType: 22 /* MEDIA_RULE */ ,
     media,
     children,
     key
 });
+
 function createKeyframes(keyframes, children, key = uid()) {
     return {
-        nodeType: 24 /* KEYFRAMES_RULE */,
+        nodeType: 24 /* KEYFRAMES_RULE */ ,
         keyframes,
         children,
         key
     };
 }
+
 function createKeyframe(keyframe, children, key = uid()) {
     return {
+        nodeType: 27 /* KEYFRAME_RULE */ ,
         key,
         keyframe,
         children,
-        nodeType: 27 /* KEYFRAME_RULE */,
     };
 }
 var createSupports = (supports, children, key) => ({
-    nodeType: 23 /* SUPPORTS_RULE */,
+    nodeType: 23 /* SUPPORTS_RULE */ ,
     supports,
     children,
     key
 });
 var createDeclaration = (children, key) => {
     return {
-        nodeType: 29 /* DECLARATION */,
+        nodeType: 29 /* DECLARATION */ ,
         /*
             render function 生成vdom时，会直接合并declaration和mixin，所以此时不再存在declaration group，而是用declaration替代 ， 在进行flat处理时也不会存在declarationgroup
         */
@@ -209,7 +215,7 @@ function mixin(...sources) {
 }
 
 function doFlat(rules, flattedRules, parent = null, // 保存parent的作用主要是当遍历到declaration时
-key = null) {
+    key = null) {
     for (let i = 0; i < rules.length; i++) {
         var rule = rules[i];
         if (!rule) {
@@ -220,43 +226,40 @@ key = null) {
         rule.patchKey = patchKey;
         rule.parent = parent;
         switch (rule.nodeType) {
-            case 26 /* STYLE_RULE */:
+            case 26 /* STYLE_RULE */ :
                 flattedRules.push(rule);
                 var _children = rule.children;
-                rule.children = null;
+                rule.children = null; // children 会用存储declaration
                 if (_children) {
-                    doFlat(_children, flattedRules, rule);
+                    doFlat(_children, flattedRules, rule, patchKey);
                 }
                 break;
-            case 29 /* DECLARATION */:
+            case 29 /* DECLARATION */ :
                 if (!rule.parent) {
                     debugger;
                     // 声明不再任何样式规则或媒体规则下时,应该报错
-                }
-                else if (rule.parent.nodeType === 26 /* STYLE_RULE */) {
-                    (rule.parent.children ||= []).push(rule);
-                }
-                else if (rule.parent.nodeType === 27 /* KEYFRAME_RULE */) {
-                    (rule.parent.children ||= []).push(rule);
-                }
-                else {
+                } else if (rule.parent.nodeType === 26 /* STYLE_RULE */ ) {
+                    (rule.parent.children || = []).push(rule);
+                } else if (rule.parent.nodeType === 27 /* KEYFRAME_RULE */ ) {
+                    (rule.parent.children || = []).push(rule);
+                } else {
                     /*
                         当一条样式声明不时样式规则的子节点
                     */
-                    if (rule.parent.nodeType === 22 /* MEDIA_RULE */) {
+                    if (rule.parent.nodeType === 22 /* MEDIA_RULE */ ) {
                         /*
                             一条声明直接存在媒体规则下，会继承媒体规则的选择器并新建一条 styleRule
                             此时和一直寻找parent的选择器
                         */
                         var selector, parent = rule.parent;
-                        while (!selector && parent) { /* 当选择器没被找到，并且parent存在时才会继续寻找 */
+                        while (!selector && parent) {
+                            /* 当选择器没被找到，并且parent存在时才会继续寻找 */
                             selector = parent.selector;
                             parent = parent.parent;
                         }
                         if (!selector) {
                             debugger;
-                        }
-                        else {
+                        } else {
                             // reset the declaration to styleRule
                             var newRule = createStyle(selector, rule.children, key);
                             newRule.patchKey = patchKey;
@@ -265,15 +268,15 @@ key = null) {
                     }
                 }
                 continue;
-            case 22 /* MEDIA_RULE */:
+            case 22 /* MEDIA_RULE */ :
                 rule.children = flatRules(rule.children, rule);
                 flattedRules.push(rule);
                 break;
-            case 23 /* SUPPORTS_RULE */:
+            case 23 /* SUPPORTS_RULE */ :
                 rule.children = flatRules(rule.children);
                 flattedRules.push(rule);
                 break;
-            case 24 /* KEYFRAMES_RULE */:
+            case 24 /* KEYFRAMES_RULE */ :
                 rule.children = flatRules(rule.children);
                 /*
                     在此处需要把动画下的每一帧的样式处理成对象形式
@@ -284,7 +287,7 @@ key = null) {
                 });
                 flattedRules.push(rule);
                 break;
-            case 27 /* KEYFRAME_RULE */:
+            case 27 /* KEYFRAME_RULE */ :
                 /* 需要和styleRule处理方式一样 */
                 flattedRules.push(rule);
                 var _children = rule.children;
@@ -293,7 +296,7 @@ key = null) {
                     doFlat(_children, flattedRules, rule);
                 }
                 break;
-            case 1 /* FRAGMENT */:
+            case 1 /* FRAGMENT */ :
                 // fragment wont be a parent
                 doFlat(rule.children, flattedRules, rule.parent, rule.patchKey);
                 break;
@@ -303,7 +306,7 @@ key = null) {
 }
 
 function flatRules(rules, parent = null, key = null
-/* 这里传入的key是为了避免由循环产生节点中，当第一层是fragment时，无法为子节点设置上唯一的key  */
+    /* 这里传入的key是为了避免由循环产生节点中，当第一层是fragment时，无法为子节点设置上唯一的key  */
 ) {
     const flatted = doFlat(rules, [], parent, key);
     /*
@@ -312,7 +315,7 @@ function flatRules(rules, parent = null, key = null
     */
     var result = [];
     flatted.forEach((rule) => {
-        if (rule.nodeType === 26 /* STYLE_RULE */) {
+        if (rule.nodeType === 26 /* STYLE_RULE */ ) {
             /*
                 children有多个子元素时为在规则中含有其他规则或因为指令存在而打断连续性,
                 并且 ， 最终生成的vdom中不会出现declaration类型，而是直接使用map结构代替,
@@ -326,8 +329,7 @@ function flatRules(rules, parent = null, key = null
             if (rule.children) {
                 result.push(rule);
             }
-        }
-        else {
+        } else {
             result.push(rule);
         }
     });
@@ -341,46 +343,55 @@ function processStringRender(source, key) {
     source = String(source);
     return source.startsWith('! ') ? createComment(source.slice(2), key) : createText(source, key);
 }
+
 function processVnodePrerender(node, parentKey) {
     if (!isArray(node)) {
         node = [node];
     }
-    var flattedNode = [];
+    var flattedNodes = [];
     node.forEach((child) => {
-        if (!child)
+        if (child === undefined || child === null)
             return; // 空节点筛除  
         if (isString(child) || isNumber(child)) {
+            // 只会出现手写render的情况
             child = processStringRender(child, parentKey);
         }
-        if (child.nodeType === 1 /* FRAGMENT */) {
+        if (isArray(child)) {
+            // 只会出现手写render的情况 [[v1,v2,v3]]
+            flattedNodes = flattedNodes.concat(processVnodePrerender(child, parentKey));
+        }
+        if (child.patchKey) {
+            flattedNodes.push(child);
+            return;
+        }
+        if (child.nodeType === 1 /* FRAGMENT */ ) {
             /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
                 当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
             */
-            flattedNode = flattedNode.concat(processVnodePrerender(child.children, child.key));
-        }
-        else {
+            flattedNodes = flattedNodes.concat(processVnodePrerender(child.children, child.key));
+        } else {
             if (parentKey) {
                 child.patchKey = parentKey + '_' + child.key;
-            }
-            else {
+            } else {
                 child.patchKey = child.key;
             }
-            if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */) {
+            if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */ ) {
                 // 子节点递归处理
                 child.children = processVnodePrerender(child.children);
             }
-            if (child.nodeType === 17 /* STYLE */) {
+            if (child.nodeType === 17 /* STYLE */ ) {
                 child.children = flatRules(child.children, null, child.patchKey);
             }
-            flattedNode.push(child);
+            flattedNodes.push(child);
         }
     });
-    return flattedNode;
+    return flattedNodes;
 }
 
 const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
 const isReservedProp = (key) => key.startsWith(`_`);
 const getReservedProp = (key) => key.slice(1);
+
 function unionkeys(...maps) {
     var _ = {};
     for (let i in maps || emptyObject) {
@@ -407,7 +418,7 @@ function createMapEntries(...maps) {
             continue;
         for (let key in map) {
             var value = map[key];
-            var collection = res[key] ||= [];
+            var collection = res[key] || = [];
             collection[i] = value;
         }
     }
@@ -456,6 +467,7 @@ function getEventName(name) {
     return initialLowerCase(name.slice(2).split(/_|\$/)[0]);
 }
 const extrctEventNameRE = /on([a-zA-Z]+)([_a-zA-Z]*)([\$a-zA-Z]*)/;
+
 function parseEventName(name) {
     const [_, event, _argumentsStr, modifiersStr] = extrctEventNameRE.exec(name);
     return {
@@ -493,6 +505,7 @@ function withEventModifiers(fn, modifiers) {
 const IMPORTANT_SYMBOL = Symbol('Important');
 const IMPORTANT_KEY = '!important';
 const IMPORTANT = 'important';
+
 function important(value) {
     return {
         value,
@@ -532,12 +545,10 @@ function parseStyleValue(rawValue) {
     var value, important = false;
     if (rawValue === undefined || rawValue === null) {
         value = null;
-    }
-    else if (rawValue[IMPORTANT_SYMBOL]) {
+    } else if (rawValue[IMPORTANT_SYMBOL]) {
         value = rawValue.value;
         important = true;
-    }
-    else {
+    } else {
         value = rawValue;
         important = false;
     }
@@ -554,22 +565,31 @@ function parseStyleValue(rawValue) {
         important
     };
 }
+
 function updateDeclaration(style, pDeclaration, nDeclaration) {
-    pDeclaration ||= emptyObject;
-    nDeclaration ||= emptyObject;
+    pDeclaration || = emptyObject;
+    nDeclaration || = emptyObject;
     for (let propName of unionkeys(pDeclaration, nDeclaration)) {
-        var { value: pValue, important: pImportant } = parseStyleValue(pDeclaration[propName]);
-        var { value: nValue, important: nImportant } = parseStyleValue(nDeclaration[propName]);
+        var {
+            value: pValue,
+            important: pImportant
+        } = parseStyleValue(pDeclaration[propName]);
+        var {
+            value: nValue,
+            important: nImportant
+        } = parseStyleValue(nDeclaration[propName]);
         if (pValue !== nValue || pImportant !== nImportant) {
             setStyleProperty(style, propName, nValue, nImportant);
         }
     }
 }
+
 function mountDeclaration(style, declaration) {
     return updateDeclaration(style, emptyObject, declaration);
 }
 // export 
 const setElementStyleDeclaration = (el, declaration) => mountDeclaration(el.style, declaration);
+
 function unmountDeclaration(style, declaration) {
     return updateDeclaration(style, declaration, emptyObject);
 }
@@ -580,17 +600,19 @@ function getStyleValue(style, key) {
     var isImportant = !!style.getPropertyPriority(property);
     return isImportant ? important(value) : value;
 }
+
 function getElementStyleValue(el, key) {
     return getStyleValue(el.style, key);
 }
+
 function getElementComputedStyleValue(el, key) {
     return getStyleValue(window.getComputedStyle(el), key);
 }
+
 function getStyle(style, keys) {
     if (isObject(keys)) {
         keys = Object.keys(keys);
-    }
-    else if (isString(keys)) {
+    } else if (isString(keys)) {
         keys = keys.split(',');
     }
     var declaration = {};
@@ -599,14 +621,17 @@ function getStyle(style, keys) {
     }
     return declaration;
 }
+
 function getElementStyle(el, keys) {
     return getStyle(el.style, keys);
 }
+
 function getElementComputedStyle(el, keys) {
     return getStyle(window.getComputedStyle(el), keys);
 }
 
 const globalInstanceEventListeners = new WeakMap();
+
 function getInstanceEvents(instance) {
     let listenersMap = globalInstanceEventListeners.get(instance);
     if (!listenersMap) {
@@ -615,6 +640,7 @@ function getInstanceEvents(instance) {
     }
     return listenersMap;
 }
+
 function getInstancetEventListeners(instance, event) {
     let events = getInstanceEvents(instance);
     let listeners = events.get(event);
@@ -624,11 +650,13 @@ function getInstancetEventListeners(instance, event) {
     }
     return listeners;
 }
+
 function createInstanceEventEmitter(instance) {
     return (event, ...args) => {
         emitInstancetEvent(instance, event, ...args);
     };
 }
+
 function emitInstancetEvent(instance, event, ...args) {
     const listeners = getInstancetEventListeners(instance, event);
     listeners.forEach((handler) => {
@@ -639,23 +667,27 @@ function emitInstancetEvent(instance, event, ...args) {
 function arrayHandler(handler) {
     return (isArray(handler) ? handler : [handler]).filter(isFunction);
 }
+
 function updateInstanceListeners(instance, event, pHandler, nHandler) {
     // 不影响组件自身注册的事件
     removeInstanceListener(instance, event, pHandler);
     addInstanceListener(instance, event, nHandler);
 }
+
 function addInstanceListener(instance, event, rawHandler) {
     const listeners = getInstancetEventListeners(instance, event);
     arrayHandler(rawHandler).forEach((handler) => {
         listeners.add(handler);
     });
 }
+
 function removeInstanceListener(instance, event, rawHandler) {
     const listeners = getInstancetEventListeners(instance, event);
     arrayHandler(rawHandler).forEach((handler) => {
         listeners.delete(handler);
     });
 }
+
 function onceInstanceListener(instance, event, rawHandler) {
     const listeners = getInstancetEventListeners(instance, event);
     arrayHandler(rawHandler).forEach((handler) => {
@@ -677,18 +709,22 @@ function updateClass(el, pClass, nClass) {
         p ? (n || removeClass(el, className)) : (n && addClass(el, className));
     }
 }
+
 function mountClass(el, _class) {
     updateClass(el, emptyObject, _class);
 }
+
 function unmountClass(el) {
     el.className = '';
 }
+
 function mountAttributes(el, props, instance, isSVG) {
     updateAttributes(el, emptyObject, props, instance, isSVG);
 }
+
 function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
-    pProps ||= emptyObject;
-    nProps ||= emptyObject;
+    pProps || = emptyObject;
+    nProps || = emptyObject;
     for (let propName of unionkeys(pProps, nProps)) {
         var pValue = pProps[propName];
         var nValue = nProps[propName];
@@ -701,22 +737,23 @@ function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
                 updateClass(el, pValue, nValue);
                 break;
             case 'ref':
-                let refs = instance.refs ||= {};
+                let refs = instance.refs || = {};
                 if (nValue !== pValue) {
                     pValue && (refs[pValue] = null);
                     nValue && (refs[nValue] = el);
                 }
                 break;
             default:
-                if (propName.startsWith('_')) ;
+                if (propName.startsWith('_'));
                 else if (isEvent(propName)) {
-                    var { event, options } = parseNativeEventName(propName);
+                    var {
+                        event,
+                        options
+                    } = parseNativeEventName(propName);
                     updateNativeEvents(el, event, pValue, nValue, options);
-                }
-                else if (propName in el) { // dom props
+                } else if (propName in el) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue);
-                }
-                else {
+                } else {
                     // attribute
                     (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
                 }
@@ -739,7 +776,10 @@ function updateNativeEvents(el, event, pHandler, nHandler, options) {
     mountStyleSheet will create a style element
 */
 const mountStyleSheet = (vnode, container, anchor, parent) => {
-    const { props, children } = vnode;
+    const {
+        props,
+        children
+    } = vnode;
     var el = docCreateElement('style');
     mountAttributes(el, props, parent, false);
     vnode.el = el;
@@ -747,33 +787,39 @@ const mountStyleSheet = (vnode, container, anchor, parent) => {
     var sheet = el.sheet;
     mountSheet(sheet, children, vnode);
 };
+
 function mountSheet(sheet, rules, vnode) {
     rules.forEach((rule) => {
         mountRule(sheet, rule, vnode);
     });
 }
+
 function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
     switch (rule.nodeType) {
-        case 26 /* STYLE_RULE */:
+        case 26 /* STYLE_RULE */ :
             mountStyleRule(sheet, rule, vnode, index);
             break;
-        case 22 /* MEDIA_RULE */:
+        case 22 /* MEDIA_RULE */ :
             mountMediaRule(sheet, rule, vnode, index);
             break;
-        case 23 /* SUPPORTS_RULE */:
+        case 23 /* SUPPORTS_RULE */ :
             mountSupportsRule(sheet, rule, vnode, index);
             break;
-        case 24 /* KEYFRAMES_RULE */:
+        case 24 /* KEYFRAMES_RULE */ :
             mountKeyframesRule(sheet, rule, vnode, index);
             break;
-        case 27 /* KEYFRAME_RULE */:
+        case 27 /* KEYFRAME_RULE */ :
             mountKeyframeRule(sheet, rule, vnode, index);
             break;
     }
 }
+
 function mountStyleRule(sheet, rule, vnode, // this is style vnode, it carry the special attrs for rendering
-insertIndex = sheet.cssRules.length) {
-    const { selector, children: declaration } = rule;
+    insertIndex = sheet.cssRules.length) {
+    const {
+        selector,
+        children: declaration
+    } = rule;
     if (!declaration)
         return;
     const index = insertStyle(sheet, selector, insertIndex);
@@ -782,6 +828,7 @@ insertIndex = sheet.cssRules.length) {
     const insertedRuleStyle = insertedRule.style;
     mountDeclaration(insertedRuleStyle, declaration);
 }
+
 function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
     var media = rule.media;
     var rules = rule.children;
@@ -793,6 +840,7 @@ function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length)
     rule.rule = newSheet;
     mountSheet(newSheet, rules, vnode);
 }
+
 function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
     var supports = rule.supports;
     var rules = rule.children;
@@ -800,6 +848,7 @@ function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
     var newSheet = sheet.cssRules[index];
     mountSheet(newSheet, rules, vnode);
 }
+
 function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
     var keyframes = rule.keyframes;
     var rules = rule.children;
@@ -808,8 +857,12 @@ function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.len
     var newSheet = sheet.cssRules[index];
     mountSheet(newSheet, rules, vnode);
 }
+
 function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
-    var { keyframe, children: declaration } = rule;
+    var {
+        keyframe,
+        children: declaration
+    } = rule;
     insertKeyframe(sheet, keyframe);
     sheet.appendRule(`${keyframe}{}`);
     var index = sheet.cssRules.length - 1;
@@ -817,54 +870,81 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
     rule.rule = insertedRule; // set rule
     const insertedRuleStyle = insertedRule.style;
     for (let property in declaration) {
-        var { value } = parseStyleValue(declaration[property]);
+        var {
+            value
+        } = parseStyleValue(declaration[property]);
         // keyframe 中不能设置important
         setStyleProperty(insertedRuleStyle, property, value);
     }
 }
 
 function mountRenderComponent(vnode, container, anchor, parent) {
-    const { type, props, children } = vnode;
-    const renderResult = type.call(null, props, children);
-    const next = processVnodePrerender(renderResult);
-    vnode.vnode = next; // 保存当前组件的树
-    patch(null, next, container, anchor, parent);
+    const {
+        type,
+        props,
+        children
+    } = vnode;
+    vnode.instance = parent;
+    // 函数式组件没有实例，但也可以拥有状态 , 组件有状态时，会进行自更新 ， 自更新时props和slots内容还是之前传过来的
+    function renderComponentUpdate() {
+        let isMounted = vnode.isMounted;
+        const renderResult = type.call(null, props, children, vnode);
+        const next = processVnodePrerender(renderResult);
+        processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */ , vnode);
+        patch(vnode.vnode, next, container, anchor, parent);
+        processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */ , vnode);
+        vnode.vnode = next; // 保存当前组件的树
+        vnode.isMounted = true;
+    }
+    effect(renderComponentUpdate);
 }
-function updateRenderComponent(p, n, container, anchor, parent) {
-    const { type, props, children } = n;
-    const renderResult = type.call(null, props, children);
+
+function updateRenderComponent(pVnode, nVnode, container, anchor, parent) {
+    const {
+        type,
+        props,
+        children
+    } = nVnode;
+    nVnode.instance = parent;
+    const renderResult = type.call(null, props, children, nVnode, pVnode); // 传入新旧节点
     const next = processVnodePrerender(renderResult);
-    n.vnode = next; //
-    const prev = p.vnode;
+    const prev = pVnode.vnode;
+    processHook("beforeUpdate" /* BEFORE_UPDATE */ , nVnode, pVnode);
     patch(prev, next, container, anchor, parent);
+    processHook("updated" /* UPDATED */ , nVnode, pVnode);
+    nVnode.vnode = next; //
 }
+
 function unmountRenderComponent(vnode, container, anchor, parent) {
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */ , vnode);
     patch(vnode.vnode, null, container, anchor, parent);
+    processHook("unmounted" /* UNMOUNTED */ , vnode);
 }
 
 function mount(vnode, container, anchor = null, parent = null) {
     switch (vnode.nodeType) {
-        case 13 /* HTML_ELEMENT */:
+        case 13 /* HTML_ELEMENT */ :
             mountElement(vnode, container, anchor, parent);
             break;
-        case 9 /* SVG_ELEMENT */:
+        case 9 /* SVG_ELEMENT */ :
             mountElement(vnode, container, anchor, parent, true);
-        case 12 /* TEXT */:
+        case 12 /* TEXT */ :
             mountText(vnode, container, anchor);
             break;
-        case 10 /* HTML_COMMENT */:
+        case 10 /* HTML_COMMENT */ :
             insertElement(vnode.el = docCreateComment(vnode.children), container, anchor);
-        case 14 /* COMPONENT */:
+        case 14 /* COMPONENT */ :
             mountComponent(vnode, container, anchor, parent);
             break;
-        case 15 /* RENDER_COMPONENT */:
+        case 15 /* RENDER_COMPONENT */ :
             mountRenderComponent(vnode, container, anchor, parent);
             break;
-        case 17 /* STYLE */:
+        case 17 /* STYLE */ :
             mountStyleSheet(vnode, container, anchor, parent);
             break;
     }
 }
+
 function mountChildren(children, container, anchor, parent) {
     if (!children)
         return;
@@ -872,30 +952,37 @@ function mountChildren(children, container, anchor, parent) {
         mount(child, container, anchor, parent);
     });
 }
+
 function mountElement(vnode, container, anchor, parent, isSVG = false) {
     vnode.instance = parent;
     // 1
-    processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
+    processHook("beforeCreate" /* BEFORE_CREATE */ , vnode);
     // 2
-    const { type, props, children, transition, patchKey } = vnode;
+    const {
+        type,
+        props,
+        children,
+        transition,
+        patchKey
+    } = vnode;
     // create 
     const el = vnode.el = docCreateElement(type, isSVG);
     el._vnode = vnode;
     mountAttributes(el, props, parent, isSVG);
-    processHook("created" /* CREATED */, vnode);
-    processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
+    processHook("created" /* CREATED */ , vnode);
+    processHook("beforeMount" /* BEFORE_MOUNT */ , vnode);
     // 进入动画不影响节点的插入
     if (transition) {
         transition.processMount(el, () => insertElement(el, container, anchor));
-    }
-    else {
+    } else {
         insertElement(el, container, anchor);
     }
     // mounted 后需不需要拿到子节点元素
-    processHook("mounted" /* MOUNTED */, vnode);
+    processHook("mounted" /* MOUNTED */ , vnode);
     mountChildren(children, el, anchor, parent);
-    processHook("childrenMounted" /* CHILDREN_MOUNTED */, vnode);
+    processHook("childrenMounted" /* CHILDREN_MOUNTED */ , vnode);
 }
+
 function mountText(vnode, container, anchor, parent) {
     var el = docCreateText(vnode.children);
     vnode.el = el;
@@ -903,94 +990,112 @@ function mountText(vnode, container, anchor, parent) {
 }
 
 const unmountComponent = (component, container, anchor = null) => {
-    const { instance } = component;
-    const { vnode } = instance;
-    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
+    const {
+        instance
+    } = component;
+    const {
+        vnode
+    } = instance;
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */ , component);
     patch(vnode, null, container, anchor, parent);
-    processHook("unmounted" /* UNMOUNTED */, component);
+    processHook("unmounted" /* UNMOUNTED */ , component);
 };
 
 function unmount(vnode, container, anchor, parent) {
     switch (vnode.nodeType) {
-        case 13 /* HTML_ELEMENT */:
+        case 13 /* HTML_ELEMENT */ :
             unmountElement(vnode);
             break;
-        case 10 /* HTML_COMMENT */:
+        case 10 /* HTML_COMMENT */ :
             removeElement(vnode.el);
             break;
-        case 17 /* STYLE */:
+        case 17 /* STYLE */ :
             unmountElement(vnode);
             break;
-        case 9 /* SVG_ELEMENT */:
+        case 9 /* SVG_ELEMENT */ :
             unmountElement(vnode);
             break;
-        case 12 /* TEXT */:
+        case 12 /* TEXT */ :
             removeElement(vnode.el);
             break;
-        case 14 /* COMPONENT */:
+        case 14 /* COMPONENT */ :
             unmountComponent(vnode, container, anchor);
             break;
-        case 15 /* RENDER_COMPONENT */:
+        case 15 /* RENDER_COMPONENT */ :
             unmountRenderComponent(vnode, container, anchor, parent);
             break;
     }
 }
+
 function unmountChildren(children) {
     // 卸载过程目前不需要锚点
     children.forEach(unmount);
 }
+
 function unmountElement(vnode) {
-    const { el, transition } = vnode;
-    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
-    if (vnode.children && vnode.nodeType !== 17 /* STYLE */) {
+    const {
+        el,
+        transition
+    } = vnode;
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */ , vnode);
+    if (vnode.children && vnode.nodeType !== 17 /* STYLE */ ) {
         unmountChildren(vnode.children);
     }
     if (transition) {
         transition.processUnmount(el);
-    }
-    else {
+    } else {
         removeElement(el);
     }
-    processHook("unmounted" /* UNMOUNTED */, vnode);
+    processHook("unmounted" /* UNMOUNTED */ , vnode);
 }
 
 const mountComponentProps = (instance, props) => updateComponentProps(instance, null, props);
+
 function updateComponentProps(instance, pProps, nProps) {
-    pProps ||= emptyObject;
-    nProps ||= emptyObject;
-    const { scope, propsOptions, emitsOptions } = instance;
+    pProps || = emptyObject;
+    nProps || = emptyObject;
+    const {
+        scope,
+        propsOptions,
+        emitsOptions
+    } = instance;
     // 在props都不存在的情况下也要处理默认值，必须值等情况，所以传入propsoptions进入循环
     for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
         let pValue = pProps[prop];
         let nValue = nProps[prop];
-        if (prop.startsWith('_')) ;
+        if (prop.startsWith('_'));
         else if (prop === 'ref') {
             // ref component
-            let refs = instance.parent.refs ||= {};
+            let refs = instance.parent.refs || = {};
             if (nValue !== pValue) {
                 pValue && (refs[pValue] = null);
                 nValue && (refs[nValue] = instance);
             }
-        }
-        else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
+        } else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
             // 未定义
-            let attrs = instance.attrs ||= {};
+            let attrs = instance.attrs || = {};
             attrs[prop] = nValue;
-        }
-        else if (isEvent(prop)) {
+        } else if (isEvent(prop)) {
             // events
-            var { event, _arguments, modifiers } = parseEventName(prop);
+            var {
+                event,
+                _arguments,
+                modifiers
+            } = parseEventName(prop);
             updateInstanceListeners(instance, event, pValue, nValue);
-        }
-        else {
+        } else {
             // props
-            const { default: _default, type, validator, required } = propsOptions[prop];
+            const {
+                default: _default,
+                type,
+                validator,
+                required
+            } = propsOptions[prop];
             if (isUndefined(nValue)) {
                 // nValue 不存在在时应该使用默认值
                 if (required) {
                     error(`props ${prop} is required`);
-                }
-                else {
+                } else {
                     nValue = _default;
                 }
             }
@@ -1008,7 +1113,10 @@ function updateComponentProps(instance, pProps, nProps) {
 
 const updateComponent = (p, n, container, anchor, parent) => {
     // 进入update 则patchkey一定相同
-    const { instance, props: pProps } = p;
+    const {
+        instance,
+        props: pProps
+    } = p;
     n.instance = instance;
     updateComponentProps(instance, pProps, n.props);
     // update slots ... 不需要更新slot
@@ -1045,15 +1153,19 @@ function createMapAndList(children) {
         return token;
     });
     return {
-        map, list
+        map,
+        list
     };
 }
+
 function sortChildren(p, n, isRules) {
     // copy
     p = [...p || []];
     n = [...n || []];
     var nLength = n.length;
-    var { map: pMap } = createMapAndList(p);
+    var {
+        map: pMap
+    } = createMapAndList(p);
     var pMoved = 0;
     for (let i = 0; i < nLength; i++) {
         /*
@@ -1062,7 +1174,7 @@ function sortChildren(p, n, isRules) {
         var node = n[i];
         var patchKey = node.patchKey;
         var sameNode = pMap[patchKey];
-        if (sameNode && (isRules || (sameNode.node.type === node.type))) {
+        if (sameNode && sameNode.node.type === node.type) {
             /*
                 the condition of reuse a vnode for dom is same patchkey and same type
                 for rules is just the same patchkey
@@ -1075,15 +1187,56 @@ function sortChildren(p, n, isRules) {
                 insertNull(n, i, diffLength);
                 i += diffLength;
                 nLength += diffLength;
-            }
-            else {
+            } else {
                 insertNull(p, sameNodeIndex, diffLength);
                 pMoved += diffLength;
             }
         }
     }
     return {
-        p, n
+        p,
+        n
+    };
+}
+
+function sortRules(p, n) {
+    // copy
+    p = [...p || []];
+    n = [...n || []];
+    var nLength = n.length;
+    var {
+        map: pMap
+    } = createMapAndList(p);
+    var pMoved = 0;
+    for (let i = 0; i < nLength; i++) {
+        /*
+            此次循环用于将两组规则的相同key对应到相同的索引下
+        */
+        var node = n[i];
+        var patchKey = node.patchKey;
+        var sameNode = pMap[patchKey];
+        if (sameNode) {
+            /*
+                the condition of reuse a vnode for dom is same patchkey and same type
+                for rules is just the same patchkey
+            */
+            var sameNodeIndex = sameNode.index + pMoved;
+            var diff = i - sameNodeIndex;
+            var diffLength = Math.abs(diff);
+            if (diff < 0) {
+                /* 说明该接点在p中的位置较远，需要再n中条南充元素 */
+                insertNull(n, i, diffLength);
+                i += diffLength;
+                nLength += diffLength;
+            } else {
+                insertNull(p, sameNodeIndex, diffLength);
+                pMoved += diffLength;
+            }
+        }
+    }
+    return {
+        p,
+        n
     };
 }
 
@@ -1095,6 +1248,7 @@ const updateStyleSheet = (p, n) => {
     */
     updateSheet(p.children, n.children, sheet, n);
 };
+
 function updateSheet(pRules, nRules, sheet, vnode) {
     /*
         与更新dom元素不同，规则中只要patchKey相同就一定会复用,
@@ -1103,7 +1257,10 @@ function updateSheet(pRules, nRules, sheet, vnode) {
         其次为nodetype,
         !还是假设key相同的节点顺序一定不会变，
     */
-    var { p, n } = sortChildren(pRules, nRules, true);
+    var {
+        p,
+        n
+    } = sortRules(pRules, nRules);
     /*
         经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
         抛出同一索引下节点类型不相同的情况
@@ -1119,32 +1276,29 @@ function updateSheet(pRules, nRules, sheet, vnode) {
         if (!pRule) {
             mountRule(sheet, nRule, vnode, cursor);
             cursor++;
-        }
-        else if (!nRule) {
+        } else if (!nRule) {
             // unmount
             deleteRule(sheet, cursor);
             cursor--;
-        }
-        else if (pRule.nodeType !== nRule.nodeType) {
+        } else if (pRule.nodeType !== nRule.nodeType) {
             // 当节点类型不同时，先卸载，再挂载 
             deleteRule(sheet, cursor);
             mountRule(sheet, nRule, vnode, cursor);
-        }
-        else {
+        } else {
             // update
             switch (nRule.nodeType) {
-                case 26 /* STYLE_RULE */:
+                case 26 /* STYLE_RULE */ :
                     updateStyleRule(pRule, nRule);
                     break;
-                case 22 /* MEDIA_RULE */:
+                case 22 /* MEDIA_RULE */ :
                     updateMediaRule(pRule, nRule, vnode);
                     break;
-                case 23 /* SUPPORTS_RULE */:
+                case 23 /* SUPPORTS_RULE */ :
                     // supports can't update 
                     deleteRule(sheet, cursor);
                     mountRule(sheet, nRule, vnode, cursor);
                     break;
-                case 24 /* KEYFRAMES_RULE */:
+                case 24 /* KEYFRAMES_RULE */ :
                     updateKeyframesRule(pRule, nRule);
                     break;
             }
@@ -1152,13 +1306,20 @@ function updateSheet(pRules, nRules, sheet, vnode) {
         cursor++;
     }
 }
+
 function updateStyleRule(pRule, nRule, vnode) {
     var rule = nRule.rule = pRule.rule;
     var style = rule.style;
     if (!style)
         return;
-    var { selector: pSelector, children: pDeclaration } = pRule;
-    var { selector: nSelector, children: nDeclaration } = nRule;
+    var {
+        selector: pSelector,
+        children: pDeclaration
+    } = pRule;
+    var {
+        selector: nSelector,
+        children: nDeclaration
+    } = nRule;
     if (pSelector !== nSelector) {
         setSelector(rule, nSelector);
     }
@@ -1167,6 +1328,7 @@ function updateStyleRule(pRule, nRule, vnode) {
 // same as selector delimiter
 const mediumDelimiter = /\s*,\s*/;
 const normalizeMedium = (medium) => isArray(medium) ? medium : medium.trim().split(mediumDelimiter);
+
 function updateMedium(mediaRule, pMediaum, nMediaum) {
     pMediaum = normalizeMedium(pMediaum);
     nMediaum = normalizeMedium(nMediaum);
@@ -1181,17 +1343,31 @@ function updateMedium(mediaRule, pMediaum, nMediaum) {
         }
     });
 }
+
 function updateMediaRule(pRule, nRule, vnode) {
     var rule = nRule.rule = pRule.rule;
-    var { media: pMedia, children: pRules } = pRule;
-    var { media: nMedia, children: nRules } = nRule;
+    var {
+        media: pMedia,
+        children: pRules
+    } = pRule;
+    var {
+        media: nMedia,
+        children: nRules
+    } = nRule;
     updateMedium(rule, pMedia, nMedia);
     updateSheet(pRules, nRules, rule, vnode);
 }
+
 function updateKeyframesRule(pRule, nRule, vnode) {
     var keyframesrule = nRule.rule = pRule.rule;
-    var { keyframes: pKeyframes, children: pRules } = pRule;
-    var { keyframes: nKeyframes, children: nRules } = nRule;
+    var {
+        keyframes: pKeyframes,
+        children: pRules
+    } = pRule;
+    var {
+        keyframes: nKeyframes,
+        children: nRules
+    } = nRule;
     if (pKeyframes !== nKeyframes) {
         setKeyframesName(keyframesrule, nKeyframes);
     }
@@ -1204,13 +1380,17 @@ function updateKeyframesRule(pRule, nRule, vnode) {
         var nk = nRules[i];
         if (!pk) {
             mountKeyframeRule(keyframesrule, nk);
-        }
-        else if (!nk) {
+        } else if (!nk) {
             deleteKeyframe(keyframesrule, pk.keyframe);
-        }
-        else {
-            var { keyframe: pKeyframe, children: pDeclaration } = pk;
-            var { keyframe: nKeyframe, children: nDeclaration } = nk;
+        } else {
+            var {
+                keyframe: pKeyframe,
+                children: pDeclaration
+            } = pk;
+            var {
+                keyframe: nKeyframe,
+                children: nDeclaration
+            } = nk;
             let keyframerule = nk.rule = pk.rule;
             var style = keyframerule.style;
             if (pKeyframe !== nKeyframe) {
@@ -1224,39 +1404,45 @@ function updateKeyframesRule(pRule, nRule, vnode) {
 
 function update(p, n, container, anchor, parent) {
     switch (n.nodeType) {
-        case 12 /* TEXT */:
+        case 12 /* TEXT */ :
             updateText(p, n);
             break;
-        case 13 /* HTML_ELEMENT */:
+        case 13 /* HTML_ELEMENT */ :
             updateHTMLElement(p, n, container, anchor, parent);
             break;
-        case 17 /* STYLE */:
+        case 17 /* STYLE */ :
             updateStyleSheet(p, n);
             break;
-        case 14 /* COMPONENT */:
+        case 14 /* COMPONENT */ :
             updateComponent(p, n);
             break;
-        case 15 /* RENDER_COMPONENT */:
+        case 15 /* RENDER_COMPONENT */ :
             updateRenderComponent(p, n, container, anchor, parent);
             break;
     }
 }
+
 function updateText(p, n) {
     var el = n.el = p.el;
     if (p.children !== n.children) {
         el.textContent = n.children;
     }
 }
+
 function updateHTMLElement(p, n, container, anchor, parent) {
     const el = n.el = p.el;
-    processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
+    processHook("beforeUpdate" /* BEFORE_UPDATE */ , n, p);
     updateAttributes(el, p.props, n.props, parent);
-    processHook("updated" /* UPDATED */, n, p);
+    processHook("updated" /* UPDATED */ , n, p);
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor, parent);
 }
+
 function updateChildren(pChildren, nChildren, container, anchor, parent) {
-    var { p, n } = sortChildren(pChildren, nChildren, false);
+    var {
+        p,
+        n
+    } = sortChildren(pChildren, nChildren);
     var max = Math.max(p.length, n.length);
     for (let i = 0; i < max; i++) {
         patch(p[i], n[i], container, getAnchor(p, i + 1), parent);
@@ -1269,21 +1455,26 @@ function getAnchor(vnodes, index) {
     for (let i = index; i < vnodes.length; i++) {
         let nextSibiling = vnodes[i];
         if (!nextSibiling) {
+            // 这里可能出现为空是因为排序时增加的空节点
             continue;
         }
         return getVnodeAnchor(nextSibiling);
     }
 }
+
 function getVnodeAnchor(vnode) {
+    if (!vnode) {
+        return null;
+    }
     switch (vnode.nodeType) {
-        case 14 /* COMPONENT */:
+        case 14 /* COMPONENT */ :
             return getVnodeAnchor(vnode.instance.vnode[0]);
-        case 15 /* RENDER_COMPONENT */:
+        case 15 /* RENDER_COMPONENT */ :
             return getVnodeAnchor(vnode.vnode[0]);
-        case 13 /* HTML_ELEMENT */:
-        case 9 /* SVG_ELEMENT */:
-        case 12 /* TEXT */:
-        case 10 /* HTML_COMMENT */:
+        case 13 /* HTML_ELEMENT */ :
+        case 9 /* SVG_ELEMENT */ :
+        case 12 /* TEXT */ :
+        case 10 /* HTML_COMMENT */ :
             return vnode.el;
     }
     return null;
@@ -1293,28 +1484,25 @@ const patch = (current, next, container, anchor, parent) => {
     if (!current) {
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent);
+        } else {
+            return;
         }
-    }
-    else {
+    } else {
         if (!next) {
             // 卸载当前节点
             isArray(current) ? unmountChildren(current) : unmount(current, container, anchor, parent);
-        }
-        else {
+        } else {
             if (isArray(current)) {
                 updateChildren(current, isArray(next) ? next : [next], container, anchor, parent);
-            }
-            else {
+            } else {
                 if (isArray(next)) {
                     updateChildren([current], next, container, anchor, parent);
-                }
-                else {
+                } else {
                     // 两个单节点 ， 但key可能不同 
                     if (current.type === next.type && current.patchKey === next.patchKey) {
                         // 类型相同，直接更新
                         update(current, next, container, anchor, parent);
-                    }
-                    else {
+                    } else {
                         // 类型不同。先卸载，在挂载
                         unmount(current, container, anchor, parent);
                         mount(next, container, anchor, parent);
@@ -1360,17 +1548,21 @@ var ReactiveTypes;
     ReactiveTypes["WEAK_MAP"] = "WeakMap";
     ReactiveTypes["WEAK_SET"] = "WeakSet";
 })(ReactiveTypes || (ReactiveTypes = {}));
+
 function toRaw(value) {
-    return value && value["raw" /* RAW */];
+    return value && value["raw" /* RAW */ ];
 }
+
 function isReactive(value) {
-    return value && value["isReactive" /* IS_REACTIVE */];
+    return value && value["isReactive" /* IS_REACTIVE */ ];
 }
+
 function isShallow(value) {
-    return value && value["isShallow" /* IS_SHALLOW */];
+    return value && value["isShallow" /* IS_SHALLOW */ ];
 }
+
 function isRef(value) {
-    return value && value["isRef" /* IS_REF */];
+    return value && value["isRef" /* IS_REF */ ];
 }
 
 const TARGET_MAP = new WeakMap();
@@ -1383,6 +1575,7 @@ function getDepsMap(target) {
     }
     return depsMap;
 }
+
 function getDeps(target, key) {
     let depsMap = getDepsMap(target);
     let deps = depsMap.get(key);
@@ -1392,6 +1585,7 @@ function getDeps(target, key) {
     }
     return deps;
 }
+
 function track(target, key) {
     let activeEffect = getActiveEffect();
     if (!activeEffect)
@@ -1403,6 +1597,7 @@ function track(target, key) {
 }
 /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
 const trackTargetSymbol = Symbol('target has changed');
+
 function getTargetDeps(target) {
     return getDeps(target, trackTargetSymbol);
 }
@@ -1416,6 +1611,7 @@ function trackTarget(target) {
     // 用于清除依赖
     activeEffect.deps.push(deps);
 }
+
 function trigger(target, key) {
     if (key !== trackTargetSymbol) {
         // 防止递归
@@ -1429,8 +1625,7 @@ function trigger(target, key) {
                 return;
             }
             dep.triggerRun();
-        }
-        else {
+        } else {
             dep();
         }
     });
@@ -1439,11 +1634,12 @@ const effectStack = [];
 const getActiveEffect = () => effectStack[effectStack.length - 1];
 const setActiveEffect = (effect) => effectStack.push(effect);
 const deleteActiveEffect = () => effectStack.pop();
+
 function isEffect(value) {
-    return value && value["isEffect" /* IS_EFFECT */];
+    return value && value["isEffect" /* IS_EFFECT */ ];
 }
 class ReactiveEffect {
-    ["isEffect" /* IS_EFFECT */] = true;
+    ["isEffect" /* IS_EFFECT */ ] = true;
     // 记录副作用依赖了那些变量
     deps = [];
     effectFn;
@@ -1464,8 +1660,7 @@ class ReactiveEffect {
     triggerRun() {
         if (this.scheduler) {
             return this.scheduler(this.run.bind(this));
-        }
-        else {
+        } else {
             return this.run();
         }
     }
@@ -1476,6 +1671,7 @@ class ReactiveEffect {
         this.deps = [];
     }
 }
+
 function createReactiveEffect(fn, scheduler) {
     return new ReactiveEffect(fn, scheduler);
 }
@@ -1580,6 +1776,7 @@ const collectionHandlers = {
         return _isShallow ? value : reactive(value);
     }
 };
+
 function arrayHandlerWithTrack(...args) {
     if (!_isReadonly) { // 非只读才会收集
         trackTarget(_target);
@@ -1587,6 +1784,7 @@ function arrayHandlerWithTrack(...args) {
     let result = _target[_key](...args);
     return result;
 }
+
 function arrayHandlerWithTrigger(...args) {
     if (_isReadonly) {
         // 只读不能修改
@@ -1619,6 +1817,7 @@ const specialKeyHandler = {
 };
 // 可用于收集依赖的key
 const isProxyKey = (target, key) => !(key in target) || hasOwn(target, key);
+
 function createGetter(isReadonly, isShallow, isCollection) {
     return (target, key, receiver) => {
         // cache global state
@@ -1628,13 +1827,13 @@ function createGetter(isReadonly, isShallow, isCollection) {
         _key = key;
         // reserved keys
         switch (key) {
-            case "raw" /* RAW */:
+            case "raw" /* RAW */ :
                 return target;
-            case "isReactive" /* IS_REACTIVE */:
+            case "isReactive" /* IS_REACTIVE */ :
                 return !isReadonly;
-            case "isShallow" /* IS_SHALLOW */:
+            case "isShallow" /* IS_SHALLOW */ :
                 return isShallow;
-            case "isReadonly" /* IS_READONLY */:
+            case "isReadonly" /* IS_READONLY */ :
                 return isReadonly;
             case ReactiveTypeSymbol:
                 // 所欲响应式数据都会有此标记
@@ -1645,8 +1844,7 @@ function createGetter(isReadonly, isShallow, isCollection) {
             if (hasOwn(collectionHandlers, key) && key in target) {
                 return collectionHandlers[key];
             }
-        }
-        else if (isProxyKey(target, key)) {
+        } else if (isProxyKey(target, key)) {
             // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
             if (!isReadonly) {
                 track(target, key);
@@ -1657,8 +1855,7 @@ function createGetter(isReadonly, isShallow, isCollection) {
                 return value;
             }
             return isReadonly ? readonly(value) : reactive(value);
-        }
-        else if (isArray(target) && hasOwn(arrayHandlers, key)) {
+        } else if (isArray(target) && hasOwn(arrayHandlers, key)) {
             // 数组重写方法
             return arrayHandlers[key];
         }
@@ -1676,6 +1873,7 @@ function onSet(cb) {
     onSetCallbacks.add(cb);
     return () => onSetCallbacks.delete(cb);
 }
+
 function createSetter(isReadonly = false, isShallow = false) {
     return (target, key, newValue, receiver) => {
         // 返回 false 时会报错
@@ -1698,6 +1896,7 @@ function createSetter(isReadonly = false, isShallow = false) {
         return true;
     };
 }
+
 function has(target, key) {
     /*
         has 包括非自身的key
@@ -1710,14 +1909,16 @@ function has(target, key) {
     }
     return Reflect.has(target, key);
 }
+
 function ownKeys(target) {
     /*
         for ? in target
     */
     // Object.assign will call this
-    console.log('track ownKeys');
+    trackTarget(target);
     return Reflect.ownKeys(target);
 }
+
 function deleteProperty(target, key) {
     // 为 true 表示删除成功
     const isOwn = hasOwn(target, key);
@@ -1727,6 +1928,7 @@ function deleteProperty(target, key) {
     }
     return result;
 }
+
 function readonlyDeleteProperty(target, key) {
     warn(`${key} in `, target, ` can't delete`);
     return true;
@@ -1783,6 +1985,7 @@ const createReactiveCollection = (value) => new Proxy(value, reactiveCollectionH
 const createReadonlyCollection = (value) => new Proxy(value, readonlyCollectionHandler);
 const createShallowReactiveCollection = (value) => new Proxy(value, shallowReactiveCollectionHandler);
 const createShallowReadonlyCollection = (value) => new Proxy(value, shallowReadonlyCollectionHandler);
+
 function createProxy(value, isReadonly, isShallow) {
     //! 如果 已经代理过，返回原始值
     if (isProxy(value)) {
@@ -1805,15 +2008,19 @@ function createProxy(value, isReadonly, isShallow) {
             return value;
     }
 }
+
 function reactive(value) {
     return createProxy(value, false, false);
 }
+
 function shallowReactive(value) {
     return createProxy(value, false, true);
 }
+
 function readonly(value) {
     return createProxy(value, true, false);
 }
+
 function shallowReadonly(value) {
     return createProxy(value, true, true);
 }
@@ -1822,7 +2029,7 @@ const ref = (value, options) => new Ref(value, options);
 const createRefValueSetter = (ref) => (newValue) => ref.value = newValue;
 class Ref {
     [ReactiveTypeSymbol] = true;
-    ["isRef" /* IS_REF */] = true;
+    ["isRef" /* IS_REF */ ] = true;
     oldValue; // 保存旧值
     _value;
     sensitive;
@@ -1854,6 +2061,7 @@ const getRefDeps = (ref) => {
     }
     return deps;
 };
+
 function trackRef(ref) {
     var activeEffect = getActiveEffect();
     if (!activeEffect) {
@@ -1862,13 +2070,13 @@ function trackRef(ref) {
     var deps = getRefDeps(ref);
     deps.add(activeEffect);
 }
+
 function triggerRef(ref) {
     var deps = getRefDeps(ref);
     deps.forEach((dep) => {
         if (isEffect(dep)) {
             dep.triggerRun();
-        }
-        else {
+        } else {
             dep();
         }
     });
@@ -1879,11 +2087,11 @@ const cleaarRefDeps = (ref) => {
 };
 
 const computed = (getter) => new ComputedRef(getter);
-const isComputed = (value) => value && value["isComputed" /* IS_COMPUTED */];
+const isComputed = (value) => value && value["isComputed" /* IS_COMPUTED */ ];
 class ComputedRef {
     [ReactiveTypeSymbol] = true;
-    ["isComputed" /* IS_COMPUTED */] = true;
-    ["isRef" /* IS_REF */] = true;
+    ["isComputed" /* IS_COMPUTED */ ] = true;
+    ["isRef" /* IS_REF */ ] = true;
     cacheValue;
     oldValue;
     shouldCompute = true;
@@ -1920,7 +2128,8 @@ function shallowWatchReactive(data, callback) {
     }
     // 问题？ 新设置的key无法触发依赖，因为没收集
     const rawData = toRaw(data);
-    var watchCallbackIsCalling = false, changeKey, changeNewValue, changeOldValue;
+    var watchCallbackIsCalling = false,
+        changeKey, changeNewValue, changeOldValue;
     let cb = () => {
         watchCallbackIsCalling = true;
         callback.call(null, changeKey, changeNewValue, changeOldValue);
@@ -1931,8 +2140,7 @@ function shallowWatchReactive(data, callback) {
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
                 error('cant set reactive data value in the watch callback');
-            }
-            else {
+            } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeKey = key;
                 changeNewValue = newValue;
@@ -1948,6 +2156,7 @@ function shallowWatchReactive(data, callback) {
         deps.delete(cb);
     };
 }
+
 function watchReactive(reactiveData, callback) {
     if (!isReactive(reactiveData)) {
         return;
@@ -1957,6 +2166,7 @@ function watchReactive(reactiveData, callback) {
     // ! 当侦测一个reactive data时，回调中不应该再设置该属性的值否则会死循环
     const targets = new Set();
     collectTarget(reactiveData);
+
     function collectTarget(data) {
         if (!isReactive(data)) {
             return;
@@ -1965,7 +2175,8 @@ function watchReactive(reactiveData, callback) {
         Object.values(data).forEach(collectTarget);
     }
     // watch的回调函数是否正在调用
-    var watchCallbackIsCalling = false, changeTarget, changeKey, changeNewValue, changeOldValue;
+    var watchCallbackIsCalling = false,
+        changeTarget, changeKey, changeNewValue, changeOldValue;
     let cb = () => {
         watchCallbackIsCalling = true;
         callback.call(null, changeTarget, changeKey, changeNewValue, changeOldValue);
@@ -1980,8 +2191,7 @@ function watchReactive(reactiveData, callback) {
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
                 error('cant set reactive data value in the watch callback');
-            }
-            else {
+            } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeTarget = target;
                 changeKey = key;
@@ -2022,7 +2232,8 @@ function watchTargetKey(target, key, callback) {
         return;
     }
     const deps = getDeps(target, key);
-    var watchCallbackIsCalling = false, changeNewValue, changeOldValue;
+    var watchCallbackIsCalling = false,
+        changeNewValue, changeOldValue;
     let cb = () => {
         watchCallbackIsCalling = true;
         callback.call(null, changeNewValue, changeOldValue);
@@ -2033,8 +2244,7 @@ function watchTargetKey(target, key, callback) {
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
                 error('cant set reactive data value in the watch callback');
-            }
-            else {
+            } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeNewValue = newValue;
                 changeOldValue = oldValue;
@@ -2060,15 +2270,268 @@ function watchRef(ref, callback) {
     return () => deps.delete(watchEffect);
 }
 
+class ReactiveBoolean extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    toggle() {
+        return this.value = !this.value;
+    }
+    toTrue() {
+        return this.value = true;
+    }
+    toFalse() {
+        return this.value = false;
+    }
+}
+
+function useBoolean(value = true) {
+    return new ReactiveBoolean(value);
+}
+
+/*
+    rbg
+    hex
+    hsl  // css 中 只能写 %
+*/
+const toHex = (num) => num.toString(16);
+const toDec = (num) => parseInt(String(num), 16);
+
+function rgbToHex() {}
+
+function hexToRgb() {}
+const useColor = (color) => new ColorRef(color);
+class ColorRef extends Ref {
+    constructor(color) {
+        super(color);
+    }
+}
+
+function useDate(...dateArgs) {
+    return new DateRef(new Date(...dateArgs));
+}
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+class DateRef extends Ref {
+    constructor(date) {
+        super(date, {
+            sensitive: true
+        });
+    }
+    clone() {
+        return useDate(this._value); // _value 不会收集依赖
+    }
+    get(key) {
+        return Reflect.get(this, key).call(this);
+    }
+    year(setYear) {
+        if (isUndefined(setYear)) {
+            // getter
+            return this.value.getFullYear();
+        } else {
+            // 不应该收集依赖
+            this._value.setFullYear(Number(setYear));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    month(setMonth) {
+        if (isUndefined(setMonth)) {
+            // getter
+            return this.value.getMonth() + 1;
+        } else {
+            // 不应该收集依赖
+            this._value.setMonth(Number(setMonth) - 1);
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    // monthday
+    date(setDate) {
+        if (isUndefined(setDate)) {
+            // getter
+            return this.value.getDate();
+        } else {
+            // 不应该收集依赖
+            this._value.setDate(Number(setDate));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    // weekday
+    day(setDay) {
+        if (isUndefined(setDay)) {
+            // getter
+            return this.value.getDay();
+        } else {
+            debugger;
+        }
+    }
+    hour(setHour) {
+        if (isUndefined(setHour)) {
+            // getter
+            return this.value.getHours();
+        } else {
+            // 不应该收集依赖
+            this._value.setHours(Number(setHour));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    minute(setMinutes) {
+        if (isUndefined(setMinutes)) {
+            // getter
+            return this.value.getMinutes();
+        } else {
+            // 不应该收集依赖
+            this._value.setMinutes(Number(setMinutes));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    second(setSecond) {
+        if (isUndefined(setSecond)) {
+            // getter
+            return this.value.getSeconds();
+        } else {
+            // 不应该收集依赖
+            this._value.setSeconds(Number(setSecond));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    milliSecond(setMilliseconds) {
+        if (isUndefined(setMilliseconds)) {
+            // getter
+            return this.value.getMilliseconds();
+        } else {
+            // 不应该收集依赖
+            this._value.setMilliseconds(Number(setMilliseconds));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    format(template, customKeywords = emptyObject) {
+        let w = customKeywords.weekdays || weekdays;
+        let m = customKeywords.months || months;
+        return template.replace(dateFormatRE, (capture) => {
+            switch (capture) {
+                case "YYYY" /* YEAR */ :
+                    return this.year();
+                case "YY" /* YEAR_2D */ :
+                    return String(this.year()).slice(2);
+                case "M" /* MONTH */ :
+                    return this.month();
+                case "MM" /* MONTH_2D */ :
+                    return padZero(this.month());
+                case "MMM" /* MONTH_SHORT_NAME */ :
+                    return m[this.month() - 1].slice(0, 3);
+                case "MMMM" /* MONTH_FULL_NAME */ :
+                    return m[this.month() - 1];
+                case "D" /* DATE */ :
+                    return this.date();
+                case "DD" /* DATE_2D */ :
+                    return padZero(this.date());
+                case "h" /* HOUR_12 */ :
+                    // 等于 12 应该是 12 点还是 0 点
+                    var hour = this.hour();
+                    return hour > 12 ? hour - 12 : hour;
+                case "hh" /* HOUR_12_2D */ :
+                    var hour = this.hour();
+                    return padZero(hour > 12 ? hour - 12 : hour);
+                case "H" /* HOUR_24 */ :
+                    return this.hour();
+                case "HH" /* HOUR_24_2D */ :
+                    return padZero(this.hour());
+                case "m" /* MINUTE */ :
+                    return this.minute();
+                case "mm" /* MINUTE_2D */ :
+                    return padZero(this.minute());
+                case "s" /* SECOND */ :
+                    return this.second();
+                case "ss" /* SECOND_2D */ :
+                    return padZero(this.second());
+                case "SSS" /* MILLISECOND */ :
+                    return this.milliSecond();
+                case "SS" /* MILLISECOND_10 */ :
+                    return String(this.milliSecond()).slice(0, 2);
+                case "S" /* MILLISECOND_100 */ :
+                    return String(this.milliSecond()).slice(0, 1);
+                case "W" /* WEEKDAY */ :
+                    return this.day();
+                case "WWW" /* WEEKDAY_FULL_NAME */ :
+                    return w[this.day()];
+                case "WW" /* WEEKDAY_SHORT_NAME */ :
+                    return w[this.day()].slice(0, 3);
+                default:
+                    return '?';
+            }
+        });
+    }
+}
+const dateFormatRE = /Y{1,4}|M{1,4}|D{1,2}|H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,3}|A|a|W{1,3}/g;
+
+function padZero(source, expectLength = 2) {
+    // 期待长度一定要大于目标长度
+    return '0'.repeat(expectLength - String(source).length) + source;
+}
+
+class ReactiveNumber extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    plus(value = 1) {
+        return this.value += value;
+    }
+    minus(value = 1) {
+        return this.value -= value;
+    }
+    multiply(value = 1) {
+        return this.value *= value;
+    }
+    devide(value = 1) {
+        return this.value /= value;
+    }
+}
+
+function useNumber(value) {
+    return new ReactiveNumber(value);
+}
+
+class ReactiveString extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    concat(...values) {
+        return this.value.concat(...values);
+    }
+    padEnd(targetLength, padString) {
+        return this.value = this.value.padEnd(targetLength, padString);
+    }
+}
+
+function useString(value = 'hello world') {
+    return new ReactiveString(value);
+}
+
 var nextTick = (fn, args = undefined) => {
     var p = Promise.resolve(args);
     p.then(fn.bind(null));
 };
 var queueJobs = new Set();
+
 function queueJob(job) {
     queueJobs.add(job);
     nextTick(executeQueueJobs);
 }
+
 function executeQueueJobs() {
     queueJobs.forEach((job) => {
         job();
@@ -2078,18 +2541,23 @@ function executeQueueJobs() {
 
 // rendering instance and creating instance
 var currentInstance = null;
+
 function setCurrentInstance(instance) {
     currentInstance = instance;
 }
+
 function getCurrentInstance() {
     return currentInstance;
 }
+
 function getCurrentScope() {
     return getCurrentInstance().scope;
 }
+
 function getCurrentRenderScope() {
     return getCurrentInstance().renderScope;
 }
+
 function setScopeData(scope, data) {
     if (!isObject(data)) {
         return;
@@ -2099,12 +2567,16 @@ function setScopeData(scope, data) {
         scope[key] = data[key];
     }
 }
+
 function mountComponent(vnode, container, anchor, parent) {
     const instance = createComponentInstance(vnode.type, parent);
     vnode.instance = instance;
     instance.componentVnode = vnode;
-    const { scope, renderScope } = instance;
-    processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
+    const {
+        scope,
+        renderScope
+    } = instance;
+    processHook("beforeCreate" /* BEFORE_CREATE */ , vnode);
     // create
     setCurrentInstance(instance);
     // 初次创建前应该把 slot props 方法等挂载到作用域上
@@ -2113,9 +2585,11 @@ function mountComponent(vnode, container, anchor, parent) {
     instance.slots = vnode.children;
     instance.props = vnode.props;
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
-    const createResults = callHook("create" /* CREATE */, instance, { binding: scope }, scope);
+    const createResults = callHook("create" /* CREATE */ , instance, {
+        binding: scope
+    }, scope);
     // 注入 mixins 状态
-    createResults?.forEach((data) => setScopeData(scope, data));
+    createResults ? .forEach((data) => setScopeData(scope, data));
     // 组件根初始化方法
     /*
         render 优先级
@@ -2124,20 +2598,25 @@ function mountComponent(vnode, container, anchor, parent) {
     let render;
     if (instance.render) {
         render = instance.render.bind(renderScope);
-    }
-    else if (instance.createRender) {
+    } else if (instance.createRender) {
         render = instance.createRender(renderMethods);
-    }
-    else {
+    } else {
         render = emptyFunction;
     }
     instance.render = render;
     setCurrentInstance(null);
-    processHook("created" /* CREATED */, vnode);
+    processHook("created" /* CREATED */ , vnode);
     // component update
     // component update fn
     function update() {
-        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance;
+        const {
+            isMounted,
+            vnode: pVnode,
+            beforePatch,
+            componentVnode,
+            updatingComponentVnode,
+            render
+        } = instance;
         // 每次 更新生成新树
         setCurrentInstance(instance);
         let nVnode = render(scope);
@@ -2149,8 +2628,7 @@ function mountComponent(vnode, container, anchor, parent) {
             pComponentVnode = componentVnode;
             // 把新节点存到实例上
             instance.componentVnode = nComponentVnode;
-        }
-        else {
+        } else {
             nComponentVnode = componentVnode;
         }
         // 清理vnode 
@@ -2158,9 +2636,11 @@ function mountComponent(vnode, container, anchor, parent) {
         nVnode = processVnodePrerender(nVnode);
         instance.renderingVnode = nVnode;
         if (vnode.transition) {
-            nVnode.forEach((_) => { _.transition = vnode.transition; });
+            nVnode.forEach((_) => {
+                _.transition = vnode.transition;
+            });
         }
-        processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nComponentVnode, pComponentVnode);
+        processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */ , nComponentVnode, pComponentVnode);
         if (beforePatch) {
             beforePatch(pVnode, nVnode);
         }
@@ -2169,28 +2649,29 @@ function mountComponent(vnode, container, anchor, parent) {
         instance.vnode = nVnode;
         instance.isMounted = true;
         instance.renderingVnode = null;
-        processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nComponentVnode, pComponentVnode);
+        processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */ , nComponentVnode, pComponentVnode);
     }
     //  call at every update
     instance.update = update;
     const rednerEffect = createReactiveEffect(update, queueJob);
     // 手动渲染
+    instance.renderEffect = rednerEffect;
     rednerEffect.run();
     return instance;
 }
 
 const COMPONENT_TYPE = Symbol('ComponentType');
+
 function createComponent(type, props, children, key = uid()) {
     let componentFlag = type[COMPONENT_TYPE];
     if (!componentFlag) {
         // stateful component
         if (isObject(type)) {
-            componentFlag = 14 /* COMPONENT */;
+            componentFlag = 14 /* COMPONENT */ ;
             resolveOptions(type);
-        }
-        else if (isFunction(type)) {
+        } else if (isFunction(type)) {
             // render component
-            componentFlag = 15 /* RENDER_COMPONENT */;
+            componentFlag = 15 /* RENDER_COMPONENT */ ;
         }
         mark(type, COMPONENT_TYPE, componentFlag);
     }
@@ -2202,18 +2683,20 @@ function createComponent(type, props, children, key = uid()) {
         key
     };
 }
+
 function createElement(type, props, children, key = uid()) {
     return {
-        nodeType: 13 /* HTML_ELEMENT */,
+        nodeType: 13 /* HTML_ELEMENT */ ,
         type,
         props,
         children,
         key
     };
 }
+
 function createSVGElement(type, props, children, key = uid()) {
     return {
-        nodeType: 9 /* SVG_ELEMENT */,
+        nodeType: 9 /* SVG_ELEMENT */ ,
         type,
         props,
         children,
@@ -2224,23 +2707,25 @@ const Text = Symbol('Text');
 // the key is for other node
 function createText(children, key = uid()) {
     return {
-        nodeType: 12 /* TEXT */,
+        nodeType: 12 /* TEXT */ ,
         children,
         key
     };
 }
 const Comment = Symbol('Comment');
+
 function createComment(text, key = uid()) {
     return {
         type: Comment,
-        nodeType: 10 /* HTML_COMMENT */,
+        nodeType: 10 /* HTML_COMMENT */ ,
         children: text,
         key
     };
 }
+
 function createFragment(children, key = uid()) {
     return {
-        nodeType: 1 /* FRAGMENT */,
+        nodeType: 1 /* FRAGMENT */ ,
         children,
         key
     };
@@ -2248,6 +2733,7 @@ function createFragment(children, key = uid()) {
 
 var iterableFlag = Symbol.iterator;
 var isIterableData = (data) => !!data[iterableFlag];
+
 function renderList(data, callee, key) {
     if (!isIterableData(data)) {
         if (isNumber(data)) {
@@ -2256,8 +2742,7 @@ function renderList(data, callee, key) {
                 from[j] = j + 1;
             }
             data = from;
-        }
-        else if (isObject(data)) {
+        } else if (isObject(data)) {
             data = Object.entries(data);
         }
     }
@@ -2279,8 +2764,8 @@ function renderList(data, callee, key) {
     return results;
 }
 
-function customDisplay() {
-}
+function customDisplay() {}
+
 function display(data) {
     if (isObject(data) || isArray(data)) {
         return JSON.stringify(data);
@@ -2289,14 +2774,21 @@ function display(data) {
 }
 
 function getComponent(name) {
-    var component = getCurrentInstance().components?.[name] || getCurrentApp().components[name];
+    let instanceComponents = getCurrentInstance().components;
+    let appComponents = getCurrentApp().components;
+    // 支持组件首字母大写
+    var component = instanceComponents ? . [name] || instanceComponents ? . [initialUpperCase(name)] || appComponents ? . [name] || appComponents ? . [initialUpperCase(name)];
     if (!component) {
         error(`cant find compnent ${name}`);
     }
     return component;
 }
+
 function getDirective(name) {
-    var directive = getCurrentInstance().directives?.[name] || getCurrentApp().directives[name];
+    let instancedirectives = getCurrentInstance().directives;
+    let appdirectives = getCurrentApp().directives;
+    // 支持组件首字母大写
+    var directive = instancedirectives ? . [name] || instancedirectives ? . [initialUpperCase(name)] || appdirectives ? . [name] || appdirectives ? . [initialUpperCase(name)];
     if (!directive) {
         error(`can't find directive ${name}`);
     }
@@ -2306,6 +2798,7 @@ function getDirective(name) {
 function setScope(variable, scope) {
     return scope + '.' + variable;
 }
+
 function createExpression(content, isStatic = false) {
     return {
         content,
@@ -2313,8 +2806,11 @@ function createExpression(content, isStatic = false) {
     };
 }
 const extractString = /(['"])[^\1]*\1/g;
+
 function extractStringTokens(exp) {
-    let tokens = [], cursor = 0, token;
+    let tokens = [],
+        cursor = 0,
+        token;
     while (token = extractString.exec(exp)) {
         let str = token[0];
         let length = str.length;
@@ -2331,24 +2827,30 @@ function extractStringTokens(exp) {
     return tokens;
 }
 const variableRE = /[\$_a-zA-Z][a-zA-Z0-9]*/g;
+
 function replaceVariable(expression, scope) {
     return expression.replace(variableRE, (variable) => {
         return setScope(variable, scope);
     });
 }
+
 function expressionTokensToResult(expressions, scope, stepsIndex) {
-    return expressions.reduce((result, { content, isStatic }) => {
+    return expressions.reduce((result, {
+        content,
+        isStatic
+    }) => {
         return result + (isStatic ? content : withScope(content, scope, stepsIndex));
     }, '');
 }
+
 function withScope(expression, scope = 'Crush', stepsIndex = 0) {
     switch (stepsIndex) {
-        case 0 /* START */:
+        case 0 /* START */ :
             return withScope(expression, scope, stepsIndex + 1);
-        case 1 /* PROCESS_STRING */:
+        case 1 /* PROCESS_STRING */ :
             let stringTokens = extractStringTokens(expression);
             return expressionTokensToResult(stringTokens, scope, stepsIndex + 1);
-        case 2 /* REPLACE_VARIABLE */:
+        case 2 /* REPLACE_VARIABLE */ :
             return replaceVariable(expression, scope);
     }
     return '';
@@ -2362,24 +2864,21 @@ const objectStringify = (target) => {
     return '{' +
         Object.entries(target).map(([property, value]) => {
             return property + ':' + (isObject(value) ? objectStringify(value) : isArray(value) ? toArray(value) : value);
-        }).join(',')
-        + '}';
+        }).join(',') +
+        '}';
 };
 const stringify = (target) => {
     if (isString(target)) {
         return target;
-    }
-    else if (isArray(target)) {
+    } else if (isArray(target)) {
         return `[${target.map(stringify).join(',')}]`;
-    }
-    else if (isObject(target)) {
+    } else if (isObject(target)) {
         return '{' +
             Object.entries(target).map(([property, value]) => {
                 return property + ':' + stringify(value);
-            }).join(',')
-            + '}';
-    }
-    else {
+            }).join(',') +
+            '}';
+    } else {
         return String(target);
     }
 };
@@ -2392,6 +2891,7 @@ const toArray = (items) => `[${items.join(',')}]`;
 const dynamicMapKey = (key) => `[${key}]`;
 const callFn = (fnName, ...params) => `${fnName}(${params.join(',')})`;
 const ternaryExp = (condition, ifTrue, ifFalse) => `${condition}?(${ifTrue}):(${ifFalse})`;
+
 function ternaryChains(conditions, returns, falseDefault = 'undefined', index = 0) {
     return ternaryExp(conditions[index], returns[index], index < conditions.length - 1 ? ternaryChains(conditions, returns, falseDefault, ++index) : (returns[index + 1] || falseDefault));
 }
@@ -2423,8 +2923,7 @@ class Scanner {
         var res = exec(this.source, extractor);
         if (!res) {
             return null;
-        }
-        else {
+        } else {
             var [_, ...groups] = res;
             this.move(_.length);
             return groups;
@@ -2437,9 +2936,11 @@ var closeTagRE = /^<\/([\w-]+)(?:\.[\w\.]+)?\s*>/;
 const htmlCommentRE = /<!--((.|[\r\n])*?)-->/;
 const attributeRE = /([^=\s>]+)\s*(?:=\s*(["'])([^\2]*?)\2)?/;
 var textEndsWithTag = /([\s\S]*?)<(\/?)[\w-]+/;
+
 function baseParseHTML(template) {
     var scanner = createScanner(template);
-    var ast = [], attributes, rawAttributeMap, inOpen, tag, modifiers;
+    var ast = [],
+        attributes, rawAttributeMap, inOpen, tag, modifiers;
     while (scanner.source) {
         if (scanner.startsWith('<')) {
             if (scanner.at(1) === '/') {
@@ -2458,26 +2959,22 @@ function baseParseHTML(template) {
                         break;
                     }
                 }
-            }
-            else if (scanner.at(1) === '!') {
+            } else if (scanner.at(1) === '!') {
                 var exRes = scanner.exec(htmlCommentRE);
                 ast.push({
                     tag: '!',
                     children: exRes[0]
                 });
-            }
-            else {
+            } else {
                 var exRes = scanner.exec(openTagRE);
                 tag = exRes[0];
                 modifiers = exRes[1];
                 inOpen = true;
             }
-        }
-        else if (inOpen) {
+        } else if (inOpen) {
             if (scanner.startsWith('/')) {
                 scanner.move(1); // ignore
-            }
-            else if (scanner.startsWith('>')) {
+            } else if (scanner.startsWith('>')) {
                 // open tag close
                 ast.push({
                     tag,
@@ -2493,23 +2990,23 @@ function baseParseHTML(template) {
                 rawAttributeMap = null;
                 inOpen = false;
                 scanner.move(1);
-            }
-            else {
+            } else {
                 /* catch attribute */
                 var exRes = scanner.exec(attributeRE);
                 var attribute = exRes[0];
                 var value = exRes[2];
-                (attributes ||= []).push({ attribute, value });
-                (rawAttributeMap ||= {})[attribute] = value;
+                (attributes || = []).push({
+                    attribute,
+                    value
+                });
+                (rawAttributeMap || = {})[attribute] = value;
             }
-        }
-        else {
+        } else {
             var textToken, text;
             if ((textToken = textEndsWithTag.exec(scanner.source))) {
                 text = textToken[1];
                 scanner.move(text.length);
-            }
-            else {
+            } else {
                 // text为结尾 , 直接读取所有内容，并清空
                 text = scanner.source;
                 scanner.source = '';
@@ -2548,6 +3045,7 @@ var NodesMap;
     NodesMap[NodesMap["component"] = 16] = "component";
     NodesMap[NodesMap["model"] = 37] = "model";
 })(NodesMap || (NodesMap = {}));
+
 function keyOf(nodeType) {
     return NodesMap[nodeType];
 }
@@ -2575,6 +3073,7 @@ const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,col
 const isSVGTag = makeMap(SVG_TAGS);
 
 const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
+
 function parseIterator(expression) {
     const [_, items, iterable] = extIteratorExp.exec(expression);
     return {
@@ -2614,6 +3113,7 @@ var parseText = (text) => {
 
 // we can use $(exp) as a dynamic content
 var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
+
 function parseSelector(selector) {
     var isDynamic = false;
     return {
@@ -2628,7 +3128,10 @@ function parseSelector(selector) {
 const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/;
 // both for html attribute and css declaration
 function parseAttribute(attr) {
-    let { attribute, value } = attr;
+    let {
+        attribute,
+        value
+    } = attr;
     var res = execCaptureGroups(attribute, extAttributeRE);
     if (!res) {
         return;
@@ -2659,12 +3162,15 @@ const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
 const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
 const parseCSS = (source) => {
     var scanner = createScanner(source);
-    var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
+    var ast = [],
+        stack = [],
+        exResult, current, parent = null,
+        closing = false,
+        declarationGroup;
     while (scanner.source) {
         if (scanner.startsWith('}')) {
             closing = true;
-        }
-        else if (scanner.startsWith(keyOf(21 /* AT */))) {
+        } else if (scanner.startsWith(keyOf(21 /* AT */ ))) {
             /*
                 media conditions
             */
@@ -2673,61 +3179,57 @@ const parseCSS = (source) => {
             current = {
                 type
             };
-            if (type === 22 /* MEDIA_RULE */) {
+            if (type === 22 /* MEDIA_RULE */ ) {
                 current.media = content;
-            }
-            else if (type === 24 /* KEYFRAMES_RULE */) {
+            } else if (type === 24 /* KEYFRAMES_RULE */ ) {
                 current.keyframes = content;
-            }
-            else if (type === 23 /* SUPPORTS_RULE */) {
+            } else if (type === 23 /* SUPPORTS_RULE */ ) {
                 current.supports = content;
             }
-        }
-        else if (scanner.expect('/*')) ;
-        else if (scanner.startsWith(keyOf(30 /* MIXIN */))) {
+        } else if (scanner.expect('/*'));
+        else if (scanner.startsWith(keyOf(30 /* MIXIN */ ))) {
             var [mixin] = scanner.exec(mixinRE);
             var m = {
-                type: 30 /* MIXIN */,
+                type: 30 /* MIXIN */ ,
                 mixin
             };
-            (declarationGroup ||= []).push(m);
+            (declarationGroup || = []).push(m);
             continue;
-        }
-        else if (cssReservedWord.test(scanner.source)) {
+        } else if (cssReservedWord.test(scanner.source)) {
             /*
                 处理指令，指令不再需要通过标识符去判断
             */
             var [dir, content] = scanner.exec(CSSDir);
             var type = keyOf(dir);
-            var d = { type };
+            var d = {
+                type
+            };
             switch (type) {
-                case 6 /* FOR */:
+                case 6 /* FOR */ :
                     d.iterator = parseIterator(content);
                     break;
-                case 3 /* IF */:
+                case 3 /* IF */ :
                     d.condition = content;
                     d.isBranchStart = true;
                     break;
-                case 4 /* ELSE_IF */:
+                case 4 /* ELSE_IF */ :
                     d.condition = content;
                     d.isBranch = true;
                     break;
-                case 5 /* ELSE */:
+                case 5 /* ELSE */ :
                     d.isBranch = true;
                     break;
             }
             current = d;
-        }
-        else if (exResult = scanner.exec(selectorRE)) {
+        } else if (exResult = scanner.exec(selectorRE)) {
             /*
                 try to get the selector
             */
             current = {
-                type: 26 /* STYLE_RULE */,
+                type: 26 /* STYLE_RULE */ ,
                 selector: parseSelector(exResult[0])
             };
-        }
-        else if (exResult = scanner.exec(declarationRE)) {
+        } else if (exResult = scanner.exec(declarationRE)) {
             /*
                 the last declaration must end with  " ; "
             */
@@ -2735,37 +3237,40 @@ const parseCSS = (source) => {
                 attribute: exResult[0],
                 value: exResult[1]
             });
-            var { property, flag, endFlag } = declaration;
+            var {
+                property,
+                flag,
+                endFlag
+            } = declaration;
             if (flag === '$') {
                 declaration.isDynamicValue = true;
-            }
-            else if (flag === '$--') {
+            } else if (flag === '$--') {
                 declaration.isDynamicValue = true;
                 declaration.property = '--' + property;
                 declaration.illegalKey = true;
-            }
-            else if (flag === '--') {
+            } else if (flag === '--') {
                 declaration.property = '--' + property;
                 declaration.illegalKey = true;
             }
             //! important
             declaration.isImportant = endFlag === '!';
-            (declarationGroup ||= []).push({
+            (declarationGroup || = []).push({
                 declaration,
                 type: 29 /* DECLARATION */
             });
             continue;
-        }
-        else {
+        } else {
             /* error */
             debugger;
         }
         /* process the relation , with cascading struct */
         if (declarationGroup) {
-            var asb = { type: 28 /* DECLARATION_GROUP */ };
+            var asb = {
+                type: 28 /* DECLARATION_GROUP */
+            };
             asb.children = declarationGroup;
             asb.parent = parent;
-            (parent.children ||= []).push(asb);
+            (parent.children || = []).push(asb);
             declarationGroup = null;
         }
         if (closing) {
@@ -2778,9 +3283,8 @@ const parseCSS = (source) => {
         if (!parent) {
             // while there is no parent , the currentDeclaration is meaningless
             ast.push(current);
-        }
-        else {
-            var children = parent.children ||= [];
+        } else {
+            var children = parent.children || = [];
             current.parent = parent;
             children.push(current);
         }
@@ -2796,30 +3300,30 @@ const parseCSS = (source) => {
 const processRules = (rules, isKeyframe = false) => {
     rules.forEach((rule) => {
         switch (rule.type) {
-            case 26 /* STYLE_RULE */:
-                const { selector, parent } = rule;
+            case 26 /* STYLE_RULE */ :
+                const {
+                    selector, parent
+                } = rule;
                 if (isKeyframe) {
-                    rule.type = 27 /* KEYFRAME_RULE */;
-                }
-                else {
-                    var extendSelectors = parent?.selectors;
+                    rule.type = 27 /* KEYFRAME_RULE */ ;
+                } else {
+                    var extendSelectors = parent ? .selectors;
                     if (extendSelectors) {
                         rule.selectors = [...extendSelectors, selector];
-                    }
-                    else {
+                    } else {
                         rule.selectors = [selector];
                     }
                 }
                 break;
-            case 3 /* IF */:
-            case 4 /* ELSE_IF */:
-            case 5 /* ELSE */:
-            case 6 /* FOR */:
-            case 22 /* MEDIA_RULE */:
-            case 23 /* SUPPORTS_RULE */:
-                rule.selectors = rule.parent?.selectors;
+            case 3 /* IF */ :
+            case 4 /* ELSE_IF */ :
+            case 5 /* ELSE */ :
+            case 6 /* FOR */ :
+            case 22 /* MEDIA_RULE */ :
+            case 23 /* SUPPORTS_RULE */ :
+                rule.selectors = rule.parent ? .selectors;
                 break;
-            case 24 /* KEYFRAMES_RULE */:
+            case 24 /* KEYFRAMES_RULE */ :
                 isKeyframe = true;
                 break;
         }
@@ -2837,76 +3341,85 @@ var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
 var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
 // array
 var arrayRE = /\[.*\]/;
+
 function isHandler(exp) {
     return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
 }
 const builtInTags = {
     ''(ast) {
-        ast.type = 12 /* TEXT */;
+        ast.type = 12 /* TEXT */ ;
         ast.children = parseText(ast.children);
         ast.ignoreChildren = true;
     },
     '!'(ast) {
-        ast.type = 10 /* HTML_COMMENT */;
+        ast.type = 10 /* HTML_COMMENT */ ;
         ast.ignoreChildren = true;
     },
-    if(ast) {
-        ast.type = 3 /* IF */;
+    if (ast) {
+        ast.type = 3 /* IF */ ;
         ast.condition = ast.rawAttributeMap.condition;
         ast.isBranchStart = true;
     },
     elseIf(ast) {
-        ast.type = 4 /* ELSE_IF */;
+        ast.type = 4 /* ELSE_IF */ ;
         ast.condition = ast.rawAttributeMap.condition;
         ast.isBranch = true;
     },
     else(ast) {
-        ast.type = 5 /* ELSE */;
+        ast.type = 5 /* ELSE */ ;
         ast.isBranch = true;
     },
-    for(ast) {
-        ast.type = 6 /* FOR */;
+    for (ast) {
+        ast.type = 6 /* FOR */ ;
         ast.iterator = parseIterator(ast.rawAttributeMap.iterator);
     },
     template(ast) {
-        ast.type = 2 /* TEMPLATE */;
+        ast.type = 2 /* TEMPLATE */ ;
+    },
+    fragment(ast) {
+        ast.type = 2 /* TEMPLATE */ ;
     },
     // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
     slot(ast) {
-        ast.type = 35 /* SLOT */;
+        ast.type = 35 /* SLOT */ ;
         // 插槽名称支持动态， 作用域不支持动态
         // ! slot need : slotName , isDynamicSlot 
-        ast.type = 35 /* SLOT */;
-        let name = ast?.attributeMap?.name;
-        name.type = 39 /* SKIP */;
+        ast.type = 35 /* SLOT */ ;
+        let name = ast ? .attributeMap ? .name;
+        name.type = 39 /* SKIP */ ;
         if (name) {
             ast.slotName = name.value;
             ast.isDynamicSlot = name.isDynamicValue;
-        }
-        else {
+        } else {
             ast.slotName = 'default';
             ast.isDynamicSlot = false;
         }
     },
     component(ast) {
-        ast.type = 16 /* DYNAMIC_COMPONENT */;
+        ast.type = 16 /* DYNAMIC_COMPONENT */ ;
         const is = ast.attributeMap.is;
-        const { isDynamicValue, value } = is;
+        const {
+            isDynamicValue,
+            value
+        } = is;
         ast.is = value;
         ast.isDynamicIs = isDynamicValue;
-        is.type = 39 /* SKIP */;
+        is.type = 39 /* SKIP */ ;
     },
     element(ast) {
-        ast.type = 11 /* DYNAMIC_ELEMENT */;
+        ast.type = 11 /* DYNAMIC_ELEMENT */ ;
         const is = ast.attributeMap.is;
-        const { isDynamicValue, value } = is;
+        const {
+            isDynamicValue,
+            value
+        } = is;
         ast.is = value;
         ast.isDynamicIs = isDynamicValue;
-        is.type = 39 /* SKIP */;
+        is.type = 39 /* SKIP */ ;
     },
     style(ast) {
-        ast.type = 17 /* STYLE */;
-        var template = ast.children?.[0].children;
+        ast.type = 17 /* STYLE */ ;
+        var template = ast.children ? . [0].children;
         if (template) {
             var styleAst = parseCSS(template);
             processRules(styleAst);
@@ -2915,14 +3428,14 @@ const builtInTags = {
         ast.ignoreChildren = true;
     }
 };
-// 
+// 由外界注入的指令 ， 还需要额外处理
 const customDirectiveHandlers = {
     model(attribute, ast) {
         let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : ast.rawAttributeMap.type || 'text';
         // transform 
         attribute.property = `model${initialUpperCase(modelType)}`;
         ast.attributes.unshift({
-            type: 7 /* ATTRIBUTE */,
+            type: 7 /* ATTRIBUTE */ ,
             property: '_setter',
             value: toArrowFunction(`${attribute.value} = _`, '_'),
             isDynamicValue: true,
@@ -2931,41 +3444,40 @@ const customDirectiveHandlers = {
     }
 };
 const builtInAttributes = {
-    if(attr, ast) {
-        attr.type = 3 /* IF */;
-        const directives = ast.directives ||= [];
+    if (attr, ast) {
+        attr.type = 3 /* IF */ ;
+        const directives = ast.directives || = [];
         if (!directives.length) { // 为元素的第一个指令
             ast.condition = attr.value;
             ast.isBranchStart = true;
-        }
-        else {
+        } else {
             directives.push(attr);
         }
     },
     elseIf(attr, ast) {
-        attr.type = 4 /* ELSE_IF */;
+        attr.type = 4 /* ELSE_IF */ ;
         if (!ast.directives.length) {
             ast.isBranch = true;
             ast.condition = attr.value;
         }
     },
     else(attr, ast) {
-        attr.type = 5 /* ELSE */;
+        attr.type = 5 /* ELSE */ ;
         ast.isBranch = true;
     },
-    for(attr, ast) {
-        attr.type = 6 /* FOR */;
+    for (attr, ast) {
+        attr.type = 6 /* FOR */ ;
         attr.iterator = parseIterator(attr.value);
         ast.directives.push(attr);
     },
     text(attr, ast) {
-        attr.type = 7 /* ATTRIBUTE */;
+        attr.type = 7 /* ATTRIBUTE */ ;
         attr.property = 'innerText';
         attr.isDynamicValue = true;
         ast.children = null; // 直接忽略
     },
     html(attr, ast) {
-        attr.type = 7 /* ATTRIBUTE */;
+        attr.type = 7 /* ATTRIBUTE */ ;
         attr.property = 'innerHTML';
         attr.isDynamicValue = true;
         ast.children = null; // 直接忽略
@@ -2975,24 +3487,24 @@ const builtInAttributes = {
         /*
             注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
         */
-        attr.type = 39 /* SKIP */;
+        attr.type = 39 /* SKIP */ ;
         // 定义插槽无动态插槽 , 第一个参数为slot的名称
-        ast.defineSlotName = attr._arguments?.[0];
+        ast.defineSlotName = attr._arguments ? . [0];
         ast.isDynamicDefineSlotName = attr.isDynamicProperty;
         ast.slotScope = attr.value;
     },
     style(attr, ast) {
-        attr.type = 17 /* STYLE */;
+        attr.type = 17 /* STYLE */ ;
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
     },
     class(attr, ast) {
-        attr.type = 18 /* CLASS */;
+        attr.type = 18 /* CLASS */ ;
         // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
     }
 };
 const builtInEvents = {
     hook(attr, ast) {
-        attr.type = 39 /* SKIP */;
+        attr.type = 39 /* SKIP */ ;
         const hooks = attr._arguments;
         hooks.forEach((hook) => {
             ast.attributes.push({
@@ -3004,11 +3516,12 @@ const builtInEvents = {
         });
     }
 };
+
 function processAttribute(ast) {
     var attributes = ast.attributes;
     if (!attributes)
         return;
-    let attributeMap = ast.attributeMap ||= {};
+    let attributeMap = ast.attributeMap || = {};
     attributes.forEach((attr) => {
         // parseAttribute 不传入两个字符串是为了复用节点
         let processedAttribute = parseAttribute(attr);
@@ -3016,74 +3529,73 @@ function processAttribute(ast) {
     });
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i];
-        let { flag, isDynamicProperty } = attribute;
+        let {
+            flag,
+            isDynamicProperty
+        } = attribute;
         if (flag === '@') {
             // event
-            attribute.type = 25 /* EVENT */;
+            attribute.type = 25 /* EVENT */ ;
             attribute.isHandler = isHandler(attribute.value);
             if (!isDynamicProperty && builtInEvents[attribute.property]) {
                 // 保留事件
                 builtInEvents[attribute.property](attribute, ast);
             }
-        }
-        else if (flag === '--') {
-            attribute.type = 34 /* CUSTOM_DIRECTIVE */;
+        } else if (flag === '--') {
+            // 所有带 -- 一定是外界注入的指令
+            attribute.type = 34 /* CUSTOM_DIRECTIVE */ ;
             // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
             const customDirectiveHandler = customDirectiveHandlers[attribute.property];
-            (ast.customDirectives ||= []).push(attribute);
+            (ast.customDirectives || = []).push(attribute);
             if (!isDynamicProperty && customDirectiveHandler) {
                 customDirectiveHandler(attribute, ast);
             }
-        }
-        else if (flag === '#') {
-            // id shorthand
-            attribute.type = 7 /* ATTRIBUTE */;
-            attribute.value = attribute.property;
+        } else if (flag === '#') {
+            /*
+                <div #app> </div> => <div #app> </div>
+                <template #header></template> =>  <template slot:header></template>
+                <Hello #app> => ref ??
+            */
+            attribute.type = 7 /* ATTRIBUTE */ ;
+            // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+            attribute.value = hyphenate(attribute.property);
             attribute.property = 'id';
             attribute.isDynamicValue = attribute.isDynamicProperty;
             attribute.isDynamicProperty = false;
-        }
-        else if (flag === '.') {
+        } else if (flag === '.') {
             // class shourthand
-            attribute.type = 18 /* CLASS */;
+            attribute.type = 18 /* CLASS */ ;
             attribute.value = attribute.property;
             attribute.property = 'class';
             attribute.isDynamicValue = attribute.isDynamicProperty;
             attribute.isDynamicProperty = false;
-        }
-        else {
+        } else {
             // normal property , if for 等也会作为属性出现
             const attrHandler = builtInAttributes[attribute.property];
             if (!attrHandler || attribute.isDynamicProperty) {
-                attribute.type = 7 /* ATTRIBUTE */;
-            }
-            else {
-                ast.directives ||= [];
+                attribute.type = 7 /* ATTRIBUTE */ ;
+            } else {
+                ast.directives || = [];
                 attrHandler(attribute, ast);
             }
         }
     }
 }
+
 function processAst(ast) {
     if (isArray(ast)) {
         ast.forEach(processAst);
         return;
     }
-    const tag = ast.tag;
-    const tagName = camelize(tag);
-    ast.tagName = tagName;
+    const tagName = ast.tagName = camelize(ast.tag);
+    let builtInTagHandler = builtInTags[tagName];
+    if (!builtInTagHandler) {
+        ast.type = isHTMLTag(tagName) ? 13 /* HTML_ELEMENT */ : isSVGTag(tagName) ? 9 /* SVG_ELEMENT */ : 14 /* COMPONENT */ ;
+    }
+    // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
     processAttribute(ast);
-    if (builtInTags[tagName]) {
-        builtInTags[tagName](ast);
-    }
-    else if (isHTMLTag(tagName)) {
-        ast.type = 13 /* HTML_ELEMENT */;
-    }
-    else if (isSVGTag(tagName)) {
-        ast.type = 9 /* SVG_ELEMENT */;
-    }
-    else {
-        ast.type = 14 /* COMPONENT */;
+    if (builtInTagHandler) {
+        builtInTagHandler(ast);
     }
     if (!ast.ignoreChildren && ast.children) {
         processAst(ast.children);
@@ -3138,11 +3650,9 @@ const genNodes = (nodes, context) => {
     const children = genChildren(nodes, context);
     if (children.length === 0) {
         return 'null';
-    }
-    else if (children.length === 1) {
+    } else if (children.length === 1) {
         return children[0];
-    }
-    else {
+    } else {
         return genFragment(stringify(children), context);
     }
 };
@@ -3166,13 +3676,11 @@ function genChildren(nodes, context) {
         if (node.isBranchStart) {
             children.push([node]);
             inBranch = true;
-        }
-        else if (node.isBranch) {
+        } else if (node.isBranch) {
             if (inBranch) {
                 children[children.length - 1].push(node);
             }
-        }
-        else {
+        } else {
             children.push(genNode(node, context));
             inBranch = false;
         }
@@ -3182,15 +3690,15 @@ function genChildren(nodes, context) {
             const branchCondition = child.map((b) => b.condition).filter(Boolean); // 勇于筛除else的condition ， 其他应该在之前就报错
             const branchContent = child.map((b) => genNode(b, context));
             return ternaryChains(branchCondition, branchContent);
-        }
-        else {
+        } else {
             return child;
         }
     });
     return children;
 }
-const genFor = (target, iterator, context) => context.callRenderFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
+const genFor = (target, iterator, context) => context.callRenderFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */ );
 const genIf = (target, condition) => ternaryExp(condition, target, NULL);
+
 function genForWithFragment(target, iterator, context) {
     return genFragment(genFor(target, iterator, context), context);
 }
@@ -3200,27 +3708,28 @@ const genDirectives = (target, dirs, context) => {
     */
     if (!dirs || dirs.length === 0) {
         return target;
-    }
-    else {
+    } else {
         // from end to start
         var dir = dirs[dirs.length - 1];
         dirs.pop();
         switch (dir.type) {
-            case 3 /* IF */:
+            case 3 /* IF */ :
                 target = genIf(target, dir.value);
                 break;
-            case 6 /* FOR */:
+            case 6 /* FOR */ :
                 target = genForWithFragment(target, dir.iterator, context);
                 break;
         }
         return genDirectives(target, dirs, context);
     }
 };
+
 function genChildrenString(children, context) {
     if (!children)
         return NULL;
     return stringify(genChildren(children, context));
 }
+
 function genDirs(code, node, context) {
     if (node.customDirectives) {
         code = genCustomDirectives(code, node.customDirectives, context);
@@ -3230,9 +3739,16 @@ function genDirs(code, node, context) {
     }
     return code;
 }
+
 function genCustomDirectives(code, directives, context) {
     var dirs = directives.map((directive) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers } = directive;
+        var {
+            property,
+            value,
+            isDynamicProperty,
+            _arguments,
+            modifiers
+        } = directive;
         var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property));
         if (!isDynamicProperty) {
             directive = context.hoistExpression(directive);
@@ -3246,8 +3762,11 @@ function genCustomDirectives(code, directives, context) {
     });
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
 }
+
 function genSlotContent(node, context) {
-    var { children } = node;
+    var {
+        children
+    } = node;
     /*
         关于插槽的定义 ,
         插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
@@ -3259,13 +3778,15 @@ function genSlotContent(node, context) {
     var _default;
     var slots = {};
     children.forEach((child) => {
-        var { defineSlotName, slotScope } = child;
+        var {
+            defineSlotName,
+            slotScope
+        } = child;
         // 作用域插槽只能在具名插槽上
         if (defineSlotName) {
             slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope);
-        }
-        else {
-            (_default ||= []).push(child);
+        } else {
+            (_default || = []).push(child);
         }
     });
     if (_default) {
@@ -3274,42 +3795,49 @@ function genSlotContent(node, context) {
     }
     return stringify(slots);
 }
+
 function genNode(node, context) {
     switch (node.type) {
-        case 10 /* HTML_COMMENT */:
+        case 10 /* HTML_COMMENT */ :
             return context.callRenderFn(renderMethodsNameMap.createComment, toBackQuotes(node.children), uid());
-        case 3 /* IF */:
-        case 4 /* ELSE_IF */:
-        case 5 /* ELSE */:
+        case 3 /* IF */ :
+        case 4 /* ELSE_IF */ :
+        case 5 /* ELSE */ :
             return genNodes(node.children, context);
-        case 6 /* FOR */:
+        case 6 /* FOR */ :
             // use the fragment , cause the iterator will set the u key in each node , 
             return genForWithFragment(genNodes(node.children, context), node.iterator, context);
-        case 2 /* TEMPLATE */:
+        case 2 /* TEMPLATE */ :
             var code = genNodes(node.children, context);
             // 只有模板上的保留属性会生效
             return genDirectives(code, node.directives, context);
-        case 35 /* SLOT */:
-            const { slotName, isDynamicSlot, children } = node;
+        case 35 /* SLOT */ :
+            const {
+                slotName, isDynamicSlot, children
+            } = node;
             return context.callRenderFn(renderMethodsNameMap.renderSlot, isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
-        case 36 /* OUTLET */:
+        case 36 /* OUTLET */ :
             return genNodes(node.children, context);
-        case 11 /* DYNAMIC_ELEMENT */:
-            var { is, isDynamicIs } = node;
+        case 11 /* DYNAMIC_ELEMENT */ :
+            var {
+                is, isDynamicIs
+            } = node;
             var code = context.callRenderFn(renderMethodsNameMap.createElement, isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
-            genChildrenString(node.children, context), uStringId());
+                genChildrenString(node.children, context), uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 13 /* HTML_ELEMENT */:
+        case 13 /* HTML_ELEMENT */ :
             var code = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 9 /* SVG_ELEMENT */:
+        case 9 /* SVG_ELEMENT */ :
             var code = context.callRenderFn(renderMethodsNameMap.createSVGElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 16 /* DYNAMIC_COMPONENT */:
-            var { is, isDynamicIs } = node;
+        case 16 /* DYNAMIC_COMPONENT */ :
+            var {
+                is, isDynamicIs
+            } = node;
             var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is));
             // 动态组件不会提升
             var props = genProps(node, context);
@@ -3317,7 +3845,7 @@ function genNode(node, context) {
             code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 14 /* COMPONENT */:
+        case 14 /* COMPONENT */ :
             var code = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName));
             var uv = context.hoistExpression(code);
             var props = genProps(node, context);
@@ -3325,25 +3853,25 @@ function genNode(node, context) {
             code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 12 /* TEXT */:
+        case 12 /* TEXT */ :
             return genText(node.children, context);
-        case 17 /* STYLE */:
+        case 17 /* STYLE */ :
             var props = genProps(node, context);
             var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId());
             code = genDirs(code, node, context);
             return code;
-        case 26 /* STYLE_RULE */:
+        case 26 /* STYLE_RULE */ :
             return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
-        case 22 /* MEDIA_RULE */:
+        case 22 /* MEDIA_RULE */ :
             const rules = stringify(genChildren(node.children, context));
             return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId());
-        case 24 /* KEYFRAMES_RULE */:
+        case 24 /* KEYFRAMES_RULE */ :
             return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
-        case 27 /* KEYFRAME_RULE */:
+        case 27 /* KEYFRAME_RULE */ :
             return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
-        case 23 /* SUPPORTS_RULE */:
+        case 23 /* SUPPORTS_RULE */ :
             return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
-        case 28 /* DECLARATION_GROUP */:
+        case 28 /* DECLARATION_GROUP */ :
             return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId());
     }
 }
@@ -3356,23 +3884,25 @@ const genTextContent = (texts, context) => {
 const genText = (texts, context) => {
     return context.callRenderFn(renderMethodsNameMap.createText, genTextContent(texts, context), uStringId());
 };
+
 function genSelector(selectors, context) {
     /*
         先保留数组形式,再进行处理
     */
     var res = [];
     var lastIsStatic = false;
-    selectors.forEach(({ selectorText, isDynamic }) => {
+    selectors.forEach(({
+        selectorText,
+        isDynamic
+    }) => {
         if (isDynamic) {
             res.push(selectorText);
             lastIsStatic = false;
-        }
-        else {
+        } else {
             var splitedSelector = splitSelector(selectorText);
             if (lastIsStatic) {
                 res[res.length - 1] = mergeSplitedSelector(res[res.length - 1], splitedSelector);
-            }
-            else {
+            } else {
                 res.push(splitedSelector);
             }
             lastIsStatic = true;
@@ -3381,8 +3911,7 @@ function genSelector(selectors, context) {
     var selectorCode = res.map((item) => {
         if (isArray(item)) { // static
             return toBackQuotes(joinSelector(item));
-        }
-        else { // dynamic
+        } else { // dynamic
             // scope  
             return toBackQuotes(item);
         }
@@ -3397,29 +3926,32 @@ function genDeclartion(declarationGroup, context) {
     var res = [];
     var lastIsDeclaration = false;
     declarationGroup.forEach((declaration) => {
-        if (declaration.type === 30 /* MIXIN */) {
+        if (declaration.type === 30 /* MIXIN */ ) {
             res.push(declaration.mixin);
             lastIsDeclaration = false;
-        }
-        else if (declaration.type === 29 /* DECLARATION */) {
+        } else if (declaration.type === 29 /* DECLARATION */ ) {
             var target;
             if (lastIsDeclaration) {
                 target = res[res.length - 1];
-            }
-            else {
+            } else {
                 target = {};
                 res.push(target);
                 lastIsDeclaration = true;
             }
-            var { property, value, isDynamicProperty, isDynamicValue, isImportant, illegalKey } = declaration.declaration;
+            var {
+                property,
+                value,
+                isDynamicProperty,
+                isDynamicValue,
+                isImportant,
+                illegalKey
+            } = declaration.declaration;
             if (isDynamicProperty) {
                 // 动态的key不存在不合法情况
                 property = dynamicMapKey(property);
-            }
-            else if (illegalKey) {
+            } else if (illegalKey) {
                 property = dynamicMapKey(toSingleQuotes(property));
-            }
-            else {
+            } else {
                 property = camelize(property);
             }
             if (!isDynamicValue) {
@@ -3434,30 +3966,34 @@ function genDeclartion(declarationGroup, context) {
     const _res = res.map((item) => {
         if (isObject(item)) {
             return objectStringify(item);
-        }
-        else {
+        } else {
             return item;
         }
     });
     if (_res.length === 1) {
         return _res[0];
-    }
-    else {
+    } else {
         return context.callRenderFn(renderMethodsNameMap.mixin, ..._res);
     }
 }
+
 function genProps(node, context) {
-    const { type, attributes } = node;
-    const isComponent = type === 14 /* COMPONENT */;
+    const {
+        type,
+        attributes
+    } = node;
+    const isComponent = type === 14 /* COMPONENT */ ;
     if (!attributes) {
         return NULL;
     }
     var props = {};
     attributes.forEach((attr) => {
         switch (attr.type) {
-            case 25 /* EVENT */:
-                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
-                value ||= property; // 简写形似
+            case 25 /* EVENT */ :
+                var {
+                    property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers
+                } = attr;
+                value || = property; // 简写形似
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
                         dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
@@ -3471,18 +4007,20 @@ function genProps(node, context) {
                 }
                 props[handlerKey] = callback;
                 break;
-            case 18 /* CLASS */:
-                var _class = props.class ||= [];
+            case 18 /* CLASS */ :
+                var _class = props.class || = [];
                 _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                 break;
-            case 17 /* STYLE */:
-                var style = props.style ||= [];
+            case 17 /* STYLE */ :
+                var style = props.style || = [];
                 style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                 break;
-            case 7 /* ATTRIBUTE */:
+            case 7 /* ATTRIBUTE */ :
                 // normal attributes
-                var { property, value, isDynamicProperty, isDynamicValue, } = attr;
-                value ||= property; // 简写形式
+                var {
+                    property, value, isDynamicProperty, isDynamicValue,
+                } = attr;
+                value || = property; // 简写形式
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
                 break;
         }
@@ -3527,10 +4065,10 @@ class CodeGenerator {
         this.methods[fn] = true;
         return callFn(fn, ...args);
     }
-    setScope() {
-    }
+    setScope() {}
 }
 const RENDER_METHODS = 'renderMethods';
+
 function compile(template) {
     var ast = baseParseHTML(template);
     processAst(ast);
@@ -3554,12 +4092,13 @@ function compile(template) {
 }
 
 const inlineStyleDelimiter = /\s*[:;]\s*/;
+
 function parseInlineStyle(styleString) {
     var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
     var l = chips.length;
     var styleMap = {};
     while (l) {
-        styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1]);
+        styleMap[camelize(chips[l - 2])] = chips[l - 1];
         l -= 2;
     }
     return styleMap;
@@ -3581,17 +4120,13 @@ function normalizeClass(rawClass) {
     */
     if (isString(rawClass)) {
         return parseInlineClass(rawClass);
-    }
-    else if (isObject(rawClass)) {
+    } else if (isObject(rawClass)) {
         return rawClass;
-    }
-    else if (isArray(rawClass)) {
+    } else if (isArray(rawClass)) {
         return extend(...rawClass.map(normalizeClass));
-    }
-    else if (isFunction(rawClass)) {
+    } else if (isFunction(rawClass)) {
         return normalizeClass(rawClass());
-    }
-    else {
+    } else {
         return emptyObject;
     }
 }
@@ -3602,23 +4137,22 @@ function normalizeClass(rawClass) {
 function normalizeStyle(style) {
     if (isObject(style)) {
         return style;
-    }
-    else if (isString(style)) {
+    } else if (isString(style)) {
         return parseInlineStyle(style);
-    }
-    else if (isArray(style)) {
+    } else if (isArray(style)) {
         style = style.map(normalizeStyle);
         return extend(...style);
+    } else {
+        return style;
     }
 }
 
 function renderSlot(name, scope, fallback, key) {
     const instance = getCurrentInstance();
-    let slot = instance?.slots?.[name] || fallback;
+    let slot = instance ? .slots ? . [name] || fallback;
     if (!slot) {
         return null;
-    }
-    else {
+    } else {
         slot = slot(scope);
     }
     // 这里返回的一定是单一节点（fragment），不会是数组形式
@@ -3652,37 +4186,38 @@ var renderMethods = {
     normalizeStyle,
     createComponent,
     renderSlot,
-    createMap
+    mergeSelectors
 };
 
 // if you are using css function with dynamic binding , use camelized function name 
 function toPositiveValue(value) {
     if (isNumber(value)) {
         return value < 0 ? -value : value;
-    }
-    else {
+    } else {
         return value.startsWith('-') ? value.slice(1) : value;
     }
 }
+
 function toNegativeValue(value) {
     if (isNumber(value)) {
         return value > 0 ? -value : value;
-    }
-    else {
+    } else {
         return value.startsWith('-') ? value : '-' + value;
     }
 }
+
 function toAbsoluteValue(value) {
     if (isNumber(value)) {
         return Math.abs(value);
-    }
-    else {
+    } else {
         return value.startsWith('-') ? value.slice(1) : value;
     }
 }
+
 function addUnit(value, unit) {
     return isNumber(value) ? `${value + unit}` : value;
 }
+
 function rgba(...rgba) {
     return `rgba(${rgba.join(',')})`;
 }
@@ -3713,63 +4248,79 @@ const hsl = hsla;
 function $var(variable) {
     return `var(${variable})`;
 }
+
 function attr(attrName) {
     return `attr(${attrName})`;
 }
+
 function calc(exp) {
     return `calc(${exp})`;
 }
+
 function cubicBezier(x1, y1, x2, y2) {
     return `cubic-bezier(${x1},${y1},${x2},${y2})`;
 }
 // color gradient
-function conicGradient() {
-}
-function linearGradient() {
-}
-function radialGradient() {
-}
+function conicGradient() {}
+
+function linearGradient() {}
+
+function radialGradient() {}
 const max = (...items) => `max(${items.join(',')})`;
 const min = (...items) => `min(${items.join(',')})`;
+
 function rotateY(deg) {
     return `rotateY(${addUnit(deg, 'deg')})`;
 }
+
 function translateX(t) {
     return `translateX(${t})`;
 }
+
 function translateY(t) {
     return `translateY(${t})`;
 }
+
 function translate3d(x, y, z) {
     return `translate3d(${x},${y},${z})`;
 }
+
 function scale(sx, sy) {
     return 'scale(' + sx + (sy ? `,${sy}` : '') + ')';
 }
+
 function scale3d(sx, sy, sz) {
     return `scale3d(${sx},${sy},${sz})`;
 }
+
 function rotate3d(x, y, z, a) {
     return `rotate3d(${x},${y},${z},${addUnit(a, 'deg')})`;
 }
+
 function rotate(a) {
     return `rotate(${addUnit(a, 'deg')})`;
 }
+
 function perspective(l) {
     return `perspective(${l})`;
 }
+
 function skewX(x) {
     return `skewX(${addUnit(x, 'deg')})`;
 }
+
 function skewY(y) {
     return `skewX(${addUnit(y, 'deg')})`;
 }
+
 function skew(x, y) {
     return `skew(${addUnit(x, 'deg')},${addUnit(y, 'deg')})`;
 }
+
 function scaleY(n) {
     return `scaleY(${n})`;
 }
+
 function scaleX(n) {
     return `scaleX(${n})`;
 }
@@ -3778,6 +4329,7 @@ function scaleX(n) {
 const groupSelectorDelimiter = /\s*,\s*/;
 const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
 const joinSelector = (splitedSelector) => splitedSelector.join(',');
+
 function mergeSelector(p, c) {
     var ref = false; // is using & 
     var merged = c.replace('&', () => {
@@ -3796,6 +4348,7 @@ function mergeSplitedSelector(parent, children) {
 }
 const mergeSplitedSelectors = (...selectors) => selectors.reduce(mergeSplitedSelector);
 const mergeSplitedSelectorsAndJoin = (...selectors) => joinSelector(mergeSplitedSelectors(...selectors));
+
 function mergeSelectors(...selectors) {
     return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
 }
@@ -3803,6 +4356,7 @@ function mergeSelectors(...selectors) {
 function keyframes(name, keyframes) {
     return createKeyframes(name, keyframes);
 }
+
 function keyframe(name, keyframes) {
     return createKeyframe(name, keyframes);
 }
@@ -3810,19 +4364,17 @@ function keyframe(name, keyframes) {
     comment : ! 66666
 */
 function h(type, props, children, key = uid()) {
-    if (isObject(type)) {
-        // state component
+    if (isObject(type) || isFunction(type)) {
+        // 同时支持有状态组件和函数式组件
         if (children && !isObject(children)) {
             children = {
                 default: children
             };
         }
         return createComponent(type, props, children, key);
-    }
-    else if (isHTMLTag(type)) {
+    } else if (isHTMLTag(type)) {
         return createElement(type, props, children, key);
-    }
-    else if (isSVGTag(type)) {
+    } else if (isSVGTag(type)) {
         return createSVGElement(type, props, children, key);
     }
 }
@@ -3836,10 +4388,14 @@ function h(type, props, children, key = uid()) {
     rang
 */
 const modelText = {
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         el.value = value;
     },
-    created(el, { value }, vnode) {
+    created(el, {
+        value
+    }, vnode) {
         const setter = vnode.props._setter;
         el.value = value;
         addListener(el, 'input', () => {
@@ -3849,7 +4405,13 @@ const modelText = {
 };
 // 多个相同name的input同时出现
 const modelRadio = {
-    created(el, { value }, { props: { _setter } }) {
+    created(el, {
+        value
+    }, {
+        props: {
+            _setter
+        }
+    }) {
         if (el.value === value) {
             el.checked = true;
         }
@@ -3858,18 +4420,21 @@ const modelRadio = {
         });
     },
     // data to input
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         if (el.value === String(value)) {
             el.checked = true;
-        }
-        else {
+        } else {
             el.checked = false;
         }
     }
 };
 // modelcheckbox dont need setter
 const modelCheckbox = {
-    created(el, { value: checked }) {
+    created(el, {
+        value: checked
+    }) {
         if (!isArray(checked)) {
             return;
         }
@@ -3879,17 +4444,19 @@ const modelCheckbox = {
         addListener(el, 'change', () => {
             if (el.checked) {
                 checked.push(el.value);
-            }
-            else {
+            } else {
                 removeFromArray(checked, el.value);
             }
         });
     },
     // 数据改变更新视图
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         el.checked = value.includes(el.value);
     }
 };
+
 function getSelectedValue(selectEl) {
     let selected = [];
     for (let option of selectEl.options) {
@@ -3899,13 +4466,20 @@ function getSelectedValue(selectEl) {
     }
     return selected;
 }
+
 function setSelectState(selectEl, selected) {
     for (let option of selectEl.options) {
         option.selected = selected.includes(option.value);
     }
 }
 const modelSelectOne = {
-    childrenMounted(el, { value }, { props: { _setter } }) {
+    childrenMounted(el, {
+        value
+    }, {
+        props: {
+            _setter
+        }
+    }) {
         let options = el.options;
         for (let option of options) {
             // options 默认第一个为选中的
@@ -3915,14 +4489,22 @@ const modelSelectOne = {
             _setter(el.value);
         });
     },
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         if (value !== el.value) {
             el.value = value;
         }
     }
 };
 const modelSelectMultiple = {
-    childrenMounted(el, { value }, { props: { _setter } }) {
+    childrenMounted(el, {
+        value
+    }, {
+        props: {
+            _setter
+        }
+    }) {
         if (!isArray(value)) {
             return;
         }
@@ -3935,31 +4517,45 @@ const modelSelectMultiple = {
             _setter(getSelectedValue(el));
         });
     },
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         setSelectState(el, value);
     }
 };
 // 目前只支持 16 进制
 const modelColor = {
-    created(el, { value }, vnode) {
+    created(el, {
+        value
+    }, vnode) {
         const setter = vnode.props._setter;
         el.value = value;
         addListener(el, 'input', () => {
             setter(el.value);
         });
     },
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         el.value = value;
     },
 };
 const modelRange = {
-    created(el, { value }, { props: { _setter } }) {
+    created(el, {
+        value
+    }, {
+        props: {
+            _setter
+        }
+    }) {
         el.value = value;
         addListener(el, 'input', () => {
             _setter(el.value);
         });
     },
-    beforeUpdate(el, { value }) {
+    beforeUpdate(el, {
+        value
+    }) {
         el.value = value;
     }
 };
@@ -3967,24 +4563,30 @@ const modelRange = {
 function setDisplay(el, show) {
     if (show) {
         el.style.display = el._display;
-    }
-    else {
+    } else {
         el.style.display = 'none';
     }
 }
 const showDirective = {
-    beforeMount(el, { value }, { transition }) {
+    beforeMount(el, {
+        value
+    }, {
+        transition
+    }) {
         el._display = el.style.display;
         setDisplay(el, value);
     },
-    updated(el, { value, oldValue }, { transition }) {
+    updated(el, {
+        value,
+        oldValue
+    }, {
+        transition
+    }) {
         if (!value === !oldValue) {
             return;
-        }
-        else if (!transition) {
+        } else if (!transition) {
             setDisplay(el, value);
-        }
-        else {
+        } else {
             value ? transition.processShow(el) : transition.processHide(el);
         }
     }
@@ -3996,8 +4598,16 @@ function doCSSAnimation(el, options, endCb, cancelCb) {
         // ! 元素本身不应该存在动画名称属性
         return;
     }
-    const { name, duration, timingFunction, delay, playState, fillMode, iterationCount, // infinite 无限次时 结束回调失效
-    direction } = options;
+    const {
+        name,
+        duration,
+        timingFunction,
+        delay,
+        playState,
+        fillMode,
+        iterationCount, // infinite 无限次时 结束回调失效
+        direction
+    } = options;
     const animationDeclaration = {
         animationName: name,
         animationDuration: isNumber(Number(duration)) ? duration + 'ms' : duration,
@@ -4040,143 +4650,151 @@ const slideInDown = [keyframe('from', {
     }),
     keyframe('to', {
         transform: translate3d(0, 0, 0)
-    })];
+    })
+];
 const slideInUp = [keyframe('from', {
         transform: translate3d(0, '100%', 0),
         visibility: 'visible'
     }),
     keyframe('to', {
         transform: translate3d(0, 0, 0)
-    })];
+    })
+];
 const slideInLeft = [keyframe('from', {
         transform: translate3d('-100%', 0, 0),
         visibility: 'visible'
     }),
     keyframe('to', {
         transform: translate3d(0, 0, 0)
-    })];
+    })
+];
 const slideInRight = [keyframe('from', {
         transform: translate3d('100%', 0, 0),
         visibility: 'visible'
     }),
     keyframe('to', {
         transform: translate3d(0, 0, 0)
-    })];
+    })
+];
 const slideOutDown = [keyframe('from', {
         transform: translate3d(0, 0, 0)
     }),
     keyframe('to', {
         transform: translate3d(0, '100%', 0),
         visibility: 'hidden'
-    })];
+    })
+];
 const slideOutUp = [keyframe('from', {
         transform: translate3d(0, 0, 0)
     }),
     keyframe('to', {
         transform: translate3d(0, '-100%', 0),
         visibility: 'hidden'
-    })];
+    })
+];
 const slideOutLeft = [keyframe('from', {
         transform: translate3d(0, 0, 0)
     }),
     keyframe('to', {
         transform: translate3d('-100%', 0, 0),
         visibility: 'hidden'
-    })];
+    })
+];
 const slideOutRight = [keyframe('from', {
         transform: translate3d(0, 0, 0)
     }),
     keyframe('to', {
         transform: translate3d('100%', 0, 0),
         visibility: 'hidden'
-    })];
+    })
+];
 
 const zoomIn = [keyframe('from', {
-        transform: scale3d(0.3, 0.3, 0.3),
-        opacity: 0
-    }), keyframe(50, {
-        opacity: 1
-    })];
+    transform: scale3d(0.3, 0.3, 0.3),
+    opacity: 0
+}), keyframe(50, {
+    opacity: 1
+})];
 const zoomInDown = [keyframe('from', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-1000px', 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe(60, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-1000px', 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe(60, {
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomInUp = [keyframe('from', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '1000px', 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe(60, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '1000px', 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe(60, {
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomInLeft = [keyframe('from', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d('-1000px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe(60, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d('10px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d('-1000px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe(60, {
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d('10px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomInRight = [keyframe('from', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d('1000px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe(60, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d('-10px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d('1000px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe(60, {
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d('-10px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomOut = [keyframe('from', {
-        opacity: 1
-    }), keyframe(40, {
-        opacity: 0,
-        transform: scale3d(0.3, 0.3, 0.3)
-    }), keyframe('to', {
-        opacity: 0
-    })];
+    opacity: 1
+}), keyframe(40, {
+    opacity: 0,
+    transform: scale3d(0.3, 0.3, 0.3)
+}), keyframe('to', {
+    opacity: 0
+})];
 const zoomOutDown = [keyframe(40, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe('to', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '2000px', 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '-60px', 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe('to', {
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '2000px', 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomOutUp = [keyframe(40, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe('to', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-2000px', 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d(0, '60px', 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe('to', {
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d(0, '-2000px', 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomOutLeft = [keyframe(40, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d('42px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe('to', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d('-2000px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d('42px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe('to', {
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d('-2000px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 const zoomOutRight = [keyframe(40, {
-        opacity: 1,
-        transform: [scale3d(0.475, 0.475, 0.475), translate3d('-42px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
-    }), keyframe('to', {
-        opacity: 0,
-        transform: [scale3d(0.1, 0.1, 0.1), translate3d('2000px', 0, 0)],
-        animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
-    })];
+    opacity: 1,
+    transform: [scale3d(0.475, 0.475, 0.475), translate3d('-42px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.55, 0.055, 0.675, 0.19)
+}), keyframe('to', {
+    opacity: 0,
+    transform: [scale3d(0.1, 0.1, 0.1), translate3d('2000px', 0, 0)],
+    animationTimingFunction: cubicBezier(0.175, 0.885, 0.32, 1)
+})];
 
 const hinge = [
     keyframe(0, {
@@ -4258,75 +4876,189 @@ const bounceIn = [
     keyframe(['from', 20, 40, 60, 80, 100], {
         animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1)
     }),
-    keyframe(0, { transform: scale3d(0.3, 0.3, 0.3) }),
-    keyframe(20, { transform: scale3d(1.1, 1.1, 1.1) }),
-    keyframe(40, { transform: scale3d(0.9, 0.9, 0.9) }),
-    keyframe(60, { transform: scale3d(1.03, 1.03, 1.03) }),
-    keyframe(80, { transform: scale3d(0.97, 0.97, 0.97) }),
-    keyframe(100, { transform: scale3d(1, 1, 1) }),
+    keyframe(0, {
+        transform: scale3d(0.3, 0.3, 0.3)
+    }),
+    keyframe(20, {
+        transform: scale3d(1.1, 1.1, 1.1)
+    }),
+    keyframe(40, {
+        transform: scale3d(0.9, 0.9, 0.9)
+    }),
+    keyframe(60, {
+        transform: scale3d(1.03, 1.03, 1.03)
+    }),
+    keyframe(80, {
+        transform: scale3d(0.97, 0.97, 0.97)
+    }),
+    keyframe(100, {
+        transform: scale3d(1, 1, 1)
+    }),
 ];
 const bounceOut = [
-    keyframe(20, { transform: scale3d(0.9, 0.9, 0.9) }),
-    keyframe([50, 55], { opacity: 1, transform: scale3d(1.1, 1.1, 1.1) }),
-    keyframe(100, { transform: scale3d(0.3, 0.3, 0.3), opacity: 0 })
+    keyframe(20, {
+        transform: scale3d(0.9, 0.9, 0.9)
+    }),
+    keyframe([50, 55], {
+        opacity: 1,
+        transform: scale3d(1.1, 1.1, 1.1)
+    }),
+    keyframe(100, {
+        transform: scale3d(0.3, 0.3, 0.3),
+        opacity: 0
+    })
 ];
 const bounceInDown = [
-    keyframe([0, 60, 75, 90, 100], { animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1) }),
-    keyframe(0, { opacity: 0, transform: [translate3d(0, '-3000px', 0), scaleY(3)] }),
-    keyframe(60, { opacity: 1, transform: [translate3d(0, '25px', 0), scaleY(0.9)] }),
-    keyframe(75, { transform: [translate3d(0, '-10px', 0), scaleY(0.95)] }),
-    keyframe(90, { transform: [translate3d(0, '5px', 0), scaleY(0.985)] }),
-    keyframe(100, { transform: translate3d(0, 0, 0) }),
+    keyframe([0, 60, 75, 90, 100], {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1)
+    }),
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d(0, '-3000px', 0), scaleY(3)]
+    }),
+    keyframe(60, {
+        opacity: 1,
+        transform: [translate3d(0, '25px', 0), scaleY(0.9)]
+    }),
+    keyframe(75, {
+        transform: [translate3d(0, '-10px', 0), scaleY(0.95)]
+    }),
+    keyframe(90, {
+        transform: [translate3d(0, '5px', 0), scaleY(0.985)]
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
 ];
 const bounceInUp = [
-    keyframe([0, 60, 75, 90, 100], { animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1) }),
-    keyframe(0, { opacity: 0, transform: [translate3d(0, '-3000px', 0), scaleY(3)] }),
-    keyframe(60, { opacity: 1, transform: [translate3d(0, '25px', 0), scaleY(0.9)] }),
-    keyframe(75, { transform: [translate3d(0, '-10px', 0), scaleY(0.95)] }),
-    keyframe(90, { transform: [translate3d(0, '5px', 0), scaleY(0.985)] }),
-    keyframe(100, { transform: translate3d(0, 0, 0) }),
+    keyframe([0, 60, 75, 90, 100], {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1)
+    }),
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d(0, '-3000px', 0), scaleY(3)]
+    }),
+    keyframe(60, {
+        opacity: 1,
+        transform: [translate3d(0, '25px', 0), scaleY(0.9)]
+    }),
+    keyframe(75, {
+        transform: [translate3d(0, '-10px', 0), scaleY(0.95)]
+    }),
+    keyframe(90, {
+        transform: [translate3d(0, '5px', 0), scaleY(0.985)]
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
 ];
 const bounceInLeft = [
-    keyframe([0, 60, 75, 90, 100], { animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1) }),
-    keyframe(0, { opacity: 0, transform: [translate3d('-3000px', 0, 0), scaleY(3)] }),
-    keyframe(60, { opacity: 1, transform: [translate3d('25px', 0, 0), scaleY(0.9)] }),
-    keyframe(75, { transform: [translate3d('-10px', 0, 0), scaleY(0.95)] }),
-    keyframe(90, { transform: [translate3d('5px', 0, 0), scaleY(0.985)] }),
-    keyframe(100, { transform: translate3d(0, 0, 0) }),
+    keyframe([0, 60, 75, 90, 100], {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1)
+    }),
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d('-3000px', 0, 0), scaleY(3)]
+    }),
+    keyframe(60, {
+        opacity: 1,
+        transform: [translate3d('25px', 0, 0), scaleY(0.9)]
+    }),
+    keyframe(75, {
+        transform: [translate3d('-10px', 0, 0), scaleY(0.95)]
+    }),
+    keyframe(90, {
+        transform: [translate3d('5px', 0, 0), scaleY(0.985)]
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
 ];
 const bounceInRight = [
-    keyframe([0, 60, 75, 90, 100], { animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1) }),
-    keyframe(0, { opacity: 0, transform: [translate3d('3000px', 0, 0), scaleY(3)] }),
-    keyframe(60, { opacity: 1, transform: [translate3d('-25px', 0, 0), scaleY(0.9)] }),
-    keyframe(75, { transform: [translate3d('10px', 0, 0), scaleY(0.95)] }),
-    keyframe(90, { transform: [translate3d('-5px', 0, 0), scaleY(0.985)] }),
-    keyframe(100, { transform: translate3d(0, 0, 0) }),
+    keyframe([0, 60, 75, 90, 100], {
+        animationTimingFunction: cubicBezier(0.215, 0.61, 0.355, 1)
+    }),
+    keyframe(0, {
+        opacity: 0,
+        transform: [translate3d('3000px', 0, 0), scaleY(3)]
+    }),
+    keyframe(60, {
+        opacity: 1,
+        transform: [translate3d('-25px', 0, 0), scaleY(0.9)]
+    }),
+    keyframe(75, {
+        transform: [translate3d('10px', 0, 0), scaleY(0.95)]
+    }),
+    keyframe(90, {
+        transform: [translate3d('-5px', 0, 0), scaleY(0.985)]
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0)
+    }),
 ];
 const bounceOutDown = [
-    keyframe(20, { transform: [translate3d(0, '10px', 0), scaleY(0.985)] }),
-    keyframe([40, 45], { opacity: 1, transform: [translate3d(0, '-20px', 0), scaleY(0.9)] }),
-    keyframe(100, { opacity: 0, transform: [translate3d(0, '2000px', 0), scaleY(3)] }),
+    keyframe(20, {
+        transform: [translate3d(0, '10px', 0), scaleY(0.985)]
+    }),
+    keyframe([40, 45], {
+        opacity: 1,
+        transform: [translate3d(0, '-20px', 0), scaleY(0.9)]
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: [translate3d(0, '2000px', 0), scaleY(3)]
+    }),
 ];
 const bounceOutUp = [
-    keyframe(20, { transform: [translate3d(0, '-10px', 0), scaleY(0.985)] }),
-    keyframe([40, 45], { opacity: 1, transform: [translate3d(0, '20px', 0), scaleY(0.9)] }),
-    keyframe(100, { opacity: 0, transform: [translate3d(0, '-2000px', 0), scaleY(3)] }),
+    keyframe(20, {
+        transform: [translate3d(0, '-10px', 0), scaleY(0.985)]
+    }),
+    keyframe([40, 45], {
+        opacity: 1,
+        transform: [translate3d(0, '20px', 0), scaleY(0.9)]
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: [translate3d(0, '-2000px', 0), scaleY(3)]
+    }),
 ];
 const bounceOutLeft = [
-    keyframe(20, { opacity: 1, transform: [translate3d('20px', 0, 0), scaleX(2)] }),
-    keyframe(100, { opacity: 0, transform: [translate3d('-2000px', 0, 0), scaleX(2)] })
+    keyframe(20, {
+        opacity: 1,
+        transform: [translate3d('20px', 0, 0), scaleX(2)]
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: [translate3d('-2000px', 0, 0), scaleX(2)]
+    })
 ];
 const bounceOutRight = [
-    keyframe(20, { opacity: 1, transform: [translate3d('-20px', 0, 0), scaleX(2)] }),
-    keyframe(100, { opacity: 0, transform: [translate3d('2000px', 0, 0), scaleX(2)] })
+    keyframe(20, {
+        opacity: 1,
+        transform: [translate3d('-20px', 0, 0), scaleX(2)]
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: [translate3d('2000px', 0, 0), scaleX(2)]
+    })
 ];
 
 const swing = [
-    keyframe(20, { transform: rotate3d(0, 0, 1, '15deg') }),
-    keyframe(40, { transform: rotate3d(0, 0, 1, '-10deg') }),
-    keyframe(60, { transform: rotate3d(0, 0, 1, '5deg') }),
-    keyframe(80, { transform: rotate3d(0, 0, 1, '-5deg') }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '0deg') }),
+    keyframe(20, {
+        transform: rotate3d(0, 0, 1, '15deg')
+    }),
+    keyframe(40, {
+        transform: rotate3d(0, 0, 1, '-10deg')
+    }),
+    keyframe(60, {
+        transform: rotate3d(0, 0, 1, '5deg')
+    }),
+    keyframe(80, {
+        transform: rotate3d(0, 0, 1, '-5deg')
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '0deg')
+    }),
 ];
 
 const flash = [
@@ -4339,14 +5071,26 @@ const flash = [
 ];
 
 const shakeX = [
-    keyframe([0, 100], { transform: translate3d(0, 0, 0) }),
-    keyframe([10, 30, 50, 70, 90], { transform: translate3d('-10px', 0, 0) }),
-    keyframe([20, 40, 60, 80], { transform: translate3d('10px', 0, 0) }),
+    keyframe([0, 100], {
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe([10, 30, 50, 70, 90], {
+        transform: translate3d('-10px', 0, 0)
+    }),
+    keyframe([20, 40, 60, 80], {
+        transform: translate3d('10px', 0, 0)
+    }),
 ];
 const shakeY = [
-    keyframe([0, 100], { transform: translate3d(0, 0, 0) }),
-    keyframe([10, 30, 50, 70, 90], { transform: translate3d(0, '-10px', 0) }),
-    keyframe([20, 40, 60, 80], { transform: translate3d(0, '10px', 0) }),
+    keyframe([0, 100], {
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe([10, 30, 50, 70, 90], {
+        transform: translate3d(0, '-10px', 0)
+    }),
+    keyframe([20, 40, 60, 80], {
+        transform: translate3d(0, '10px', 0)
+    }),
 ];
 
 const pulse = [
@@ -4568,12 +5312,24 @@ const flipOutY = [
 ];
 
 const headShake = [
-    keyframe(0, { transform: translateX('0px') }),
-    keyframe(6.5, { transform: [translateX('-6px'), rotateY(-9)] }),
-    keyframe(18.5, { transform: [translateX('5px'), rotateY(7)] }),
-    keyframe(31.5, { transform: [translateX('-3px'), rotateY(-5)] }),
-    keyframe(43.5, { transform: [translateX('2px'), rotateY(3)] }),
-    keyframe(50, { transform: translateX('0px') }),
+    keyframe(0, {
+        transform: translateX('0px')
+    }),
+    keyframe(6.5, {
+        transform: [translateX('-6px'), rotateY(-9)]
+    }),
+    keyframe(18.5, {
+        transform: [translateX('5px'), rotateY(7)]
+    }),
+    keyframe(31.5, {
+        transform: [translateX('-3px'), rotateY(-5)]
+    }),
+    keyframe(43.5, {
+        transform: [translateX('2px'), rotateY(3)]
+    }),
+    keyframe(50, {
+        transform: translateX('0px')
+    }),
 ];
 
 const lightSpeedInRight = [
@@ -4628,13 +5384,27 @@ const lightSpeedOutLeft = [
 ];
 
 const rubberBand = [
-    keyframe(0, { transform: scale3d(1, 1, 1) }),
-    keyframe(30, { transform: scale3d(1.25, 0.75, 1) }),
-    keyframe(40, { transform: scale3d(0.75, 1.25, 1) }),
-    keyframe(50, { transform: scale3d(1.15, 0.85, 1) }),
-    keyframe(65, { transform: scale3d(0.95, 1.05, 1) }),
-    keyframe(75, { transform: scale3d(1.05, 0.95, 1) }),
-    keyframe(100, { transform: scale3d(1, 1, 1) }),
+    keyframe(0, {
+        transform: scale3d(1, 1, 1)
+    }),
+    keyframe(30, {
+        transform: scale3d(1.25, 0.75, 1)
+    }),
+    keyframe(40, {
+        transform: scale3d(0.75, 1.25, 1)
+    }),
+    keyframe(50, {
+        transform: scale3d(1.15, 0.85, 1)
+    }),
+    keyframe(65, {
+        transform: scale3d(0.95, 1.05, 1)
+    }),
+    keyframe(75, {
+        transform: scale3d(1.05, 0.95, 1)
+    }),
+    keyframe(100, {
+        transform: scale3d(1, 1, 1)
+    }),
 ];
 
 const heartBeat = [
@@ -4680,176 +5450,420 @@ const wobble = [
 ];
 
 const rotateIn = [
-    keyframe(0, { transform: rotate3d(0, 0, 1, '-200deg'), opacity: 0 }),
-    keyframe(100, { transform: translate3d(0, 0, 0), opacity: 1 }),
+    keyframe(0, {
+        transform: rotate3d(0, 0, 1, '-200deg'),
+        opacity: 0
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0),
+        opacity: 1
+    }),
 ];
 const rotateInDownLeft = [
-    keyframe(0, { transform: rotate3d(0, 0, 1, '-45deg'), opacity: 0 }),
-    keyframe(100, { transform: translate3d(0, 0, 0), opacity: 1 }),
+    keyframe(0, {
+        transform: rotate3d(0, 0, 1, '-45deg'),
+        opacity: 0
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0),
+        opacity: 1
+    }),
 ];
 const rotateInDownRight = [
-    keyframe(0, { transform: rotate3d(0, 0, 1, '45deg'), opacity: 0 }),
-    keyframe(100, { transform: translate3d(0, 0, 0), opacity: 1 }),
+    keyframe(0, {
+        transform: rotate3d(0, 0, 1, '45deg'),
+        opacity: 0
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0),
+        opacity: 1
+    }),
 ];
 const rotateInUpLeft = [
-    keyframe(0, { transform: rotate3d(0, 0, 1, '45deg'), opacity: 0 }),
-    keyframe(100, { transform: translate3d(0, 0, 0), opacity: 1 }),
+    keyframe(0, {
+        transform: rotate3d(0, 0, 1, '45deg'),
+        opacity: 0
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0),
+        opacity: 1
+    }),
 ];
 const rotateInUpRight = [
-    keyframe(0, { transform: rotate3d(0, 0, 1, '-90deg'), opacity: 0 }),
-    keyframe(100, { transform: translate3d(0, 0, 0), opacity: 1 }),
+    keyframe(0, {
+        transform: rotate3d(0, 0, 1, '-90deg'),
+        opacity: 0
+    }),
+    keyframe(100, {
+        transform: translate3d(0, 0, 0),
+        opacity: 1
+    }),
 ];
 const rotateOut = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '200deg'), opacity: 0 }),
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '200deg'),
+        opacity: 0
+    }),
 ];
 const rotateOutDownLeft = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '90deg'), opacity: 0 }),
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '90deg'),
+        opacity: 0
+    }),
 ];
 const rotateOutDownRight = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '90deg'), opacity: 0 }),
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '90deg'),
+        opacity: 0
+    }),
 ];
 const rotateOutUpLeft = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '-45deg'), opacity: 0 }),
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '-45deg'),
+        opacity: 0
+    }),
 ];
 const rotateOutUpRight = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { transform: rotate3d(0, 0, 1, '90deg'), opacity: 0 }),
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        transform: rotate3d(0, 0, 1, '90deg'),
+        opacity: 0
+    }),
 ];
 
 const fadeIn = [
-    keyframe(0, { opacity: 0 }),
-    keyframe(100, { opacity: 1 })
+    keyframe(0, {
+        opacity: 0
+    }),
+    keyframe(100, {
+        opacity: 1
+    })
 ];
 const fadeInDown = [
-    keyframe(0, { opacity: 0, transform: translate3d(0, '-100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d(0, '-100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInDownBig = [
-    keyframe(0, { opacity: 0, transform: translate3d(0, '-2000px', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d(0, '-2000px', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInLeft = [
-    keyframe(0, { opacity: 0, transform: translate3d('-100%', 0, 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('-100%', 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInLeftBig = [
-    keyframe(0, { opacity: 0, transform: translate3d('-2000px', 0, 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('-2000px', 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInRight = [
-    keyframe(0, { opacity: 0, transform: translate3d('100%', 0, 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('100%', 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInRightBig = [
-    keyframe(0, { opacity: 0, transform: translate3d('2000px', 0, 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('2000px', 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInUp = [
-    keyframe(0, { opacity: 0, transform: translate3d(0, '100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d(0, '100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInUpBig = [
-    keyframe(0, { opacity: 0, transform: translate3d(0, '2000px', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d(0, '2000px', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInTopLeft = [
-    keyframe(0, { opacity: 0, transform: translate3d('-100%', '-100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('-100%', '-100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInTopRight = [
-    keyframe(0, { opacity: 0, transform: translate3d('100%', '-100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('100%', '-100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInBottomLeft = [
-    keyframe(0, { opacity: 0, transform: translate3d('-100%', '100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('-100%', '100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeInBottomRight = [
-    keyframe(0, { opacity: 0, transform: translate3d('100%', '-100%', 0) }),
-    keyframe(100, { opacity: 1, transform: translate3d(0, 0, 0) })
+    keyframe(0, {
+        opacity: 0,
+        transform: translate3d('100%', '-100%', 0)
+    }),
+    keyframe(100, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    })
 ];
 const fadeOut = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0 })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0
+    })
 ];
 const fadeOutDown = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d(0, '100%', 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d(0, '100%', 0)
+    })
 ];
 const fadeOutDownBig = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d(0, '2000px', 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d(0, '2000px', 0)
+    })
 ];
 const fadeOutLeft = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d('-100%', 0, 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('-100%', 0, 0)
+    })
 ];
 const fadeOutLeftBig = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d('-2000px', 0, 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('-2000px', 0, 0)
+    })
 ];
 const fadeOutRight = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d('100%', 0, 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('100%', 0, 0)
+    })
 ];
 const fadeOutRightBig = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d('2000px', 0, 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('2000px', 0, 0)
+    })
 ];
 const fadeOutUp = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d(0, '-100%', 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d(0, '-100%', 0)
+    })
 ];
 const fadeOutUpBig = [
-    keyframe(0, { opacity: 1 }),
-    keyframe(100, { opacity: 0, transform: translate3d(0, '-2000px', 0) })
+    keyframe(0, {
+        opacity: 1
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d(0, '-2000px', 0)
+    })
 ];
 const fadeOutTopLeft = [
-    keyframe(0, { opacity: 1, transform: translate3d(0, 0, 0) }),
-    keyframe(100, { opacity: 0, transform: translate3d('-100%', '-100%', 0) })
+    keyframe(0, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('-100%', '-100%', 0)
+    })
 ];
 const fadeOutTopRight = [
-    keyframe(0, { opacity: 1, transform: translate3d(0, 0, 0) }),
-    keyframe(100, { opacity: 0, transform: translate3d('100%', '-100%', 0) })
+    keyframe(0, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('100%', '-100%', 0)
+    })
 ];
 const fadeOutBottomRight = [
-    keyframe(0, { opacity: 1, transform: translate3d(0, 0, 0) }),
-    keyframe(100, { opacity: 0, transform: translate3d('100%', '100%', 0) })
+    keyframe(0, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('100%', '100%', 0)
+    })
 ];
 const fadeOutBottomLeft = [
-    keyframe(0, { opacity: 1, transform: translate3d(0, 0, 0) }),
-    keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
+    keyframe(0, {
+        opacity: 1,
+        transform: translate3d(0, 0, 0)
+    }),
+    keyframe(100, {
+        opacity: 0,
+        transform: translate3d('-100%', '100%', 0)
+    })
 ];
 
+const xxx = () => 21 /* AT */ ;
 const animationFrames = {
     // slide 滑动
-    slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
+    slideInDown,
+    slideInLeft,
+    slideInRight,
+    slideInUp,
+    slideOutDown,
+    slideOutLeft,
+    slideOutRight,
+    slideOutUp,
     // zoom 缩放
-    zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp,
+    zoomIn,
+    zoomInDown,
+    zoomInLeft,
+    zoomInRight,
+    zoomInUp,
+    zoomOut,
+    zoomOutDown,
+    zoomOutLeft,
+    zoomOutRight,
+    zoomOutUp,
     // specials 特殊动画
-    hinge, jackInTheBox, rollIn, rollOut,
+    hinge,
+    jackInTheBox,
+    rollIn,
+    rollOut,
     // 弹跳
-    bounce, bounceIn, bounceInDown, bounceInLeft, bounceInRight, bounceInUp, bounceOut, bounceOutDown, bounceOutLeft, bounceOutRight, bounceOutUp,
+    bounce,
+    bounceIn,
+    bounceInDown,
+    bounceInLeft,
+    bounceInRight,
+    bounceInUp,
+    bounceOut,
+    bounceOutDown,
+    bounceOutLeft,
+    bounceOutRight,
+    bounceOutUp,
     // 摇摆
     swing,
     // 闪烁
     flash,
     // 抖动
-    shakeX, shakeY,
+    shakeX,
+    shakeY,
     // 脉搏
     pulse,
     // 出场
-    backInDown, backInLeft, backInRight, backInUp, backOutDown, backOutLeft, backOutRight, backOutUp,
+    backInDown,
+    backInLeft,
+    backInRight,
+    backInUp,
+    backOutDown,
+    backOutLeft,
+    backOutRight,
+    backOutUp,
     // 翻动
-    flip, flipInX, flipInY, flipOutX, flipOutY,
+    flip,
+    flipInX,
+    flipInY,
+    flipOutX,
+    flipOutY,
     // 摇头
     headShake,
     // 光速
-    lightSpeedInLeft, lightSpeedInRight, lightSpeedOutLeft, lightSpeedOutRigt,
+    lightSpeedInLeft,
+    lightSpeedInRight,
+    lightSpeedOutLeft,
+    lightSpeedOutRigt,
     // 橡皮筋
     rubberBand,
     // 心跳
@@ -4857,11 +5871,43 @@ const animationFrames = {
     // 摇晃
     wobble,
     // 旋转
-    rotateIn, rotateInDownLeft, rotateInDownRight, rotateInUpLeft, rotateInUpRight, rotateOut, rotateOutDownLeft, rotateOutDownRight, rotateOutUpLeft, rotateOutUpRight,
+    rotateIn,
+    rotateInDownLeft,
+    rotateInDownRight,
+    rotateInUpLeft,
+    rotateInUpRight,
+    rotateOut,
+    rotateOutDownLeft,
+    rotateOutDownRight,
+    rotateOutUpLeft,
+    rotateOutUpRight,
     // 淡入淡出
-    fadeIn, fadeInBottomLeft, fadeInBottomRight, fadeInDown, fadeInDownBig, fadeInLeft, fadeInLeftBig, fadeInRight, fadeInRightBig, fadeInTopLeft,
-    fadeInTopRight, fadeInUp, fadeInUpBig, fadeOut, fadeOutBottomLeft, fadeOutBottomRight, fadeOutDown, fadeOutDownBig, fadeOutLeft, fadeOutLeftBig,
-    fadeOutRight, fadeOutRightBig, fadeOutTopLeft, fadeOutTopRight, fadeOutUp, fadeOutUpBig,
+    fadeIn,
+    fadeInBottomLeft,
+    fadeInBottomRight,
+    fadeInDown,
+    fadeInDownBig,
+    fadeInLeft,
+    fadeInLeftBig,
+    fadeInRight,
+    fadeInRightBig,
+    fadeInTopLeft,
+    fadeInTopRight,
+    fadeInUp,
+    fadeInUpBig,
+    fadeOut,
+    fadeOutBottomLeft,
+    fadeOutBottomRight,
+    fadeOutDown,
+    fadeOutDownBig,
+    fadeOutLeft,
+    fadeOutLeftBig,
+    fadeOutRight,
+    fadeOutRightBig,
+    fadeOutTopLeft,
+    fadeOutTopRight,
+    fadeOutUp,
+    fadeOutUpBig,
 };
 // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
 const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames));
@@ -4871,8 +5917,7 @@ const installAnimation = () => mount(createStyleSheet(null, animations), documen
     过渡动画逻辑
     使用transition , 先保留之前元素的tansition  , 设置新的 transtion ，然后设置新的样式
 */
-function setElementTranstion(el) {
-}
+function setElementTranstion(el) {}
 
 //! class
 function bindEnterClass(el, name) {
@@ -4883,10 +5928,12 @@ function bindEnterClass(el, name) {
         removeClass(el, `${name}-enter-from`);
     });
 }
+
 function removeEnterClass(el, name) {
     removeClass(el, `${name}-enter-to`);
     removeClass(el, `${name}-enter`);
 }
+
 function bindLeaveClass(el, name) {
     addClass(el, `${name}-leave-from`);
     document.body.offsetHeight;
@@ -4896,6 +5943,7 @@ function bindLeaveClass(el, name) {
         removeClass(el, `${name}-leave-from`);
     });
 }
+
 function removeLeaveClass(el, name) {
     removeClass(el, `${name}-leave-to`);
     removeClass(el, `${name}-leave`);
@@ -4927,10 +5975,28 @@ class TransitionDesc {
         this.update(options);
     }
     update(options) {
-        options ||= emptyObject;
-        const { type, name, duration, appear, 
-        // hooks
-        onBeforeEnter, onEnter, onAfterEnter, onEnterCancelled, onBeforeLeave, onLeave, onAfterLeave, onLeaveCancelled, onBeforeAppear, onAppear, onAfterAppear, onAppearCancelled, enterKeyframes, leaveKeyframes, } = options;
+        options || = emptyObject;
+        const {
+            type,
+            name,
+            duration,
+            appear,
+            // hooks
+            onBeforeEnter,
+            onEnter,
+            onAfterEnter,
+            onEnterCancelled,
+            onBeforeLeave,
+            onLeave,
+            onAfterLeave,
+            onLeaveCancelled,
+            onBeforeAppear,
+            onAppear,
+            onAfterAppear,
+            onAppearCancelled,
+            enterKeyframes,
+            leaveKeyframes,
+        } = options;
         this.name = name || 'transition';
         this.type = type || 'css';
         // 该元素在组件中是否为第一次渲染
@@ -4962,14 +6028,17 @@ class TransitionDesc {
             hook.call(_this, ...args);
         }
     };
-    beforeEnter() { }
-    beforeLeave() { }
-    cancelEnter() { }
-    canceleave() { }
+    beforeEnter() {}
+    beforeLeave() {}
+    cancelEnter() {}
+    canceleave() {}
     // 关于 transition group
     processMount(newEl, insertFn) {
-        let { patchKey, instance } = newEl._vnode;
-        let appearRecord = instance.appearRecord ||= {};
+        let {
+            patchKey,
+            instance
+        } = newEl._vnode;
+        let appearRecord = instance.appearRecord || = {};
         let appeared = appearRecord[patchKey];
         if (!this.appear && !appeared) {
             // once process
@@ -4997,8 +6066,7 @@ class TransitionDesc {
                 // after enter
                 newEl._entering = true;
             });
-        }
-        else if (this.type === 'css') {
+        } else if (this.type === 'css') {
             this.bindeEnterClass(newEl);
             onceListener(newEl, 'transitionend', () => {
                 // after enter
@@ -5008,13 +6076,14 @@ class TransitionDesc {
         }
     }
     processUnmount(el) {
-        let { patchKey } = el._vnode;
+        let {
+            patchKey
+        } = el._vnode;
         if (el._entering) {
             // 正在进入 ，取消进入动画, 进入卸载东动画
             if (this.type === 'css') {
                 this.removeEnterClass(el);
-            }
-            else if (this.type === 'animate') {
+            } else if (this.type === 'animate') {
                 el.cancelKeyframes();
             }
         }
@@ -5026,8 +6095,7 @@ class TransitionDesc {
                 removeElement(el);
                 leavingElements[patchKey] = null;
             });
-        }
-        else if (this.type === 'animate') {
+        } else if (this.type === 'animate') {
             doCSSAnimation(el, {
                 name: this.leaveKeyframes,
                 duration: this.duration
@@ -5079,14 +6147,27 @@ class TransitionDesc {
 
 const transitionComponent = {
     props: {},
-    render: ({ $slots }) => $slots.default(),
-    beforeMount({ $instance: { scope, renderingVnode }, $props }) {
+    render: ({
+        $slots
+    }) => $slots.default(),
+    beforeMount({
+        $instance: {
+            scope,
+            renderingVnode
+        },
+        $props
+    }) {
         const transtion = createTransition($props);
         renderingVnode.forEach((vnode) => {
             vnode.transition = transtion;
         });
     },
-    beforeUpdate({ $instance: { renderingVnode }, $props }) {
+    beforeUpdate({
+        $instance: {
+            renderingVnode
+        },
+        $props
+    }) {
         const transtion = createTransition($props);
         renderingVnode && renderingVnode.forEach((vnode) => {
             vnode.transition = transtion;
@@ -5096,8 +6177,16 @@ const transitionComponent = {
 // 第一次进入任何元素都不会过渡
 const transitionGroupComponent = {
     props: ['duration', 'type', 'enterKeyframes', 'leaveKeyframes', 'name'],
-    render: ({ $slots }) => $slots.default(),
-    beforeUpdate({ $instance: { vnode, renderingVnode }, $props }) {
+    render: ({
+        $slots
+    }) => $slots.default(),
+    beforeUpdate({
+        $instance: {
+            vnode,
+            renderingVnode
+        },
+        $props
+    }) {
         const transition = createTransition($props);
         // always true
         transition.appear = true;
@@ -5114,10 +6203,14 @@ const transitionGroupComponent = {
 
 */
 const transitionDirective = {
-    beforeCreate(_, { value }, vnode) {
+    beforeCreate(_, {
+        value
+    }, vnode) {
         vnode.transition = createTransition(value);
     },
-    beforeUpdate(_, { value }, nVnode, pVnode) {
+    beforeUpdate(_, {
+        value
+    }, nVnode, pVnode) {
         if (!pVnode) {
             // 此时为组件自更新
             return;
@@ -5133,9 +6226,89 @@ const transitionGroupDirective = {
     }
 };
 
+const defaultTeleportOptions = {
+    to: document.body,
+    anchor: null,
+    disabled: false
+};
+const body = document.body;
+
+function normalizeElement(selectorOrElement) {
+    if (isString(selectorOrElement)) {
+        try {
+            selectorOrElement = document.querySelector(selectorOrElement);
+        } catch (e) {
+            selectorOrElement = body;
+        }
+    }
+    if (!(selectorOrElement instanceof Element)) {
+        selectorOrElement = body;
+    }
+    return selectorOrElement;
+}
+
+function Teleport(props, {
+    default: _default
+}, nVnode, pVnode) {
+    props || = defaultTeleportOptions;
+    let {
+        to: container,
+        anchor,
+        disabled
+    } = props;
+    container = normalizeElement(container);
+    anchor = normalizeElement(anchor);
+    let renderingVnode = processVnodePrerender(_default());
+    debugger;
+    if (pVnode) {
+        // 节点更新
+        let {
+            to: pContainer,
+            anchor: pAnchor,
+            disabled: pDisabled
+        } = pVnode.props || defaultTeleportOptions;
+        let teleportedVnode = pVnode.teleportedVnode; // 已经传送的节点
+        pContainer = normalizeElement(pContainer);
+        pAnchor = normalizeElement(pAnchor);
+        let instance = pVnode.instance; // = nVnode.instance
+        if (disabled && !pDisabled) {
+            // 卸载
+            patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
+            nVnode.teleportedVnode = null;
+        } else if (!disabled && pDisabled) {
+            // 挂载
+            patch(null, renderingVnode, container, anchor, instance); // 挂载新的
+            nVnode.teleportedVnode = renderingVnode;
+        } else {
+            // 更新
+            if (container !== pContainer || anchor !== pAnchor) {
+                patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
+                patch(null, renderingVnode, container, anchor, instance); // 挂载新的
+                nVnode.teleportedVnode = renderingVnode;
+            } else {
+                patch(teleportedVnode, renderingVnode, container, anchor, instance);
+                nVnode.teleportedVnode = renderingVnode;
+            }
+        }
+    } else if (nVnode.isMounted) {
+        // 自更新 , 参数一定不变 ？？？, 插槽内容变会进入此更新
+        debugger;
+    } else {
+        // 第一次挂载
+        if (disabled);
+        else {
+            patch(null, renderingVnode, container, anchor, nVnode.instance); // 传送
+            nVnode.teleportedVnode = renderingVnode;
+        }
+    }
+    // disabled生效 ，直接渲染空节点
+    return disabled ? renderingVnode : null;
+}
+
 const builtInComponents = {
     transition: transitionComponent,
-    transitionGroup: transitionGroupComponent
+    transitionGroup: transitionGroupComponent,
+    Teleport
 };
 const builtInDirectives = {
     modelText: modelText,
@@ -5148,10 +6321,11 @@ const builtInDirectives = {
     modelSelectMultiple: modelSelectMultiple,
     show: showDirective,
     transition: transitionDirective,
-    transitionGroup: transitionGroupDirective
+    transitionGroup: transitionGroupDirective,
 };
 
 var currentApp;
+
 function getCurrentApp() {
     if (!currentApp) {
         debugger;
@@ -5218,18 +6392,18 @@ class App {
 const createApp = (rootComponent) => new App(rootComponent);
 
 function injectHook(type, target, hook) {
-    var hooks = (target[type] ||= []);
+    var hooks = (target[type] || = []);
     if (!isArray(hooks)) {
         target[type] = [target[type]];
     }
     // the input hooks supports array
     if (isArray(hook)) {
         hooks = hooks.concat(hook);
-    }
-    else {
+    } else {
         hooks.push(hook);
     }
 }
+
 function injectMapHooks(target, mapHooks) {
     for (let type in mapHooks) {
         injectHook(type, target, mapHooks[type]);
@@ -5244,7 +6418,10 @@ function callHook(type, target, options = null, ...args) {
     const hooks = target[type];
     if (!hooks)
         return;
-    var { binding, scheduler } = options || emptyObject;
+    var {
+        binding,
+        scheduler
+    } = options || emptyObject;
     const hooksResults = hooks.map((hook) => {
         return scheduler ?
             scheduler(hook, binding, ...args) :
@@ -5254,13 +6431,13 @@ function callHook(type, target, options = null, ...args) {
     return hooksResults;
 }
 const createHook = (type) => (hook) => injectHook(type, getCurrentInstance(), hook);
-const onCreated = createHook("created" /* CREATED */);
-const onBeforeMount = createHook("beforeMount" /* BEFORE_MOUNT */);
-const onMounted = createHook("mounted" /* MOUNTED */);
-const onBeforeUpdate = createHook("beforeUpdate" /* BEFORE_UPDATE */);
-const onUpdated = createHook("updated" /* UPDATED */);
-const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
-const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
+const onCreated = createHook("created" /* CREATED */ );
+const onBeforeMount = createHook("beforeMount" /* BEFORE_MOUNT */ );
+const onMounted = createHook("mounted" /* MOUNTED */ );
+const onBeforeUpdate = createHook("beforeUpdate" /* BEFORE_UPDATE */ );
+const onUpdated = createHook("updated" /* UPDATED */ );
+const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */ );
+const onUnmounted = createHook("unmounted" /* UNMOUNTED */ );
 
 /*
     当传入不合理的props时
@@ -5268,8 +6445,7 @@ const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
 function normalizePropsOptions(options) {
     if (isArray(options)) {
         options = arrayToMap(options, emptyObject);
-    }
-    else {
+    } else {
         for (let key in options) {
             if (!isObject(options[key])) {
                 options[key] = {
@@ -5279,6 +6455,14 @@ function normalizePropsOptions(options) {
         }
     }
     return options;
+}
+
+function normalizeEmitsOptions(options) {
+    if (isArray(options)) {
+        return arrayToMap(options, emptyObject);
+    } else {
+        return options;
+    }
 }
 
 var ComponentOptions;
@@ -5294,14 +6478,19 @@ var ComponentOptions;
     ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
     ComponentOptions["UNMOUNTED"] = "unmounted";
     ComponentOptions["BEFORE_PATCH"] = "beforePatch";
+    // keepalive
+    ComponentOptions["ACTIVATED"] = "activated";
+    ComponentOptions["DEACTIVATED"] = "deactivated";
     ComponentOptions["TEMPLATE"] = "template";
     ComponentOptions["RENDER"] = "render";
     ComponentOptions["PROPS"] = "props";
     ComponentOptions["EMITS"] = "emits";
+    ComponentOptions["NAME"] = "name";
     ComponentOptions["MIXINS"] = "mixins";
     ComponentOptions["COMPOENNTS"] = "components";
     ComponentOptions["DIRECTIVES"] = "directives";
 })(ComponentOptions || (ComponentOptions = {}));
+
 function resolveOptions(options) {
     for (let key in options) {
         const value = options[key];
@@ -5310,7 +6499,7 @@ function resolveOptions(options) {
                 options.propsOptions = normalizePropsOptions(value);
                 break;
             case ComponentOptions.EMITS:
-                options.emitsOptions = normalizePropsOptions(value);
+                options.emitsOptions = normalizeEmitsOptions(value);
                 break;
             case ComponentOptions.TEMPLATE:
                 options.createRender = compile(value);
@@ -5327,6 +6516,9 @@ function resolveOptions(options) {
             case ComponentOptions.UPDATED:
             case ComponentOptions.BEFORE_UNMOUNT:
             case ComponentOptions.UNMOUNTED:
+            case ComponentOptions.BEFORE_PATCH:
+            case ComponentOptions.ACTIVATED:
+            case ComponentOptions.DEACTIVATED:
                 // 转换为数组形式
                 if (value && !isArray(value)) {
                     options[key] = [value];
@@ -5336,16 +6528,17 @@ function resolveOptions(options) {
                 break;
             case ComponentOptions.DIRECTIVES:
                 break;
-            //! remove to create instance
-            // case ComponentOptions.MIXINS:
-            //     var mixins = value
-            //     injectMixins(options, mixins as any[])
-            //     break
+            case ComponentOptions.NAME:
+                break;
             default:
                 /*custom options*/
-                const customOptions = options.customOptions ||= {};
+                const customOptions = options.customOptions || = {};
                 customOptions[key] = value;
                 break;
+        }
+        // 组件定义了name 可以递归
+        if (options[ComponentOptions.NAME]) {
+            (options[ComponentOptions.COMPOENNTS] || = {})[options[ComponentOptions.NAME]] = options;
         }
     }
 }
@@ -5374,6 +6567,7 @@ function injectMixin(options, mixin) {
     // ! 
     return options;
 }
+
 function injectMixins(target, mixins) {
     if (!mixins)
         return;
@@ -5423,7 +6617,10 @@ const scopeProperties = {
         return instance.refs ||= {}; // ! 确保组件没挂载时可以拿到 refs
     },
     $el: (instance) => {
-        let { vnode, isMounted } = instance;
+        let {
+            vnode,
+            isMounted
+        } = instance;
         if (!isMounted || !vnode) {
             return null;
         }
@@ -5465,8 +6662,7 @@ function createScope(instance) {
         set(target, key, newValue, receiver) {
             if (hasOwn(scopeProperties, key)) {
                 return true;
-            }
-            else {
+            } else {
                 return Reflect.set(target, key, newValue, receiver);
             }
         }
@@ -5491,11 +6687,9 @@ function createInstanceWatch(instance) {
         let scope = instance.scope;
         if (isString(source)) {
             return watchTargetKey(scope, source, cb);
-        }
-        else if (isReactive(source)) {
+        } else if (isReactive(source)) {
             return watchReactive(source, cb);
-        }
-        else if (isRef(source)) {
+        } else if (isRef(source)) {
             return watchRef(source, cb);
         }
     };
@@ -5527,6 +6721,7 @@ const createComponentInstance = (options, parent) => {
         off: null,
         once: null,
         watch: null,
+        renderEffect: null,
         render: options.render,
         customOptions: options.customOptions,
         propsOptions: options.propsOptions,
@@ -5569,10 +6764,12 @@ function normalizeDirective(directive) {
         updated: directive
     } : directive;
 }
+
 function injectDirective(target, [directive, ...bindings]) {
-    var dirs = target.dirs ||= new Map();
+    var dirs = target.dirs || = new Map();
     dirs.set(directive, bindings);
 }
+
 function injectDirectives(target, directives) {
     directives.forEach((directive) => {
         injectDirective(target, directive);
@@ -5588,14 +6785,17 @@ function setOwnKey(arr) {
     }
     return arr;
 }
+
 function processHook(type, next, previous = null) {
     // 在这不需要判断 两个节点的patchkey是否相同
-    const isComponent = next.nodeType === 14 /* COMPONENT */;
+    const isComponent = next.nodeType === 14 /* COMPONENT */ ;
     if (isComponent) {
         var instance = next.instance;
         // 组件需要处理实例钩子
         var scope = instance.scope;
-        callHook(type, instance, { binding: scope }, scope);
+        callHook(type, instance, {
+            binding: scope
+        }, scope);
     }
     // 指令钩子
     var dirs = next.dirs;
@@ -5620,10 +6820,333 @@ function processHook(type, next, previous = null) {
         }
     }
     // 节点钩子
-    const vnodeHook = next?.props?.[`_${type}`];
+    const vnodeHook = next ? .props ? . [`_${type}`];
     if (vnodeHook) {
         vnodeHook(isComponent ? next.instance.scope : next.el);
     }
 }
 
-export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doCSSAnimation, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, processVnodePrerender, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getRefDeps, getReservedProp, getStyle, getStyleValue, h, hasOwn, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComputed, isEffect, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, splitSelector, stringToMap, stringify, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toEventName, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackRef, trackTarget, trackTargetSymbol, translate3d, translateX, translateY, trigger, triggerRef, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
+export {
+    $var,
+    App,
+    Comment,
+    ComponentOptions,
+    ComputedRef,
+    IMPORTANT,
+    IMPORTANT_KEY,
+    IMPORTANT_SYMBOL,
+    NULL,
+    NodesMap,
+    ReactiveEffect,
+    ReactiveTypeSymbol,
+    ReactiveTypes,
+    Ref,
+    TARGET_MAP,
+    Text,
+    addClass,
+    addInstanceListener,
+    addListener,
+    appendMedium,
+    arrayHandler,
+    arrayToMap,
+    attr,
+    builtInComponents,
+    builtInDirectives,
+    cache,
+    calc,
+    callFn,
+    callHook,
+    camelize,
+    cleaarRefDeps,
+    compile,
+    computed,
+    conicGradient,
+    createApp,
+    createComment,
+    createComponent,
+    createComponentInstance,
+    createDeclaration,
+    createElement,
+    createFragment,
+    createFunction,
+    createInstanceEventEmitter,
+    createKeyframe,
+    createKeyframes,
+    createMap,
+    createMapEntries,
+    createMedia,
+    createReactiveCollection,
+    createReactiveEffect,
+    createReactiveObject,
+    createReadonlyCollection,
+    createReadonlyObject,
+    createRefValueSetter,
+    createRenderScope,
+    createSVGElement,
+    createScope,
+    createSetter,
+    createShallowReactiveCollection,
+    createShallowReactiveObject,
+    createShallowReadonlyCollection,
+    createShallowReadonlyObject,
+    createStyle,
+    createStyleSheet,
+    createSupports,
+    createText,
+    cubicBezier,
+    currentInstance,
+    customDisplay,
+    dateFormatRE,
+    declare,
+    defineScopeProperty,
+    deleteActiveEffect,
+    deleteKeyframe,
+    deleteMedium,
+    deleteRule,
+    destructur,
+    display,
+    doCSSAnimation,
+    doFlat,
+    docCreateComment,
+    docCreateElement,
+    docCreateText,
+    dynamicMapKey,
+    effect,
+    emitInstancetEvent,
+    emptyArray,
+    emptyFunction,
+    emptyObject,
+    error,
+    exec,
+    execCaptureGroups,
+    extend,
+    flatRules,
+    getActiveEffect,
+    getComponent,
+    getCurrentApp,
+    getCurrentInstance,
+    getCurrentRenderScope,
+    getCurrentScope,
+    getDeps,
+    getDepsMap,
+    getDirective,
+    getElementComputedStyle,
+    getElementComputedStyleValue,
+    getElementStyle,
+    getElementStyleValue,
+    getEmptyObject,
+    getEventName,
+    getInstanceEvents,
+    getInstancetEventListeners,
+    getLastSetKey,
+    getLastSetNewValue,
+    getLastSetOldValue,
+    getLastSetTarget,
+    getLastVisitKey,
+    getLastVisitTarget,
+    getRefDeps,
+    getReservedProp,
+    getStyle,
+    getStyleValue,
+    h,
+    hasOwn,
+    hexToRgb,
+    hsl,
+    hsla,
+    hyphenate,
+    important,
+    initialLowerCase,
+    initialUpperCase,
+    injectDirectives,
+    injectHook,
+    injectMapHooks,
+    injectMixin,
+    injectMixins,
+    insertElement,
+    insertKeyframe,
+    insertKeyframes,
+    insertMedia,
+    insertNull,
+    insertRule,
+    insertStyle,
+    insertSupports,
+    installAnimation,
+    isArray,
+    isComputed,
+    isEffect,
+    isEvent,
+    isFunction,
+    isHTMLTag,
+    isNumber,
+    isNumberString,
+    isObject,
+    isPromise,
+    isProxy,
+    isProxyType,
+    isReactive,
+    isRef,
+    isReservedProp,
+    isSVGTag,
+    isShallow,
+    isString,
+    isUndefined,
+    joinSelector,
+    keyOf,
+    keyframe,
+    keyframes,
+    linearGradient,
+    makeMap,
+    mark,
+    markRaw,
+    max,
+    mergeSelectors,
+    mergeSplitedSelector,
+    mergeSplitedSelectorsAndJoin,
+    min,
+    mixin,
+    mount,
+    mountAttributes,
+    mountChildren,
+    mountClass,
+    mountComponent,
+    mountDeclaration,
+    mountKeyframeRule,
+    mountRule,
+    mountStyleRule,
+    mountStyleSheet,
+    nextTick,
+    normalizeClass,
+    normalizeKeyText,
+    normalizeStyle,
+    objectStringify,
+    onBeforeMount,
+    onBeforeUnmount,
+    onBeforeUpdate,
+    onCreated,
+    onMounted,
+    onSet,
+    onSetCallbacks,
+    onUnmounted,
+    onUpdated,
+    onceInstanceListener,
+    onceListener,
+    parseEventName,
+    parseInlineClass,
+    parseInlineStyle,
+    parseNativeEventName,
+    parseStyleValue,
+    patch,
+    perspective,
+    processHook,
+    processVnodePrerender,
+    queueJob,
+    radialGradient,
+    reactive,
+    reactiveCollectionHandler,
+    reactiveHandler,
+    readonly,
+    readonlyCollectionHandler,
+    readonlyHandler,
+    ref,
+    remountElement,
+    removeAttribute,
+    removeClass,
+    removeElement,
+    removeFromArray,
+    removeInstanceListener,
+    removeListener,
+    renderList,
+    renderSlot,
+    resolveOptions,
+    rgb,
+    rgbToHex,
+    rgba,
+    rotate,
+    rotate3d,
+    rotateY,
+    scale,
+    scale3d,
+    scaleX,
+    scaleY,
+    setActiveEffect,
+    setAttribute,
+    setCurrentInstance,
+    setElementStyleDeclaration,
+    setElementTranstion,
+    setKeyText,
+    setKeyframesName,
+    setSelector,
+    setStyleProperty,
+    setText,
+    shallowCloneArray,
+    shallowReactive,
+    shallowReactiveCollectionHandler,
+    shallowReactiveHandler,
+    shallowReadonly,
+    shallowReadonlyCollectionHandler,
+    shallowReadonlyHandler,
+    shallowWatchReactive,
+    skew,
+    skewX,
+    skewY,
+    sortChildren,
+    sortRules,
+    splitSelector,
+    stringToMap,
+    stringify,
+    ternaryChains,
+    ternaryExp,
+    toAbsoluteValue,
+    toArray,
+    toArrowFunction,
+    toBackQuotes,
+    toDec,
+    toEventName,
+    toHex,
+    toNativeEventName,
+    toNegativeValue,
+    toPositiveValue,
+    toRaw,
+    toReservedProp,
+    toSingleQuotes,
+    toTernaryExp,
+    track,
+    trackRef,
+    trackTarget,
+    trackTargetSymbol,
+    translate3d,
+    translateX,
+    translateY,
+    trigger,
+    triggerRef,
+    typeOf,
+    uStringId,
+    uVar,
+    uid,
+    unionkeys,
+    unmount,
+    unmountChildren,
+    unmountClass,
+    unmountComponent,
+    unmountDeclaration,
+    update,
+    updateAttributes,
+    updateChildren,
+    updateClass,
+    updateComponent,
+    updateDeclaration,
+    updateInstanceListeners,
+    updateStyleSheet,
+    useBoolean,
+    useColor,
+    useDate,
+    useNumber,
+    useString,
+    warn,
+    watchReactive,
+    watchRef,
+    watchTargetKey,
+    withEventModifiers,
+    withScope,
+    xxx
+};

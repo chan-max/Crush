@@ -1,36 +1,28 @@
 import { defineAsyncComponent } from "@crush/builtin/lib/defineAsyncComponent";
 import { watchComputed } from "@crush/reactivity/lib/watchComputed";
-import { createApp, reactive, ref, computed, watchReactive, watchRef, isReactive, doCSSAnimation, remountElement, shallowCloneArray, h, onMounted } from "./packages/core";
+import { createApp, reactive, ref, computed, watchReactive, watchRef, isReactive, doCSSAnimation, remountElement, shallowCloneArray, h, onMounted, watchTargetKey } from "./packages/core";
 
 
-const tom = {
+
+let root = {
     template: `
-        <h1 @click="change"> {{obj}} </h1>
+        <h1 @click="change"> {{x}} </h1>
     `,
     create({
         $self,
         $watch,
     }: any) {
-        $self.obj = { x: 1 }
+        $self.x = 6666
         $self.change = () => {
-            $self.obj.x++
+            $self.x++
         }
-        $watch($self.obj, () => {
-            console.log('obj change');
+        let unwatch =  $watch('x', () => {
+            console.log('x change');
         })
-    }
-}
 
-let root = {
-    components: {
-        tom
-    },
-    template:/*html*/`
-        <button @click="x++"> 切换组件 </button>
-        <tom if="x%2 === 0">
-    `,
-    create({ $self }: any) {
-        $self.x = 0
+        setTimeout(() => {
+            unwatch()
+        }, 3002);
     }
 }
 

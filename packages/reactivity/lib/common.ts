@@ -52,7 +52,7 @@ export enum ReactiveTypes {
 }
 
 export function toRaw(value: any) {
-    return value && value[ReactiveFlags.RAW]
+    return value && (value[ReactiveFlags.RAW] || value)
 }
 
 export function isReactive(value: any) {

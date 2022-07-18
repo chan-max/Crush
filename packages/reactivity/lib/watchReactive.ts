@@ -136,11 +136,12 @@ export function watchReactive(reactiveData: any, callback: any) {
 
 
 // 指定侦测的目标和key值
-export function watchTargetKey(target: any, key: any, callback: any) {
-    if (!isReactive(target)) {
+export function watchTargetKey(reactiveTarget: any, key: any, callback: any) {
+    if (!isReactive(reactiveTarget)) {
         return
     }
 
+    let target = toRaw(reactiveTarget)
     const deps = getDeps(target, key)
 
     var watchCallbackIsCalling = false, changeNewValue: any, changeOldValue: any;

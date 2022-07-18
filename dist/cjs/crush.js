@@ -184,10 +184,10 @@ function createKeyframes(keyframes, children, key = uid()) {
 }
 function createKeyframe(keyframe, children, key = uid()) {
     return {
+        nodeType: 27 /* KEYFRAME_RULE */,
         key,
         keyframe,
         children,
-        nodeType: 27 /* KEYFRAME_RULE */,
     };
 }
 var createSupports = (supports, children, key) => ({
@@ -227,9 +227,9 @@ key = null) {
             case 26 /* STYLE_RULE */:
                 flattedRules.push(rule);
                 var _children = rule.children;
-                rule.children = null;
+                rule.children = null; // children 会用存储declaration
                 if (_children) {
-                    doFlat(_children, flattedRules, rule);
+                    doFlat(_children, flattedRules, rule, patchKey);
                 }
                 break;
             case 29 /* DECLARATION */:
@@ -349,18 +349,27 @@ function processVnodePrerender(node, parentKey) {
     if (!isArray(node)) {
         node = [node];
     }
-    var flattedNode = [];
+    var flattedNodes = [];
     node.forEach((child) => {
-        if (!child)
+        if (child === undefined || child === null)
             return; // 空节点筛除  
         if (isString(child) || isNumber(child)) {
+            // 只会出现手写render的情况
             child = processStringRender(child, parentKey);
+        }
+        if (isArray(child)) {
+            // 只会出现手写render的情况 [[v1,v2,v3]]
+            flattedNodes = flattedNodes.concat(processVnodePrerender(child, parentKey));
+        }
+        if (child.patchKey) {
+            flattedNodes.push(child);
+            return;
         }
         if (child.nodeType === 1 /* FRAGMENT */) {
             /* 这里给后续传入fragment的key，为了使后续的每个节点都能有唯一的key ,
                 当使用 for循环时，只能传入一个key，但会在循环时为每个结果生成唯一的key
             */
-            flattedNode = flattedNode.concat(processVnodePrerender(child.children, child.key));
+            flattedNodes = flattedNodes.concat(processVnodePrerender(child.children, child.key));
         }
         else {
             if (parentKey) {
@@ -376,10 +385,10 @@ function processVnodePrerender(node, parentKey) {
             if (child.nodeType === 17 /* STYLE */) {
                 child.children = flatRules(child.children, null, child.patchKey);
             }
-            flattedNode.push(child);
+            flattedNodes.push(child);
         }
     });
-    return flattedNode;
+    return flattedNodes;
 }
 
 const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
@@ -829,21 +838,35 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
 
 function mountRenderComponent(vnode, container, anchor, parent) {
     const { type, props, children } = vnode;
-    const renderResult = type.call(null, props, children);
-    const next = processVnodePrerender(renderResult);
-    vnode.vnode = next; // 保存当前组件的树
-    patch(null, next, container, anchor, parent);
+    vnode.instance = parent;
+    // 函数式组件没有实例，但也可以拥有状态 , 组件有状态时，会进行自更新 ， 自更新时props和slots内容还是之前传过来的
+    function renderComponentUpdate() {
+        let isMounted = vnode.isMounted;
+        const renderResult = type.call(null, props, children, vnode);
+        const next = processVnodePrerender(renderResult);
+        processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, vnode);
+        patch(vnode.vnode, next, container, anchor, parent);
+        processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, vnode);
+        vnode.vnode = next; // 保存当前组件的树
+        vnode.isMounted = true;
+    }
+    effect(renderComponentUpdate);
 }
-function updateRenderComponent(p, n, container, anchor, parent) {
-    const { type, props, children } = n;
-    const renderResult = type.call(null, props, children);
+function updateRenderComponent(pVnode, nVnode, container, anchor, parent) {
+    const { type, props, children } = nVnode;
+    nVnode.instance = parent;
+    const renderResult = type.call(null, props, children, nVnode, pVnode); // 传入新旧节点
     const next = processVnodePrerender(renderResult);
-    n.vnode = next; //
-    const prev = p.vnode;
+    const prev = pVnode.vnode;
+    processHook("beforeUpdate" /* BEFORE_UPDATE */, nVnode, pVnode);
     patch(prev, next, container, anchor, parent);
+    processHook("updated" /* UPDATED */, nVnode, pVnode);
+    nVnode.vnode = next; //
 }
 function unmountRenderComponent(vnode, container, anchor, parent) {
+    processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
     patch(vnode.vnode, null, container, anchor, parent);
+    processHook("unmounted" /* UNMOUNTED */, vnode);
 }
 
 function mount(vnode, container, anchor = null, parent = null) {
@@ -976,7 +999,7 @@ function updateComponentProps(instance, pProps, nProps) {
                 nValue && (refs[nValue] = instance);
             }
         }
-        else if (!emitsOptions[getEventName(prop)] && !propsOptions[prop]) {
+        else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
             // 未定义
             let attrs = instance.attrs ||= {};
             attrs[prop] = nValue;
@@ -1066,7 +1089,45 @@ function sortChildren(p, n, isRules) {
         var node = n[i];
         var patchKey = node.patchKey;
         var sameNode = pMap[patchKey];
-        if (sameNode && (isRules || (sameNode.node.type === node.type))) {
+        if (sameNode && sameNode.node.type === node.type) {
+            /*
+                the condition of reuse a vnode for dom is same patchkey and same type
+                for rules is just the same patchkey
+            */
+            var sameNodeIndex = sameNode.index + pMoved;
+            var diff = i - sameNodeIndex;
+            var diffLength = Math.abs(diff);
+            if (diff < 0) {
+                /* 说明该接点在p中的位置较远，需要再n中条南充元素 */
+                insertNull(n, i, diffLength);
+                i += diffLength;
+                nLength += diffLength;
+            }
+            else {
+                insertNull(p, sameNodeIndex, diffLength);
+                pMoved += diffLength;
+            }
+        }
+    }
+    return {
+        p, n
+    };
+}
+function sortRules(p, n) {
+    // copy
+    p = [...p || []];
+    n = [...n || []];
+    var nLength = n.length;
+    var { map: pMap } = createMapAndList(p);
+    var pMoved = 0;
+    for (let i = 0; i < nLength; i++) {
+        /*
+            此次循环用于将两组规则的相同key对应到相同的索引下
+        */
+        var node = n[i];
+        var patchKey = node.patchKey;
+        var sameNode = pMap[patchKey];
+        if (sameNode) {
             /*
                 the condition of reuse a vnode for dom is same patchkey and same type
                 for rules is just the same patchkey
@@ -1107,7 +1168,7 @@ function updateSheet(pRules, nRules, sheet, vnode) {
         其次为nodetype,
         !还是假设key相同的节点顺序一定不会变，
     */
-    var { p, n } = sortChildren(pRules, nRules, true);
+    var { p, n } = sortRules(pRules, nRules);
     /*
         经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
         抛出同一索引下节点类型不相同的情况
@@ -1260,7 +1321,7 @@ function updateHTMLElement(p, n, container, anchor, parent) {
     updateChildren(p.children, n.children, container, anchor, parent);
 }
 function updateChildren(pChildren, nChildren, container, anchor, parent) {
-    var { p, n } = sortChildren(pChildren, nChildren, false);
+    var { p, n } = sortChildren(pChildren, nChildren);
     var max = Math.max(p.length, n.length);
     for (let i = 0; i < max; i++) {
         patch(p[i], n[i], container, getAnchor(p, i + 1), parent);
@@ -1273,12 +1334,16 @@ function getAnchor(vnodes, index) {
     for (let i = index; i < vnodes.length; i++) {
         let nextSibiling = vnodes[i];
         if (!nextSibiling) {
+            // 这里可能出现为空是因为排序时增加的空节点
             continue;
         }
         return getVnodeAnchor(nextSibiling);
     }
 }
 function getVnodeAnchor(vnode) {
+    if (!vnode) {
+        return null;
+    }
     switch (vnode.nodeType) {
         case 14 /* COMPONENT */:
             return getVnodeAnchor(vnode.instance.vnode[0]);
@@ -1297,6 +1362,9 @@ const patch = (current, next, container, anchor, parent) => {
     if (!current) {
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent);
+        }
+        else {
+            return;
         }
     }
     else {
@@ -1719,7 +1787,7 @@ function ownKeys(target) {
         for ? in target
     */
     // Object.assign will call this
-    console.log('track ownKeys');
+    trackTarget(target);
     return Reflect.ownKeys(target);
 }
 function deleteProperty(target, key) {
@@ -2064,6 +2132,259 @@ function watchRef(ref, callback) {
     return () => deps.delete(watchEffect);
 }
 
+class ReactiveBoolean extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    toggle() {
+        return this.value = !this.value;
+    }
+    toTrue() {
+        return this.value = true;
+    }
+    toFalse() {
+        return this.value = false;
+    }
+}
+function useBoolean(value = true) {
+    return new ReactiveBoolean(value);
+}
+
+/*
+    rbg
+    hex
+    hsl  // css 中 只能写 %
+*/
+const toHex = (num) => num.toString(16);
+const toDec = (num) => parseInt(String(num), 16);
+function rgbToHex() {
+}
+function hexToRgb() {
+}
+const useColor = (color) => new ColorRef(color);
+class ColorRef extends Ref {
+    constructor(color) {
+        super(color);
+    }
+}
+
+function useDate(...dateArgs) {
+    return new DateRef(new Date(...dateArgs));
+}
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+class DateRef extends Ref {
+    constructor(date) {
+        super(date, { sensitive: true });
+    }
+    clone() {
+        return useDate(this._value); // _value 不会收集依赖
+    }
+    get(key) {
+        return Reflect.get(this, key).call(this);
+    }
+    year(setYear) {
+        if (isUndefined(setYear)) {
+            // getter
+            return this.value.getFullYear();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setFullYear(Number(setYear));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    month(setMonth) {
+        if (isUndefined(setMonth)) {
+            // getter
+            return this.value.getMonth() + 1;
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setMonth(Number(setMonth) - 1);
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    // monthday
+    date(setDate) {
+        if (isUndefined(setDate)) {
+            // getter
+            return this.value.getDate();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setDate(Number(setDate));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    // weekday
+    day(setDay) {
+        if (isUndefined(setDay)) {
+            // getter
+            return this.value.getDay();
+        }
+        else {
+            debugger;
+        }
+    }
+    hour(setHour) {
+        if (isUndefined(setHour)) {
+            // getter
+            return this.value.getHours();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setHours(Number(setHour));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    minute(setMinutes) {
+        if (isUndefined(setMinutes)) {
+            // getter
+            return this.value.getMinutes();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setMinutes(Number(setMinutes));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    second(setSecond) {
+        if (isUndefined(setSecond)) {
+            // getter
+            return this.value.getSeconds();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setSeconds(Number(setSecond));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    milliSecond(setMilliseconds) {
+        if (isUndefined(setMilliseconds)) {
+            // getter
+            return this.value.getMilliseconds();
+        }
+        else {
+            // 不应该收集依赖
+            this._value.setMilliseconds(Number(setMilliseconds));
+            // use sensitive force trigger
+            this.value = this.value;
+            return this;
+        }
+    }
+    format(template, customKeywords = emptyObject) {
+        let w = customKeywords.weekdays || weekdays;
+        let m = customKeywords.months || months;
+        return template.replace(dateFormatRE, (capture) => {
+            switch (capture) {
+                case "YYYY" /* YEAR */:
+                    return this.year();
+                case "YY" /* YEAR_2D */:
+                    return String(this.year()).slice(2);
+                case "M" /* MONTH */:
+                    return this.month();
+                case "MM" /* MONTH_2D */:
+                    return padZero(this.month());
+                case "MMM" /* MONTH_SHORT_NAME */:
+                    return m[this.month() - 1].slice(0, 3);
+                case "MMMM" /* MONTH_FULL_NAME */:
+                    return m[this.month() - 1];
+                case "D" /* DATE */:
+                    return this.date();
+                case "DD" /* DATE_2D */:
+                    return padZero(this.date());
+                case "h" /* HOUR_12 */:
+                    // 等于 12 应该是 12 点还是 0 点
+                    var hour = this.hour();
+                    return hour > 12 ? hour - 12 : hour;
+                case "hh" /* HOUR_12_2D */:
+                    var hour = this.hour();
+                    return padZero(hour > 12 ? hour - 12 : hour);
+                case "H" /* HOUR_24 */:
+                    return this.hour();
+                case "HH" /* HOUR_24_2D */:
+                    return padZero(this.hour());
+                case "m" /* MINUTE */:
+                    return this.minute();
+                case "mm" /* MINUTE_2D */:
+                    return padZero(this.minute());
+                case "s" /* SECOND */:
+                    return this.second();
+                case "ss" /* SECOND_2D */:
+                    return padZero(this.second());
+                case "SSS" /* MILLISECOND */:
+                    return this.milliSecond();
+                case "SS" /* MILLISECOND_10 */:
+                    return String(this.milliSecond()).slice(0, 2);
+                case "S" /* MILLISECOND_100 */:
+                    return String(this.milliSecond()).slice(0, 1);
+                case "W" /* WEEKDAY */:
+                    return this.day();
+                case "WWW" /* WEEKDAY_FULL_NAME */:
+                    return w[this.day()];
+                case "WW" /* WEEKDAY_SHORT_NAME */:
+                    return w[this.day()].slice(0, 3);
+                default:
+                    return '?';
+            }
+        });
+    }
+}
+const dateFormatRE = /Y{1,4}|M{1,4}|D{1,2}|H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,3}|A|a|W{1,3}/g;
+function padZero(source, expectLength = 2) {
+    // 期待长度一定要大于目标长度
+    return '0'.repeat(expectLength - String(source).length) + source;
+}
+
+class ReactiveNumber extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    plus(value = 1) {
+        return this.value += value;
+    }
+    minus(value = 1) {
+        return this.value -= value;
+    }
+    multiply(value = 1) {
+        return this.value *= value;
+    }
+    devide(value = 1) {
+        return this.value /= value;
+    }
+}
+function useNumber(value) {
+    return new ReactiveNumber(value);
+}
+
+class ReactiveString extends Ref {
+    constructor(value) {
+        super(value);
+    }
+    concat(...values) {
+        return this.value.concat(...values);
+    }
+    padEnd(targetLength, padString) {
+        return this.value = this.value.padEnd(targetLength, padString);
+    }
+}
+function useString(value = 'hello world') {
+    return new ReactiveString(value);
+}
+
 var nextTick = (fn, args = undefined) => {
     var p = Promise.resolve(args);
     p.then(fn.bind(null));
@@ -2179,6 +2500,7 @@ function mountComponent(vnode, container, anchor, parent) {
     instance.update = update;
     const rednerEffect = createReactiveEffect(update, queueJob);
     // 手动渲染
+    instance.renderEffect = rednerEffect;
     rednerEffect.run();
     return instance;
 }
@@ -2293,14 +2615,20 @@ function display(data) {
 }
 
 function getComponent(name) {
-    var component = getCurrentInstance().components?.[name] || getCurrentApp().components[name];
+    let instanceComponents = getCurrentInstance().components;
+    let appComponents = getCurrentApp().components;
+    // 支持组件首字母大写
+    var component = instanceComponents?.[name] || instanceComponents?.[initialUpperCase(name)] || appComponents?.[name] || appComponents?.[initialUpperCase(name)];
     if (!component) {
         error(`cant find compnent ${name}`);
     }
     return component;
 }
 function getDirective(name) {
-    var directive = getCurrentInstance().directives?.[name] || getCurrentApp().directives[name];
+    let instancedirectives = getCurrentInstance().directives;
+    let appdirectives = getCurrentApp().directives;
+    // 支持组件首字母大写
+    var directive = instancedirectives?.[name] || instancedirectives?.[initialUpperCase(name)] || appdirectives?.[name] || appdirectives?.[initialUpperCase(name)];
     if (!directive) {
         error(`can't find directive ${name}`);
     }
@@ -2875,6 +3203,9 @@ const builtInTags = {
     template(ast) {
         ast.type = 2 /* TEMPLATE */;
     },
+    fragment(ast) {
+        ast.type = 2 /* TEMPLATE */;
+    },
     // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
     slot(ast) {
         ast.type = 35 /* SLOT */;
@@ -2919,7 +3250,7 @@ const builtInTags = {
         ast.ignoreChildren = true;
     }
 };
-// 
+// 由外界注入的指令 ， 还需要额外处理
 const customDirectiveHandlers = {
     model(attribute, ast) {
         let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : ast.rawAttributeMap.type || 'text';
@@ -3031,6 +3362,7 @@ function processAttribute(ast) {
             }
         }
         else if (flag === '--') {
+            // 所有带 -- 一定是外界注入的指令
             attribute.type = 34 /* CUSTOM_DIRECTIVE */;
             // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
             const customDirectiveHandler = customDirectiveHandlers[attribute.property];
@@ -3040,9 +3372,14 @@ function processAttribute(ast) {
             }
         }
         else if (flag === '#') {
-            // id shorthand
+            /*
+                <div #app> </div> => <div #app> </div>
+                <template #header></template> =>  <template slot:header></template>
+                <Hello #app> => ref ??
+            */
             attribute.type = 7 /* ATTRIBUTE */;
-            attribute.value = attribute.property;
+            // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+            attribute.value = hyphenate(attribute.property);
             attribute.property = 'id';
             attribute.isDynamicValue = attribute.isDynamicProperty;
             attribute.isDynamicProperty = false;
@@ -3073,21 +3410,15 @@ function processAst(ast) {
         ast.forEach(processAst);
         return;
     }
-    const tag = ast.tag;
-    const tagName = camelize(tag);
-    ast.tagName = tagName;
+    const tagName = ast.tagName = camelize(ast.tag);
+    let builtInTagHandler = builtInTags[tagName];
+    if (!builtInTagHandler) {
+        ast.type = isHTMLTag(tagName) ? 13 /* HTML_ELEMENT */ : isSVGTag(tagName) ? 9 /* SVG_ELEMENT */ : 14 /* COMPONENT */;
+    }
+    // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
     processAttribute(ast);
-    if (builtInTags[tagName]) {
-        builtInTags[tagName](ast);
-    }
-    else if (isHTMLTag(tagName)) {
-        ast.type = 13 /* HTML_ELEMENT */;
-    }
-    else if (isSVGTag(tagName)) {
-        ast.type = 9 /* SVG_ELEMENT */;
-    }
-    else {
-        ast.type = 14 /* COMPONENT */;
+    if (builtInTagHandler) {
+        builtInTagHandler(ast);
     }
     if (!ast.ignoreChildren && ast.children) {
         processAst(ast.children);
@@ -3563,7 +3894,7 @@ function parseInlineStyle(styleString) {
     var l = chips.length;
     var styleMap = {};
     while (l) {
-        styleMap[camelize(chips[l - 2])] = toSingleQuotes(chips[l - 1]);
+        styleMap[camelize(chips[l - 2])] = chips[l - 1];
         l -= 2;
     }
     return styleMap;
@@ -3614,6 +3945,9 @@ function normalizeStyle(style) {
         style = style.map(normalizeStyle);
         return extend(...style);
     }
+    else {
+        return style;
+    }
 }
 
 function renderSlot(name, scope, fallback, key) {
@@ -3656,7 +3990,7 @@ var renderMethods = {
     normalizeStyle,
     createComponent,
     renderSlot,
-    createMap
+    mergeSelectors
 };
 
 // if you are using css function with dynamic binding , use camelized function name 
@@ -3814,12 +4148,10 @@ function keyframe(name, keyframes) {
     comment : ! 66666
 */
 function h(type, props, children, key = uid()) {
-    if (isObject(type)) {
-        // state component
+    if (isObject(type) || isFunction(type)) {
+        // 同时支持有状态组件和函数式组件
         if (children && !isObject(children)) {
-            children = {
-                default: children
-            };
+            children = { default: children };
         }
         return createComponent(type, props, children, key);
     }
@@ -4829,6 +5161,7 @@ const fadeOutBottomLeft = [
     keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
 ];
 
+const xxx = () => 21 /* AT */;
 const animationFrames = {
     // slide 滑动
     slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
@@ -5137,9 +5470,83 @@ const transitionGroupDirective = {
     }
 };
 
+const defaultTeleportOptions = {
+    to: document.body,
+    anchor: null,
+    disabled: false
+};
+const body = document.body;
+function normalizeElement(selectorOrElement) {
+    if (isString(selectorOrElement)) {
+        try {
+            selectorOrElement = document.querySelector(selectorOrElement);
+        }
+        catch (e) {
+            selectorOrElement = body;
+        }
+    }
+    if (!(selectorOrElement instanceof Element)) {
+        selectorOrElement = body;
+    }
+    return selectorOrElement;
+}
+function Teleport(props, { default: _default }, nVnode, pVnode) {
+    props ||= defaultTeleportOptions;
+    let { to: container, anchor, disabled } = props;
+    container = normalizeElement(container);
+    anchor = normalizeElement(anchor);
+    let renderingVnode = processVnodePrerender(_default());
+    debugger;
+    if (pVnode) {
+        // 节点更新
+        let { to: pContainer, anchor: pAnchor, disabled: pDisabled } = pVnode.props || defaultTeleportOptions;
+        let teleportedVnode = pVnode.teleportedVnode; // 已经传送的节点
+        pContainer = normalizeElement(pContainer);
+        pAnchor = normalizeElement(pAnchor);
+        let instance = pVnode.instance; // = nVnode.instance
+        if (disabled && !pDisabled) {
+            // 卸载
+            patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
+            nVnode.teleportedVnode = null;
+        }
+        else if (!disabled && pDisabled) {
+            // 挂载
+            patch(null, renderingVnode, container, anchor, instance); // 挂载新的
+            nVnode.teleportedVnode = renderingVnode;
+        }
+        else {
+            // 更新
+            if (container !== pContainer || anchor !== pAnchor) {
+                patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
+                patch(null, renderingVnode, container, anchor, instance); // 挂载新的
+                nVnode.teleportedVnode = renderingVnode;
+            }
+            else {
+                patch(teleportedVnode, renderingVnode, container, anchor, instance);
+                nVnode.teleportedVnode = renderingVnode;
+            }
+        }
+    }
+    else if (nVnode.isMounted) {
+        // 自更新 , 参数一定不变 ？？？, 插槽内容变会进入此更新
+        debugger;
+    }
+    else {
+        // 第一次挂载
+        if (disabled) ;
+        else {
+            patch(null, renderingVnode, container, anchor, nVnode.instance); // 传送
+            nVnode.teleportedVnode = renderingVnode;
+        }
+    }
+    // disabled生效 ，直接渲染空节点
+    return disabled ? renderingVnode : null;
+}
+
 const builtInComponents = {
     transition: transitionComponent,
-    transitionGroup: transitionGroupComponent
+    transitionGroup: transitionGroupComponent,
+    Teleport
 };
 const builtInDirectives = {
     modelText: modelText,
@@ -5152,7 +5559,7 @@ const builtInDirectives = {
     modelSelectMultiple: modelSelectMultiple,
     show: showDirective,
     transition: transitionDirective,
-    transitionGroup: transitionGroupDirective
+    transitionGroup: transitionGroupDirective,
 };
 
 var currentApp;
@@ -5284,6 +5691,14 @@ function normalizePropsOptions(options) {
     }
     return options;
 }
+function normalizeEmitsOptions(options) {
+    if (isArray(options)) {
+        return arrayToMap(options, emptyObject);
+    }
+    else {
+        return options;
+    }
+}
 
 exports.ComponentOptions = void 0;
 (function (ComponentOptions) {
@@ -5298,10 +5713,14 @@ exports.ComponentOptions = void 0;
     ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
     ComponentOptions["UNMOUNTED"] = "unmounted";
     ComponentOptions["BEFORE_PATCH"] = "beforePatch";
+    // keepalive
+    ComponentOptions["ACTIVATED"] = "activated";
+    ComponentOptions["DEACTIVATED"] = "deactivated";
     ComponentOptions["TEMPLATE"] = "template";
     ComponentOptions["RENDER"] = "render";
     ComponentOptions["PROPS"] = "props";
     ComponentOptions["EMITS"] = "emits";
+    ComponentOptions["NAME"] = "name";
     ComponentOptions["MIXINS"] = "mixins";
     ComponentOptions["COMPOENNTS"] = "components";
     ComponentOptions["DIRECTIVES"] = "directives";
@@ -5314,7 +5733,7 @@ function resolveOptions(options) {
                 options.propsOptions = normalizePropsOptions(value);
                 break;
             case exports.ComponentOptions.EMITS:
-                options.emitsOptions = normalizePropsOptions(value);
+                options.emitsOptions = normalizeEmitsOptions(value);
                 break;
             case exports.ComponentOptions.TEMPLATE:
                 options.createRender = compile(value);
@@ -5331,6 +5750,9 @@ function resolveOptions(options) {
             case exports.ComponentOptions.UPDATED:
             case exports.ComponentOptions.BEFORE_UNMOUNT:
             case exports.ComponentOptions.UNMOUNTED:
+            case exports.ComponentOptions.BEFORE_PATCH:
+            case exports.ComponentOptions.ACTIVATED:
+            case exports.ComponentOptions.DEACTIVATED:
                 // 转换为数组形式
                 if (value && !isArray(value)) {
                     options[key] = [value];
@@ -5340,16 +5762,17 @@ function resolveOptions(options) {
                 break;
             case exports.ComponentOptions.DIRECTIVES:
                 break;
-            //! remove to create instance
-            // case ComponentOptions.MIXINS:
-            //     var mixins = value
-            //     injectMixins(options, mixins as any[])
-            //     break
+            case exports.ComponentOptions.NAME:
+                break;
             default:
                 /*custom options*/
                 const customOptions = options.customOptions ||= {};
                 customOptions[key] = value;
                 break;
+        }
+        // 组件定义了name 可以递归
+        if (options[exports.ComponentOptions.NAME]) {
+            (options[exports.ComponentOptions.COMPOENNTS] ||= {})[options[exports.ComponentOptions.NAME]] = options;
         }
     }
 }
@@ -5531,6 +5954,7 @@ const createComponentInstance = (options, parent) => {
         off: null,
         once: null,
         watch: null,
+        renderEffect: null,
         render: options.render,
         customOptions: options.customOptions,
         propsOptions: options.propsOptions,
@@ -5695,6 +6119,7 @@ exports.createSupports = createSupports;
 exports.createText = createText;
 exports.cubicBezier = cubicBezier;
 exports.customDisplay = customDisplay;
+exports.dateFormatRE = dateFormatRE;
 exports.declare = declare;
 exports.defineScopeProperty = defineScopeProperty;
 exports.deleteActiveEffect = deleteActiveEffect;
@@ -5718,7 +6143,6 @@ exports.error = error;
 exports.exec = exec;
 exports.execCaptureGroups = execCaptureGroups;
 exports.extend = extend;
-exports.processVnodePrerender = processVnodePrerender;
 exports.flatRules = flatRules;
 exports.getActiveEffect = getActiveEffect;
 exports.getComponent = getComponent;
@@ -5749,6 +6173,7 @@ exports.getStyle = getStyle;
 exports.getStyleValue = getStyleValue;
 exports.h = h;
 exports.hasOwn = hasOwn;
+exports.hexToRgb = hexToRgb;
 exports.hsl = hsl;
 exports.hsla = hsla;
 exports.hyphenate = hyphenate;
@@ -5836,6 +6261,7 @@ exports.parseStyleValue = parseStyleValue;
 exports.patch = patch;
 exports.perspective = perspective;
 exports.processHook = processHook;
+exports.processVnodePrerender = processVnodePrerender;
 exports.queueJob = queueJob;
 exports.radialGradient = radialGradient;
 exports.reactive = reactive;
@@ -5856,6 +6282,7 @@ exports.renderList = renderList;
 exports.renderSlot = renderSlot;
 exports.resolveOptions = resolveOptions;
 exports.rgb = rgb;
+exports.rgbToHex = rgbToHex;
 exports.rgba = rgba;
 exports.rotate = rotate;
 exports.rotate3d = rotate3d;
@@ -5886,6 +6313,7 @@ exports.skew = skew;
 exports.skewX = skewX;
 exports.skewY = skewY;
 exports.sortChildren = sortChildren;
+exports.sortRules = sortRules;
 exports.splitSelector = splitSelector;
 exports.stringToMap = stringToMap;
 exports.stringify = stringify;
@@ -5895,7 +6323,9 @@ exports.toAbsoluteValue = toAbsoluteValue;
 exports.toArray = toArray;
 exports.toArrowFunction = toArrowFunction;
 exports.toBackQuotes = toBackQuotes;
+exports.toDec = toDec;
 exports.toEventName = toEventName;
+exports.toHex = toHex;
 exports.toNativeEventName = toNativeEventName;
 exports.toNegativeValue = toNegativeValue;
 exports.toPositiveValue = toPositiveValue;
@@ -5930,9 +6360,15 @@ exports.updateComponent = updateComponent;
 exports.updateDeclaration = updateDeclaration;
 exports.updateInstanceListeners = updateInstanceListeners;
 exports.updateStyleSheet = updateStyleSheet;
+exports.useBoolean = useBoolean;
+exports.useColor = useColor;
+exports.useDate = useDate;
+exports.useNumber = useNumber;
+exports.useString = useString;
 exports.warn = warn;
 exports.watchReactive = watchReactive;
 exports.watchRef = watchRef;
 exports.watchTargetKey = watchTargetKey;
 exports.withEventModifiers = withEventModifiers;
 exports.withScope = withScope;
+exports.xxx = xxx;
