@@ -31,6 +31,7 @@ export function Teleport(props: any, { default: _default }: any, nVnode: any, pV
     anchor = normalizeElement(anchor)
     let renderingVnode = processVnodePrerender(_default())
 
+    debugger
     if (pVnode) {
         // 节点更新
         let { to: pContainer, anchor: pAnchor, disabled: pDisabled } = pVnode.props || defaultTeleportOptions

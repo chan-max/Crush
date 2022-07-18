@@ -2,44 +2,40 @@ import { defineAsyncComponent } from "@crush/builtin/lib/defineAsyncComponent";
 import { watchComputed } from "@crush/reactivity/lib/watchComputed";
 import { createApp, reactive, ref, computed, watchReactive, watchRef, isReactive, doCSSAnimation, remountElement, shallowCloneArray, h, onMounted } from "./packages/core";
 
-let teleport = {
-    components: {
-        tom({ x }) {
-            return h('h1', null, x)
+
+const tom = {
+    template: `
+        <h1 @click="change"> {{obj}} </h1>
+    `,
+    create({
+        $self,
+        $watch,
+    }: any) {
+        $self.obj = { x: 1 }
+        $self.change = () => {
+            $self.obj.x++
         }
+        $watch($self.obj, () => {
+            console.log('obj change');
+        })
+    }
+}
+
+let root = {
+    components: {
+        tom
     },
     template:/*html*/`
-        <style>
-            for(id,i in teleports){
-                #$(id){
-                    width:100px;
-                    height:100px;
-                    color:red;
-                    h1{
-                        $color:rgb(i*30,i*30,i*30);
-                    }
-                }
-            }
-        </style>
-        <button @click="disabled = !disabled"> 切换disabled {{ disabled ? '不可用' : '可用'}}</button>
-        <h1> {{teleportTo}} </h1>
-        <div for="id,i in teleports" #(id)>
-            box : {{id}}
-        </div>
-        <input --model="teleportTo">
-        <teleport $to="teleportTo" $disabled="disabled">
-            <h1> 我是传送的内容 </h1>
-        </teleport>
+        <button @click="x++"> 切换组件 </button>
+        <tom if="x%2 === 0">
     `,
     create({ $self }: any) {
-        $self.teleportTo = document.body
-        $self.disabled = false
-        $self.teleports = ['a', 'b', 'c', 'd', 'e', 'f', 'e']
+        $self.x = 0
     }
 }
 
 
-var app = createApp(teleport)
+var app = createApp(root)
 console.log(app);
 
 

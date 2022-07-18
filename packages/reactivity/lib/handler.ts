@@ -264,8 +264,7 @@ function ownKeys(target: any) {
         for ? in target
     */
     // Object.assign will call this
-    console.log('track ownKeys');
-
+    trackTarget(target)
     return Reflect.ownKeys(target);
 }
 
