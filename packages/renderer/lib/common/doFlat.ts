@@ -36,9 +36,9 @@ export function doFlat(
             case Nodes.STYLE_RULE:
                 flattedRules.push(rule)
                 var _children = rule.children
-                rule.children = null
+                rule.children = null // children 会用存储declaration
                 if (_children) {
-                    doFlat(_children, flattedRules, rule)
+                    doFlat(_children, flattedRules, rule, patchKey)
                 }
                 break
             case Nodes.DECLARATION:

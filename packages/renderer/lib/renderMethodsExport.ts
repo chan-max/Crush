@@ -12,6 +12,7 @@ import {
 } from './vnode/dom'
 
 import { important } from './common/important'
+import { mergeSelectors } from '@crush/core'
 
 import {
     createStyleSheet,
@@ -79,5 +80,5 @@ export default {
     normalizeStyle,
     createComponent,
     renderSlot,
-    createMap
+    mergeSelectors
 }

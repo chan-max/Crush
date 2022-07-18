@@ -10,23 +10,31 @@ let teleport = {
     },
     template:/*html*/`
         <style>
-            #teleport-container1 *{
-                color:red;
-            }
-            #teleport-container2 *{
-                color:yellow;
+            for(id,i in teleports){
+                #$(id){
+                    width:100px;
+                    height:100px;
+                    color:red;
+                    h1{
+                        $color:rgb(i*30,i*30,i*30);
+                    }
+                }
             }
         </style>
-        <button @click="count++">{{count}}</button>
-        <div #teleport-container1></div>
-        <div #teleport-container2></div>
-        <teleport to="#teleport-container1" $disabled="count%2 === 0">
-            <h1> 111 </h1>
-            <h2> 222 </h2>
+        <button @click="disabled = !disabled"> 切换disabled {{ disabled ? '不可用' : '可用'}}</button>
+        <h1> {{teleportTo}} </h1>
+        <div for="id,i in teleports" #(id)>
+            box : {{id}}
+        </div>
+        <input --model="teleportTo">
+        <teleport $to="teleportTo" $disabled="disabled">
+            <h1> 我是传送的内容 </h1>
         </teleport>
     `,
     create({ $self }: any) {
-        $self.count = 0
+        $self.teleportTo = document.body
+        $self.disabled = false
+        $self.teleports = ['a', 'b', 'c', 'd', 'e', 'f', 'e']
     }
 }
 

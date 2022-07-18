@@ -2,6 +2,7 @@
 import { Nodes } from "@crush/const"
 
 export const updateStyleSheet = (p: any, n: any) => {
+
     var el = n.el = p.el
     var sheet = el.sheet
     /*
@@ -18,7 +19,7 @@ export const updateStyleSheet = (p: any, n: any) => {
 import { updateDeclaration } from "./declaration"
 
 import {
-    sortChildren
+    sortRules
 } from './sequence'
 
 import {
@@ -33,7 +34,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
         其次为nodetype,
         !还是假设key相同的节点顺序一定不会变，
     */
-    var { p, n } = sortChildren(pRules, nRules, true)
+    var { p, n } = sortRules(pRules, nRules)
 
     /* 
         经过第一次处理后，还需要进行第二次处理，目的是只有nodeType类型相同的节点会属于相同的节点，其他一律用空节点代替，因为一定会挂载或卸载，
@@ -43,6 +44,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
     var max = Math.max(p.length, n.length)
 
     var cursor = 0
+
     for (let i = 0; i < max; i++) {
         var pRule = p[i]
         var nRule = n[i]
