@@ -208,6 +208,7 @@ function processAttribute(ast: any) {
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i]
         let { flag, isDynamicProperty } = attribute
+
         if (flag === '@') {
             // event
             attribute.type = Nodes.EVENT
@@ -240,6 +241,7 @@ function processAttribute(ast: any) {
             attribute.isDynamicProperty = false
         } else if (flag === '.') {
             // class shourthand
+  
             attribute.type = Nodes.CLASS
             attribute.value = attribute.property
             attribute.property = 'class'

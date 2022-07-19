@@ -23,6 +23,5 @@ export function parseAttribute(attr: any) {
     attr.endFlag = endFlag
     attr.left = left
     attr.right = right
-
     return attr
 }

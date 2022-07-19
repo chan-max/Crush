@@ -3,14 +3,8 @@ import { createRefValueSetter, ref, Ref } from "@crush/reactivity/lib/ref"
 import { watchRef } from "@crush/reactivity/lib/watchRef"
 import { getCurrentScope } from "@crush/renderer"
 
-// 
 
-/*
-    ref
-    set ref
-    watch ref
-    destrcutor to use
-*/
+
 export function useRefState(value: any): any {
     let scope = getCurrentScope()
     var _ref = ref(value)

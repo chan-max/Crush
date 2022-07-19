@@ -2,6 +2,6 @@ import { App, defineScopeProperty } from "@crush/core";
 
 
 
-function createRouter() {
+function createRouter(routerOptions: any) {
     
 }

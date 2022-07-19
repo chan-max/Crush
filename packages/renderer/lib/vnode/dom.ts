@@ -23,6 +23,7 @@ function createComponent(type: any, props: any, children: any, key: any = uid())
     }
 
     return {
+        uid:uid(),
         nodeType: componentFlag,
         type,
         props,

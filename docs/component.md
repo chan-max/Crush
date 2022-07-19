@@ -25,3 +25,11 @@
 #### beforeUnmount
 #### unmounted
 
+## 函数式组件
+
+函数式组件没有组件实例
+
+
+
+
+
