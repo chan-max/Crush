@@ -6,11 +6,7 @@ import { terser } from "rollup-plugin-terser";
 //console.log(replace(replacements));
 const entry = './packages/core/index.ts'
 
-const bannerContent = `
-    Crush.js 
-    <%= pkg.version%>
-    <%= pkg.author%>
-`
+const bannerContent = `crush.js <%= pkg.version%><%= pkg.author%>`
 
 export default {
     input: entry,

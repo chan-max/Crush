@@ -9,7 +9,11 @@ import { mount, mountComponent, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
-import { NULL } from "@crush/compiler"
+
+import * as crush from '../../index'
+
+console.log(crush);
+
 
 var currentApp: App
 
@@ -81,13 +85,9 @@ export class App {
     use(plugin: PluginType, ...options: any[]) {
         if (this.plugins.has(plugin)) return
         let install = isFunction(plugin) ? plugin : plugin.install
-        install.call(plugin, this, ...options)
+        install.call(plugin, this, crush, ...options)
         this.plugins.add(plugin)
     }
-
-
-
-
 
     record: any = {}
     time(key: string) {

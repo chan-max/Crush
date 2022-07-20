@@ -82,6 +82,9 @@ export function resolveOptions(options: any) {
                 break
             case ComponentOptions.NAME:
                 break
+            case 'component':
+                // options key 'component' is used for devide route or component
+                break
             default:
                 /*custom options*/
                 const customOptions = options.customOptions ||= {}
@@ -90,7 +93,7 @@ export function resolveOptions(options: any) {
         }
 
         // 组件定义了name 可以递归
-        if(options[ComponentOptions.NAME]){
+        if (options[ComponentOptions.NAME]) {
             (options[ComponentOptions.COMPOENNTS] ||= {})[options[ComponentOptions.NAME]] = options
         }
     }

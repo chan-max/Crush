@@ -1,22 +1,26 @@
 import { isString } from "@crush/common"
 import { effect, patch, processVnodePrerender } from "@crush/core"
 
+const body = document.body
 
 const defaultTeleportOptions = {
-    to: document.body,
+    to: body,
     anchor: null,
     disabled: false
 }
 
-const body = document.body
+
 
 function normalizeElement(selectorOrElement: any) {
     if (isString(selectorOrElement)) {
         try {
             selectorOrElement = document.querySelector(selectorOrElement)
         } catch (e) {
-            selectorOrElement = null
+            return null
         }
+    }
+    if (!(selectorOrElement instanceof Element)) {
+        return null
     }
     return selectorOrElement
 }
