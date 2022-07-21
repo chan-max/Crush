@@ -52,3 +52,8 @@ function parseQuery(queryString: string) {
     })
     return query
 }
+
+
+function getCurrentUrl(){
+
+}

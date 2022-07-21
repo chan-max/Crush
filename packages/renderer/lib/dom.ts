@@ -37,18 +37,18 @@ export function remountElement(el: HTMLElement) {
 export const setAttribute = (el: Element, attribute: string, value: string) => el.setAttribute(attribute, value)
 export const removeAttribute = (el: Element, attribute: string) => el.removeAttribute(attribute)
 
-export const addListener = (el: Element, event: string, handler: any, options: any = null) => el.addEventListener(event, handler, options);
-export const removeListener = (el: Element, event: string, handler: any, options: any = null) => el.removeEventListener(event, handler, options);
+export const addListener = (target: EventTarget, event: string, handler: any, options: any = null) => target.addEventListener(event, handler, options);
+export const removeListener = (target: EventTarget, event: string, handler: any, options: any = null) => target.removeEventListener(event, handler, options);
 
-export function onceListener(el: Element, event: string, handler: Function, options: any = null) {
+export function onceListener(target: Element, event: string, handler: Function, options: any = null) {
     var onceHandler = () => {
         handler()
-        removeListener(el, event, onceHandler, options)
+        removeListener(target, event, onceHandler, options)
     }
-    addListener(el, event, onceHandler, options)
+    addListener(target, event, onceHandler, options)
 
     // 注销事件
-    return () => removeListener(el, event, onceHandler, options)
+    return () => removeListener(target, event, onceHandler, options)
 }
 
 

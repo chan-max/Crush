@@ -27,6 +27,7 @@
     "@crush/const": "^0.0.0",
     "@crush/reactivity": "^0.0.0",
     "@crush/renderer": "^0.0.0",
+    "@crush/router": "^0.0.0",
     "@crush/scheduler": "^0.0.0"
   },
   "repository": {

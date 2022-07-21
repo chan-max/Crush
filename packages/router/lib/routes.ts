@@ -7,5 +7,5 @@ function isRoute(options: any) {
 
 
 export function createRouterMap(routes: any) {
-
+    
 }

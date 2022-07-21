@@ -1,13 +1,17 @@
-
 import { modelText, modelColor, modelRadio, modelCheckbox, modelSelectOne, modelSelectMultiple, modelRange } from "./model"
 import { showDirective } from "./show"
 import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
 import { Teleport } from "./teleport"
+import {RouterLink,RouterView} from '@crush/router'
+
+
 
 export const builtInComponents: any = {
     transition: transitionComponent,
     transitionGroup: transitionGroupComponent,
-    Teleport
+    Teleport,
+    RouterLink,
+    RouterView
 }
 
 export const builtInDirectives = {
@@ -22,5 +26,4 @@ export const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
-    
 }

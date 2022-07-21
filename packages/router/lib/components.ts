@@ -1,30 +1,18 @@
+import { getCurrentRouter } from "./router"
 
 
-const routerView = {
-    render() {
-        
-    },
-    create() {
-
-    }
+export function RouterView(props: any, slots: any, vnode: any, pVnode: any) {
+    const router = getCurrentRouter()
+    debugger
+    return '路由视图'
 }
 
-const routerLink = {
+export function RouterLink({
+    to,
+    replace,
+    activeClass
+}: any) {
 
-}
-
-const router = {
-
-}
-
-
-/*
-    
-*/
-const route = {
-    props: {
-        path: String
-    }
 }
 
 

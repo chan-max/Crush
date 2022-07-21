@@ -1,6 +1,7 @@
 import { emptyObject } from "@crush/common";
-import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
+import { isProxyType, ReactiveFlags, ReactiveTypeSymbol } from "./common"
 import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect } from "./effect"
+import { reactive } from "./reactive";
 
 export const ref = (value: any, options?: any) => new Ref(value, options)
 
@@ -17,15 +18,19 @@ export class Ref {
 
     sensitive: any
 
+    shallow: any
+
     constructor(value: any, options: any = emptyObject) {
         this.sensitive = options.sensitive
+        this.shallow = options.shallow
         this._value = value
     }
 
     get value() {
         // track
         trackRef(this)
-        return this._value
+        let value = this._value
+        return (!this.shallow && isProxyType(value)) ? reactive(value) : value
     }
 
     set value(newValue) {
