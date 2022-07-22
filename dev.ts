@@ -4,40 +4,41 @@ import { createApp, reactive, ref, computed, watchReactive, watchRef, isReactive
 import { createRouter } from "./packages/router/lib/router";
 
 
-const jax = {
-    template: `武器大师`
-}
-
-const zed = {
-    template: `劫`
-}
 
 const yasuo = {
-    template: `亚索`
-}
-
-let root = {
-    components: { jax, zed, yasuo },
-    template: /*html*/`
-        <h4> 根应用 </h4>
-        <router-view>
-    `,
-    create({ $self, $watch, $router }: any) {
-        $self.x = 0
-        $self.add = () => $self.x++
+    template: `亚索 `,
+    create({ $attrs }: any) {
     }
 }
 
-var app = createApp(root)
+let lol = {
+    components: {
+        yasuo
+    },
+    props: ['id'],
+    template: `
+    <h2>英雄联盟 {{id}}</h2>
+    <yasuo $id="id">
+    `
+}
+
+
+let game = {
+    components: {
+        lol
+    },
+    template: `
+    <h1> 游戏中心 </h1>
+    `,
+    create({ $self }: any) {
+
+    }
+}
+
+var app = createApp(game)
 console.log(app);
 
 const router = createRouter({})
-
-import { onHashChange } from "./packages/router/lib/native";
-
-onHashChange((n, o) => {
-    console.log(n, o);
-})
 
 app.use(router)
 
