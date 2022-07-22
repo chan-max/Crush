@@ -1,6 +1,7 @@
 import {
     isArray
 } from '@crush/common'
+import { Nodes } from '@crush/const'
 
 import {
     mount, mountChildren
@@ -10,8 +11,9 @@ import {
 } from './unmount'
 import { update, updateChildren } from './update'
 
-export const patch = (current: any, next: any, container: any, anchor: any, parent: any) => {
-    if (!current) {
+
+export const patch = (prev: any, next: any, container: any, anchor: any, parent: any) => {
+    if (!prev) {
         if (next) {
             isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent)
         } else {
@@ -20,21 +22,22 @@ export const patch = (current: any, next: any, container: any, anchor: any, pare
     } else {
         if (!next) {
             // 卸载当前节点
-            isArray(current) ? unmountChildren(current) : unmount(current, container, anchor, parent)
+            isArray(prev) ? unmountChildren(prev) : unmount(prev, container, anchor, parent)
         } else {
-            if (isArray(current)) {
-                updateChildren(current, isArray(next) ? next : [next], container, anchor, parent)
+            if (isArray(prev)) {
+                updateChildren(prev, isArray(next) ? next : [next], container, anchor, parent)
             } else {
                 if (isArray(next)) {
-                    updateChildren([current], next, container, anchor, parent)
+                    updateChildren([prev], next, container, anchor, parent)
                 } else {
-                    // 两个单节点 ， 但key可能不同 
-                    if (current.type === next.type && current.patchKey === next.patchKey) {
-                        // 类型相同，直接更新
-                        update(current, next, container, anchor, parent)
+                    let { type: prevType, patchKey: prevPatchKey } = prev
+                    let { type: nextType, patchKey: nextPatchKey, nodeType } = next
+                    // 文本节点和注释节点直接更新即可
+                    if (prevType === nextType && (prevPatchKey === nextPatchKey || nodeType === Nodes.TEXT || nodeType === Nodes.HTML_COMMENT)) {
+                        // type相同，nodeType一定相同
+                        update(prev, next, container, anchor, parent)
                     } else {
-                        // 类型不同。先卸载，在挂载
-                        unmount(current, container, anchor, parent)
+                        unmount(prev, container, anchor, parent)
                         mount(next, container, anchor, parent)
                     }
                 }

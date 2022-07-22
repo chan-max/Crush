@@ -3,7 +3,7 @@
 
 */
 
-export function parseUrl(url: string) {
+export function parseURL(url: string) {
     if (url.startsWith('#')) {
         url = url.slice(1)
     }

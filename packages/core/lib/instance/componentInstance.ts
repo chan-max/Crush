@@ -12,7 +12,6 @@ import { createInstanceWatch } from "./watch";
 export const createComponentInstance = (options: any, parent: any) => {
     let app = getCurrentApp()
     let instance: ComponentInstance = {
-
         app,
         parent,
         uid: uid(),
@@ -38,9 +37,9 @@ export const createComponentInstance = (options: any, parent: any) => {
         watch: null,
         renderEffect: null,
         render: options.render,
-        customOptions: options.customOptions,
-        propsOptions: options.propsOptions,
-        emitsOptions: options.emitsOptions,
+        customOptions: options.customOptions ,
+        propsOptions: options.propsOptions || emptyObject,
+        emitsOptions: options.emitsOptions || emptyObject,
         createRender: options.createRender,
         components: options.components,
         directives: options.directives,
@@ -55,6 +54,11 @@ export const createComponentInstance = (options: any, parent: any) => {
         beforeUpdate: shallowCloneArray(options.beforeUpdate),
         updated: shallowCloneArray(options.updated),
         beforePatch: shallowCloneArray(options.beforePatch),
+        activated: shallowCloneArray(options.activated),
+        deactivated: shallowCloneArray(options.deactivated),
+        beforeRouteEnter: shallowCloneArray(options.beforeRouteEnter),
+        beforeRouteLeave: shallowCloneArray(options.beforeRouteLeave),
+        beforeRouteUpdate: shallowCloneArray(options.beforeRouteUpdate)
     }
 
     injectMixins(instance, options.mixins)
@@ -115,5 +119,10 @@ export interface ComponentInstance {
     off: any,
     once: any
     watch: any,
-    renderEffect: any
+    renderEffect: any,
+    activated:any,
+    deactivated:any
+    beforeRouteEnter:any,
+    beforeRouteLeave:any
+    beforeRouteUpdate:any
 }

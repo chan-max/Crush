@@ -24,6 +24,10 @@ export enum ComponentOptions {
     ACTIVATED = 'activated',
     DEACTIVATED = 'deactivated',
 
+    BEFORE_ROUTE_ENTER = 'beforeRouteEnter' , 
+    BEFORE_ROUTE_LEAVE = 'beforeRouteLeave' , 
+    BEFORE_ROUTE_UPDATE = 'beforeRouteUpdate' , 
+
     TEMPLATE = 'template',
     RENDER = 'render',
 
@@ -71,6 +75,9 @@ export function resolveOptions(options: any) {
             case ComponentOptions.BEFORE_PATCH:
             case ComponentOptions.ACTIVATED:
             case ComponentOptions.DEACTIVATED:
+            case ComponentOptions.BEFORE_ROUTE_ENTER:
+            case ComponentOptions.BEFORE_ROUTE_LEAVE:
+            case ComponentOptions.BEFORE_ROUTE_UPDATE:
                 // 转换为数组形式
                 if (value && !isArray(value)) {
                     options[key] = [value]
