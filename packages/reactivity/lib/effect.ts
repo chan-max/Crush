@@ -1,12 +1,11 @@
-import { emptyObject } from "@crush/common"
+import { emptyObject, isUndefined } from "@crush/common"
 import { ReactiveFlags } from "./common"
-
 
 
 export const TARGET_MAP = new WeakMap()
 
-
 export function getDepsMap(target: any) {
+
     let depsMap = TARGET_MAP.get(target)
     if (!depsMap) {
         depsMap = new Map()
@@ -15,15 +14,26 @@ export function getDepsMap(target: any) {
     return depsMap
 }
 
-export function getDeps(target: any, key: any) {
-    let depsMap = getDepsMap(target)
-    let deps = depsMap.get(key);
-    if (!deps) {
-        deps = new Set()
-        depsMap.set(key, deps);
+export function getDeps(target: any, key?: any) {
+    // ref 和 set类型 没有depsMap ，只有 deps
+    if (!isUndefined(key)) { // 没传 key
+        let depsMap = getDepsMap(target)
+        let deps = depsMap.get(key);
+        if (!deps) {
+            deps = new Set()
+            depsMap.set(key, deps);
+        }
+        return deps
+    } else {
+        let deps = TARGET_MAP.get(target)
+        if (!deps) {
+            deps = new Set()
+            TARGET_MAP.set(target, deps)
+        }
+        return deps
     }
-    return deps
 }
+
 
 export function track(target: any, key?: any) {
     let activeEffect = getActiveEffect()
@@ -35,46 +45,50 @@ export function track(target: any, key?: any) {
 }
 
 
-// 用于收集不确定的key目标依赖，当任意key改变都会出发此依赖
-export function trackTarget(target: any) {
-    track(target, trackTargetSymbol)
-}
-
-
 /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-export const trackTargetSymbol = Symbol('target has changed')
+export const targetObserverSymbol = Symbol('target has changed')
 
-export function getTargetDeps(target: any) {
-    return getDeps(target, trackTargetSymbol)
+
+export function trackTargetObserver(target: any) {
+    track(target, targetObserverSymbol)
 }
 
-
-
-
-
-// 只触发由trackTargetSymbol收集的依赖
-export function triggerTarget(target: any) {
-
+export function triggerTargetObserver(target: any) {
+    trigger(target, targetObserverSymbol)
 }
 
-// 触发一个目标中所有依赖
-export function triggerAll(target: any) {
-    const targetDepsMap = getDepsMap(target)
-
-    debugger
-
-}
-
-export function trigger(target: any, key: any) {
-
-    if (key !== trackTargetSymbol) {
-        // 防止递归
-        trigger(target, trackTargetSymbol)
+export function trigger(target: any, key?: any) {
+    // trigger 中会触发target中的依赖
+    if (isUndefined(key)) {
+        let deps = getDeps(target)
+        // 无depsmap
+        runDeps(deps)
+    } else {
+        // 任一key内容改变都会触发这一依赖
+        if (key !== targetObserverSymbol) { // 防止递归死循环
+            triggerTargetObserver(target)
+        }
+        triggerTargetKey(target, key)
     }
+}
 
+
+export function triggerAllDepsMap(target: any) {
+    let depsMap = getDepsMap(target)
+    for (let [key, deps] of depsMap) {
+        runDeps(deps)
+    }
+}
+
+
+export function triggerTargetKey(target: any, key: any) {
     let deps = getDeps(target, key);
-
     // copy 防止死循环
+    runDeps(deps)
+}
+
+
+function runDeps(deps: any) {
     [...deps].forEach((dep: any) => {
         if (isEffect(dep)) {
             if (dep == getActiveEffect()) {
@@ -86,6 +100,8 @@ export function trigger(target: any, key: any) {
         }
     })
 }
+
+//! effect
 
 
 const effectStack: ReactiveEffect[] = []

@@ -1,6 +1,6 @@
 import { ReactiveFlags, ReactiveTypeSymbol } from "./common"
 import { createReactiveEffect } from "./effect";
-import { trackRef, triggerRef } from "./ref";
+import { track, trigger } from "./effect";
 
 export const computed = (getter: any) => new ComputedRef(getter)
 
@@ -25,7 +25,7 @@ export class ComputedRef {
             // 依赖的值变化后，触发调度器 , 一个computed依赖的副作用就是它所依赖的值的副作用
             if (!this.shouldCompute) { // 缓存值
                 this.shouldCompute = true
-                triggerRef(this)
+                trigger(this)
             }
         })
     }
@@ -37,7 +37,7 @@ export class ComputedRef {
     }
 
     get value() {
-        trackRef(this)
+        track(this)
         return this.shouldCompute ? this.computedValue : this.cacheValue
     }
 }

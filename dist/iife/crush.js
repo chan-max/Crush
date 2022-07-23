@@ -1473,9 +1473,9 @@ var Crush = (function (exports) {
         activeEffect.deps.push(deps);
     }
     /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-    const trackTargetSymbol = Symbol('target has changed');
+    const targetObserverSymbol = Symbol('target has changed');
     function getTargetDeps(target) {
-        return getDeps(target, trackTargetSymbol);
+        return getDeps(target, targetObserverSymbol);
     }
     // 用于收集不确定的key目标依赖，当任意key改变都会出发此依赖
     function trackTarget(target) {
@@ -1488,9 +1488,9 @@ var Crush = (function (exports) {
         activeEffect.deps.push(deps);
     }
     function trigger(target, key) {
-        if (key !== trackTargetSymbol) {
+        if (key !== targetObserverSymbol) {
             // 防止递归
-            trigger(target, trackTargetSymbol);
+            trigger(target, targetObserverSymbol);
         }
         let deps = getDeps(target, key);
         // copy 防止死循环
@@ -1903,7 +1903,7 @@ var Crush = (function (exports) {
         }
         get value() {
             // track
-            trackRef(this);
+            track(this);
             return this._value;
         }
         set value(newValue) {
@@ -1914,7 +1914,7 @@ var Crush = (function (exports) {
             this.oldValue = this._value;
             this._value = newValue;
             // trigger
-            triggerRef(this);
+            trigger(this);
         }
     }
     const getRefDeps = (ref) => {
@@ -1925,7 +1925,7 @@ var Crush = (function (exports) {
         }
         return deps;
     };
-    function trackRef(ref) {
+    function track(ref) {
         var activeEffect = getActiveEffect();
         if (!activeEffect) {
             return;
@@ -1933,7 +1933,7 @@ var Crush = (function (exports) {
         var deps = getRefDeps(ref);
         deps.add(activeEffect);
     }
-    function triggerRef(ref) {
+    function trigger(ref) {
         var deps = getRefDeps(ref);
         deps.forEach((dep) => {
             if (isEffect(dep)) {
@@ -1964,7 +1964,7 @@ var Crush = (function (exports) {
                 // 依赖的值变化后，触发调度器 , 一个computed依赖的副作用就是它所依赖的值的副作用
                 if (!this.shouldCompute) { // 缓存值
                     this.shouldCompute = true;
-                    triggerRef(this);
+                    trigger(this);
                 }
             });
         }
@@ -1974,7 +1974,7 @@ var Crush = (function (exports) {
             return this.cacheValue = this.computedEffect.run();
         }
         get value() {
-            trackRef(this);
+            track(this);
             return this.shouldCompute ? this.computedValue : this.cacheValue;
         }
     }
@@ -2011,7 +2011,7 @@ var Crush = (function (exports) {
                 }
             }
         });
-        const deps = getDeps(rawData, trackTargetSymbol);
+        const deps = getDeps(rawData, targetObserverSymbol);
         deps.add(cb);
         // unwatch
         return () => {
@@ -2043,7 +2043,7 @@ var Crush = (function (exports) {
             watchCallbackIsCalling = false;
         };
         targets.forEach((target) => {
-            let deps = getDeps(target, trackTargetSymbol);
+            let deps = getDeps(target, targetObserverSymbol);
             deps.add(cb);
         });
         const unSet = onSet((target, key, newValue, oldValue) => {
@@ -2064,7 +2064,7 @@ var Crush = (function (exports) {
                 return;
             }
             // 解绑
-            let oldValueDeps = getDeps(oldValue, trackTargetSymbol);
+            let oldValueDeps = getDeps(oldValue, targetObserverSymbol);
             oldValueDeps.delete(cb);
             targets.delete(oldValue);
             // 增加新绑定值的依赖
@@ -2073,7 +2073,7 @@ var Crush = (function (exports) {
                 return;
             }
             if (isProxyType(newValue)) {
-                let newValueDeps = getDeps(newValue, trackTargetSymbol);
+                let newValueDeps = getDeps(newValue, targetObserverSymbol);
                 newValueDeps.add(cb);
                 targets.add(newValue);
             }
@@ -2082,7 +2082,7 @@ var Crush = (function (exports) {
         return () => {
             unSet();
             targets.forEach((target) => {
-                let deps = getDeps(target, trackTargetSymbol);
+                let deps = getDeps(target, targetObserverSymbol);
                 deps.delete(cb);
             });
         };
@@ -6333,14 +6333,14 @@ var Crush = (function (exports) {
     exports.toSingleQuotes = toSingleQuotes;
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
-    exports.trackRef = trackRef;
+    exports.track = track;
     exports.trackTarget = trackTarget;
-    exports.trackTargetSymbol = trackTargetSymbol;
+    exports.targetObserverSymbol = targetObserverSymbol;
     exports.translate3d = translate3d;
     exports.translateX = translateX;
     exports.translateY = translateY;
     exports.trigger = trigger;
-    exports.triggerRef = triggerRef;
+    exports.trigger = trigger;
     exports.typeOf = typeOf;
     exports.uStringId = uStringId;
     exports.uVar = uVar;

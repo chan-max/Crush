@@ -1,6 +1,6 @@
 import { emptyObject } from "@crush/common";
 import { isProxyType, ReactiveFlags, ReactiveTypeSymbol } from "./common"
-import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect } from "./effect"
+import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect, getDeps } from "./effect"
 import { reactive } from "./reactive";
 
 export const ref = (value: any, options?: any) => new Ref(value, options)
@@ -28,7 +28,7 @@ export class Ref {
 
     get value() {
         // track
-        trackRef(this)
+        track(this)
         let value = this._value
         return (!this.shallow && isProxyType(value)) ? reactive(value) : value
     }
@@ -41,46 +41,16 @@ export class Ref {
         this.oldValue = this._value
         this._value = newValue
         // trigger
-        triggerRef(this)
+        trigger(this)
     }
 }
 
 
 
-export const getRefDeps = (ref: any): Set<any> => {
-    var deps = TARGET_MAP.get(ref)
-    if (!deps) {
-        deps = new Set()
-        TARGET_MAP.set(ref, deps)
-    }
-    return deps
-}
-
-
-
-export function trackRef(ref: any) {
-    var activeEffect = getActiveEffect()
-    if (!activeEffect) {
-        return
-    }
-    var deps = getRefDeps(ref)
-    deps.add(activeEffect)
-}
-
-export function triggerRef(ref: any) {
-    var deps = getRefDeps(ref)
-    deps.forEach((dep: any) => {
-        if (isEffect(dep)) {
-            dep.triggerRun()
-        } else {
-            dep()
-        }
-    })
-}
 
 // 清除所有与当前ref相关的依赖
 export const cleaarRefDeps = (ref: Ref) => {
-    getRefDeps(ref).clear()
+    getDeps(ref).clear()
 }
 
 

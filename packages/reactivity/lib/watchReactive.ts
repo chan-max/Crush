@@ -1,6 +1,6 @@
 import { error } from "@crush/common";
 import { isProxyType, isReactive, toRaw } from "./common";
-import { getDeps, trackTargetSymbol } from "./effect";
+import { getDeps, targetObserverSymbol } from "./effect";
 import { getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, onSet } from "./handler";
 
 
@@ -43,7 +43,7 @@ export function shallowWatchReactive(data: any, callback: any) {
         }
     })
 
-    const deps = getDeps(rawData, trackTargetSymbol)
+    const deps = getDeps(rawData, targetObserverSymbol)
     deps.add(cb)
 
     // unwatch
@@ -86,7 +86,7 @@ export function watchReactive(reactiveData: any, callback: any) {
     }
 
     targets.forEach((target: any) => {
-        let deps = getDeps(target, trackTargetSymbol)
+        let deps = getDeps(target, targetObserverSymbol)
         deps.add(cb)
     })
 
@@ -109,7 +109,7 @@ export function watchReactive(reactiveData: any, callback: any) {
             return
         }
         // 解绑
-        let oldValueDeps = getDeps(oldValue, trackTargetSymbol)
+        let oldValueDeps = getDeps(oldValue, targetObserverSymbol)
         oldValueDeps.delete(cb)
         targets.delete(oldValue)
         // 增加新绑定值的依赖
@@ -118,7 +118,7 @@ export function watchReactive(reactiveData: any, callback: any) {
             return
         }
         if (isProxyType(newValue)) {
-            let newValueDeps = getDeps(newValue, trackTargetSymbol)
+            let newValueDeps = getDeps(newValue, targetObserverSymbol)
             newValueDeps.add(cb)
             targets.add(newValue)
         }
@@ -128,7 +128,7 @@ export function watchReactive(reactiveData: any, callback: any) {
     return () => {
         unSet()
         targets.forEach((target: any) => {
-            let deps = getDeps(target, trackTargetSymbol)
+            let deps = getDeps(target, targetObserverSymbol)
             deps.delete(cb)
         })
     }

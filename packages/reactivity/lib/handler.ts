@@ -2,7 +2,7 @@ import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
-import { track, trackTarget, trigger, } from './effect'
+import { track, trackTargetObserver, trigger, triggerAllDepsMap, triggerTargetObserver, } from './effect'
 
 // global state
 let _isReadonly = false
@@ -28,7 +28,8 @@ export const getLastSetNewValue = () => _lastSetNewValue // 获取上一个修�
 const collectionHandlers: Record<string, any> = {
     get size() {
         //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
-        trackTarget(_target)
+        //todo bug 任一元素变化后 都会触发该依赖
+        trackTargetObserver(_target)
         return _target.size
     },
     // set weakset
@@ -37,7 +38,7 @@ const collectionHandlers: Record<string, any> = {
             return
         }
         var result = _target.add(value)
-        
+        trigger(_target, value)
         // 返回set对象本身
         return result
     },
@@ -46,7 +47,9 @@ const collectionHandlers: Record<string, any> = {
         if (_isReadonly) {
             return
         }
+        // 触发所有依赖
         _target.clear()
+        triggerAllDepsMap(_target)
     },
     // map weakmap set weakset
     delete(key: any) {
@@ -61,12 +64,12 @@ const collectionHandlers: Record<string, any> = {
     },
     // map set
     entries() {
-        trackTarget(_target)
+        trackTargetObserver(_target)
         return _target.entries()
     },
     // map set
     forEach(fn: any) {
-        trackTarget(_target)
+        trackTargetObserver(_target)
         return _target.forEach(fn)
     },
     // set map weakset weakmap
@@ -76,12 +79,12 @@ const collectionHandlers: Record<string, any> = {
     },
     // map set
     keys() {
-        trackTarget(_target)
+        trackTargetObserver(_target)
         return _target.keys()
     },
     // map set
     values() {
-        trackTarget(_target)
+        trackTargetObserver(_target)
         return _target.values()
     },
     // map weakmap
@@ -106,7 +109,7 @@ const collectionHandlers: Record<string, any> = {
 
 function arrayHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
-        trackTarget(_target)
+
     }
 
     let result = _target[_key](...args)
@@ -142,7 +145,7 @@ const arrayHandlers: Record<string, any> = {
 const specialKeyHandler: Record<string, any> = {
     [Symbol.iterator]: (value: Function) => {
         // should track ?
-        trackTarget(_target)
+
         return value.bind(_target)
     }
 }
@@ -263,7 +266,7 @@ function ownKeys(target: any) {
         for ? in target
     */
     // Object.assign will call this
-    trackTarget(target)
+
     return Reflect.ownKeys(target);
 }
 

@@ -1596,10 +1596,10 @@ function track(target, key) {
     activeEffect.deps.push(deps);
 }
 /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
-const trackTargetSymbol = Symbol('target has changed');
+const targetObserverSymbol = Symbol('target has changed');
 
 function getTargetDeps(target) {
-    return getDeps(target, trackTargetSymbol);
+    return getDeps(target, targetObserverSymbol);
 }
 // 用于收集不确定的key目标依赖，当任意key改变都会出发此依赖
 function trackTarget(target) {
@@ -1613,9 +1613,9 @@ function trackTarget(target) {
 }
 
 function trigger(target, key) {
-    if (key !== trackTargetSymbol) {
+    if (key !== targetObserverSymbol) {
         // 防止递归
-        trigger(target, trackTargetSymbol);
+        trigger(target, targetObserverSymbol);
     }
     let deps = getDeps(target, key);
     // copy 防止死循环
@@ -2039,7 +2039,7 @@ class Ref {
     }
     get value() {
         // track
-        trackRef(this);
+        track(this);
         return this._value;
     }
     set value(newValue) {
@@ -2050,7 +2050,7 @@ class Ref {
         this.oldValue = this._value;
         this._value = newValue;
         // trigger
-        triggerRef(this);
+        trigger(this);
     }
 }
 const getRefDeps = (ref) => {
@@ -2062,7 +2062,7 @@ const getRefDeps = (ref) => {
     return deps;
 };
 
-function trackRef(ref) {
+function track(ref) {
     var activeEffect = getActiveEffect();
     if (!activeEffect) {
         return;
@@ -2071,7 +2071,7 @@ function trackRef(ref) {
     deps.add(activeEffect);
 }
 
-function triggerRef(ref) {
+function trigger(ref) {
     var deps = getRefDeps(ref);
     deps.forEach((dep) => {
         if (isEffect(dep)) {
@@ -2101,7 +2101,7 @@ class ComputedRef {
             // 依赖的值变化后，触发调度器 , 一个computed依赖的副作用就是它所依赖的值的副作用
             if (!this.shouldCompute) { // 缓存值
                 this.shouldCompute = true;
-                triggerRef(this);
+                trigger(this);
             }
         });
     }
@@ -2111,7 +2111,7 @@ class ComputedRef {
         return this.cacheValue = this.computedEffect.run();
     }
     get value() {
-        trackRef(this);
+        track(this);
         return this.shouldCompute ? this.computedValue : this.cacheValue;
     }
 }
@@ -2148,7 +2148,7 @@ function shallowWatchReactive(data, callback) {
             }
         }
     });
-    const deps = getDeps(rawData, trackTargetSymbol);
+    const deps = getDeps(rawData, targetObserverSymbol);
     deps.add(cb);
     // unwatch
     return () => {
@@ -2183,7 +2183,7 @@ function watchReactive(reactiveData, callback) {
         watchCallbackIsCalling = false;
     };
     targets.forEach((target) => {
-        let deps = getDeps(target, trackTargetSymbol);
+        let deps = getDeps(target, targetObserverSymbol);
         deps.add(cb);
     });
     const unSet = onSet((target, key, newValue, oldValue) => {
@@ -2203,7 +2203,7 @@ function watchReactive(reactiveData, callback) {
             return;
         }
         // 解绑
-        let oldValueDeps = getDeps(oldValue, trackTargetSymbol);
+        let oldValueDeps = getDeps(oldValue, targetObserverSymbol);
         oldValueDeps.delete(cb);
         targets.delete(oldValue);
         // 增加新绑定值的依赖
@@ -2212,7 +2212,7 @@ function watchReactive(reactiveData, callback) {
             return;
         }
         if (isProxyType(newValue)) {
-            let newValueDeps = getDeps(newValue, trackTargetSymbol);
+            let newValueDeps = getDeps(newValue, targetObserverSymbol);
             newValueDeps.add(cb);
             targets.add(newValue);
         }
@@ -2221,7 +2221,7 @@ function watchReactive(reactiveData, callback) {
     return () => {
         unSet();
         targets.forEach((target) => {
-            let deps = getDeps(target, trackTargetSymbol);
+            let deps = getDeps(target, targetObserverSymbol);
             deps.delete(cb);
         });
     };
@@ -7111,14 +7111,14 @@ export {
     toSingleQuotes,
     toTernaryExp,
     track,
-    trackRef,
+    track,
     trackTarget,
-    trackTargetSymbol,
+    targetObserverSymbol,
     translate3d,
     translateX,
     translateY,
     trigger,
-    triggerRef,
+    trigger,
     typeOf,
     uStringId,
     uVar,
