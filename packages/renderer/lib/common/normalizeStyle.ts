@@ -1,12 +1,12 @@
-import { isArray, isObject, isString } from "@crush/common"
+import { isArray, isFunction, isObject, isString } from "@crush/common"
 import { parseInlineStyle } from "@crush/compiler"
 import { extend } from "./extend";
 
 /*  
-    the result always return a map
+     always return a map
 */
 
-export function normalizeStyle(style: any) {
+export function normalizeStyle(style: any): any {
     if (isObject(style)) {
         return style
     } else if (isString(style)) {
@@ -14,6 +14,8 @@ export function normalizeStyle(style: any) {
     } else if (isArray(style)) {
         style = style.map(normalizeStyle)
         return extend(...style)
+    } else if (isFunction(style)) {
+        return normalizeStyle(style())
     } else {
         return style
     }

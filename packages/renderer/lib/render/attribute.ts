@@ -35,10 +35,10 @@ import {
 } from '../common/event'
 
 import { updateDeclaration } from "./declaration";
-import { ComponentInstance, normalizeClass, normalizeStyle } from "@crush/core";
+import { ComponentInstance, isElementLifecycleHook,  normalizeClass, normalizeStyle } from "@crush/core";
 
 
-export function mountAttributes(el: any, props: any, instance: ComponentInstance, isSVG: boolean,) {
+export function mountAttributes(el: any, props: any, instance: ComponentInstance, isSVG: boolean) {
     updateAttributes(el, emptyObject, props, instance, isSVG,)
 }
 
@@ -63,11 +63,18 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: Co
                     nValue && (refs[nValue] = el)
                 }
                 break
+            case 'bind':
+                updateAttributes(el, pValue, nValue, instance, isSVG)
+                break 
             default:
                 if (propName.startsWith('_')) {
                     // 保留属性
                 } else if (isEvent(propName)) {
                     var { event, options } = parseNativeEventName(propName)
+                    if(isElementLifecycleHook(event)){
+                        // 生命周期钩子跳过
+                        return
+                    }
                     updateNativeEvents(el, event, pValue, nValue, options)
                 } else if (propName in el) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue)

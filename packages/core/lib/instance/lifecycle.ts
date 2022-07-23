@@ -22,6 +22,7 @@ const enum LifecycleHooks {
 
     BEFORE_ROUTE_ENTER = 'beforeRouteEnter',
     BEFORE_ROUTE_LEAVE = 'beforeRouteLeave',
+    BEFORE_ROUTE_UPDATE = 'beforeRouteUpdate',
 
     // keep alive
     ACTIVATED = 'activated',
@@ -52,7 +53,39 @@ function injectMapHooks(target: any, mapHooks: any) {
     return target
 }
 
+export function isElementLifecycleHook(name: any) {
+    return [
+        LifecycleHooks.BEFORE_CREATE,
+        LifecycleHooks.BEFORE_MOUNT,
+        LifecycleHooks.BEFORE_UNMOUNT,
+        LifecycleHooks.BEFORE_UPDATE,
+        LifecycleHooks.UPDATED,
+        LifecycleHooks.CHILDREN_MOUNTED,
+        LifecycleHooks.UNMOUNTED,
+        LifecycleHooks.MOUNTED,
+        LifecycleHooks.CREATED
+    ].includes(name)
+}
 
+export function isComponentLifecycleHook(name: any) {
+    return [
+        LifecycleHooks.BEFORE_CREATE,
+        LifecycleHooks.BEFORE_MOUNT,
+        LifecycleHooks.BEFORE_UNMOUNT,
+        LifecycleHooks.BEFORE_UPDATE,
+        LifecycleHooks.UPDATED,
+        LifecycleHooks.UNMOUNTED,
+        LifecycleHooks.MOUNTED,
+        LifecycleHooks.CREATED,
+        LifecycleHooks.ACTIVATED,
+        LifecycleHooks.DEACTIVATED,
+        LifecycleHooks.BEFORE_ROUTE_ENTER,
+        LifecycleHooks.BEFORE_ROUTE_LEAVE,
+        LifecycleHooks.BEFORE_ROUTE_UPDATE
+    ].includes(name)
+}
+
+// is renderComponent hook ???
 
 
 /*
@@ -63,10 +96,7 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
     const hooks = target[type]
     if (!hooks) return
 
-    var {
-        binding,
-        scheduler
-    } = options || emptyObject
+    var { binding, scheduler } = options || emptyObject
     const hooksResults = hooks.map((hook: any) => {
         return scheduler ?
             scheduler(hook, binding, ...args) :

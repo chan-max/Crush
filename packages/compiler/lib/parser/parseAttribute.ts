@@ -7,6 +7,7 @@ const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+)
 export function parseAttribute(attr: any) {
     let { attribute, value } = attr
     var res = execCaptureGroups(attribute, extAttributeRE)
+
     if (!res) {
         return
     }

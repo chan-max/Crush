@@ -16,6 +16,22 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     <div $id="uid"></div>
 ```
 
+### 属性简写
+
+```
+    <div id></div>
+        等同于
+    <div id="id"></div>
+
+    <div $id></div>
+        等同于
+    <div $id="id"></div>
+
+    <div @event></div>
+        等同于
+    <div @event="event"></div>
+```
+
 ### 事件绑定
 ```
     <button @click="login"></button>
@@ -58,11 +74,15 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 
 ```
     <li for="i in 6"> {{i}} </li>
+    
+    <for iterator="i in 6">
+        <li> {{i}} </li>
+    </for>
 ```
 
 ### id 和 class 
 
-#### id 简写
+### id 简写
 
 ```
     <div #app></div>
@@ -75,7 +95,7 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     <div $id="exp"></div>
 ```
 
-#### class 简写
+### class 简写
 
 ```
     <div .box></div>
@@ -93,6 +113,21 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     等同于
     <div class="x y z"></div>
 ```
+
+### class 数据形式
+    
+- object （值为真值时采用key）
+- array
+- string
+- function （采用返回值）
+
+### 行内样式
+
+- object
+- array
+- string
+- function （采用返回值）
+
 
 ## css拓展
 
@@ -192,7 +227,7 @@ crush提供的css模板是基于原生css的一种拓展，目标是对原生css
 
 混入是一种 css in js 特别重要的一个特性，后面章节我们会用更多例子进行探讨。
 
-#### js 中的 important
+### js 中的 important
 
 如果我们使用 动态值绑定 ，或者样式混入等，当我们想设置属性的优先级时（important），一种方法时在字符串后面加上 **!important** ，但模板语法中的在属性值后面感叹号并不适用，我们内部提供了一个 important 方法 ，入下
 

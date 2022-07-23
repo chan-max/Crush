@@ -8,7 +8,6 @@ import {
 // normalized class always will be a map with true value
 export function normalizeClass(rawClass: any): Record<string, any> {
     /*
-        crush class support 
         string
         array
         object

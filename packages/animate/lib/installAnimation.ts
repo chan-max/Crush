@@ -2,7 +2,7 @@ import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
 import { Nodes } from '@crush/const'
 
-
+export const NODES: any = Nodes.AT
 
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'
 import { zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp } from './animations/zoom'

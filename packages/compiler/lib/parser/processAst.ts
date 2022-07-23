@@ -155,9 +155,6 @@ const builtInRawAttributes: any = {
             directives.push(attr)
         }
     },
-    '?'() {
-
-    },
     elseIf(attr: any, ast: any) {
         attr.type = Nodes.ELSE_IF
         if (!ast.directives?.length) {
@@ -186,6 +183,11 @@ const builtInRawAttributes: any = {
         attr.isDynamicValue = true
         ast.children = null // 直接忽略
     },
+    bind(attr: any) {
+        attr.type = Nodes.ATTRIBUTE
+        attr.property = attr.attribute
+        attr.isDynamicValue = true
+    }
 }
 
 

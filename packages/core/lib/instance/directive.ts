@@ -18,7 +18,7 @@ import {
     LifecycleHooks
 } from './lifecycle'
 
-import { isFunction, emptyArray, emptyObject } from '@crush/common'
+import { isFunction, emptyArray, emptyObject, initialUpperCase } from '@crush/common'
 import { callHook } from './lifecycle'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
@@ -100,7 +100,7 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     }
 
     // 节点钩子
-    const vnodeHook = vnode?.props?.[`_${type}`]
+    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
     if (vnodeHook) {
         vnodeHook(scope)
     }
@@ -131,7 +131,7 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     }
 
     // 节点钩子
-    const vnodeHook = vnode?.props?.[`_${type}`]
+    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
     if (vnodeHook) {
         vnodeHook(el)
     }
@@ -161,7 +161,7 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
     }
 
     // 节点钩子
-    const vnodeHook = vnode?.props?.[`_${type}`]
+    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
     if (vnodeHook) {
         vnodeHook()
     }
