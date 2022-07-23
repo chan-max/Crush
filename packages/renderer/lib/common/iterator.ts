@@ -29,6 +29,7 @@ export function renderList(data: Iterator, callee: Function, key: number){
 
     for (var item of data as NativeIterator) {
         var res = isArray(item) ? callee(...item, i) : callee(item, i)
+
         if (res) {
             results.push(res)
             /* set ukey for diff */

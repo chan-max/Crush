@@ -28,31 +28,30 @@ export const getLastSetNewValue = () => _lastSetNewValue // 获取上一个修�
 const collectionHandlers: Record<string, any> = {
     get size() {
         //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
-        debugger
+        trackTarget(_target)
         return _target.size
     },
     // set weakset
     add(value: any) {
         if (_isReadonly) {
-            return warn(_target, 'is readonly , cant add');
+            return
         }
         var result = _target.add(value)
-        debugger
+        
         // 返回set对象本身
         return result
     },
     // map set
     clear() {
         if (_isReadonly) {
-            return warn(_target, 'is readonly cant clear');
+            return
         }
         _target.clear()
-        debugger
     },
     // map weakmap set weakset
     delete(key: any) {
         if (_isReadonly) {
-            return warn(_target, 'is readonly cant delete');
+            return
         }
         const result = _target.delete(key)
         if (result) { // 返回为 true 为删除成功
@@ -62,12 +61,12 @@ const collectionHandlers: Record<string, any> = {
     },
     // map set
     entries() {
-        debugger
+        trackTarget(_target)
         return _target.entries()
     },
     // map set
     forEach(fn: any) {
-        debugger
+        trackTarget(_target)
         return _target.forEach(fn)
     },
     // set map weakset weakmap
@@ -77,18 +76,18 @@ const collectionHandlers: Record<string, any> = {
     },
     // map set
     keys() {
-        debugger
+        trackTarget(_target)
         return _target.keys()
     },
     // map set
     values() {
-        debugger
+        trackTarget(_target)
         return _target.values()
     },
     // map weakmap
     set(key: any, value: any) {
         if (_isReadonly) {
-            return warn(_target, 'is readonly , cant set');
+            return
         }
         var result = _target.set(key, value)
         trigger(_target, key)
