@@ -6,17 +6,22 @@ import { createApp, effect, reactive, ref, } from "./packages/core";
 
 let game = {
     template: /*html*/`
-        <button @click="setX(x + 2)" @mounted> {{x}} </button>
+        <button @click="setX(x + 2)" @updated> {{x}} </button>
     `,
     create({ $self }: any) {
         const { x, setX, onXchange } = useRefState(66)
 
+        $self.tom = {
+            x: 1,
+            y: 2
+        }
+        
         onXchange((newValue: any, oldValue: any) => {
             document.title = newValue
         })
 
-        $self.mounted = () => {
-            console.log('mounted');
+        $self.updated = () => {
+            console.log('updated');
         }
     },
 }
