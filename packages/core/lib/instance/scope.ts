@@ -5,9 +5,6 @@ import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
 
-const protoMethods = {
-    ...cssMethods
-}
 
 
 const scopeProperties: any = {
@@ -23,6 +20,7 @@ const scopeProperties: any = {
             return null
         }
         let el = vnode.map((_vnode: any) => _vnode.el)
+        // 有多个根元素会返回多个元素
         return el.length === 1 ? el[0] : el
     },
     $root: (instance: any) => instance.root,
@@ -49,6 +47,10 @@ const scopeProperties: any = {
 
 export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter
 
+const protoMethods = {
+    ...cssMethods,
+    ...scopeProperties, // todo bug (with)
+}
 
 
 // inject scope property

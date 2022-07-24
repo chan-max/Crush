@@ -186,7 +186,7 @@ const builtInRawAttributes: any = {
     bind(attr: any) {
         attr.type = Nodes.ATTRIBUTE
         attr.property = attr.attribute
-        attr.isDynamicValue = true
+        attr.isDynamicValue = true // 不需要$绑定
     }
 }
 
@@ -200,7 +200,6 @@ const builtInEvents: any = {
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
-
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i]
         let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)] // 驼峰化
@@ -243,13 +242,18 @@ function processAttribute(ast: any) {
                 attribute.isDynamicProperty = false
             } else if (flag === '.') {
                 // class shourthand
-
                 attribute.type = Nodes.CLASS
                 attribute.value = attribute.property
                 attribute.property = 'class'
                 attribute.isDynamicValue = attribute.isDynamicProperty
                 attribute.isDynamicProperty = false
-            } else {
+            } else if(flag === '...'){
+               // bind shorthand
+               attribute.type = Nodes.ATTRIBUTE
+               attribute.value = attribute.property
+               attribute.property = 'bind'
+               attribute.isDynamicValue = true
+            }else {
                 // normal property , if for 等也会作为属性出现
                 const attrHandler = builtInAttributes[attribute.property]
                 if (!attrHandler || attribute.isDynamicProperty) {

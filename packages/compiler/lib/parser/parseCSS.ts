@@ -51,7 +51,7 @@ export const parseCSS = (source: string): any => {
     while (scanner.source) {
         if (scanner.startsWith('}')) {
             closing = true
-        } else if (scanner.startsWith(keyOf(Nodes.AT))) {
+        } else if (scanner.startsWith('@')) {
             /*
                 media conditions
             */
@@ -69,7 +69,7 @@ export const parseCSS = (source: string): any => {
             }
         } else if (scanner.expect('/*')) {
             /* comment continue */
-        } else if (scanner.startsWith(keyOf(Nodes.MIXIN))) {
+        } else if (scanner.startsWith('...')) {
             var [mixin]: any = scanner.exec(mixinRE);
             var m = {
                 type: Nodes.MIXIN,
@@ -82,21 +82,25 @@ export const parseCSS = (source: string): any => {
                 处理指令，指令不再需要通过标识符去判断
             */
             var [dir, content]: any = scanner.exec(CSSDir)
-            var type: any = keyOf(dir)
-            var d: any = { type }
-            switch (type) {
-                case Nodes.FOR:
+            var d: any = {}
+            switch (dir) {
+                case 'for':
+                    d.type = Nodes.FOR
                     d.iterator = parseIterator(content)
                     break
-                case Nodes.IF:
+                case 'if':
+                    d.type = Nodes.IF
                     d.condition = content
                     d.isBranchStart = true
                     break
-                case Nodes.ELSE_IF:
+                case 'else-if':
+                case 'elseIf':
+                    d.type = Nodes.ELSE_IF
                     d.condition = content
                     d.isBranch = true
                     break
-                case Nodes.ELSE:
+                case 'else':
+                    d.type = Nodes.ELSE
                     d.isBranch = true
                     break
             }
@@ -117,7 +121,7 @@ export const parseCSS = (source: string): any => {
                 attribute: exResult[0],
                 value: exResult[1]
             });
-            
+
             var {
                 property,
                 flag,
