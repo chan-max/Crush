@@ -1,4 +1,4 @@
-import { camelize, hasOwn, hyphenate, initialUpperCase, isArray, isUndefined } from "@crush/common"
+import { camelize, emptyFunction, hasOwn, hyphenate, initialUpperCase, isArray, isUndefined } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
@@ -108,9 +108,10 @@ const customDirectiveHandlers: any = {
         // transform 
         attribute.property = `model${initialUpperCase(modelType)}`
 
-        ast.attributes.unshift({
+        ast.attributes.push({
             type: Nodes.ATTRIBUTE,
             property: '_setter',
+            attribute: '_setter', // 用于跳过属性解析
             value: toArrowFunction(`${attribute.value} = _`, '_'),
             isDynamicValue: true,
             isDynamicProperty: false
@@ -142,7 +143,6 @@ const builtInAttributes: any = {
 }
 
 // 支持某些怪异的写法  , 这些属性不会进行解析
-
 
 const builtInRawAttributes: any = {
     if(attr: any, ast: any) {
@@ -187,21 +187,19 @@ const builtInRawAttributes: any = {
         attr.type = Nodes.ATTRIBUTE
         attr.property = attr.attribute
         attr.isDynamicValue = true // 不需要$绑定
-    }
+    },
+    _setter: emptyFunction
 }
 
 
-const builtInEvents: any = {
-
-}
-
-
+const builtInEvents: any = {}
 
 function processAttribute(ast: any) {
     var attributes = ast.attributes
     if (!attributes) return
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i]
+
         let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)] // 驼峰化
         if (rawAttributeHandler) {
             rawAttributeHandler(attribute, ast)
@@ -247,13 +245,13 @@ function processAttribute(ast: any) {
                 attribute.property = 'class'
                 attribute.isDynamicValue = attribute.isDynamicProperty
                 attribute.isDynamicProperty = false
-            } else if(flag === '...'){
-               // bind shorthand
-               attribute.type = Nodes.ATTRIBUTE
-               attribute.value = attribute.property
-               attribute.property = 'bind'
-               attribute.isDynamicValue = true
-            }else {
+            } else if (flag === '...') {
+                // bind shorthand
+                attribute.type = Nodes.ATTRIBUTE
+                attribute.value = attribute.property
+                attribute.property = 'bind'
+                attribute.isDynamicValue = true
+            } else {
                 // normal property , if for 等也会作为属性出现
                 const attrHandler = builtInAttributes[attribute.property]
                 if (!attrHandler || attribute.isDynamicProperty) {

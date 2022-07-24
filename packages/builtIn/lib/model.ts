@@ -5,14 +5,6 @@
 import { isArray, removeFromArray } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
-/*
-    model types :
-    checkbox
-    color
-    date
-    rang
-*/
-
 
 export const modelText = {
     beforeUpdate(el: any, { value }: any,) {

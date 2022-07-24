@@ -2,7 +2,7 @@ import { cache } from "./cache";
 
 const camelizeRE = /-(\w)/g;
 const camelize = cache((str:string) => {
-    return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
+    return str && str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
 })
 
 const hyphenateRE = /\B([A-Z])/g;

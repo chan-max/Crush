@@ -8,6 +8,8 @@ export * from './lib/instance/mixin'
 export * from './lib/instance/option'
 export * from './lib/instance/scope'
 export * from './lib/instance/plugin'
+export * from './lib/instance/refState'
+
 
 export * from '@crush/animate'
 export * from '@crush/common'

@@ -3,11 +3,7 @@ import { createRefValueSetter, ref, Ref } from "@crush/reactivity/lib/ref"
 import { watchRef } from "@crush/reactivity/lib/watchRef"
 import { getCurrentScope } from "@crush/renderer"
 
-export enum RefStateSequence {
-    STATE,
-    SETTER,
-    WATCHER
-}
+
 
 export function useRefState(value: any, refOptions?: any): any {
     let scope = getCurrentScope()

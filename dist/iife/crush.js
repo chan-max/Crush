@@ -1,13 +1,334 @@
-/**
- * 
- *     Crush.js 
- *     1.0.16
- *     chan
- * 
- */
-
+// crush.js 1.0.16chan
 var Crush = (function (exports) {
     'use strict';
+
+    var crush = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        get getCurrentApp () { return getCurrentApp; },
+        get App () { return App; },
+        get createApp () { return createApp; },
+        get createComponentInstance () { return createComponentInstance; },
+        get injectDirectives () { return injectDirectives; },
+        get processHook () { return processHook; },
+        get isElementLifecycleHook () { return isElementLifecycleHook; },
+        get isComponentLifecycleHook () { return isComponentLifecycleHook; },
+        get injectHook () { return injectHook; },
+        get callHook () { return callHook; },
+        get onCreated () { return onCreated; },
+        get onBeforeMount () { return onBeforeMount; },
+        get onBeforeUnmount () { return onBeforeUnmount; },
+        get onBeforeUpdate () { return onBeforeUpdate; },
+        get onMounted () { return onMounted; },
+        get onUnmounted () { return onUnmounted; },
+        get onUpdated () { return onUpdated; },
+        get injectMapHooks () { return injectMapHooks; },
+        get injectMixin () { return injectMixin; },
+        get injectMixins () { return injectMixins; },
+        get ComponentOptions () { return exports.ComponentOptions; },
+        get resolveOptions () { return resolveOptions; },
+        get defineScopeProperty () { return defineScopeProperty; },
+        get createScope () { return createScope; },
+        get createRenderScope () { return createRenderScope; },
+        get doCSSAnimation () { return doCSSAnimation; },
+        get NODES () { return NODES; },
+        get installAnimation () { return installAnimation; },
+        get setElementTranstion () { return setElementTranstion; },
+        get cache () { return cache; },
+        get warn () { return warn; },
+        get error () { return error; },
+        get arrayToMap () { return arrayToMap; },
+        get stringToMap () { return stringToMap; },
+        get makeMap () { return makeMap; },
+        get removeFromArray () { return removeFromArray; },
+        get shallowCloneArray () { return shallowCloneArray; },
+        get mark () { return mark; },
+        get exec () { return exec; },
+        get execCaptureGroups () { return execCaptureGroups; },
+        get getEmptyObject () { return getEmptyObject; },
+        get uid () { return uid; },
+        get uStringId () { return uStringId; },
+        get uVar () { return uVar; },
+        get emptyObject () { return emptyObject; },
+        get emptyArray () { return emptyArray; },
+        get emptyFunction () { return emptyFunction; },
+        get createMap () { return createMap; },
+        get isNumber () { return isNumber; },
+        get isArray () { return isArray; },
+        get isString () { return isString; },
+        get isFunction () { return isFunction; },
+        get isUndefined () { return isUndefined; },
+        get isObject () { return isObject; },
+        get typeOf () { return typeOf; },
+        get isPromise () { return isPromise; },
+        get isNumberString () { return isNumberString; },
+        get camelize () { return camelize; },
+        get hyphenate () { return hyphenate; },
+        get initialLowerCase () { return initialLowerCase; },
+        get initialUpperCase () { return initialUpperCase; },
+        get hasOwn () { return hasOwn; },
+        get builtInComponents () { return builtInComponents; },
+        get builtInDirectives () { return builtInDirectives; },
+        get withScope () { return withScope; },
+        get ternaryExp () { return ternaryExp; },
+        get ternaryChains () { return ternaryChains; },
+        get dynamicMapKey () { return dynamicMapKey; },
+        get toBackQuotes () { return toBackQuotes; },
+        get toTernaryExp () { return toTernaryExp; },
+        get toArray () { return toArray; },
+        get toSingleQuotes () { return toSingleQuotes; },
+        get objectStringify () { return objectStringify; },
+        get toArrowFunction () { return toArrowFunction; },
+        get callFn () { return callFn; },
+        get destructur () { return destructur; },
+        get declare () { return declare; },
+        get NULL () { return NULL; },
+        get stringify () { return stringify; },
+        get toReservedProp () { return toReservedProp; },
+        get createFunction () { return createFunction; },
+        get compile () { return compile; },
+        get parseInlineStyle () { return parseInlineStyle; },
+        get parseInlineClass () { return parseInlineClass; },
+        get NodesMap () { return exports.NodesMap; },
+        get keyOf () { return keyOf; },
+        get isHTMLTag () { return isHTMLTag; },
+        get isSVGTag () { return isSVGTag; },
+        get createReactiveObject () { return createReactiveObject; },
+        get createReadonlyObject () { return createReadonlyObject; },
+        get createShallowReactiveObject () { return createShallowReactiveObject; },
+        get createShallowReadonlyObject () { return createShallowReadonlyObject; },
+        get createReactiveCollection () { return createReactiveCollection; },
+        get createReadonlyCollection () { return createReadonlyCollection; },
+        get createShallowReactiveCollection () { return createShallowReactiveCollection; },
+        get createShallowReadonlyCollection () { return createShallowReadonlyCollection; },
+        get reactive () { return reactive; },
+        get shallowReactive () { return shallowReactive; },
+        get readonly () { return readonly; },
+        get shallowReadonly () { return shallowReadonly; },
+        get ReactiveTypeSymbol () { return ReactiveTypeSymbol; },
+        get isProxy () { return isProxy; },
+        get isProxyType () { return isProxyType; },
+        get markRaw () { return markRaw; },
+        get ReactiveTypes () { return exports.ReactiveTypes; },
+        get toRaw () { return toRaw; },
+        get isReactive () { return isReactive; },
+        get isShallow () { return isShallow; },
+        get isRef () { return isRef; },
+        get TARGET_MAP () { return TARGET_MAP; },
+        get getDepsMap () { return getDepsMap; },
+        get getDeps () { return getDeps; },
+        get track () { return track; },
+        get targetObserverSymbol () { return targetObserverSymbol; },
+        get trackTargetObserver () { return trackTargetObserver; },
+        get triggerTargetObserver () { return triggerTargetObserver; },
+        get trigger () { return trigger; },
+        get triggerAllDepsMap () { return triggerAllDepsMap; },
+        get triggerTargetKey () { return triggerTargetKey; },
+        get getActiveEffect () { return getActiveEffect; },
+        get setActiveEffect () { return setActiveEffect; },
+        get deleteActiveEffect () { return deleteActiveEffect; },
+        get isEffect () { return isEffect; },
+        get ReactiveEffect () { return ReactiveEffect; },
+        get createReactiveEffect () { return createReactiveEffect; },
+        get effect () { return effect; },
+        get getLastVisitTarget () { return getLastVisitTarget; },
+        get getLastVisitKey () { return getLastVisitKey; },
+        get getLastSetTarget () { return getLastSetTarget; },
+        get getLastSetKey () { return getLastSetKey; },
+        get getLastSetOldValue () { return getLastSetOldValue; },
+        get getLastSetNewValue () { return getLastSetNewValue; },
+        get onSetCallbacks () { return onSetCallbacks; },
+        get onSet () { return onSet; },
+        get createSetter () { return createSetter; },
+        get reactiveHandler () { return reactiveHandler; },
+        get shallowReactiveHandler () { return shallowReactiveHandler; },
+        get readonlyHandler () { return readonlyHandler; },
+        get shallowReadonlyHandler () { return shallowReadonlyHandler; },
+        get reactiveCollectionHandler () { return reactiveCollectionHandler; },
+        get readonlyCollectionHandler () { return readonlyCollectionHandler; },
+        get shallowReactiveCollectionHandler () { return shallowReactiveCollectionHandler; },
+        get shallowReadonlyCollectionHandler () { return shallowReadonlyCollectionHandler; },
+        get ref () { return ref; },
+        get createRefValueSetter () { return createRefValueSetter; },
+        get Ref () { return Ref; },
+        get cleaarRefDeps () { return cleaarRefDeps; },
+        get computed () { return computed; },
+        get isComputed () { return isComputed; },
+        get ComputedRef () { return ComputedRef; },
+        get shallowWatchReactive () { return shallowWatchReactive; },
+        get watchReactive () { return watchReactive; },
+        get watchTargetKey () { return watchTargetKey; },
+        get watchRef () { return watchRef; },
+        get useBoolean () { return useBoolean; },
+        get toHex () { return toHex; },
+        get toDec () { return toDec; },
+        get rgbToHex () { return rgbToHex; },
+        get hexToRgb () { return hexToRgb; },
+        get useColor () { return useColor; },
+        get useDate () { return useDate; },
+        get dateFormatRE () { return dateFormatRE; },
+        get useNumber () { return useNumber; },
+        get useString () { return useString; },
+        get addClass () { return addClass; },
+        get removeClass () { return removeClass; },
+        get docCreateElement () { return docCreateElement; },
+        get docCreateComment () { return docCreateComment; },
+        get docCreateText () { return docCreateText; },
+        get setText () { return setText; },
+        get insertElement () { return insertElement; },
+        get removeElement () { return removeElement; },
+        get remountElement () { return remountElement; },
+        get setAttribute () { return setAttribute; },
+        get removeAttribute () { return removeAttribute; },
+        get addListener () { return addListener; },
+        get removeListener () { return removeListener; },
+        get onceListener () { return onceListener; },
+        get normalizeKeyText () { return normalizeKeyText; },
+        get setKeyText () { return setKeyText; },
+        get insertRule () { return insertRule; },
+        get insertStyle () { return insertStyle; },
+        get insertMedia () { return insertMedia; },
+        get insertSupports () { return insertSupports; },
+        get insertKeyframes () { return insertKeyframes; },
+        get insertKeyframe () { return insertKeyframe; },
+        get deleteRule () { return deleteRule; },
+        get deleteKeyframe () { return deleteKeyframe; },
+        get setSelector () { return setSelector; },
+        get setKeyframesName () { return setKeyframesName; },
+        get deleteMedium () { return deleteMedium; },
+        get appendMedium () { return appendMedium; },
+        get setStyleProperty () { return setStyleProperty; },
+        get toPositiveValue () { return toPositiveValue; },
+        get toNegativeValue () { return toNegativeValue; },
+        get toAbsoluteValue () { return toAbsoluteValue; },
+        get rgba () { return rgba; },
+        get rgb () { return rgb; },
+        get hsl () { return hsl; },
+        get hsla () { return hsla; },
+        get $var () { return $var; },
+        get attr () { return attr; },
+        get calc () { return calc; },
+        get cubicBezier () { return cubicBezier; },
+        get max () { return max; },
+        get min () { return min; },
+        get translateX () { return translateX; },
+        get translateY () { return translateY; },
+        get scale () { return scale; },
+        get rotate3d () { return rotate3d; },
+        get translate3d () { return translate3d; },
+        get rotate () { return rotate; },
+        get perspective () { return perspective; },
+        get scale3d () { return scale3d; },
+        get skew () { return skew; },
+        get skewX () { return skewX; },
+        get skewY () { return skewY; },
+        get scaleY () { return scaleY; },
+        get scaleX () { return scaleX; },
+        get rotateY () { return rotateY; },
+        get conicGradient () { return conicGradient; },
+        get linearGradient () { return linearGradient; },
+        get radialGradient () { return radialGradient; },
+        get getComponent () { return getComponent; },
+        get getDirective () { return getDirective; },
+        get customDisplay () { return customDisplay; },
+        get display () { return display; },
+        get doFlat () { return doFlat; },
+        get isEvent () { return isEvent; },
+        get toNativeEventName () { return toNativeEventName; },
+        get parseNativeEventName () { return parseNativeEventName; },
+        get toEventName () { return toEventName; },
+        get getEventName () { return getEventName; },
+        get parseEventName () { return parseEventName; },
+        get withEventModifiers () { return withEventModifiers; },
+        get extend () { return extend; },
+        get flatRules () { return flatRules; },
+        get IMPORTANT_SYMBOL () { return IMPORTANT_SYMBOL; },
+        get IMPORTANT_KEY () { return IMPORTANT_KEY; },
+        get IMPORTANT () { return IMPORTANT; },
+        get important () { return important; },
+        get renderSlot () { return renderSlot; },
+        get processVnodePrerender () { return processVnodePrerender; },
+        get normalizeStyle () { return normalizeStyle; },
+        get normalizeClass () { return normalizeClass; },
+        get renderList () { return renderList; },
+        get mixin () { return mixin; },
+        get splitSelector () { return splitSelector; },
+        get mergeSplitedSelector () { return mergeSplitedSelector; },
+        get mergeSelectors () { return mergeSelectors; },
+        get joinSelector () { return joinSelector; },
+        get mergeSplitedSelectorsAndJoin () { return mergeSplitedSelectorsAndJoin; },
+        get updateClass () { return updateClass; },
+        get mountClass () { return mountClass; },
+        get unmountClass () { return unmountClass; },
+        get mountAttributes () { return mountAttributes; },
+        get updateAttributes () { return updateAttributes; },
+        get insertNull () { return insertNull; },
+        get isReservedProp () { return isReservedProp; },
+        get getReservedProp () { return getReservedProp; },
+        get unionkeys () { return unionkeys; },
+        get createMapEntries () { return createMapEntries; },
+        get parseStyleValue () { return parseStyleValue; },
+        get updateDeclaration () { return updateDeclaration; },
+        get mountDeclaration () { return mountDeclaration; },
+        get setElementStyleDeclaration () { return setElementStyleDeclaration; },
+        get unmountDeclaration () { return unmountDeclaration; },
+        get getStyleValue () { return getStyleValue; },
+        get getElementStyleValue () { return getElementStyleValue; },
+        get getElementComputedStyleValue () { return getElementComputedStyleValue; },
+        get getStyle () { return getStyle; },
+        get getElementStyle () { return getElementStyle; },
+        get getElementComputedStyle () { return getElementComputedStyle; },
+        get mount () { return mount; },
+        get mountChildren () { return mountChildren; },
+        get currentInstance () { return exports.currentInstance; },
+        get setCurrentInstance () { return setCurrentInstance; },
+        get getCurrentInstance () { return getCurrentInstance; },
+        get getCurrentScope () { return getCurrentScope; },
+        get getCurrentRenderScope () { return getCurrentRenderScope; },
+        get mountComponent () { return mountComponent; },
+        get mountStyleSheet () { return mountStyleSheet; },
+        get mountRule () { return mountRule; },
+        get mountStyleRule () { return mountStyleRule; },
+        get mountKeyframeRule () { return mountKeyframeRule; },
+        get updateStyleSheet () { return updateStyleSheet; },
+        get updateComponent () { return updateComponent; },
+        get update () { return update; },
+        get updateChildren () { return updateChildren; },
+        get unmountComponent () { return unmountComponent; },
+        get unmount () { return unmount; },
+        get unmountChildren () { return unmountChildren; },
+        get sortChildren () { return sortChildren; },
+        get sortRules () { return sortRules; },
+        get patch () { return patch; },
+        get createStyleSheet () { return createStyleSheet; },
+        get createStyle () { return createStyle; },
+        get createDeclaration () { return createDeclaration; },
+        get createKeyframe () { return createKeyframe; },
+        get createMedia () { return createMedia; },
+        get createSupports () { return createSupports; },
+        get createKeyframes () { return createKeyframes; },
+        get createSVGElement () { return createSVGElement; },
+        get Text () { return Text; },
+        get Comment () { return Comment; },
+        get createComment () { return createComment; },
+        get createComponent () { return createComponent; },
+        get createElement () { return createElement; },
+        get createText () { return createText; },
+        get createFragment () { return createFragment; },
+        get keyframes () { return keyframes; },
+        get keyframe () { return keyframe; },
+        get h () { return h; },
+        get getInstanceEvents () { return getInstanceEvents; },
+        get getInstancetEventListeners () { return getInstancetEventListeners; },
+        get createInstanceEventEmitter () { return createInstanceEventEmitter; },
+        get emitInstancetEvent () { return emitInstancetEvent; },
+        get arrayHandler () { return arrayHandler; },
+        get updateInstanceListeners () { return updateInstanceListeners; },
+        get addInstanceListener () { return addInstanceListener; },
+        get removeInstanceListener () { return removeInstanceListener; },
+        get onceInstanceListener () { return onceInstanceListener; },
+        get nextTick () { return nextTick; },
+        get queueJob () { return queueJob; }
+    });
 
     const cache = (fn) => {
         const cache = Object.create(null);
@@ -98,7 +419,7 @@ var Crush = (function (exports) {
 
     const camelizeRE = /-(\w)/g;
     const camelize = cache((str) => {
-        return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
+        return str && str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
     });
     const hyphenateRE = /\B([A-Z])/g;
     const hyphenate = cache((str) => str.replace(hyphenateRE, '-$1').toLowerCase());
@@ -138,16 +459,16 @@ var Crush = (function (exports) {
     }
     const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value);
     const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
-    const addListener = (el, event, handler, options = null) => el.addEventListener(event, handler, options);
-    const removeListener = (el, event, handler, options = null) => el.removeEventListener(event, handler, options);
-    function onceListener(el, event, handler, options = null) {
+    const addListener = (target, event, handler, options = null) => target.addEventListener(event, handler, options);
+    const removeListener = (target, event, handler, options = null) => target.removeEventListener(event, handler, options);
+    function onceListener(target, event, handler, options = null) {
         var onceHandler = () => {
             handler();
-            removeListener(el, event, onceHandler, options);
+            removeListener(target, event, onceHandler, options);
         };
-        addListener(el, event, onceHandler, options);
+        addListener(target, event, onceHandler, options);
         // 注销事件
-        return () => removeListener(el, event, onceHandler, options);
+        return () => removeListener(target, event, onceHandler, options);
     }
 
     var createStyleSheet = (props, children, key = uid()) => {
@@ -719,10 +1040,17 @@ var Crush = (function (exports) {
                         nValue && (refs[nValue] = el);
                     }
                     break;
+                case 'bind':
+                    updateAttributes(el, pValue, nValue, instance, isSVG);
+                    break;
                 default:
                     if (propName.startsWith('_')) ;
                     else if (isEvent(propName)) {
                         var { event, options } = parseNativeEventName(propName);
+                        if (isElementLifecycleHook(event)) {
+                            // 生命周期钩子跳过
+                            return;
+                        }
                         updateNativeEvents(el, event, pValue, nValue, options);
                     }
                     else if (propName in el) { // dom props
@@ -835,28 +1163,30 @@ var Crush = (function (exports) {
         }
     }
 
+    function normalizeRenderComponentProps(props) {
+        if (props?.bind) { // use bind
+            extend(props, props.bind);
+            delete props.bind;
+        }
+        return props;
+    }
     function mountRenderComponent(vnode, container, anchor, parent) {
         const { type, props, children } = vnode;
         vnode.instance = parent;
         // 函数式组件没有实例，但也可以拥有状态 , 组件有状态时，会进行自更新 ， 自更新时props和slots内容还是之前传过来的
-        function renderComponentUpdate() {
-            let isMounted = vnode.isMounted;
-            const renderResult = type.call(null, props, children, vnode);
-            const next = processVnodePrerender(renderResult);
-            processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, vnode);
-            patch(vnode.vnode, next, container, anchor, parent);
-            processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, vnode);
-            vnode.vnode = next; // 保存当前组件的树
-            vnode.isMounted = true;
-        }
-        effect(renderComponentUpdate);
+        const renderResult = type.call(null, normalizeRenderComponentProps(props), children, vnode);
+        const next = processVnodePrerender(renderResult);
+        processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
+        patch(vnode.vnode, next, container, anchor, parent);
+        processHook("mounted" /* MOUNTED */, vnode);
+        vnode.vnode = next; // 保存当前组件的树
     }
     function updateRenderComponent(pVnode, nVnode, container, anchor, parent) {
         const { type, props, children } = nVnode;
         nVnode.instance = parent;
-        const renderResult = type.call(null, props, children, nVnode, pVnode); // 传入新旧节点
-        const next = processVnodePrerender(renderResult);
+        const renderResult = type.call(null, normalizeRenderComponentProps(props), children, nVnode, pVnode); // 传入新旧节点
         const prev = pVnode.vnode;
+        const next = processVnodePrerender(renderResult);
         processHook("beforeUpdate" /* BEFORE_UPDATE */, nVnode, pVnode);
         patch(prev, next, container, anchor, parent);
         processHook("updated" /* UPDATED */, nVnode, pVnode);
@@ -864,7 +1194,7 @@ var Crush = (function (exports) {
     }
     function unmountRenderComponent(vnode, container, anchor, parent) {
         processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
-        patch(vnode.vnode, null, container, anchor, parent);
+        patch(vnode.vnode, null, container, anchor, parent); // 直接卸载节点即可
         processHook("unmounted" /* UNMOUNTED */, vnode);
     }
 
@@ -998,14 +1328,19 @@ var Crush = (function (exports) {
                     nValue && (refs[nValue] = instance);
                 }
             }
+            else if (prop === 'bind') {
+                updateComponentProps(instance, pValue, nValue);
+            }
             else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
-                // 未定义
                 let attrs = instance.attrs ||= {};
                 attrs[prop] = nValue;
             }
             else if (isEvent(prop)) {
                 // events
                 var { event, _arguments, modifiers } = parseEventName(prop);
+                if (isComponentLifecycleHook(event)) {
+                    return;
+                }
                 updateInstanceListeners(instance, event, pValue, nValue);
             }
             else {
@@ -1357,8 +1692,8 @@ var Crush = (function (exports) {
         return null;
     }
 
-    const patch = (current, next, container, anchor, parent) => {
-        if (!current) {
+    const patch = (prev, next, container, anchor, parent) => {
+        if (!prev) {
             if (next) {
                 isArray(next) ? mountChildren(next, container, anchor, parent) : mount(next, container, anchor, parent);
             }
@@ -1369,25 +1704,26 @@ var Crush = (function (exports) {
         else {
             if (!next) {
                 // 卸载当前节点
-                isArray(current) ? unmountChildren(current) : unmount(current, container, anchor, parent);
+                isArray(prev) ? unmountChildren(prev) : unmount(prev, container, anchor, parent);
             }
             else {
-                if (isArray(current)) {
-                    updateChildren(current, isArray(next) ? next : [next], container, anchor, parent);
+                if (isArray(prev)) {
+                    updateChildren(prev, isArray(next) ? next : [next], container, anchor, parent);
                 }
                 else {
                     if (isArray(next)) {
-                        updateChildren([current], next, container, anchor, parent);
+                        updateChildren([prev], next, container, anchor, parent);
                     }
                     else {
-                        // 两个单节点 ， 但key可能不同 
-                        if (current.type === next.type && current.patchKey === next.patchKey) {
-                            // 类型相同，直接更新
-                            update(current, next, container, anchor, parent);
+                        let { type: prevType, patchKey: prevPatchKey } = prev;
+                        let { type: nextType, patchKey: nextPatchKey, nodeType } = next;
+                        // 文本节点和注释节点直接更新即可
+                        if (prevType === nextType && (prevPatchKey === nextPatchKey || nodeType === 12 /* TEXT */ || nodeType === 10 /* HTML_COMMENT */)) {
+                            // type相同，nodeType一定相同
+                            update(prev, next, container, anchor, parent);
                         }
                         else {
-                            // 类型不同。先卸载，在挂载
-                            unmount(current, container, anchor, parent);
+                            unmount(prev, container, anchor, parent);
                             mount(next, container, anchor, parent);
                         }
                     }
@@ -1432,7 +1768,7 @@ var Crush = (function (exports) {
         ReactiveTypes["WEAK_SET"] = "WeakSet";
     })(exports.ReactiveTypes || (exports.ReactiveTypes = {}));
     function toRaw(value) {
-        return value && value["raw" /* RAW */];
+        return value && (value["raw" /* RAW */] || value);
     }
     function isReactive(value) {
         return value && value["isReactive" /* IS_REACTIVE */];
@@ -1445,7 +1781,6 @@ var Crush = (function (exports) {
     }
 
     const TARGET_MAP = new WeakMap();
-    // 清楚所有依赖 
     function getDepsMap(target) {
         let depsMap = TARGET_MAP.get(target);
         if (!depsMap) {
@@ -1455,13 +1790,24 @@ var Crush = (function (exports) {
         return depsMap;
     }
     function getDeps(target, key) {
-        let depsMap = getDepsMap(target);
-        let deps = depsMap.get(key);
-        if (!deps) {
-            deps = new Set();
-            depsMap.set(key, deps);
+        // ref 和 set类型 没有depsMap ，只有 deps
+        if (!isUndefined(key)) { // 没传 key
+            let depsMap = getDepsMap(target);
+            let deps = depsMap.get(key);
+            if (!deps) {
+                deps = new Set();
+                depsMap.set(key, deps);
+            }
+            return deps;
         }
-        return deps;
+        else {
+            let deps = TARGET_MAP.get(target);
+            if (!deps) {
+                deps = new Set();
+                TARGET_MAP.set(target, deps);
+            }
+            return deps;
+        }
     }
     function track(target, key) {
         let activeEffect = getActiveEffect();
@@ -1474,26 +1820,39 @@ var Crush = (function (exports) {
     }
     /* 特殊的target key ，当target任意key改变时，此依赖也会触发 */
     const targetObserverSymbol = Symbol('target has changed');
-    function getTargetDeps(target) {
-        return getDeps(target, targetObserverSymbol);
+    function trackTargetObserver(target) {
+        track(target, targetObserverSymbol);
     }
-    // 用于收集不确定的key目标依赖，当任意key改变都会出发此依赖
-    function trackTarget(target) {
-        let activeEffect = getActiveEffect();
-        if (!activeEffect)
-            return;
-        let deps = getTargetDeps(target);
-        deps.add(activeEffect);
-        // 用于清除依赖
-        activeEffect.deps.push(deps);
+    function triggerTargetObserver(target) {
+        trigger(target, targetObserverSymbol);
     }
     function trigger(target, key) {
-        if (key !== targetObserverSymbol) {
-            // 防止递归
-            trigger(target, targetObserverSymbol);
+        // trigger 中会触发target中的依赖
+        if (isUndefined(key)) {
+            let deps = getDeps(target);
+            // 无depsmap
+            runDeps(deps);
         }
+        else {
+            // 任一key内容改变都会触发这一依赖
+            if (key !== targetObserverSymbol) { // 防止递归死循环
+                triggerTargetObserver(target);
+            }
+            triggerTargetKey(target, key);
+        }
+    }
+    function triggerAllDepsMap(target) {
+        let depsMap = getDepsMap(target);
+        for (let [key, deps] of depsMap) {
+            runDeps(deps);
+        }
+    }
+    function triggerTargetKey(target, key) {
         let deps = getDeps(target, key);
         // copy 防止死循环
+        runDeps(deps);
+    }
+    function runDeps(deps) {
         [...deps].forEach((dep) => {
             if (isEffect(dep)) {
                 if (dep == getActiveEffect()) {
@@ -1506,6 +1865,7 @@ var Crush = (function (exports) {
             }
         });
     }
+    //! effect
     const effectStack = [];
     const getActiveEffect = () => effectStack[effectStack.length - 1];
     const setActiveEffect = (effect) => effectStack.push(effect);
@@ -1576,31 +1936,33 @@ var Crush = (function (exports) {
     const collectionHandlers = {
         get size() {
             //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
-            debugger;
+            //todo bug 任一元素变化后 都会触发该依赖
+            trackTargetObserver(_target);
             return _target.size;
         },
         // set weakset
         add(value) {
             if (_isReadonly) {
-                return warn(_target, 'is readonly , cant add');
+                return;
             }
             var result = _target.add(value);
-            debugger;
+            trigger(_target, value);
             // 返回set对象本身
             return result;
         },
         // map set
         clear() {
             if (_isReadonly) {
-                return warn(_target, 'is readonly cant clear');
+                return;
             }
+            // 触发所有依赖
             _target.clear();
-            debugger;
+            triggerAllDepsMap(_target);
         },
         // map weakmap set weakset
         delete(key) {
             if (_isReadonly) {
-                return warn(_target, 'is readonly cant delete');
+                return;
             }
             const result = _target.delete(key);
             if (result) { // 返回为 true 为删除成功
@@ -1610,12 +1972,12 @@ var Crush = (function (exports) {
         },
         // map set
         entries() {
-            debugger;
+            trackTargetObserver(_target);
             return _target.entries();
         },
         // map set
         forEach(fn) {
-            debugger;
+            trackTargetObserver(_target);
             return _target.forEach(fn);
         },
         // set map weakset weakmap
@@ -1625,18 +1987,18 @@ var Crush = (function (exports) {
         },
         // map set
         keys() {
-            debugger;
+            trackTargetObserver(_target);
             return _target.keys();
         },
         // map set
         values() {
-            debugger;
+            trackTargetObserver(_target);
             return _target.values();
         },
         // map weakmap
         set(key, value) {
             if (_isReadonly) {
-                return warn(_target, 'is readonly , cant set');
+                return;
             }
             var result = _target.set(key, value);
             trigger(_target, key);
@@ -1652,9 +2014,6 @@ var Crush = (function (exports) {
         }
     };
     function arrayHandlerWithTrack(...args) {
-        if (!_isReadonly) { // 非只读才会收集
-            trackTarget(_target);
-        }
         let result = _target[_key](...args);
         return result;
     }
@@ -1684,7 +2043,6 @@ var Crush = (function (exports) {
     const specialKeyHandler = {
         [Symbol.iterator]: (value) => {
             // should track ?
-            trackTarget(_target);
             return value.bind(_target);
         }
     };
@@ -1786,7 +2144,6 @@ var Crush = (function (exports) {
             for ? in target
         */
         // Object.assign will call this
-        trackTarget(target);
         return Reflect.ownKeys(target);
     }
     function deleteProperty(target, key) {
@@ -1897,14 +2254,17 @@ var Crush = (function (exports) {
         oldValue; // 保存旧值
         _value;
         sensitive;
+        shallow;
         constructor(value, options = emptyObject) {
             this.sensitive = options.sensitive;
+            this.shallow = options.shallow;
             this._value = value;
         }
         get value() {
             // track
             track(this);
-            return this._value;
+            let value = this._value;
+            return (!this.shallow && isProxyType(value)) ? reactive(value) : value;
         }
         set value(newValue) {
             // 当 sensitive ，为true时 ， 当值试图从一个值变为另一个相同的值时，即使基本类型或引用类型全等，也会视为一次改变，触发依赖
@@ -1917,36 +2277,9 @@ var Crush = (function (exports) {
             trigger(this);
         }
     }
-    const getRefDeps = (ref) => {
-        var deps = TARGET_MAP.get(ref);
-        if (!deps) {
-            deps = new Set();
-            TARGET_MAP.set(ref, deps);
-        }
-        return deps;
-    };
-    function track(ref) {
-        var activeEffect = getActiveEffect();
-        if (!activeEffect) {
-            return;
-        }
-        var deps = getRefDeps(ref);
-        deps.add(activeEffect);
-    }
-    function trigger(ref) {
-        var deps = getRefDeps(ref);
-        deps.forEach((dep) => {
-            if (isEffect(dep)) {
-                dep.triggerRun();
-            }
-            else {
-                dep();
-            }
-        });
-    }
     // 清除所有与当前ref相关的依赖
     const cleaarRefDeps = (ref) => {
-        getRefDeps(ref).clear();
+        getDeps(ref).clear();
     };
 
     const computed = (getter) => new ComputedRef(getter);
@@ -2088,10 +2421,11 @@ var Crush = (function (exports) {
         };
     }
     // 指定侦测的目标和key值
-    function watchTargetKey(target, key, callback) {
-        if (!isReactive(target)) {
+    function watchTargetKey(reactiveTarget, key, callback) {
+        if (!isReactive(reactiveTarget)) {
             return;
         }
+        let target = toRaw(reactiveTarget);
         const deps = getDeps(target, key);
         var watchCallbackIsCalling = false, changeNewValue, changeOldValue;
         let cb = () => {
@@ -2121,7 +2455,7 @@ var Crush = (function (exports) {
     }
 
     function watchRef(ref, callback) {
-        const deps = getRefDeps(ref);
+        const deps = getDeps(ref);
         const watchEffect = () => callback.call(null, ref.value, ref.oldValue);
         deps.add(watchEffect);
         // unwatch
@@ -2520,6 +2854,7 @@ var Crush = (function (exports) {
             mark(type, COMPONENT_TYPE, componentFlag);
         }
         return {
+            uid: uid(),
             nodeType: componentFlag,
             type,
             props,
@@ -2956,26 +3291,69 @@ var Crush = (function (exports) {
         };
     }
 
-    const extAttributeRE = /(\$-{2}|@|\$|-{2}|\.|#)?(\()?([\w-\?]+)(\))?(?::([\w:]+))?(?:\.([\w\.]+))?(@|\$|!|\.|#)?/;
+    const argumentsAndModifiersRE = /(?::([\w:]+))?(?:\.([\w\.]+))?/;
+    var AttributeFlag;
+    (function (AttributeFlag) {
+        AttributeFlag[AttributeFlag["$--"] = 0] = "$--";
+        AttributeFlag[AttributeFlag["--"] = 1] = "--";
+        AttributeFlag[AttributeFlag["..."] = 2] = "...";
+        AttributeFlag[AttributeFlag["$"] = 3] = "$";
+        AttributeFlag[AttributeFlag["@"] = 4] = "@";
+        AttributeFlag[AttributeFlag["#"] = 5] = "#";
+        AttributeFlag[AttributeFlag["."] = 6] = "."; // class shorthand
+    })(AttributeFlag || (AttributeFlag = {}));
+    var AttributeEndFlag;
+    (function (AttributeEndFlag) {
+        AttributeEndFlag[AttributeEndFlag["!"] = 0] = "!"; // important css property
+    })(AttributeEndFlag || (AttributeEndFlag = {}));
     // both for html attribute and css declaration
     function parseAttribute(attr) {
         let { attribute, value } = attr;
-        var res = execCaptureGroups(attribute, extAttributeRE);
-        if (!res) {
-            return;
+        let flag, endFlag;
+        // 提取开始标志
+        for (let _flag in AttributeFlag) {
+            if (attribute.startsWith(_flag)) {
+                flag = _flag;
+                attribute = attribute.slice(_flag.length);
+                break;
+            }
         }
-        var [flag, left, property, right, argumentStr, modifierStr, endFlag] = res;
+        // 提取结尾标志
+        for (let _flag in AttributeEndFlag) {
+            if (attribute.endsWith(_flag)) {
+                endFlag = _flag;
+                attribute = attribute.slice(0, attribute.length - _flag.length - 1);
+                break;
+            }
+        }
+        let isDynamicProperty, property, _arguments, modifiers;
+        if (attribute.startsWith('(')) {
+            let lastIndexOfBorder = attribute.lastIndexOf(')');
+            property = attribute.slice(1, lastIndexOfBorder);
+            isDynamicProperty = true;
+            let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
+            var tokens = argumentsAndModifiersRE.exec(argumentsAndModifiers);
+            let [_, __arguments, _modifiers] = tokens;
+            _arguments = __arguments && __arguments.split(':');
+            modifiers = _modifiers && _modifiers.split('.');
+        }
+        else {
+            isDynamicProperty = false;
+            var tokens = argumentsAndModifiersRE.exec(attribute);
+            let [_, __arguments, _modifiers] = tokens;
+            _arguments = __arguments && __arguments.split(':');
+            modifiers = modifiers && _modifiers.split('.');
+            property = attribute.slice(0, attribute.length - _.length);
+        }
         attr.isBooleanProperty = isUndefined(value);
-        attr.isDynamicProperty = !!(left && right);
+        attr.isDynamicProperty = isDynamicProperty;
         attr.isDynamicValue = flag === '$';
-        attr._arguments = argumentStr && argumentStr.split(':');
-        attr.modifiers = modifierStr && modifierStr.split('.');
+        attr._arguments = _arguments;
+        attr.modifiers = modifiers;
         attr.property = attr.isDynamicProperty ? property : camelize(property);
         attr.value = value;
         attr.flag = flag;
         attr.endFlag = endFlag;
-        attr.left = left;
-        attr.right = right;
         return attr;
     }
 
@@ -2995,7 +3373,7 @@ var Crush = (function (exports) {
             if (scanner.startsWith('}')) {
                 closing = true;
             }
-            else if (scanner.startsWith(keyOf(21 /* AT */))) {
+            else if (scanner.startsWith('@')) {
                 /*
                     media conditions
                 */
@@ -3015,7 +3393,7 @@ var Crush = (function (exports) {
                 }
             }
             else if (scanner.expect('/*')) ;
-            else if (scanner.startsWith(keyOf(30 /* MIXIN */))) {
+            else if (scanner.startsWith('...')) {
                 var [mixin] = scanner.exec(mixinRE);
                 var m = {
                     type: 30 /* MIXIN */,
@@ -3029,21 +3407,25 @@ var Crush = (function (exports) {
                     处理指令，指令不再需要通过标识符去判断
                 */
                 var [dir, content] = scanner.exec(CSSDir);
-                var type = keyOf(dir);
-                var d = { type };
-                switch (type) {
-                    case 6 /* FOR */:
+                var d = {};
+                switch (dir) {
+                    case 'for':
+                        d.type = 6 /* FOR */;
                         d.iterator = parseIterator(content);
                         break;
-                    case 3 /* IF */:
+                    case 'if':
+                        d.type = 3 /* IF */;
                         d.condition = content;
                         d.isBranchStart = true;
                         break;
-                    case 4 /* ELSE_IF */:
+                    case 'else-if':
+                    case 'elseIf':
+                        d.type = 4 /* ELSE_IF */;
                         d.condition = content;
                         d.isBranch = true;
                         break;
-                    case 5 /* ELSE */:
+                    case 'else':
+                        d.type = 5 /* ELSE */;
                         d.isBranch = true;
                         break;
                 }
@@ -3212,8 +3594,8 @@ var Crush = (function (exports) {
             // ! slot need : slotName , isDynamicSlot 
             ast.type = 35 /* SLOT */;
             let name = ast?.attributeMap?.name;
-            name.type = 39 /* SKIP */;
             if (name) {
+                name.type = 39 /* SKIP */; // 该属性跳过
                 ast.slotName = name.value;
                 ast.isDynamicSlot = name.isDynamicValue;
             }
@@ -3255,9 +3637,10 @@ var Crush = (function (exports) {
             let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : ast.rawAttributeMap.type || 'text';
             // transform 
             attribute.property = `model${initialUpperCase(modelType)}`;
-            ast.attributes.unshift({
+            ast.attributes.push({
                 type: 7 /* ATTRIBUTE */,
                 property: '_setter',
+                attribute: '_setter',
                 value: toArrowFunction(`${attribute.value} = _`, '_'),
                 isDynamicValue: true,
                 isDynamicProperty: false
@@ -3265,45 +3648,6 @@ var Crush = (function (exports) {
         }
     };
     const builtInAttributes = {
-        if(attr, ast) {
-            attr.type = 3 /* IF */;
-            const directives = ast.directives ||= [];
-            if (!directives.length) { // 为元素的第一个指令
-                ast.condition = attr.value;
-                ast.isBranchStart = true;
-            }
-            else {
-                directives.push(attr);
-            }
-        },
-        elseIf(attr, ast) {
-            attr.type = 4 /* ELSE_IF */;
-            if (!ast.directives.length) {
-                ast.isBranch = true;
-                ast.condition = attr.value;
-            }
-        },
-        else(attr, ast) {
-            attr.type = 5 /* ELSE */;
-            ast.isBranch = true;
-        },
-        for(attr, ast) {
-            attr.type = 6 /* FOR */;
-            attr.iterator = parseIterator(attr.value);
-            ast.directives.push(attr);
-        },
-        text(attr, ast) {
-            attr.type = 7 /* ATTRIBUTE */;
-            attr.property = 'innerText';
-            attr.isDynamicValue = true;
-            ast.children = null; // 直接忽略
-        },
-        html(attr, ast) {
-            attr.type = 7 /* ATTRIBUTE */;
-            attr.property = 'innerHTML';
-            attr.isDynamicValue = true;
-            ast.children = null; // 直接忽略
-        },
         slot(attr, ast) {
             // ! slot 指令用于定义插槽 ， 可用于单个元素和 template （fragment）, 需要定义 slotName 
             /*
@@ -3324,82 +3668,127 @@ var Crush = (function (exports) {
             // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
         }
     };
-    const builtInEvents = {
-        hook(attr, ast) {
-            attr.type = 39 /* SKIP */;
-            const hooks = attr._arguments;
-            hooks.forEach((hook) => {
-                ast.attributes.push({
-                    property: '_' + hook,
-                    value: attr.value,
-                    isDynamicProperty: false,
-                    isDynamicValue: true
-                });
-            });
-        }
+    // 支持某些怪异的写法  , 这些属性不会进行解析
+    const builtInRawAttributes = {
+        if(attr, ast) {
+            attr.type = 3 /* IF */;
+            const directives = ast.directives ||= [];
+            if (!directives.length) { // 为元素的第一个指令
+                ast.condition = attr.value;
+                ast.isBranchStart = true;
+            }
+            else {
+                directives.push(attr);
+            }
+        },
+        elseIf(attr, ast) {
+            attr.type = 4 /* ELSE_IF */;
+            if (!ast.directives?.length) {
+                ast.isBranch = true;
+                ast.condition = attr.value;
+            }
+        },
+        else(attr, ast) {
+            attr.type = 5 /* ELSE */;
+            ast.isBranch = true;
+        },
+        for(attr, ast) {
+            attr.type = 6 /* FOR */;
+            attr.iterator = parseIterator(attr.value);
+            (ast.directives ||= []).push(attr);
+        },
+        text(attr, ast) {
+            attr.type = 7 /* ATTRIBUTE */;
+            attr.property = 'innerText';
+            attr.isDynamicValue = true;
+            ast.children = null; // 直接忽略
+        },
+        html(attr, ast) {
+            attr.type = 7 /* ATTRIBUTE */;
+            attr.property = 'innerHTML';
+            attr.isDynamicValue = true;
+            ast.children = null; // 直接忽略
+        },
+        bind(attr) {
+            attr.type = 7 /* ATTRIBUTE */;
+            attr.property = attr.attribute;
+            attr.isDynamicValue = true; // 不需要$绑定
+        },
+        _setter: emptyFunction
     };
+    const builtInEvents = {};
     function processAttribute(ast) {
         var attributes = ast.attributes;
         if (!attributes)
             return;
-        let attributeMap = ast.attributeMap ||= {};
-        attributes.forEach((attr) => {
-            // parseAttribute 不传入两个字符串是为了复用节点
-            let processedAttribute = parseAttribute(attr);
-            attributeMap[attr.property] = processedAttribute;
-        });
         for (let i = 0; i < attributes.length; i++) {
             let attribute = attributes[i];
-            let { flag, isDynamicProperty } = attribute;
-            if (flag === '@') {
-                // event
-                attribute.type = 25 /* EVENT */;
-                attribute.isHandler = isHandler(attribute.value);
-                if (!isDynamicProperty && builtInEvents[attribute.property]) {
-                    // 保留事件
-                    builtInEvents[attribute.property](attribute, ast);
-                }
-            }
-            else if (flag === '--') {
-                // 所有带 -- 一定是外界注入的指令
-                attribute.type = 34 /* CUSTOM_DIRECTIVE */;
-                // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
-                const customDirectiveHandler = customDirectiveHandlers[attribute.property];
-                (ast.customDirectives ||= []).push(attribute);
-                if (!isDynamicProperty && customDirectiveHandler) {
-                    customDirectiveHandler(attribute, ast);
-                }
-            }
-            else if (flag === '#') {
-                /*
-                    <div #app> </div> => <div #app> </div>
-                    <template #header></template> =>  <template slot:header></template>
-                    <Hello #app> => ref ??
-                */
-                attribute.type = 7 /* ATTRIBUTE */;
-                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                attribute.value = hyphenate(attribute.property);
-                attribute.property = 'id';
-                attribute.isDynamicValue = attribute.isDynamicProperty;
-                attribute.isDynamicProperty = false;
-            }
-            else if (flag === '.') {
-                // class shourthand
-                attribute.type = 18 /* CLASS */;
-                attribute.value = attribute.property;
-                attribute.property = 'class';
-                attribute.isDynamicValue = attribute.isDynamicProperty;
-                attribute.isDynamicProperty = false;
+            let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)]; // 驼峰化
+            if (rawAttributeHandler) {
+                rawAttributeHandler(attribute, ast);
             }
             else {
-                // normal property , if for 等也会作为属性出现
-                const attrHandler = builtInAttributes[attribute.property];
-                if (!attrHandler || attribute.isDynamicProperty) {
+                parseAttribute(attribute);
+                let { property, flag, isDynamicProperty } = attribute;
+                let attributeMap = ast.attributeMap ||= {};
+                attributeMap[property] = attribute;
+                if (flag === '@') {
+                    // event
+                    attribute.type = 25 /* EVENT */;
+                    attribute.isHandler = isHandler(attribute.value);
+                    if (!isDynamicProperty && builtInEvents[attribute.property]) {
+                        // 保留事件
+                        builtInEvents[attribute.property](attribute, ast);
+                    }
+                }
+                else if (flag === '--') {
+                    // 所有带 -- 一定是外界注入的指令
+                    attribute.type = 34 /* CUSTOM_DIRECTIVE */;
+                    // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
+                    const customDirectiveHandler = customDirectiveHandlers[attribute.property];
+                    (ast.customDirectives ||= []).push(attribute);
+                    if (!isDynamicProperty && customDirectiveHandler) {
+                        customDirectiveHandler(attribute, ast);
+                    }
+                }
+                else if (flag === '#') {
+                    /*
+                        <div #app> </div> => <div #app> </div>
+                        <template #header></template> =>  <template slot:header></template>
+                        <Hello #app> => ref ??
+                    */
                     attribute.type = 7 /* ATTRIBUTE */;
+                    // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                    attribute.value = hyphenate(attribute.property);
+                    attribute.property = 'id';
+                    attribute.isDynamicValue = attribute.isDynamicProperty;
+                    attribute.isDynamicProperty = false;
+                }
+                else if (flag === '.') {
+                    // class shourthand
+                    attribute.type = 18 /* CLASS */;
+                    attribute.value = attribute.property;
+                    attribute.property = 'class';
+                    attribute.isDynamicValue = attribute.isDynamicProperty;
+                    attribute.isDynamicProperty = false;
+                }
+                else if (flag === '...') {
+                    // bind shorthand
+                    attribute.type = 7 /* ATTRIBUTE */;
+                    attribute.value = attribute.property;
+                    attribute.property = 'bind';
+                    attribute.isDynamicValue = true;
                 }
                 else {
-                    ast.directives ||= [];
-                    attrHandler(attribute, ast);
+                    // normal property , if for 等也会作为属性出现
+                    const attrHandler = builtInAttributes[attribute.property];
+                    if (!attrHandler || attribute.isDynamicProperty) {
+                        attribute.type = 7 /* ATTRIBUTE */;
+                    }
+                    else {
+                        ast.directives ||= [];
+                        attrHandler(attribute, ast);
+                    }
                 }
             }
         }
@@ -3907,7 +4296,6 @@ var Crush = (function (exports) {
     // normalized class always will be a map with true value
     function normalizeClass(rawClass) {
         /*
-            crush class support
             string
             array
             object
@@ -3931,7 +4319,7 @@ var Crush = (function (exports) {
     }
 
     /*
-        the result always return a map
+         always return a map
     */
     function normalizeStyle(style) {
         if (isObject(style)) {
@@ -3943,6 +4331,9 @@ var Crush = (function (exports) {
         else if (isArray(style)) {
             style = style.map(normalizeStyle);
             return extend(...style);
+        }
+        else if (isFunction(style)) {
+            return normalizeStyle(style());
         }
         else {
             return style;
@@ -4146,6 +4537,7 @@ var Crush = (function (exports) {
     /*
         comment : ! 66666
     */
+    // 手写渲染函数是时 ， 框架内部无法识别新旧dom树中是否为同一节点 ， 所以应该手动传入 唯一id ， 不然都会作为新节点，全部卸载，并全部重新挂载
     function h(type, props, children, key = uid()) {
         if (isObject(type) || isFunction(type)) {
             // 同时支持有状态组件和函数式组件
@@ -4160,16 +4552,12 @@ var Crush = (function (exports) {
         else if (isSVGTag(type)) {
             return createSVGElement(type, props, children, key);
         }
+        else {
+            return null;
+        }
     }
 
     // compiler required : 
-    /*
-        model types :
-        checkbox
-        color
-        date
-        rang
-    */
     const modelText = {
         beforeUpdate(el, { value }) {
             el.value = value;
@@ -5160,7 +5548,7 @@ var Crush = (function (exports) {
         keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
     ];
 
-    const xxx = () => 21 /* AT */;
+    const NODES = 21 /* AT */;
     const animationFrames = {
         // slide 滑动
         slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
@@ -5469,49 +5857,53 @@ var Crush = (function (exports) {
         }
     };
 
+    const body = document.body;
     const defaultTeleportOptions = {
-        to: document.body,
+        to: body,
         anchor: null,
         disabled: false
     };
-    const body = document.body;
     function normalizeElement(selectorOrElement) {
         if (isString(selectorOrElement)) {
             try {
                 selectorOrElement = document.querySelector(selectorOrElement);
             }
             catch (e) {
-                selectorOrElement = body;
+                return null;
             }
         }
         if (!(selectorOrElement instanceof Element)) {
-            selectorOrElement = body;
+            return null;
         }
         return selectorOrElement;
     }
     function Teleport(props, { default: _default }, nVnode, pVnode) {
+        console.log('teleport update');
         props ||= defaultTeleportOptions;
         let { to: container, anchor, disabled } = props;
-        container = normalizeElement(container);
+        container = normalizeElement(container) || body;
         anchor = normalizeElement(anchor);
         let renderingVnode = processVnodePrerender(_default());
-        debugger;
         if (pVnode) {
-            // 节点更新
+            // 节点更新 , 参数可能会变
             let { to: pContainer, anchor: pAnchor, disabled: pDisabled } = pVnode.props || defaultTeleportOptions;
-            let teleportedVnode = pVnode.teleportedVnode; // 已经传送的节点
-            pContainer = normalizeElement(pContainer);
+            pContainer = normalizeElement(pContainer) || body;
             pAnchor = normalizeElement(pAnchor);
-            let instance = pVnode.instance; // = nVnode.instance
+            let instance = pVnode.instance;
+            let teleportedVnode = pVnode.teleportedVnode;
             if (disabled && !pDisabled) {
                 // 卸载
                 patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
-                nVnode.teleportedVnode = null;
+                nVnode.teleportedVnode = null; // 清空已传送节点
+                nVnode.teleportedVnodeContainer = null;
+                nVnode.teleportedVnodeAnchor = null;
             }
             else if (!disabled && pDisabled) {
                 // 挂载
                 patch(null, renderingVnode, container, anchor, instance); // 挂载新的
                 nVnode.teleportedVnode = renderingVnode;
+                nVnode.teleportedVnodeContainer = container;
+                nVnode.teleportedVnodeAnchor = anchor;
             }
             else {
                 // 更新
@@ -5519,16 +5911,16 @@ var Crush = (function (exports) {
                     patch(teleportedVnode, null, pContainer, pAnchor, instance); // 卸载之前的
                     patch(null, renderingVnode, container, anchor, instance); // 挂载新的
                     nVnode.teleportedVnode = renderingVnode;
+                    nVnode.teleportedVnodeContainer = container;
+                    nVnode.teleportedVnodeAnchor = anchor;
                 }
                 else {
                     patch(teleportedVnode, renderingVnode, container, anchor, instance);
                     nVnode.teleportedVnode = renderingVnode;
+                    nVnode.teleportedVnodeContainer = container;
+                    nVnode.teleportedVnodeAnchor = anchor;
                 }
             }
-        }
-        else if (nVnode.isMounted) {
-            // 自更新 , 参数一定不变 ？？？, 插槽内容变会进入此更新
-            debugger;
         }
         else {
             // 第一次挂载
@@ -5542,10 +5934,22 @@ var Crush = (function (exports) {
         return disabled ? renderingVnode : null;
     }
 
+    // global reactive url
+    ref('666');
+
+    function RouterView(props, slots, vnode, pVnode) {
+        vnode.instance;
+        return '路由视图';
+    }
+    function RouterLink({ to, replace, activeClass }) {
+    }
+
     const builtInComponents = {
         transition: transitionComponent,
         transitionGroup: transitionGroupComponent,
-        Teleport
+        Teleport,
+        RouterLink,
+        RouterView
     };
     const builtInDirectives = {
         modelText: modelText,
@@ -5561,6 +5965,7 @@ var Crush = (function (exports) {
         transitionGroup: transitionGroupDirective,
     };
 
+    console.log(crush);
     var currentApp;
     function getCurrentApp() {
         if (!currentApp) {
@@ -5613,7 +6018,7 @@ var Crush = (function (exports) {
             if (this.plugins.has(plugin))
                 return;
             let install = isFunction(plugin) ? plugin : plugin.install;
-            install.call(plugin, this, ...options);
+            install.call(plugin, this, crush, ...options);
             this.plugins.add(plugin);
         }
         record = {};
@@ -5646,6 +6051,37 @@ var Crush = (function (exports) {
         }
         return target;
     }
+    function isElementLifecycleHook(name) {
+        return [
+            "beforeCreate" /* BEFORE_CREATE */,
+            "beforeMount" /* BEFORE_MOUNT */,
+            "beforeUnmount" /* BEFORE_UNMOUNT */,
+            "beforeUpdate" /* BEFORE_UPDATE */,
+            "updated" /* UPDATED */,
+            "childrenMounted" /* CHILDREN_MOUNTED */,
+            "unmounted" /* UNMOUNTED */,
+            "mounted" /* MOUNTED */,
+            "created" /* CREATED */
+        ].includes(name);
+    }
+    function isComponentLifecycleHook(name) {
+        return [
+            "beforeCreate" /* BEFORE_CREATE */,
+            "beforeMount" /* BEFORE_MOUNT */,
+            "beforeUnmount" /* BEFORE_UNMOUNT */,
+            "beforeUpdate" /* BEFORE_UPDATE */,
+            "updated" /* UPDATED */,
+            "unmounted" /* UNMOUNTED */,
+            "mounted" /* MOUNTED */,
+            "created" /* CREATED */,
+            "activated" /* ACTIVATED */,
+            "deactivated" /* DEACTIVATED */,
+            "beforeRouteEnter" /* BEFORE_ROUTE_ENTER */,
+            "beforeRouteLeave" /* BEFORE_ROUTE_LEAVE */,
+            "beforeRouteUpdate" /* BEFORE_ROUTE_UPDATE */
+        ].includes(name);
+    }
+    // is renderComponent hook ???
     /*
         binding is used for bind the callback context , it is necessary
     */
@@ -5715,6 +6151,9 @@ var Crush = (function (exports) {
         // keepalive
         ComponentOptions["ACTIVATED"] = "activated";
         ComponentOptions["DEACTIVATED"] = "deactivated";
+        ComponentOptions["BEFORE_ROUTE_ENTER"] = "beforeRouteEnter";
+        ComponentOptions["BEFORE_ROUTE_LEAVE"] = "beforeRouteLeave";
+        ComponentOptions["BEFORE_ROUTE_UPDATE"] = "beforeRouteUpdate";
         ComponentOptions["TEMPLATE"] = "template";
         ComponentOptions["RENDER"] = "render";
         ComponentOptions["PROPS"] = "props";
@@ -5752,6 +6191,9 @@ var Crush = (function (exports) {
                 case exports.ComponentOptions.BEFORE_PATCH:
                 case exports.ComponentOptions.ACTIVATED:
                 case exports.ComponentOptions.DEACTIVATED:
+                case exports.ComponentOptions.BEFORE_ROUTE_ENTER:
+                case exports.ComponentOptions.BEFORE_ROUTE_LEAVE:
+                case exports.ComponentOptions.BEFORE_ROUTE_UPDATE:
                     // 转换为数组形式
                     if (value && !isArray(value)) {
                         options[key] = [value];
@@ -5762,6 +6204,9 @@ var Crush = (function (exports) {
                 case exports.ComponentOptions.DIRECTIVES:
                     break;
                 case exports.ComponentOptions.NAME:
+                    break;
+                case 'component':
+                    // options key 'component' is used for devide route or component
                     break;
                 default:
                     /*custom options*/
@@ -5838,9 +6283,6 @@ var Crush = (function (exports) {
         radialGradient
     };
 
-    const protoMethods = {
-        ...cssMethods
-    };
     const scopeProperties = {
         $uid: (instance) => instance.uid,
         $uuid: () => uid(),
@@ -5854,6 +6296,7 @@ var Crush = (function (exports) {
                 return null;
             }
             let el = vnode.map((_vnode) => _vnode.el);
+            // 有多个根元素会返回多个元素
             return el.length === 1 ? el[0] : el;
         },
         $root: (instance) => instance.root,
@@ -5878,6 +6321,10 @@ var Crush = (function (exports) {
         $listeners: (instance) => (event) => getInstancetEventListeners(instance, event)
     };
     const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
+    const protoMethods = {
+        ...cssMethods,
+        ...scopeProperties, // todo bug (with)
+    };
     // inject scope property
     function createScope(instance) {
         const scope = reactive(Object.create(protoMethods));
@@ -5956,8 +6403,8 @@ var Crush = (function (exports) {
             renderEffect: null,
             render: options.render,
             customOptions: options.customOptions,
-            propsOptions: options.propsOptions,
-            emitsOptions: options.emitsOptions,
+            propsOptions: options.propsOptions || emptyObject,
+            emitsOptions: options.emitsOptions || emptyObject,
             createRender: options.createRender,
             components: options.components,
             directives: options.directives,
@@ -5972,6 +6419,11 @@ var Crush = (function (exports) {
             beforeUpdate: shallowCloneArray(options.beforeUpdate),
             updated: shallowCloneArray(options.updated),
             beforePatch: shallowCloneArray(options.beforePatch),
+            activated: shallowCloneArray(options.activated),
+            deactivated: shallowCloneArray(options.deactivated),
+            beforeRouteEnter: shallowCloneArray(options.beforeRouteEnter),
+            beforeRouteLeave: shallowCloneArray(options.beforeRouteLeave),
+            beforeRouteUpdate: shallowCloneArray(options.beforeRouteUpdate)
         };
         injectMixins(instance, options.mixins);
         injectMixins(instance, app.mixins);
@@ -5997,8 +6449,8 @@ var Crush = (function (exports) {
         } : directive;
     }
     function injectDirective(target, [directive, ...bindings]) {
-        var dirs = target.dirs ||= new Map();
-        dirs.set(directive, bindings);
+        var directives = target.directives ||= new Map();
+        directives.set(directive, bindings);
     }
     function injectDirectives(target, directives) {
         directives.forEach((directive) => {
@@ -6015,19 +6467,28 @@ var Crush = (function (exports) {
         }
         return arr;
     }
-    function processHook(type, next, previous = null) {
-        // 在这不需要判断 两个节点的patchkey是否相同
-        const isComponent = next.nodeType === 14 /* COMPONENT */;
-        if (isComponent) {
-            var instance = next.instance;
-            // 组件需要处理实例钩子
-            var scope = instance.scope;
-            callHook(type, instance, { binding: scope }, scope);
+    function processHook(type, vnode, pVnode = null) {
+        switch (vnode.nodeType) {
+            case 14 /* COMPONENT */:
+                processComponentHook(type, vnode, pVnode);
+                break;
+            case 15 /* RENDER_COMPONENT */:
+                processRenderComponentHook(type, vnode, pVnode);
+                break;
+            case 13 /* HTML_ELEMENT */:
+            case 9 /* SVG_ELEMENT */:
+                processElementHook(type, vnode, pVnode);
+                break;
         }
-        // 指令钩子
-        var dirs = next.dirs;
-        if (dirs) {
-            for (let [dir, [value, _arguments, modifiers]] of dirs) {
+    }
+    function processComponentHook(type, vnode, pVnode) {
+        const instance = vnode.instance;
+        // 组件需要处理实例钩子
+        const scope = instance.scope;
+        callHook(type, instance, { binding: scope }, scope);
+        var directives = vnode.directives;
+        if (directives) {
+            for (let [dir, [value, _arguments, modifiers]] of directives) {
                 var _dir = normalizeDirective(dir);
                 var hook = _dir[type];
                 if (hook) {
@@ -6037,19 +6498,76 @@ var Crush = (function (exports) {
                         _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
                         modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
                     };
-                    if (previous) {
+                    if (pVnode) {
                         // 如果更新的话两个节点的指令应该完全相同
-                        bindings.oldValue = previous.dirs.get(dir)[0];
+                        bindings.oldValue = pVnode.directives.get(dir)[0];
                     }
                     // 
-                    hook(isComponent ? next.instance.scope : next.el, bindings, next, previous);
+                    hook(scope, bindings, vnode, pVnode);
                 }
             }
         }
         // 节点钩子
-        const vnodeHook = next?.props?.[`_${type}`];
+        const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
         if (vnodeHook) {
-            vnodeHook(isComponent ? next.instance.scope : next.el);
+            vnodeHook(scope);
+        }
+    }
+    function processElementHook(type, vnode, pVnode) {
+        let el = vnode.el;
+        var directives = vnode.directives;
+        if (directives) {
+            for (let [dir, [value, _arguments, modifiers]] of directives) {
+                var _dir = normalizeDirective(dir);
+                var hook = _dir[type];
+                if (hook) {
+                    var bindings = {
+                        directive: dir,
+                        value,
+                        _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
+                        modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
+                    };
+                    if (pVnode) {
+                        // 如果更新的话两个节点的指令应该完全相同
+                        bindings.oldValue = pVnode.directives.get(dir)[0];
+                    }
+                    // 
+                    hook(el, bindings, vnode, pVnode);
+                }
+            }
+        }
+        // 节点钩子
+        const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
+        if (vnodeHook) {
+            vnodeHook(el);
+        }
+    }
+    function processRenderComponentHook(type, vnode, pVnode) {
+        var directives = vnode.directives;
+        if (directives) {
+            for (let [dir, [value, _arguments, modifiers]] of directives) {
+                var _dir = normalizeDirective(dir);
+                var hook = _dir[type];
+                if (hook) {
+                    var bindings = {
+                        directive: dir,
+                        value,
+                        _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
+                        modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
+                    };
+                    if (pVnode) {
+                        // 如果更新的话两个节点的指令应该完全相同
+                        bindings.oldValue = pVnode.directives.get(dir)[0];
+                    }
+                    // 
+                    hook(bindings, vnode, pVnode);
+                }
+            }
+        }
+        // 节点钩子
+        const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
+        if (vnodeHook) {
+            vnodeHook();
         }
     }
 
@@ -6060,6 +6578,7 @@ var Crush = (function (exports) {
     exports.IMPORTANT = IMPORTANT;
     exports.IMPORTANT_KEY = IMPORTANT_KEY;
     exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;
+    exports.NODES = NODES;
     exports.NULL = NULL;
     exports.ReactiveEffect = ReactiveEffect;
     exports.ReactiveTypeSymbol = ReactiveTypeSymbol;
@@ -6166,7 +6685,6 @@ var Crush = (function (exports) {
     exports.getLastSetTarget = getLastSetTarget;
     exports.getLastVisitKey = getLastVisitKey;
     exports.getLastVisitTarget = getLastVisitTarget;
-    exports.getRefDeps = getRefDeps;
     exports.getReservedProp = getReservedProp;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
@@ -6194,8 +6712,10 @@ var Crush = (function (exports) {
     exports.insertSupports = insertSupports;
     exports.installAnimation = installAnimation;
     exports.isArray = isArray;
+    exports.isComponentLifecycleHook = isComponentLifecycleHook;
     exports.isComputed = isComputed;
     exports.isEffect = isEffect;
+    exports.isElementLifecycleHook = isElementLifecycleHook;
     exports.isEvent = isEvent;
     exports.isFunction = isFunction;
     exports.isHTMLTag = isHTMLTag;
@@ -6316,6 +6836,7 @@ var Crush = (function (exports) {
     exports.splitSelector = splitSelector;
     exports.stringToMap = stringToMap;
     exports.stringify = stringify;
+    exports.targetObserverSymbol = targetObserverSymbol;
     exports.ternaryChains = ternaryChains;
     exports.ternaryExp = ternaryExp;
     exports.toAbsoluteValue = toAbsoluteValue;
@@ -6333,14 +6854,14 @@ var Crush = (function (exports) {
     exports.toSingleQuotes = toSingleQuotes;
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
-    exports.track = track;
-    exports.trackTarget = trackTarget;
-    exports.targetObserverSymbol = targetObserverSymbol;
+    exports.trackTargetObserver = trackTargetObserver;
     exports.translate3d = translate3d;
     exports.translateX = translateX;
     exports.translateY = translateY;
     exports.trigger = trigger;
-    exports.trigger = trigger;
+    exports.triggerAllDepsMap = triggerAllDepsMap;
+    exports.triggerTargetKey = triggerTargetKey;
+    exports.triggerTargetObserver = triggerTargetObserver;
     exports.typeOf = typeOf;
     exports.uStringId = uStringId;
     exports.uVar = uVar;
@@ -6370,7 +6891,6 @@ var Crush = (function (exports) {
     exports.watchTargetKey = watchTargetKey;
     exports.withEventModifiers = withEventModifiers;
     exports.withScope = withScope;
-    exports.xxx = xxx;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
