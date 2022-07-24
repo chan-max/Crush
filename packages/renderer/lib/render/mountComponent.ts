@@ -125,7 +125,6 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
 
         if (beforePatch) { beforePatch(pVnode, nVnode) }
-        console.log('新旧节点', pVnode, nVnode)
         patch(pVnode, nVnode, container, anchor, instance)
 
         instance.vnode = nVnode
