@@ -154,8 +154,8 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir)[0]
                 }
-                // 
-                hook(bindings, vnode, pVnode)
+                // 这里不能省略第一个参数，是为了和其他两种参数保持一致
+                hook(null, bindings, vnode, pVnode)
             }
         }
     }

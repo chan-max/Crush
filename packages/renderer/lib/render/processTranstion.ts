@@ -78,46 +78,25 @@ class TransitionDesc {
 
     update(options: any) {
         options ||= emptyObject
-        const {
-            type,
-            name,
-            duration,
-            appear,
-            // hooks
-            onBeforeEnter,
-            onEnter,
-            onAfterEnter,
-            onEnterCancelled,
-            onBeforeLeave,
-            onLeave,
-            onAfterLeave,
-            onLeaveCancelled,
-            onBeforeAppear,
-            onAppear,
-            onAfterAppear,
-            onAppearCancelled,
-            enterKeyframes,
-            leaveKeyframes,
-        } = options
-        this.name = name || 'transition'
-        this.type = type || 'css'
+        this.name = options.name || 'transition'
+        this.type = options.type || 'css' // 默认采用 css
         // 该元素在组件中是否为第一次渲染
-        this.appear = appear || false
-        this.duration = duration
-        this.onBeforeEnter = onBeforeEnter
-        this.onEnter = onEnter
-        this.onAfterEnter = onAfterEnter
-        this.onEnterCancelled = onEnterCancelled
-        this.onBeforeLeave = onBeforeLeave
-        this.onLeave = onLeave
-        this.onAfterLeave = onAfterLeave
-        this.onLeaveCancelled = onLeaveCancelled
-        this.onBeforeAppear = onBeforeAppear
-        this.onAppear = onAppear
-        this.onAfterAppear = onAfterAppear
-        this.onAppearCancelled = onAppearCancelled
-        this.enterKeyframes = enterKeyframes
-        this.leaveKeyframes = leaveKeyframes
+        this.appear = options.appear || false
+        this.duration = options.duration
+        this.onBeforeEnter = options.onBeforeEnter
+        this.onEnter = options.onEnter
+        this.onAfterEnter = options.onAfterEnter
+        this.onEnterCancelled = options.onEnterCancelled
+        this.onBeforeLeave = options.onBeforeLeave
+        this.onLeave = options.onLeave
+        this.onAfterLeave = options.onAfterLeave
+        this.onLeaveCancelled = options.onLeaveCancelled
+        this.onBeforeAppear = options.onBeforeAppear
+        this.onAppear = options.onAppear
+        this.onAfterAppear = options.onAfterAppear
+        this.onAppearCancelled = options.onAppearCancelled
+        this.enterKeyframes = options.enterKeyframes
+        this.leaveKeyframes = options.leaveKeyframes
     }
 
     bindeEnterClass = (el: any) => bindEnterClass(el, this.name)
@@ -141,12 +120,12 @@ class TransitionDesc {
     // 关于 transition group
 
     public processMount(newEl: any, insertFn: any) {
+
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
         let appeared = appearRecord[patchKey]
 
         if (!this.appear && !appeared) {
-            // once process
             // appear
             insertFn()
             appearRecord[patchKey] = true
@@ -161,36 +140,41 @@ class TransitionDesc {
             leavingElements[patchKey] = null
         }
 
-        // beforeEnter
+
+        // 进入动画挂载
         insertFn()
         appearRecord[patchKey] = true
 
         newEl._entering = true
 
         if (this.type === 'animate') {
-            newEl.cancelKeyframes =  doCSSAnimation(newEl, {
+      
+            newEl.cancelKeyframes = doCSSAnimation(newEl, {
                 name: this.enterKeyframes,
-                duration: this.duration
+                duration: this.duration,
             })
             onceListener(newEl, 'animationend', () => {
                 // after enter
-                newEl._entering = true
+                newEl._entering = false
             })
         } else if (this.type === 'css') {
             this.bindeEnterClass(newEl)
             onceListener(newEl, 'transitionend', () => {
                 // after enter
                 this.removeEnterClass(newEl)
-                newEl._entering = true
+                newEl._entering = false
             })
+        } else {
+            // 其他类型 ， 开发中
+            insertFn()
         }
     }
 
     public processUnmount(el: any) {
         let { patchKey } = el._vnode
 
+        // 正在进入 ，取消进入动画, 进入卸载东动画
         if (el._entering) {
-            // 正在进入 ，取消进入动画, 进入卸载东动画
             if (this.type === 'css') {
                 this.removeEnterClass(el)
             } else if (this.type === 'animate') {
@@ -199,7 +183,7 @@ class TransitionDesc {
         }
 
         leavingElements[patchKey] = el
-        
+
         if (this.type === 'css') {
             this.bindeLeaveClass(el)
             onceListener(el, 'transitionend', () => {
@@ -217,6 +201,9 @@ class TransitionDesc {
                 removeElement(el)
                 leavingElements[patchKey] = null
             })
+        } else {
+            // 其他类型 ， 开发中
+            removeElement(el)
         }
     }
 
@@ -240,7 +227,7 @@ class TransitionDesc {
         remountElement(el)
 
         this.bindeEnterClass(el)
-        
+
         onceListener(el, 'transitionend', () => {
             this.removeEnterClass(el)
             setDisplay(el, true)

@@ -4,5 +4,4 @@
 * [响应式](reactivity)
 * [过渡与动画](transitionAndAnimation)
 * [内置](builtIn)
-* [例子](examples/)
 * [API](api)

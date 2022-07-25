@@ -16,6 +16,12 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     <div $id="uid"></div>
 ```
 
+### 事件绑定
+```
+    <button @click="login"></button>
+```
+
+
 ### 属性简写
 
 ```
@@ -30,11 +36,6 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
     <div @event></div>
         等同于
     <div @event="event"></div>
-```
-
-### 事件绑定
-```
-    <button @click="login"></button>
 ```
 
 ### 指令

@@ -2,8 +2,6 @@ import { effect, extend, LifecycleHooks, processHook, processVnodePrerender } fr
 import { patch } from "./patch"
 
 
-
-
 function normalizeRenderComponentProps(props: any) {
     if (props?.bind) { // use bind
         extend(props, props.bind)
@@ -16,16 +14,17 @@ export function mountRenderComponent(vnode: any, container: any, anchor: any, pa
     const { type, props, children } = vnode
     vnode.instance = parent
     // 函数式组件没有实例，但也可以拥有状态 , 组件有状态时，会进行自更新 ， 自更新时props和slots内容还是之前传过来的
-
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     const renderResult = type.call(null, normalizeRenderComponentProps(props), children, vnode)
     const next = processVnodePrerender(renderResult)
+    processHook(LifecycleHooks.CREATED, vnode)
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     patch(vnode.vnode, next, container, anchor, parent)
     processHook(LifecycleHooks.MOUNTED, vnode)
     vnode.vnode = next // 保存当前组件的树
 }
 
-      
+
 
 export function updateRenderComponent(pVnode: any, nVnode: any, container: any, anchor: any, parent: any) {
     const { type, props, children } = nVnode

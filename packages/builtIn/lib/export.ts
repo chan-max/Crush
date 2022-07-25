@@ -5,7 +5,6 @@ import { Teleport } from "./teleport"
 import {RouterLink,RouterView} from '@crush/router'
 
 
-
 export const builtInComponents: any = {
     transition: transitionComponent,
     transitionGroup: transitionGroupComponent,

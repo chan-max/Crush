@@ -3,22 +3,6 @@ import { Nodes } from "@crush/const"
 import { createTransition } from "@crush/renderer/lib/render/processTranstion"
 
 
-export const transitionComponent = {
-    props: {},
-    render: ({ $slots }: any) => $slots.default(),
-    beforeMount({ $instance: { scope, renderingVnode }, $props }: any) {
-        const transtion = createTransition($props)
-        renderingVnode.forEach((vnode: any) => {
-            vnode.transition = transtion
-        });
-    },
-    beforeUpdate({ $instance: { renderingVnode }, $props }: any) {
-        const transtion = createTransition($props)
-        renderingVnode && renderingVnode.forEach((vnode: any) => {
-            vnode.transition = transtion
-        });
-    }
-}
 
 export function arrayDifference(arr1: any[], arr2: any[]) {
     let f1 = arr1.filter((i1: any) => !arr2.includes(i1))
@@ -28,7 +12,6 @@ export function arrayDifference(arr1: any[], arr2: any[]) {
 
 // 第一次进入任何元素都不会过渡
 export const transitionGroupComponent = {
-    props: ['duration', 'type', 'enterKeyframes', 'leaveKeyframes', 'name'],
     render: ({ $slots }: any) => $slots.default(),
     beforeUpdate({ $instance: { vnode, renderingVnode }, $props }: any) {
         const transition = createTransition($props)
@@ -43,10 +26,23 @@ export const transitionGroupComponent = {
     }
 }
 
-/*
-    --transition.fast=""
 
-*/
+
+export const transitionComponent = {
+    render: ({ $slots }: any) => $slots.default(),
+    beforeMount({ $instance: { scope, renderingVnode }, $props }: any) {
+        const transtion = createTransition($props)
+        renderingVnode.forEach((vnode: any) => {
+            vnode.transition = transtion
+        });
+    },
+    beforeUpdate({ $instance: { renderingVnode }, $props }: any) {
+        const transtion = createTransition($props)
+        renderingVnode && renderingVnode.forEach((vnode: any) => {
+            vnode.transition = transtion
+        });
+    }
+}
 
 
 

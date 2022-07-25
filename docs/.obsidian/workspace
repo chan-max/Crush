@@ -9,8 +9,9 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "component.md",
-            "mode": "source"
+            "file": "zh/transitionAndAnimation.md",
+            "mode": "source",
+            "source": false
           }
         }
       }
@@ -68,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "component.md",
+                "file": "zh/transitionAndAnimation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,13 +89,15 @@
   },
   "active": "961ba6a88882cc73",
   "lastOpenFiles": [
+    "zh/readme.md",
+    "zh/component.md",
+    "zh/introduction.md",
     "component.md",
     "transitionAndAnimation.md",
     "template.md",
     "README.md",
     "reactivity.md",
     "application.md",
-    "_sidebar.md",
-    "_coverpage.md"
+    "_sidebar.md"
   ]
 }
