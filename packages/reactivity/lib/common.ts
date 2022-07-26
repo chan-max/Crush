@@ -1,7 +1,5 @@
 import { isUndefined, typeOf } from "@crush/common"
 
-
-
 export const enum ReactiveFlags {
     RAW = 'raw',
     IS_REACTIVE = 'isReactive',

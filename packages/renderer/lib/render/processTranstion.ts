@@ -114,8 +114,8 @@ class TransitionDesc {
 
     beforeEnter() { }
     beforeLeave() { }
-    cancelEnter() { }
-    canceleave() { }
+    cancelEnter() {}
+    canceleave() {}
 
     // 关于 transition group
 

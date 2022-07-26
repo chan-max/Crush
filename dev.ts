@@ -14,7 +14,7 @@ let root = {
             }
             .transition{
                 &-enter{
-                    transition:all 3s;
+                    transition:all 5s;
                     &-from{
                         background-color:rgb(255,0,0);
                     }
@@ -23,7 +23,7 @@ let root = {
                     }
                 }
                 &-leave{
-                    transition:all 3s;
+                    transition:all 5s;
                     &-from{
                         background-color:rgb(0,255,0);
                     }
@@ -34,10 +34,13 @@ let root = {
             }
         </style>
         <button @click="setCount(count + 1)"> {{count}} </button>
-        <div .box  for="i in count"> {{i}} </div>
+        <transition type="css" if="count%2 == 0">
+            <div .box > 1 </div>
+            <div .box> 2 </div>
+        </transition>
     `,
     create({ $self }: any) {
-        const {count,setCount} = useRefState(5)
+        const {count,setCount} = useRefState(0)
     }
 }
 

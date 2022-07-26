@@ -1,8 +1,6 @@
 import { emptyArray, emptyObject } from "@crush/common"
-import { Nodes } from "@crush/const"
+
 import { createTransition } from "@crush/renderer/lib/render/processTranstion"
-
-
 
 export function arrayDifference(arr1: any[], arr2: any[]) {
     let f1 = arr1.filter((i1: any) => !arr2.includes(i1))
@@ -30,7 +28,7 @@ export const transitionGroupComponent = {
 
 export const transitionComponent = {
     render: ({ $slots }: any) => $slots.default(),
-    beforeMount({ $instance: { scope, renderingVnode }, $props }: any) {
+    beforeMount({ $instance: { renderingVnode }, $props }: any) {
         const transtion = createTransition($props)
         renderingVnode.forEach((vnode: any) => {
             vnode.transition = transtion
@@ -43,7 +41,6 @@ export const transitionComponent = {
         });
     }
 }
-
 
 
 export const transitionDirective = {

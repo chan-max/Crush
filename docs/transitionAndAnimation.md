@@ -1,17 +1,21 @@
 # 过渡与动画
 
-## transition 
-
-## transition 指令
-
-transition 指令是框架内置的指令 ， 用于为元素的进入离开添加动画效果（指令目前只支持元素，不支持组件）
-
 transition有两种类型，一种是在进入离开相应的时机时绑定不同的class，另一种是在进入离开时，执行一次预定义的动画帧
 
 - css 过渡
 - animate 动画过渡
 
-### css transition
+## transition 配置
+
+transition 配置可以在组件和指令中通用
+
+### type
+
+关于内部提供的组件或指令，都支持两种过渡类型
+
+#### css
+
+通过在元素进入或离开时绑定相应的class来实现过渡效果
 
 自动绑定的class如下
 
@@ -22,7 +26,16 @@ transition有两种类型，一种是在进入离开相应的时机时绑定不�
 - transition-leave-from
 - transition-leave-to
 
-### transition指令的使用
+#### animate 
+
+为进入和离开指定一个动画帧
+
+
+
+
+
+name 用于生成过渡的class 默认为 transition
+
 
 ## transition group 中的 appear
 因为 transition-group 本身第一次就不会过渡 ， 所以appear属性失效
