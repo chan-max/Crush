@@ -1,10 +1,7 @@
 import { isFunction, isObject, mark, uid } from "@crush/common"
 import { Nodes } from "@crush/const"
-import {  resolveOptions } from "@crush/core"
-
-
-
-
+import { resolveOptions } from "@crush/core"
+import { normalizeProps } from "../render/normalizeProps"
 
 const COMPONENT_TYPE = Symbol('ComponentType')
 
@@ -23,10 +20,10 @@ function createComponent(type: any, props: any, children: any, key: any = uid())
     }
 
     return {
-        uid:uid(),
+        uid: uid(),
         nodeType: componentFlag,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     }
@@ -36,7 +33,7 @@ function createElement(type: string, props: any, children: any, key: any = uid()
     return {
         nodeType: Nodes.HTML_ELEMENT,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     }
@@ -46,7 +43,7 @@ export function createSVGElement(type: string, props: any, children: any, key: a
     return {
         nodeType: Nodes.SVG_ELEMENT,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     }
@@ -61,7 +58,8 @@ function createText(children: any, key = uid()) {
     return {
         nodeType: Nodes.TEXT,
         children,
-        key
+        key,
+        type: Text
     }
 }
 
@@ -75,7 +73,6 @@ export function createComment(text: any, key = uid()) {
     }
 }
 
-const Fragment = Symbol('Fragment')
 function createFragment(children: any, key = uid()) {
     return {
         nodeType: Nodes.FRAGMENT,

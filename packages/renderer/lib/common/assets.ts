@@ -4,13 +4,15 @@ import { getCurrentInstance } from "../render/mountComponent"
 
 
 export function getComponent(name: string) {
-    let instanceComponents = getCurrentInstance().components
-    let appComponents = getCurrentApp().components
+    let currentInstance = getCurrentInstance()
+    let components = currentInstance.components
+    let globalComponents = getCurrentApp().components
     // 支持组件首字母大写
-    var component = instanceComponents?.[name] || instanceComponents?.[initialUpperCase(name)] || appComponents?.[name] || appComponents?.[initialUpperCase(name)]
+    var component = components?.[name] || components?.[initialUpperCase(name)] || globalComponents?.[name] || globalComponents?.[initialUpperCase(name)]
     if (!component) {
-        error(`cant find compnent ${name}`)
+        error(`cant find component ${name}`)
     }
+
     return component
 }
 

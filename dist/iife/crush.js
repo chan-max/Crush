@@ -29,7 +29,7 @@ var Crush = (function (exports) {
         get defineScopeProperty () { return defineScopeProperty; },
         get createScope () { return createScope; },
         get createRenderScope () { return createRenderScope; },
-        get doCSSAnimation () { return doCSSAnimation; },
+        get doKeyframesAnimation () { return doKeyframesAnimation; },
         get NODES () { return NODES; },
         get installAnimation () { return installAnimation; },
         get setElementTranstion () { return setElementTranstion; },
@@ -4713,7 +4713,7 @@ var Crush = (function (exports) {
         }
     };
 
-    function doCSSAnimation(el, options, endCb, cancelCb) {
+    function doKeyframesAnimation(el, options, endCb, cancelCb) {
         let _name = getElementComputedStyleValue(el, 'animationName');
         if (_name && _name !== 'none') {
             // ! 元素本身不应该存在动画名称属性
@@ -5713,7 +5713,7 @@ var Crush = (function (exports) {
             appearRecord[patchKey] = true;
             newEl._entering = true;
             if (this.type === 'animate') {
-                newEl.cancelKeyframes = doCSSAnimation(newEl, {
+                newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
                     name: this.enterKeyframes,
                     duration: this.duration
                 });
@@ -5752,7 +5752,7 @@ var Crush = (function (exports) {
                 });
             }
             else if (this.type === 'animate') {
-                doCSSAnimation(el, {
+                doKeyframesAnimation(el, {
                     name: this.leaveKeyframes,
                     duration: this.duration
                 });
@@ -6646,7 +6646,7 @@ var Crush = (function (exports) {
     exports.deleteRule = deleteRule;
     exports.destructur = destructur;
     exports.display = display;
-    exports.doCSSAnimation = doCSSAnimation;
+    exports.doKeyframesAnimation = doKeyframesAnimation;
     exports.doFlat = doFlat;
     exports.docCreateComment = docCreateComment;
     exports.docCreateElement = docCreateElement;

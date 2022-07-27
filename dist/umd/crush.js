@@ -32,7 +32,7 @@
         get defineScopeProperty () { return defineScopeProperty; },
         get createScope () { return createScope; },
         get createRenderScope () { return createRenderScope; },
-        get doCSSAnimation () { return doCSSAnimation; },
+        get doKeyframesAnimation () { return doKeyframesAnimation; },
         get NODES () { return NODES; },
         get installAnimation () { return installAnimation; },
         get setElementTranstion () { return setElementTranstion; },
@@ -4716,7 +4716,7 @@
         }
     };
 
-    function doCSSAnimation(el, options, endCb, cancelCb) {
+    function doKeyframesAnimation(el, options, endCb, cancelCb) {
         let _name = getElementComputedStyleValue(el, 'animationName');
         if (_name && _name !== 'none') {
             // ! 元素本身不应该存在动画名称属性
@@ -5716,7 +5716,7 @@
             appearRecord[patchKey] = true;
             newEl._entering = true;
             if (this.type === 'animate') {
-                newEl.cancelKeyframes = doCSSAnimation(newEl, {
+                newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
                     name: this.enterKeyframes,
                     duration: this.duration
                 });
@@ -5755,7 +5755,7 @@
                 });
             }
             else if (this.type === 'animate') {
-                doCSSAnimation(el, {
+                doKeyframesAnimation(el, {
                     name: this.leaveKeyframes,
                     duration: this.duration
                 });
@@ -6649,7 +6649,7 @@
     exports.deleteRule = deleteRule;
     exports.destructur = destructur;
     exports.display = display;
-    exports.doCSSAnimation = doCSSAnimation;
+    exports.doKeyframesAnimation = doKeyframesAnimation;
     exports.doFlat = doFlat;
     exports.docCreateComment = docCreateComment;
     exports.docCreateElement = docCreateElement;

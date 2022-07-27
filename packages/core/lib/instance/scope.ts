@@ -1,8 +1,9 @@
-import { doCSSAnimation } from "@crush/animate";
+import { doKeyframesAnimation } from "@crush/animate";
 import { hasOwn, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
 import { addInstanceListener, createInstanceEventEmitter, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
+import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
 
@@ -44,14 +45,23 @@ const scopeProperties: any = {
     $once: (instance: any) => instance.once,
 
     // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
-    $animate: (instance: ComponentInstance) => {
-        return (ref: any, animationOptions: any) => {
-            let el = instance.refs[ref]
-            if (el) {
-                return doCSSAnimation(el, animationOptions)
-            }
+    $animate: (instance: ComponentInstance) => (ref: any, animationOptions: any) => {
+        let el = instance.refs[ref]
+        if (el) {
+            return doKeyframesAnimation(el, animationOptions)
         }
-    }
+    },
+    // 查询当前组件内的元素 , 组件的话返回组件实例
+    $querySelector: (instance: any) => (selector: any) => {
+        // 先当做组件选择器，如果不是定义的组件则当做普通元素
+        let type = instance?.components[selector] || selector
+        return querySelector(type, instance.vnode)
+    },
+    $querySelectorAll: (instance: any) => (selector: any) => {
+        // 先当做组件选择器，如果不是定义的组件则当做普通元素
+        let type = instance?.components[selector] || selector
+        return querySelectorAll(type, instance.vnode)
+    },
 }
 
 export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter

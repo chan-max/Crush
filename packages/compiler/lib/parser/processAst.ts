@@ -253,7 +253,7 @@ function processAttribute(ast: any) {
                     attribute.type = Nodes.ATTRIBUTE
                     // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
                     attribute.value = hyphenate(attribute.property)
-                    attribute.property = ast.type === Nodes.COMPONENT ? 'ref' : 'id'
+                    attribute.property = 'id'
                     attribute.isDynamicValue = attribute.isDynamicProperty
                     attribute.isDynamicProperty = false
                 }

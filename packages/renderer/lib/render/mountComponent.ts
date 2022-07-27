@@ -66,7 +66,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
 
     const createResults = callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)
-    
+
     // 注入 mixins 状态
     createResults?.forEach((data: any) => setScopeData(scope, data))
 
@@ -119,12 +119,16 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         instance.renderingVnode = nVnode
 
         if (vnode.transition) {
+            // todo , 组件transition需要重新设计
             nVnode.forEach((_: any) => { _.transition = vnode.transition });
         }
 
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
 
-        if (beforePatch) { beforePatch(pVnode, nVnode) }
+        beforePatch && beforePatch(pVnode, nVnode)
+
+        console.log(pVnode,nVnode);
+        
         patch(pVnode, nVnode, container, anchor, instance)
 
         instance.vnode = nVnode

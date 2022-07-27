@@ -11,7 +11,7 @@ function normalizeMs(value: any) {
     return isNumber(Number(value)) ? value + 'ms' : value
 }
 
-export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cancelCb?: any) {
+export function doKeyframesAnimation(el: HTMLElement, options: any, endCb?: any, cancelCb?: any) {
 
     let _name = getElementComputedStyleValue(el, 'animationName')
 

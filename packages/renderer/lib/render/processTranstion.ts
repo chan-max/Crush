@@ -1,4 +1,4 @@
-import { doCSSAnimation } from "@crush/animate"
+import { doKeyframesAnimation } from "@crush/animate"
 import { setDisplay } from "@crush/builtin/lib/show"
 import { emptyObject, initialUpperCase } from "@crush/common"
 import { addClass, onceListener, remountElement, removeClass, removeElement } from "../dom"
@@ -148,7 +148,7 @@ class TransitionDesc {
 
         if (this.type === 'animate') {
       
-            newEl.cancelKeyframes = doCSSAnimation(newEl, {
+            newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
                 name: this.enterKeyframes,
                 duration: this.duration,
             })
@@ -191,7 +191,7 @@ class TransitionDesc {
                 leavingElements[patchKey] = null
             })
         } else if (this.type === 'animate') {
-            doCSSAnimation(el, {
+            doKeyframesAnimation(el, {
                 name: this.leaveKeyframes,
                 duration: this.duration
             })
