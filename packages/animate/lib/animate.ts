@@ -34,16 +34,14 @@ export function doCSSAnimation(el: HTMLElement, options: any, endCb?: any, cance
 
     const animationDeclaration = {
         animationName: name,
-        animationDuration: isNumber(Number(duration)) ? duration + 'ms' : duration, // 默认为毫秒
-        animationDelay: isNumber(Number(delay)) ? delay + 'ms' : delay, // 默认为毫秒
+        animationDuration: normalizeMs(duration), // 默认为毫秒
+        animationDelay: normalizeMs(delay), // 默认为毫秒
         animationTimingFunction: timingFunction,
         animationPlayState: playState,
         animationFillMode: fillMode,
         animationIterationCount: iterationCount,
         animationDirection: direction
     }
-
-
 
     // 动画执行结束后再还原属性
     let copy = getElementStyle(el, animationDeclaration)

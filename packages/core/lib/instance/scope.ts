@@ -1,3 +1,4 @@
+import { doCSSAnimation } from "@crush/animate";
 import { hasOwn, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
 import { addInstanceListener, createInstanceEventEmitter, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
@@ -9,7 +10,7 @@ import { ComponentInstance } from "./componentInstance";
 
 const scopeProperties: any = {
     $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
-    $uuid: () => uid(), // 每次访问均返回不同的id
+    $uuid: uid, // 每次访问均返回不同的id
     $instance: (instance: ComponentInstance) => instance,
     $refs: (instance: ComponentInstance) => {
         return instance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
@@ -24,8 +25,8 @@ const scopeProperties: any = {
         return el.length === 1 ? el[0] : el
     },
     $root: (instance: any) => instance.root,
-    $props: (instance: any) => instance.props, // props包括 props， attrs 和 events
-    $attrs: (instance: any) => instance.attrs,
+    $props: (instance: any) => instance.props ||= {}, // props包括 props， attrs 和 events
+    $attrs: (instance: any) => instance.attrs ||= {},
     $slots: (instance: any) => instance.slots,
     $parent: (instance: any) => instance.parent,
     $watch: (instance: any) => instance.watch,
@@ -41,8 +42,16 @@ const scopeProperties: any = {
     $on: (instance: any) => instance.on,
     $off: (instance: any) => instance.off,
     $once: (instance: any) => instance.once,
-    $events: (instance: any) => instance.events,
-    $listeners: (instance: any) => (event: string) => getInstancetEventListeners(instance, event)
+
+    // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
+    $animate: (instance: ComponentInstance) => {
+        return (ref: any, animationOptions: any) => {
+            let el = instance.refs[ref]
+            if (el) {
+                return doCSSAnimation(el, animationOptions)
+            }
+        }
+    }
 }
 
 export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter

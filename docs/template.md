@@ -7,8 +7,17 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 ### 插值
 
 ```
-    <div> {{name}} </div>
+    <div> hello {{name}} </div>
 ```
+
+#### 插值修饰符
+
+```
+    <div> {{ @modifier name}} </div>
+```
+
+可以手动注册一个插值修饰符
+
 
 ### 属性绑定
 
@@ -80,6 +89,18 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
         <li> {{i}} </li>
     </for>
 ```
+
+
+#### 合理的迭代类型
+
+- Array
+- Object
+- String
+- Number
+- Map
+- Set
+
+
 
 ### id 和 class 
 
@@ -372,4 +393,141 @@ crush提供的css模板是基于原生css的一种拓展，目标是对原生css
 ```
 
 上面的例子我们通过重复渲染配合动态的选择器，实现了h1 - h6的样式设置
+
+### css原生模板
+
+框架的 css 模板目标是对原生css的扩展，但原生css中会有一些我们不需要的东西，所有并非任何css都是合理地模板，但目前支持的有如下
+
+- 普通css规则
+- 媒体查询
+- supports 检测游览器是否支持某些元素
+- 动画帧 keyframes 和 keyframe
+
+目前框架只支持这几种css的写法，并且可以任意嵌套或者搭配css逻辑语句使用
+
+
+如果想使用 原生css的其他功能，可以用 **native** 属性标记为原生css，被标记native的模板不会进行解析，会直接插入到style标签内
+
+```css
+	<style native>
+		div{
+			color:red;
+		}
+	</style>
+```
+
+## 其他模板语法
+
+### bind 
+
+bind可以为元素绑定属性 , 支持普通元素，有状态组件和无状态组建
+
+```js
+	<div bind="divAttrs"></div>
+
+	// 简写
+	
+	<div ...divAttrs></div>
+
+	let divAttrs = {
+		id:'box',
+		class:'a b c'
+	}
+	
+
+```
+
+bind语法的简写形式也非常便捷，就和js的解构类似，非常直观
+
+
+
+
+### ref
+
+与响应式系统中的ref不同，ref 属性可以在有状态组件中通过 $refs 拿到相应的元素，
+对于普通元素拿到的时元素本身，对于组件，拿到的是组件实例
+
+```html
+	<div ref="box">
+```
+
+也可以使用动态的ref名称，在循环渲染中是必然的
+
+```html
+	<div for="i in 6" $ref="'box' + i">
+```
+
+### html
+
+定义元素的 innerHTML
+
+### text
+
+定义元素的 innerText
+
+
+### 插槽
+
+插槽的具体使用会在组件章节使用，再此值介绍相关的模板语法
+
+框架关于插槽提供了 slot 标签和 slot 属性 ， 请记住
+
+插槽标签用于使用插槽，插槽属性用于定义插槽
+
+
+#### 插槽的使用
+
+```
+	<slot name="">
+```
+
+插槽标签有一个特殊的属性 name
+
+用于渲染对应的具名插槽， 默认为default，
+定义在slot标签上的其他属性，会作为作用域插槽的渲染作用域
+
+#### 插槽的定义
+
+```
+	<Hello>
+		<h1 slot:header="slotScope"> title 1 </h1>
+	</Hello>
+```
+
+在定义具名插槽时，属性的第一份参数会作为具名插槽的名称
+
+请注意 ， 插槽属性是会在组件节点下的第一层节点生效，其他情况会被忽略
+
+
+### 关于 符号 \#
+
+对于普通元素 ， # 可以作为id的简写
+
+```
+	<div #app> </div>
+```
+
+对于有状态组件，# 作为ref的简写
+
+```
+	<hello #app> </hello>
+
+	$refs.app
+```
+
+
+还有一种情况就是组件标签下的插槽，在对第一层元素，并且为**template**s时，# 会作为 slot 属性的简写，用来定义插槽的名称
+
+```
+	<hello>
+	  <template #header="slotScope">
+        111
+      </template>
+
+      <template #(dynamicSlotName)="slotScope">
+          222
+      </template>
+     </hello>
+```
+
 

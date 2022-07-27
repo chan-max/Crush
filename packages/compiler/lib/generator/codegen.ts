@@ -273,16 +273,13 @@ const genFragment = (code: string, context: any) => context.callRenderFn(renderM
 
 const genTextContent = (texts: any, context: any) => {
     return texts.map((text: any) => {
-        return text.isDynamic ? context.callRenderFn(renderMethodsNameMap.display, text.content) : toBackQuotes(text.content)
+        const { content, isDynamic, modifier } = text
+        return isDynamic ? context.callRenderFn('display', content, toSingleQuotes(modifier)) : toBackQuotes(content)
     }).join('+')
 }
 
 const genText = (texts: Text[], context: any) => {
-    return context.callRenderFn(
-        renderMethodsNameMap.createText,
-        genTextContent(texts, context),
-        uStringId()
-    )
+    return context.callRenderFn('createText', genTextContent(texts, context))
 }
 
 

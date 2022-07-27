@@ -1,7 +1,9 @@
 
-import { error, camelize, execCaptureGroups, isUndefined } from "@crush/common"
+import { camelize, isUndefined } from "@crush/common"
 
-const argumentsAndModifiersRE = /(?::([\w:]+))?(?:\.([\w\.]+))?/
+// arguments , filters , modifiers
+const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/
+
 
 enum AttributeFlag {
     '$--', // dynamic css variable
@@ -17,6 +19,8 @@ enum AttributeEndFlag {
     '!' // important css property
 }
 
+
+const staticAttributeNameRE = /[\w-]+/
 
 // both for html attribute and css declaration
 export function parseAttribute(attr: any) {
@@ -43,24 +47,28 @@ export function parseAttribute(attr: any) {
     }
 
 
-    let isDynamicProperty, property, _arguments, modifiers
+    let isDynamicProperty, property, _arguments, filters, modifiers
 
     if (attribute.startsWith('(')) {
         let lastIndexOfBorder = attribute.lastIndexOf(')')
         property = attribute.slice(1, lastIndexOfBorder)
         isDynamicProperty = true
         let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1) // 防止内部表达式太复杂解析出错
-        var tokens = argumentsAndModifiersRE.exec(argumentsAndModifiers)
+        var tokens = attributeModifierRE.exec(argumentsAndModifiers)
         let [_, __arguments, _modifiers]: any = tokens
         _arguments = __arguments && __arguments.split(':')
         modifiers = _modifiers && _modifiers.split('.')
     } else {
         isDynamicProperty = false
-        var tokens = argumentsAndModifiersRE.exec(attribute)
-        let [_, __arguments, _modifiers]: any = tokens
+        // 非动态属性， 先提取出 属性名称
+        property = (staticAttributeNameRE.exec(attribute) as any)[0]
+
+        var tokens = attributeModifierRE.exec(attribute.slice(property?.length))
+
+        let [_, __arguments, _filters, _modifiers]: any = tokens
         _arguments = __arguments && __arguments.split(':')
-        modifiers = modifiers && _modifiers.split('.')
-        property = attribute.slice(0, attribute.length - _.length)
+        filters = _filters && _filters.split('|')
+        modifiers = _modifiers && _modifiers.split('.')
     }
 
     attr.isBooleanProperty = isUndefined(value)
@@ -68,6 +76,7 @@ export function parseAttribute(attr: any) {
     attr.isDynamicValue = flag === '$'
     attr._arguments = _arguments
     attr.modifiers = modifiers
+    attr.filters = filters
     attr.property = attr.isDynamicProperty ? property : camelize(property)
     attr.value = value
     attr.flag = flag

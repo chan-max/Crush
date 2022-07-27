@@ -8,8 +8,7 @@ import {
 export const insertNull = (arr: any[], index: number, length: number = 1) => arr.splice(index, 0, ...new Array(length).fill(null))
 
 
-export const isReservedProp = (key: string) => key.startsWith(`_`)
-export const getReservedProp = (key: string) => key.slice(1)
+
 
 export function unionkeys(...maps: Record<string, any>[]): string[] {
     var _: Record<string, any> = {}

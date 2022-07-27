@@ -120,7 +120,6 @@ class TransitionDesc {
     // 关于 transition group
 
     public processMount(newEl: any, insertFn: any) {
-
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
         let appeared = appearRecord[patchKey]

@@ -188,7 +188,21 @@ const builtInRawAttributes: any = {
         attr.property = attr.attribute
         attr.isDynamicValue = true // 不需要$绑定
     },
-    _setter: emptyFunction
+    _setter: emptyFunction,
+
+    native(attr: any, ast: any) {
+        if (ast.tagName !== 'style') {
+            return
+        }
+        // 标记为原生style属性
+        // 转换为对应的 innerHTML 即可
+        attr.type = Nodes.ATTRIBUTE
+        attr.property = 'innerHTML'
+        attr.value = ast.children[0].children // use native template
+
+        // 清空style的children
+        ast.children = null
+    }
 }
 
 
@@ -199,7 +213,6 @@ function processAttribute(ast: any) {
     if (!attributes) return
     for (let i = 0; i < attributes.length; i++) {
         let attribute = attributes[i]
-
         let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)] // 驼峰化
         if (rawAttributeHandler) {
             rawAttributeHandler(attribute, ast)
@@ -231,13 +244,19 @@ function processAttribute(ast: any) {
                     <template #header></template> =>  <template slot:header></template>
                     <Hello #app> => ref ??
                 */
-
-                attribute.type = Nodes.ATTRIBUTE
-                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                attribute.value = hyphenate(attribute.property)
-                attribute.property = 'id'
-                attribute.isDynamicValue = attribute.isDynamicProperty
-                attribute.isDynamicProperty = false
+                if (ast.tagName === 'template') {
+                    // 模板上的# 会转换为插槽的定义
+                    ast.defineSlotName = attribute.property
+                    ast.isDynamicDefineSlotName = attribute.isDynamicProperty
+                    ast.slotScope = attribute.value
+                } else {
+                    attribute.type = Nodes.ATTRIBUTE
+                    // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                    attribute.value = hyphenate(attribute.property)
+                    attribute.property = ast.type === Nodes.COMPONENT ? 'ref' : 'id'
+                    attribute.isDynamicValue = attribute.isDynamicProperty
+                    attribute.isDynamicProperty = false
+                }
             } else if (flag === '.') {
                 // class shourthand
                 attribute.type = Nodes.CLASS
@@ -275,8 +294,12 @@ export function processAst(ast: any) {
     let builtInTagHandler = builtInTags[tagName]
 
     if (!builtInTagHandler) {
-        ast.type = isHTMLTag(tagName) ? Nodes.HTML_ELEMENT : isSVGTag(tagName) ? Nodes.SVG_ELEMENT : Nodes.COMPONENT
+        ast.type = isHTMLTag(tagName) ?
+            Nodes.HTML_ELEMENT : isSVGTag(tagName) ?
+                Nodes.SVG_ELEMENT : tagName === 'style' ?
+                    Nodes.STYLE : Nodes.COMPONENT
     }
+
     // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
     processAttribute(ast)
 

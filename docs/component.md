@@ -6,13 +6,16 @@
 
 #### template
 
-组件的模板，
+组件的模板，详细参考模板语法
 
 #### render
 
 无模板情况下手写渲染函数
 
-生命周期钩子函数
+#### mixins
+
+混入其他选项配置
+
 #### beforeCreate
 #### create 
 #### created
@@ -22,6 +25,14 @@
 #### updated
 #### beforeUnmount
 #### unmounted
+#### activated
+#### deactivated
+#### beforeRouteEnter
+#### beforeRouteLeave
+#### beforeRouteUpdate
+
+#### name 
+为当前组件定义名称，用于在自身模板中递归
 
 ## 函数式组件
 

@@ -54,6 +54,8 @@ import { renderSlot } from './common/renderSlot'
 import { injectDirectives } from '@crush/core'
 import { createSVGElement } from '@crush/core'
 
+import { withEventModifiers } from '@crush/core'
+
 export default {
     getCurrentRenderScope,
     createComment,
@@ -80,5 +82,6 @@ export default {
     normalizeStyle,
     createComponent,
     renderSlot,
-    mergeSelectors
+    mergeSelectors,
+    withEventModifiers
 }
