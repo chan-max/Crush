@@ -18,23 +18,20 @@ let root = {
                 background-color:red;
             }
         </style>
-        <button> 动起来     </button>
-        <div .box ref="box">
-            <header>
-                <h6 .title> 111 </h6>
-                <h6 #h>    <tom #ttt .tt> </h6>
-            </header>
+        <button @click="animate"> 动起来 </button>
+        <div .box>
         </div>
-        <tom #ttt .tt> 
-        <tom #ttt .tt> 
-        <tom #ttt .tt> 
     `,
-    create({ $self, $refs, $animate, $querySelectorAll }: any) {
-        window.querySelectorAll = $querySelectorAll
+    create({ $self, $refs, $animate, $querySelectorAll, $querySelector }: any) {
+        $self.animate = () => {
+            let el = $querySelector('.box')
+            doKeyframesAnimation(el,{
+                name:'rollIn',
+                duration:2000
+            })
+        }
     }
 }
-
-
 
 const app = createApp(root)
 console.log(app);

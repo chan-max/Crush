@@ -1,4 +1,6 @@
-// crush.js 1.0.16chan
+// crush.js 1.1.1chan
+import { extend as extend$1 } from 'dayjs';
+
 var crush = /*#__PURE__*/Object.freeze({
     __proto__: null,
     get getCurrentApp () { return getCurrentApp; },
@@ -26,6 +28,7 @@ var crush = /*#__PURE__*/Object.freeze({
     get defineScopeProperty () { return defineScopeProperty; },
     get createScope () { return createScope; },
     get createRenderScope () { return createRenderScope; },
+    get useRefState () { return useRefState; },
     get doKeyframesAnimation () { return doKeyframesAnimation; },
     get NODES () { return NODES; },
     get installAnimation () { return installAnimation; },
@@ -226,7 +229,7 @@ var crush = /*#__PURE__*/Object.freeze({
     get radialGradient () { return radialGradient; },
     get getComponent () { return getComponent; },
     get getDirective () { return getDirective; },
-    get customDisplay () { return customDisplay; },
+    get defineTextModifier () { return defineTextModifier; },
     get display () { return display; },
     get doFlat () { return doFlat; },
     get isEvent () { return isEvent; },
@@ -259,8 +262,6 @@ var crush = /*#__PURE__*/Object.freeze({
     get mountAttributes () { return mountAttributes; },
     get updateAttributes () { return updateAttributes; },
     get insertNull () { return insertNull; },
-    get isReservedProp () { return isReservedProp; },
-    get getReservedProp () { return getReservedProp; },
     get unionkeys () { return unionkeys; },
     get createMapEntries () { return createMapEntries; },
     get parseStyleValue () { return parseStyleValue; },
@@ -709,8 +710,6 @@ function processVnodePrerender(node, parentKey) {
 }
 
 const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
-const isReservedProp = (key) => key.startsWith(`_`);
-const getReservedProp = (key) => key.slice(1);
 function unionkeys(...maps) {
     var _ = {};
     for (let i in maps || emptyObject) {
@@ -1160,19 +1159,14 @@ function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.leng
     }
 }
 
-function normalizeRenderComponentProps(props) {
-    if (props?.bind) { // use bind
-        extend(props, props.bind);
-        delete props.bind;
-    }
-    return props;
-}
 function mountRenderComponent(vnode, container, anchor, parent) {
     const { type, props, children } = vnode;
     vnode.instance = parent;
     // 函数式组件没有实例，但也可以拥有状态 , 组件有状态时，会进行自更新 ， 自更新时props和slots内容还是之前传过来的
-    const renderResult = type.call(null, normalizeRenderComponentProps(props), children, vnode);
+    processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
+    const renderResult = type.call(null, props, children, vnode);
     const next = processVnodePrerender(renderResult);
+    processHook("created" /* CREATED */, vnode);
     processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
     patch(vnode.vnode, next, container, anchor, parent);
     processHook("mounted" /* MOUNTED */, vnode);
@@ -1181,7 +1175,7 @@ function mountRenderComponent(vnode, container, anchor, parent) {
 function updateRenderComponent(pVnode, nVnode, container, anchor, parent) {
     const { type, props, children } = nVnode;
     nVnode.instance = parent;
-    const renderResult = type.call(null, normalizeRenderComponentProps(props), children, nVnode, pVnode); // 传入新旧节点
+    const renderResult = type.call(null, props, children, nVnode, pVnode); // 传入新旧节点
     const prev = pVnode.vnode;
     const next = processVnodePrerender(renderResult);
     processHook("beforeUpdate" /* BEFORE_UPDATE */, nVnode, pVnode);
@@ -2813,13 +2807,12 @@ function mountComponent(vnode, container, anchor, parent) {
         nVnode = processVnodePrerender(nVnode);
         instance.renderingVnode = nVnode;
         if (vnode.transition) {
+            // todo , 组件transition需要重新设计
             nVnode.forEach((_) => { _.transition = vnode.transition; });
         }
         processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nComponentVnode, pComponentVnode);
-        if (beforePatch) {
-            beforePatch(pVnode, nVnode);
-        }
-        console.log('新旧节点', pVnode, nVnode);
+        beforePatch && beforePatch(pVnode, nVnode);
+        console.log(pVnode, nVnode);
         patch(pVnode, nVnode, container, anchor, instance);
         instance.vnode = nVnode;
         instance.isMounted = true;
@@ -2833,6 +2826,25 @@ function mountComponent(vnode, container, anchor, parent) {
     instance.renderEffect = rednerEffect;
     rednerEffect.run();
     return instance;
+}
+
+// normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
+function normalizeProps(props) {
+    if (!props) {
+        return;
+    }
+    if (props.bind) { // use bind
+        extend$1(props, props.bind);
+        delete props.bind;
+    }
+    // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
+    if (props.class) {
+        props.class = normalizeClass(props.class);
+    }
+    if (props.style) {
+        props.style = normalizeStyle(props.style);
+    }
+    return props;
 }
 
 const COMPONENT_TYPE = Symbol('ComponentType');
@@ -2854,7 +2866,7 @@ function createComponent(type, props, children, key = uid()) {
         uid: uid(),
         nodeType: componentFlag,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     };
@@ -2863,7 +2875,7 @@ function createElement(type, props, children, key = uid()) {
     return {
         nodeType: 13 /* HTML_ELEMENT */,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     };
@@ -2872,7 +2884,7 @@ function createSVGElement(type, props, children, key = uid()) {
     return {
         nodeType: 9 /* SVG_ELEMENT */,
         type,
-        props,
+        props: normalizeProps(props),
         children,
         key
     };
@@ -2883,7 +2895,8 @@ function createText(children, key = uid()) {
     return {
         nodeType: 12 /* TEXT */,
         children,
-        key
+        key,
+        type: Text
     };
 }
 const Comment = Symbol('Comment');
@@ -2936,22 +2949,34 @@ function renderList(data, callee, key) {
     return results;
 }
 
-function customDisplay() {
+let textModifiers = {
+    lowerCase: (str) => str.toLowerCase(),
+    upperCase: (str) => str.toUpperCase(),
+};
+function defineTextModifier(name, handler) {
+    textModifiers[name] = handler;
 }
-function display(data) {
+function display(data, modifier) {
     if (isObject(data) || isArray(data)) {
-        return JSON.stringify(data);
+        data = JSON.stringify(data);
+    }
+    else {
+        data = String(data);
+    }
+    if (modifier && textModifiers[modifier]) {
+        data = textModifiers[modifier](data);
     }
     return data;
 }
 
 function getComponent(name) {
-    let instanceComponents = getCurrentInstance().components;
-    let appComponents = getCurrentApp().components;
+    let currentInstance = getCurrentInstance();
+    let components = currentInstance.components;
+    let globalComponents = getCurrentApp().components;
     // 支持组件首字母大写
-    var component = instanceComponents?.[name] || instanceComponents?.[initialUpperCase(name)] || appComponents?.[name] || appComponents?.[initialUpperCase(name)];
+    var component = components?.[name] || components?.[initialUpperCase(name)] || globalComponents?.[name] || globalComponents?.[initialUpperCase(name)];
     if (!component) {
-        error(`cant find compnent ${name}`);
+        error(`cant find component ${name}`);
     }
     return component;
 }
@@ -3259,8 +3284,20 @@ var parseText = (text) => {
             });
         }
         if (execArr[1]) {
+            let exp = execArr[1].trim();
+            var content, modifier;
+            if (exp.startsWith('@')) {
+                // 使用修饰非一定要用一个空格作为分隔
+                let firstWhitespace = exp.indexOf(' ');
+                modifier = exp.slice(1, firstWhitespace);
+                content = exp.slice(firstWhitespace);
+            }
+            else {
+                content = exp;
+            }
             texts.push({
-                content: execArr[1],
+                modifier,
+                content,
                 isDynamic: true
             });
         }
@@ -3288,7 +3325,8 @@ function parseSelector(selector) {
     };
 }
 
-const argumentsAndModifiersRE = /(?::([\w:]+))?(?:\.([\w\.]+))?/;
+// arguments , filters , modifiers
+const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/;
 var AttributeFlag;
 (function (AttributeFlag) {
     AttributeFlag[AttributeFlag["$--"] = 0] = "$--";
@@ -3303,6 +3341,7 @@ var AttributeEndFlag;
 (function (AttributeEndFlag) {
     AttributeEndFlag[AttributeEndFlag["!"] = 0] = "!"; // important css property
 })(AttributeEndFlag || (AttributeEndFlag = {}));
+const staticAttributeNameRE = /[\w-]+/;
 // both for html attribute and css declaration
 function parseAttribute(attr) {
     let { attribute, value } = attr;
@@ -3323,30 +3362,33 @@ function parseAttribute(attr) {
             break;
         }
     }
-    let isDynamicProperty, property, _arguments, modifiers;
+    let isDynamicProperty, property, _arguments, filters, modifiers;
     if (attribute.startsWith('(')) {
         let lastIndexOfBorder = attribute.lastIndexOf(')');
         property = attribute.slice(1, lastIndexOfBorder);
         isDynamicProperty = true;
         let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
-        var tokens = argumentsAndModifiersRE.exec(argumentsAndModifiers);
+        var tokens = attributeModifierRE.exec(argumentsAndModifiers);
         let [_, __arguments, _modifiers] = tokens;
         _arguments = __arguments && __arguments.split(':');
         modifiers = _modifiers && _modifiers.split('.');
     }
     else {
         isDynamicProperty = false;
-        var tokens = argumentsAndModifiersRE.exec(attribute);
-        let [_, __arguments, _modifiers] = tokens;
+        // 非动态属性， 先提取出 属性名称
+        property = staticAttributeNameRE.exec(attribute)[0];
+        var tokens = attributeModifierRE.exec(attribute.slice(property?.length));
+        let [_, __arguments, _filters, _modifiers] = tokens;
         _arguments = __arguments && __arguments.split(':');
-        modifiers = modifiers && _modifiers.split('.');
-        property = attribute.slice(0, attribute.length - _.length);
+        filters = _filters && _filters.split('|');
+        modifiers = _modifiers && _modifiers.split('.');
     }
     attr.isBooleanProperty = isUndefined(value);
     attr.isDynamicProperty = isDynamicProperty;
     attr.isDynamicValue = flag === '$';
     attr._arguments = _arguments;
     attr.modifiers = modifiers;
+    attr.filters = filters;
     attr.property = attr.isDynamicProperty ? property : camelize(property);
     attr.value = value;
     attr.flag = flag;
@@ -3441,10 +3483,7 @@ const parseCSS = (source) => {
             /*
                 the last declaration must end with  " ; "
             */
-            var declaration = parseAttribute({
-                attribute: exResult[0],
-                value: exResult[1]
-            });
+            var declaration = parseAttribute({ attribute: exResult[0], value: exResult[1] });
             var { property, flag, endFlag } = declaration;
             if (flag === '$') {
                 declaration.isDynamicValue = true;
@@ -3711,7 +3750,19 @@ const builtInRawAttributes = {
         attr.property = attr.attribute;
         attr.isDynamicValue = true; // 不需要$绑定
     },
-    _setter: emptyFunction
+    _setter: emptyFunction,
+    native(attr, ast) {
+        if (ast.tagName !== 'style') {
+            return;
+        }
+        // 标记为原生style属性
+        // 转换为对应的 innerHTML 即可
+        attr.type = 7 /* ATTRIBUTE */;
+        attr.property = 'innerHTML';
+        attr.value = ast.children[0].children; // use native template
+        // 清空style的children
+        ast.children = null;
+    }
 };
 const builtInEvents = {};
 function processAttribute(ast) {
@@ -3754,12 +3805,20 @@ function processAttribute(ast) {
                     <template #header></template> =>  <template slot:header></template>
                     <Hello #app> => ref ??
                 */
-                attribute.type = 7 /* ATTRIBUTE */;
-                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                attribute.value = hyphenate(attribute.property);
-                attribute.property = 'id';
-                attribute.isDynamicValue = attribute.isDynamicProperty;
-                attribute.isDynamicProperty = false;
+                if (ast.tagName === 'template') {
+                    // 模板上的# 会转换为插槽的定义
+                    ast.defineSlotName = attribute.property;
+                    ast.isDynamicDefineSlotName = attribute.isDynamicProperty;
+                    ast.slotScope = attribute.value;
+                }
+                else {
+                    attribute.type = 7 /* ATTRIBUTE */;
+                    // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                    attribute.value = hyphenate(attribute.property);
+                    attribute.property = 'id';
+                    attribute.isDynamicValue = attribute.isDynamicProperty;
+                    attribute.isDynamicProperty = false;
+                }
             }
             else if (flag === '.') {
                 // class shourthand
@@ -3798,7 +3857,10 @@ function processAst(ast) {
     const tagName = ast.tagName = camelize(ast.tag);
     let builtInTagHandler = builtInTags[tagName];
     if (!builtInTagHandler) {
-        ast.type = isHTMLTag(tagName) ? 13 /* HTML_ELEMENT */ : isSVGTag(tagName) ? 9 /* SVG_ELEMENT */ : 14 /* COMPONENT */;
+        ast.type = isHTMLTag(tagName) ?
+            13 /* HTML_ELEMENT */ : isSVGTag(tagName) ?
+            9 /* SVG_ELEMENT */ : tagName === 'style' ?
+            17 /* STYLE */ : 14 /* COMPONENT */;
     }
     // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
     processAttribute(ast);
@@ -4070,11 +4132,12 @@ function genNode(node, context) {
 const genFragment = (code, context) => context.callRenderFn(renderMethodsNameMap.createFragment, code, uStringId());
 const genTextContent = (texts, context) => {
     return texts.map((text) => {
-        return text.isDynamic ? context.callRenderFn(renderMethodsNameMap.display, text.content) : toBackQuotes(text.content);
+        const { content, isDynamic, modifier } = text;
+        return isDynamic ? context.callRenderFn('display', content, toSingleQuotes(modifier)) : toBackQuotes(content);
     }).join('+');
 };
 const genText = (texts, context) => {
-    return context.callRenderFn(renderMethodsNameMap.createText, genTextContent(texts, context), uStringId());
+    return context.callRenderFn('createText', genTextContent(texts, context));
 };
 function genSelector(selectors, context) {
     /*
@@ -4377,7 +4440,8 @@ var renderMethods = {
     normalizeStyle,
     createComponent,
     renderSlot,
-    mergeSelectors
+    mergeSelectors,
+    withEventModifiers
 };
 
 // if you are using css function with dynamic binding , use camelized function name 
@@ -4710,6 +4774,10 @@ const showDirective = {
     }
 };
 
+// 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
+function normalizeMs(value) {
+    return isNumber(Number(value)) ? value + 'ms' : value;
+}
 function doKeyframesAnimation(el, options, endCb, cancelCb) {
     let _name = getElementComputedStyleValue(el, 'animationName');
     if (_name && _name !== 'none') {
@@ -4720,8 +4788,8 @@ function doKeyframesAnimation(el, options, endCb, cancelCb) {
     direction } = options;
     const animationDeclaration = {
         animationName: name,
-        animationDuration: isNumber(Number(duration)) ? duration + 'ms' : duration,
-        animationDelay: isNumber(Number(delay)) ? delay + 'ms' : delay,
+        animationDuration: normalizeMs(duration),
+        animationDelay: normalizeMs(delay),
         animationTimingFunction: timingFunction,
         animationPlayState: playState,
         animationFillMode: fillMode,
@@ -5588,10 +5656,6 @@ const animationFrames = {
 const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames));
 const installAnimation = () => mount(createStyleSheet(null, animations), document.head);
 
-/*
-    过渡动画逻辑
-    使用transition , 先保留之前元素的tansition  , 设置新的 transtion ，然后设置新的样式
-*/
 function setElementTranstion(el) {
 }
 
@@ -5649,28 +5713,25 @@ class TransitionDesc {
     }
     update(options) {
         options ||= emptyObject;
-        const { type, name, duration, appear, 
-        // hooks
-        onBeforeEnter, onEnter, onAfterEnter, onEnterCancelled, onBeforeLeave, onLeave, onAfterLeave, onLeaveCancelled, onBeforeAppear, onAppear, onAfterAppear, onAppearCancelled, enterKeyframes, leaveKeyframes, } = options;
-        this.name = name || 'transition';
-        this.type = type || 'css';
+        this.name = options.name || 'transition';
+        this.type = options.type || 'css'; // 默认采用 css
         // 该元素在组件中是否为第一次渲染
-        this.appear = appear || false;
-        this.duration = duration;
-        this.onBeforeEnter = onBeforeEnter;
-        this.onEnter = onEnter;
-        this.onAfterEnter = onAfterEnter;
-        this.onEnterCancelled = onEnterCancelled;
-        this.onBeforeLeave = onBeforeLeave;
-        this.onLeave = onLeave;
-        this.onAfterLeave = onAfterLeave;
-        this.onLeaveCancelled = onLeaveCancelled;
-        this.onBeforeAppear = onBeforeAppear;
-        this.onAppear = onAppear;
-        this.onAfterAppear = onAfterAppear;
-        this.onAppearCancelled = onAppearCancelled;
-        this.enterKeyframes = enterKeyframes;
-        this.leaveKeyframes = leaveKeyframes;
+        this.appear = options.appear || false;
+        this.duration = options.duration;
+        this.onBeforeEnter = options.onBeforeEnter;
+        this.onEnter = options.onEnter;
+        this.onAfterEnter = options.onAfterEnter;
+        this.onEnterCancelled = options.onEnterCancelled;
+        this.onBeforeLeave = options.onBeforeLeave;
+        this.onLeave = options.onLeave;
+        this.onAfterLeave = options.onAfterLeave;
+        this.onLeaveCancelled = options.onLeaveCancelled;
+        this.onBeforeAppear = options.onBeforeAppear;
+        this.onAppear = options.onAppear;
+        this.onAfterAppear = options.onAfterAppear;
+        this.onAppearCancelled = options.onAppearCancelled;
+        this.enterKeyframes = options.enterKeyframes;
+        this.leaveKeyframes = options.leaveKeyframes;
     }
     bindeEnterClass = (el) => bindEnterClass(el, this.name);
     bindeLeaveClass = (el) => bindLeaveClass(el, this.name);
@@ -5693,7 +5754,6 @@ class TransitionDesc {
         let appearRecord = instance.appearRecord ||= {};
         let appeared = appearRecord[patchKey];
         if (!this.appear && !appeared) {
-            // once process
             // appear
             insertFn();
             appearRecord[patchKey] = true;
@@ -5705,18 +5765,18 @@ class TransitionDesc {
             removeElement(leavingEl);
             leavingElements[patchKey] = null;
         }
-        // beforeEnter
+        // 进入动画挂载
         insertFn();
         appearRecord[patchKey] = true;
         newEl._entering = true;
         if (this.type === 'animate') {
             newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
                 name: this.enterKeyframes,
-                duration: this.duration
+                duration: this.duration,
             });
             onceListener(newEl, 'animationend', () => {
                 // after enter
-                newEl._entering = true;
+                newEl._entering = false;
             });
         }
         else if (this.type === 'css') {
@@ -5724,14 +5784,18 @@ class TransitionDesc {
             onceListener(newEl, 'transitionend', () => {
                 // after enter
                 this.removeEnterClass(newEl);
-                newEl._entering = true;
+                newEl._entering = false;
             });
+        }
+        else {
+            // 其他类型 ， 开发中
+            insertFn();
         }
     }
     processUnmount(el) {
         let { patchKey } = el._vnode;
+        // 正在进入 ，取消进入动画, 进入卸载东动画
         if (el._entering) {
-            // 正在进入 ，取消进入动画, 进入卸载东动画
             if (this.type === 'css') {
                 this.removeEnterClass(el);
             }
@@ -5758,6 +5822,10 @@ class TransitionDesc {
                 removeElement(el);
                 leavingElements[patchKey] = null;
             });
+        }
+        else {
+            // 其他类型 ， 开发中
+            removeElement(el);
         }
     }
     // show todo
@@ -5798,25 +5866,8 @@ class TransitionDesc {
     }
 }
 
-const transitionComponent = {
-    props: {},
-    render: ({ $slots }) => $slots.default(),
-    beforeMount({ $instance: { scope, renderingVnode }, $props }) {
-        const transtion = createTransition($props);
-        renderingVnode.forEach((vnode) => {
-            vnode.transition = transtion;
-        });
-    },
-    beforeUpdate({ $instance: { renderingVnode }, $props }) {
-        const transtion = createTransition($props);
-        renderingVnode && renderingVnode.forEach((vnode) => {
-            vnode.transition = transtion;
-        });
-    }
-};
 // 第一次进入任何元素都不会过渡
 const transitionGroupComponent = {
-    props: ['duration', 'type', 'enterKeyframes', 'leaveKeyframes', 'name'],
     render: ({ $slots }) => $slots.default(),
     beforeUpdate({ $instance: { vnode, renderingVnode }, $props }) {
         const transition = createTransition($props);
@@ -5830,10 +5881,21 @@ const transitionGroupComponent = {
         });
     }
 };
-/*
-    --transition.fast=""
-
-*/
+const transitionComponent = {
+    render: ({ $slots }) => $slots.default(),
+    beforeMount({ $instance: { renderingVnode }, $props }) {
+        const transtion = createTransition($props);
+        renderingVnode.forEach((vnode) => {
+            vnode.transition = transtion;
+        });
+    },
+    beforeUpdate({ $instance: { renderingVnode }, $props }) {
+        const transtion = createTransition($props);
+        renderingVnode && renderingVnode.forEach((vnode) => {
+            vnode.transition = transtion;
+        });
+    }
+};
 const transitionDirective = {
     beforeCreate(_, { value }, vnode) {
         vnode.transition = createTransition(value);
@@ -6280,9 +6342,135 @@ var cssMethods = {
     radialGradient
 };
 
+//  基于 vnode 的元素选择器，在vnode树中查找元素，必须是处理过的树，也可以查询组件等
+/*
+    *  所有元素
+    #  id 选择器
+    .  class 选择器
+    普通标签选择 ， 组件会返回实例
+*/
+// 如果是组件标签的话，直接通过实例身上的components，可获得组件的type
+var QuerySelectorType;
+(function (QuerySelectorType) {
+    QuerySelectorType[QuerySelectorType["ID"] = 0] = "ID";
+    QuerySelectorType[QuerySelectorType["CLASS"] = 1] = "CLASS";
+    QuerySelectorType[QuerySelectorType["ELEMENT_TYPE"] = 2] = "ELEMENT_TYPE";
+    QuerySelectorType[QuerySelectorType["COMPONENT_TYPE"] = 3] = "COMPONENT_TYPE";
+    QuerySelectorType[QuerySelectorType["RENDER_COMPONENT_TYPE"] = 4] = "RENDER_COMPONENT_TYPE"; // 渲染函数没有实例
+})(QuerySelectorType || (QuerySelectorType = {}));
+function parseQuerySelector(selector) {
+    let type, value;
+    if (isFunction(selector)) {
+        // render component
+        type = QuerySelectorType.RENDER_COMPONENT_TYPE;
+        value = selector;
+    }
+    else if (isObject(selector)) {
+        type = QuerySelectorType.COMPONENT_TYPE;
+        value = selector;
+    }
+    else if (selector.startsWith('.')) {
+        type = QuerySelectorType.CLASS;
+        value = selector.slice(1);
+    }
+    else if (selector.startsWith('#')) {
+        type = QuerySelectorType.ID;
+        value = selector.slice(1);
+    }
+    else {
+        type = QuerySelectorType.ELEMENT_TYPE;
+        value = selector;
+    }
+    return {
+        type,
+        value
+    };
+}
+function querySelector(selector, vnode) {
+    if (!selector || !vnode) {
+        return null;
+    }
+    let { type, value } = parseQuerySelector(selector);
+    return doQuerySelector(value, type, vnode);
+}
+function doQuerySelector(selector, type, vnode) {
+    let result = null;
+    // vnode 始终是数组形式 
+    for (let item of vnode) {
+        if (type === QuerySelectorType.CLASS) {
+            // class 中 selector 为 true
+            if (item?.props?.class?.[selector]) {
+                result = item.el || item.instance;
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.ID) {
+            if (item?.props?.id === selector) {
+                result = item.el || item.instance;
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
+            if (item.type === selector) {
+                result = item.el || item.instance; // 元素节点身上也有 instance属性
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) {
+            // render component 暂时没有相应的元素或实例
+            // 或者 render component 返回对应的子元素或实例
+            result = null;
+        }
+        else {
+            continue;
+        }
+        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
+            // 有状态组件，无状态组件，样式表 不会寻找子元素
+            result = doQuerySelector(selector, type, item.children);
+        }
+    }
+    return result;
+}
+function querySelectorAll(selector, vnode) {
+    if (!selector || !vnode) {
+        return null;
+    }
+    let { type, value } = parseQuerySelector(selector);
+    return doQuerySelectorAll(value, type, vnode, []);
+}
+function doQuerySelectorAll(selector, type, vnode, results) {
+    for (let item of vnode) {
+        if (type === QuerySelectorType.CLASS) {
+            // class 中 selector 为 true
+            if (item?.props?.class?.[selector]) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.ID) {
+            if (item?.props?.id === selector) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
+            if (item.type === selector) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) ;
+        else {
+            continue;
+        }
+        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
+            // 有状态组件，无状态组件，样式表 不会寻找子元素
+            doQuerySelectorAll(selector, type, item.children, results);
+        }
+    }
+    return results;
+}
+
 const scopeProperties = {
     $uid: (instance) => instance.uid,
-    $uuid: () => uid(),
+    $uuid: uid,
     $instance: (instance) => instance,
     $refs: (instance) => {
         return instance.refs ||= {}; // ! 确保组件没挂载时可以拿到 refs
@@ -6297,8 +6485,8 @@ const scopeProperties = {
         return el.length === 1 ? el[0] : el;
     },
     $root: (instance) => instance.root,
-    $props: (instance) => instance.props,
-    $attrs: (instance) => instance.attrs,
+    $props: (instance) => instance.props ||= {},
+    $attrs: (instance) => instance.attrs ||= {},
     $slots: (instance) => instance.slots,
     $parent: (instance) => instance.parent,
     $watch: (instance) => instance.watch,
@@ -6314,8 +6502,24 @@ const scopeProperties = {
     $on: (instance) => instance.on,
     $off: (instance) => instance.off,
     $once: (instance) => instance.once,
-    $events: (instance) => instance.events,
-    $listeners: (instance) => (event) => getInstancetEventListeners(instance, event)
+    // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
+    $animate: (instance) => (ref, animationOptions) => {
+        let el = instance.refs[ref];
+        if (el) {
+            return doKeyframesAnimation(el, animationOptions);
+        }
+    },
+    // 查询当前组件内的元素 , 组件的话返回组件实例
+    $querySelector: (instance) => (selector) => {
+        // 先当做组件选择器，如果不是定义的组件则当做普通元素
+        let type = instance?.components[selector] || selector;
+        return querySelector(type, instance.vnode);
+    },
+    $querySelectorAll: (instance) => (selector) => {
+        // 先当做组件选择器，如果不是定义的组件则当做普通元素
+        let type = instance?.components[selector] || selector;
+        return querySelectorAll(type, instance.vnode);
+    },
 };
 const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
 const protoMethods = {
@@ -6556,8 +6760,8 @@ function processRenderComponentHook(type, vnode, pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir)[0];
                 }
-                // 
-                hook(bindings, vnode, pVnode);
+                // 这里不能省略第一个参数，是为了和其他两种参数保持一致
+                hook(null, bindings, vnode, pVnode);
             }
         }
     }
@@ -6568,4 +6772,34 @@ function processRenderComponentHook(type, vnode, pVnode) {
     }
 }
 
-export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NODES, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, customDisplay, dateFormatRE, declare, defineScopeProperty, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doKeyframesAnimation, doFlat, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getReservedProp, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isReservedProp, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useString, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
+function useRefState(value, refOptions) {
+    let scope = getCurrentScope();
+    var state = ref(value, refOptions);
+    var setState = createRefValueSetter(state);
+    var watcher = (callback) => watchRef(state, callback);
+    let i = 0;
+    return new Proxy(emptyObject, {
+        get(_, key) {
+            switch (i) {
+                case 0:
+                    // provide to scope
+                    scope[key] = state;
+                    i++;
+                    return state;
+                case 1:
+                    // provide to scope
+                    scope[key] = setState;
+                    i++;
+                    return state;
+                case 2:
+                    scope[key] = watcher;
+                    i++;
+                    return watcher;
+                default:
+                    return null;
+            }
+        }
+    });
+}
+
+export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NODES, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, declare, defineScopeProperty, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useRefState, useString, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
