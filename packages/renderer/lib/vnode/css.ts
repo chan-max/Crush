@@ -1,6 +1,7 @@
 import { uid } from "@crush/common"
 
 import { Nodes } from "@crush/core"
+import { normalizeProps } from "../render/normalizeProps"
 
 
 var createStyleSheet = (props: any, children: any, key: any = uid()) => {
@@ -8,7 +9,7 @@ var createStyleSheet = (props: any, children: any, key: any = uid()) => {
         nodeType: Nodes.STYLE,
         type: 'style',
         children,
-        props,
+        props:normalizeProps(props),
         key,
     }
 }

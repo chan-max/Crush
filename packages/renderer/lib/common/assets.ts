@@ -5,6 +5,11 @@ import { getCurrentInstance } from "../render/mountComponent"
 
 export function getComponent(name: string) {
     let currentInstance = getCurrentInstance()
+
+    if (name === 'self') { // 内部提供的self标签，用于递归自身
+        return currentInstance.options
+    }
+
     let components = currentInstance.components
     let globalComponents = getCurrentApp().components
     // 支持组件首字母大写

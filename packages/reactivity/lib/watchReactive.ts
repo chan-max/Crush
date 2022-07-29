@@ -1,7 +1,7 @@
 import { error } from "@crush/common";
 import { isProxyType, isReactive, toRaw } from "./common";
 import { getDeps, targetObserverSymbol } from "./effect";
-import { getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, onSet } from "./handler";
+import { onSet } from "./handler";
 
 
 /*

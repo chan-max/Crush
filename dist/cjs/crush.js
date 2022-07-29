@@ -1,4 +1,4 @@
-// crush.js 1.1.1chan
+// crush.js 1.1.2chan
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -27,7 +27,6 @@ var crush = /*#__PURE__*/Object.freeze({
     get injectMapHooks () { return injectMapHooks; },
     get injectMixin () { return injectMixin; },
     get injectMixins () { return injectMixins; },
-    get ComponentOptions () { return exports.ComponentOptions; },
     get resolveOptions () { return resolveOptions; },
     get defineScopeProperty () { return defineScopeProperty; },
     get createScope () { return createScope; },
@@ -45,6 +44,7 @@ var crush = /*#__PURE__*/Object.freeze({
     get makeMap () { return makeMap; },
     get removeFromArray () { return removeFromArray; },
     get shallowCloneArray () { return shallowCloneArray; },
+    get shallowCloneObject () { return shallowCloneObject; },
     get mark () { return mark; },
     get exec () { return exec; },
     get execCaptureGroups () { return execCaptureGroups; },
@@ -376,6 +376,7 @@ const removeFromArray = (arr, item) => {
     return true;
 };
 const shallowCloneArray = (arr) => arr && [...arr];
+const shallowCloneObject = (obj) => obj && { ...obj };
 function mark(target, key, value = true) {
     Object.defineProperty(target, key, {
         value,
@@ -473,12 +474,31 @@ function onceListener(target, event, handler, options = null) {
     return () => removeListener(target, event, onceHandler, options);
 }
 
+// normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
+function normalizeProps(props) {
+    if (!props) {
+        return;
+    }
+    if (props.bind) { // use bind
+        dayjs.extend(props, props.bind);
+        delete props.bind;
+    }
+    // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
+    if (props.class) {
+        props.class = normalizeClass(props.class);
+    }
+    if (props.style) {
+        props.style = normalizeStyle(props.style);
+    }
+    return props;
+}
+
 var createStyleSheet = (props, children, key = uid()) => {
     return {
         nodeType: 17 /* STYLE */,
         type: 'style',
         children,
-        props,
+        props: normalizeProps(props),
         key,
     };
 };
@@ -797,6 +817,7 @@ function parseEventName(name) {
         modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
     };
 }
+// 返回 true 代表停止事件执行
 const modifierGuards = {
     stop: (e) => e.stopPropagation(),
     prevent: (e) => e.preventDefault(),
@@ -806,8 +827,16 @@ const modifierGuards = {
     alt: (e) => !e.altKey,
     meta: (e) => !e.metaKey,
     left: (e) => 'button' in e && e.button !== 0,
-    middle: (e) => 'button' in e && e.button !== 1,
+    middle: (e) => {
+        'button' in e && e.button !== 1;
+    },
     right: (e) => 'button' in e && e.button !== 2,
+    // 按键修饰符
+    enter: (e) => {
+        if (e.key !== 'Enter') {
+            return true;
+        }
+    }
 };
 /*
     使用修饰符后每次都会创建一个新的函数
@@ -2830,25 +2859,6 @@ function mountComponent(vnode, container, anchor, parent) {
     instance.renderEffect = rednerEffect;
     rednerEffect.run();
     return instance;
-}
-
-// normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
-function normalizeProps(props) {
-    if (!props) {
-        return;
-    }
-    if (props.bind) { // use bind
-        dayjs.extend(props, props.bind);
-        delete props.bind;
-    }
-    // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
-    if (props.class) {
-        props.class = normalizeClass(props.class);
-    }
-    if (props.style) {
-        props.style = normalizeStyle(props.style);
-    }
-    return props;
 }
 
 const COMPONENT_TYPE = Symbol('ComponentType');
@@ -6171,134 +6181,21 @@ const onUpdated = createHook("updated" /* UPDATED */);
 const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
 const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
 
-/*
-    当传入不合理的props时
-*/
-function normalizePropsOptions(options) {
-    if (isArray(options)) {
-        options = arrayToMap(options, emptyObject);
-    }
-    else {
-        for (let key in options) {
-            if (!isObject(options[key])) {
-                options[key] = {
-                    type: options[key]
-                };
-            }
-        }
-    }
-    return options;
-}
-function normalizeEmitsOptions(options) {
-    if (isArray(options)) {
-        return arrayToMap(options, emptyObject);
-    }
-    else {
-        return options;
-    }
-}
-
-exports.ComponentOptions = void 0;
-(function (ComponentOptions) {
-    ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
-    ComponentOptions["CREATE"] = "create";
-    // setup funcition
-    ComponentOptions["CREATED"] = "created";
-    ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
-    ComponentOptions["MOUNTED"] = "mounted";
-    ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
-    ComponentOptions["UPDATED"] = "updated";
-    ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
-    ComponentOptions["UNMOUNTED"] = "unmounted";
-    ComponentOptions["BEFORE_PATCH"] = "beforePatch";
-    // keepalive
-    ComponentOptions["ACTIVATED"] = "activated";
-    ComponentOptions["DEACTIVATED"] = "deactivated";
-    ComponentOptions["BEFORE_ROUTE_ENTER"] = "beforeRouteEnter";
-    ComponentOptions["BEFORE_ROUTE_LEAVE"] = "beforeRouteLeave";
-    ComponentOptions["BEFORE_ROUTE_UPDATE"] = "beforeRouteUpdate";
-    ComponentOptions["TEMPLATE"] = "template";
-    ComponentOptions["RENDER"] = "render";
-    ComponentOptions["PROPS"] = "props";
-    ComponentOptions["EMITS"] = "emits";
-    ComponentOptions["NAME"] = "name";
-    ComponentOptions["MIXINS"] = "mixins";
-    ComponentOptions["COMPOENNTS"] = "components";
-    ComponentOptions["DIRECTIVES"] = "directives";
-})(exports.ComponentOptions || (exports.ComponentOptions = {}));
-function resolveOptions(options) {
-    for (let key in options) {
-        const value = options[key];
-        switch (key) {
-            case exports.ComponentOptions.PROPS:
-                options.propsOptions = normalizePropsOptions(value);
-                break;
-            case exports.ComponentOptions.EMITS:
-                options.emitsOptions = normalizeEmitsOptions(value);
-                break;
-            case exports.ComponentOptions.TEMPLATE:
-                options.createRender = compile(value);
-                break;
-            case exports.ComponentOptions.RENDER:
-                // todo
-                break;
-            case exports.ComponentOptions.CREATE:
-            case exports.ComponentOptions.BEFORE_CREATE:
-            case exports.ComponentOptions.CREATED:
-            case exports.ComponentOptions.BEFORE_MOUNT:
-            case exports.ComponentOptions.MOUNTED:
-            case exports.ComponentOptions.BEFORE_UPDATE:
-            case exports.ComponentOptions.UPDATED:
-            case exports.ComponentOptions.BEFORE_UNMOUNT:
-            case exports.ComponentOptions.UNMOUNTED:
-            case exports.ComponentOptions.BEFORE_PATCH:
-            case exports.ComponentOptions.ACTIVATED:
-            case exports.ComponentOptions.DEACTIVATED:
-            case exports.ComponentOptions.BEFORE_ROUTE_ENTER:
-            case exports.ComponentOptions.BEFORE_ROUTE_LEAVE:
-            case exports.ComponentOptions.BEFORE_ROUTE_UPDATE:
-                // 转换为数组形式
-                if (value && !isArray(value)) {
-                    options[key] = [value];
-                }
-                break;
-            case exports.ComponentOptions.COMPOENNTS:
-                break;
-            case exports.ComponentOptions.DIRECTIVES:
-                break;
-            case exports.ComponentOptions.NAME:
-                break;
-            case 'component':
-                // options key 'component' is used for devide route or component
-                break;
-            default:
-                /*custom options*/
-                const customOptions = options.customOptions ||= {};
-                customOptions[key] = value;
-                break;
-        }
-        // 组件定义了name 可以递归
-        if (options[exports.ComponentOptions.NAME]) {
-            (options[exports.ComponentOptions.COMPOENNTS] ||= {})[options[exports.ComponentOptions.NAME]] = options;
-        }
-    }
-}
-
 function injectMixin(options, mixin) {
     for (let key in mixin) {
         switch (key) {
-            case exports.ComponentOptions.MIXINS:
+            case 'mixins':
                 injectMixins(options, options[key]);
                 break;
-            case exports.ComponentOptions.BEFORE_CREATE:
-            case exports.ComponentOptions.CREATE:
-            case exports.ComponentOptions.CREATED:
-            case exports.ComponentOptions.BEFORE_MOUNT:
-            case exports.ComponentOptions.MOUNTED:
-            case exports.ComponentOptions.BEFORE_UPDATE:
-            case exports.ComponentOptions.UPDATED:
-            case exports.ComponentOptions.BEFORE_UNMOUNT:
-            case exports.ComponentOptions.UNMOUNTED:
+            case 'beforeCreate':
+            case 'create':
+            case 'created':
+            case 'beforeMount':
+            case 'mounted':
+            case 'beforeUpdate':
+            case 'updated':
+            case 'beforeUnmount':
+            case 'unmounted':
                 injectHook(key, options, mixin[key]);
                 break;
             default:
@@ -6473,6 +6370,7 @@ function doQuerySelectorAll(selector, type, vnode, results) {
 }
 
 const scopeProperties = {
+    $: () => '',
     $uid: (instance) => instance.uid,
     $uuid: uid,
     $instance: (instance) => instance,
@@ -6506,13 +6404,6 @@ const scopeProperties = {
     $on: (instance) => instance.on,
     $off: (instance) => instance.off,
     $once: (instance) => instance.once,
-    // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
-    $animate: (instance) => (ref, animationOptions) => {
-        let el = instance.refs[ref];
-        if (el) {
-            return doKeyframesAnimation(el, animationOptions);
-        }
-    },
     // 查询当前组件内的元素 , 组件的话返回组件实例
     $querySelector: (instance) => (selector) => {
         // 先当做组件选择器，如果不是定义的组件则当做普通元素
@@ -6773,6 +6664,89 @@ function processRenderComponentHook(type, vnode, pVnode) {
     const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
     if (vnodeHook) {
         vnodeHook();
+    }
+}
+
+/*
+    当传入不合理的props时
+*/
+function normalizePropsOptions(options) {
+    if (isArray(options)) {
+        options = arrayToMap(options, emptyObject);
+    }
+    else {
+        for (let key in options) {
+            if (!isObject(options[key])) {
+                options[key] = {
+                    type: options[key]
+                };
+            }
+        }
+    }
+    return options;
+}
+function normalizeEmitsOptions(options) {
+    if (isArray(options)) {
+        return arrayToMap(options, emptyObject);
+    }
+    else {
+        return options;
+    }
+}
+
+function resolveOptions(options) {
+    for (let key in options) {
+        const value = options[key];
+        switch (key) {
+            case "props" /* PROPS */:
+                options.propsOptions = normalizePropsOptions(value);
+                break;
+            case "emits" /* EMITS */:
+                options.emitsOptions = normalizeEmitsOptions(value);
+                break;
+            case "template" /* TEMPLATE */:
+                options.createRender = compile(value);
+                break;
+            case "render" /* RENDER */:
+                // todo
+                break;
+            case "create" /* CREATE */:
+            case "beforeCreate" /* BEFORE_CREATE */:
+            case "created" /* CREATED */:
+            case "beforeMount" /* BEFORE_MOUNT */:
+            case "mounted" /* MOUNTED */:
+            case "beforeUpdate" /* BEFORE_UPDATE */:
+            case "updated" /* UPDATED */:
+            case "beforeUnmount" /* BEFORE_UNMOUNT */:
+            case "unmounted" /* UNMOUNTED */:
+            case "beforePatch" /* BEFORE_PATCH */:
+            case "activated" /* ACTIVATED */:
+            case "deactivated" /* DEACTIVATED */:
+            case "beforeRouteEnter" /* BEFORE_ROUTE_ENTER */:
+            case "beforeRouteLeave" /* BEFORE_ROUTE_LEAVE */:
+            case "beforeRouteUpdate" /* BEFORE_ROUTE_UPDATE */:
+                // 转换为数组形式
+                if (value && !isArray(value)) {
+                    options[key] = [value];
+                }
+                break;
+            case "components" /* COMPOENNTS */:
+                break;
+            case "directives" /* DIRECTIVES */:
+                break;
+            case "name" /* NAME */:
+                break;
+            default:
+                /*custom options*/
+                const customOptions = options.customOptions ||= {};
+                customOptions[key] = value;
+                break;
+        }
+        // 组件定义了name 可以递归 
+        // 这种是组件配置的名称，但可以被create中注册的名字替代
+        if (options["name" /* NAME */]) {
+            (options["components" /* COMPOENNTS */] ||= {})[options["name" /* NAME */]] = options;
+        }
     }
 }
 
@@ -7054,6 +7028,7 @@ exports.setSelector = setSelector;
 exports.setStyleProperty = setStyleProperty;
 exports.setText = setText;
 exports.shallowCloneArray = shallowCloneArray;
+exports.shallowCloneObject = shallowCloneObject;
 exports.shallowReactive = shallowReactive;
 exports.shallowReactiveCollectionHandler = shallowReactiveCollectionHandler;
 exports.shallowReactiveHandler = shallowReactiveHandler;

@@ -10,6 +10,9 @@ import { ComponentInstance } from "./componentInstance";
 
 
 const scopeProperties: any = {
+
+    $: () => '', // 选择器
+
     $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
     $uuid: uid, // 每次访问均返回不同的id
     $instance: (instance: ComponentInstance) => instance,
@@ -44,13 +47,6 @@ const scopeProperties: any = {
     $off: (instance: any) => instance.off,
     $once: (instance: any) => instance.once,
 
-    // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
-    $animate: (instance: ComponentInstance) => (ref: any, animationOptions: any) => {
-        let el = instance.refs[ref]
-        if (el) {
-            return doKeyframesAnimation(el, animationOptions)
-        }
-    },
     // 查询当前组件内的元素 , 组件的话返回组件实例
     $querySelector: (instance: any) => (selector: any) => {
         // 先当做组件选择器，如果不是定义的组件则当做普通元素

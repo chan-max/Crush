@@ -1,5 +1,4 @@
 export * from './lib/app/app'
-export * from './lib/app/createApp'
 export * from './lib/instance/component'
 export * from './lib/instance/componentInstance'
 export * from './lib/instance/directive'
@@ -9,7 +8,7 @@ export * from './lib/instance/option'
 export * from './lib/instance/scope'
 export * from './lib/instance/plugin'
 export * from './lib/instance/refState'
-
+export * from './lib/instance/create'
 
 export * from '@crush/animate'
 export * from '@crush/common'

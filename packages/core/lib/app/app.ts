@@ -12,88 +12,80 @@ import { installAnimation } from '@crush/animate'
 
 import * as crush from '../../index'
 
-console.log(crush);
 
+var currentApp: any
 
-var currentApp: App
-
-export function getCurrentApp(): App {
-    if (!currentApp) {
-        debugger
-    }
+export function getCurrentApp(): any {
     return currentApp
 }
 
 
+export function createApp(rootComponent: any) {
 
-export class App {
-
-    isMounted = false
-
-    inlineTemplate: any
-
-    container: any
-
-    rootComponent: any
-
-    constructor(rootComponent: any) {
-
-        this.rootComponent = rootComponent
-
-        // 安装动画
-        this.use(installAnimation)
-        currentApp = this
+    const app: any = {
+        isMounted: false,
+        rootComponent,
+        component,
+        directive,
+        components: builtInComponents,
+        directives: builtInDirectives,
+        plugins: new Set(),
+        mixin,
+        mixins: [],
+        use,
+        mount: mountApp,
+        unmount: unmountApp
     }
 
-    mount(container: any) {
-        this.container = isString(container) ? document.querySelector(container as any) : container
-        this.inlineTemplate = container.innerHTML
-        this.container.innerHTML = ''
+    currentApp = app
+    // 安装动画
+    use(installAnimation)
 
-        if (!this.rootComponent.template && !this.rootComponent.render) {
-            this.rootComponent.template = this.inlineTemplate
+    function component(name: string, component: ComponentType) {
+        if (!app.components[name]) {
+            app.components[name] = component
         }
-
-        mount(createComponent(this.rootComponent, null, null), this.container)
-        this.isMounted = true
     }
 
-    // globalProperty
 
-    components: Record<string, ComponentType> = builtInComponents
-    component(name: string, component: ComponentType) {
-        if (this.directives[name]) {
-            return warn('component is already exist')
+    function mixin(mixin: any) {
+        app.mixins.push(mixin)
+    }
+
+    function directive(name: string, directive: DirectiveType) {
+        if (!app.directives[name]) {
+            app.directives[name] = directive
         }
-        this.components[name] = component
     }
 
-    directives: Record<string, DirectiveType> = builtInDirectives
-    directive(name: string, directive: DirectiveType) {
-        if (this.directives[name]) {
-            return warn('directive is already exist')
-        }
-        this.directives[name] = directive
-    }
-
-    mixins: MixinType[] = []
-    mixin(mixin: MixinType) {
-        this.mixins.push(mixin)
-    }
-
-    plugins: Set<PluginType> = new Set()
-    use(plugin: PluginType, ...options: any[]) {
-        if (this.plugins.has(plugin)) return
+    function use(plugin: PluginType, ...options: any[]) {
+        if (app.plugins.has(plugin)) return
         let install = isFunction(plugin) ? plugin : plugin.install
-        install.call(plugin, this, crush, ...options)
-        this.plugins.add(plugin)
+        install.call(plugin, app, crush, ...options)
+        app.plugins.add(plugin)
     }
 
-    record: any = {}
-    time(key: string) {
-        return this.record[key] = performance.now()
+    function mountApp(container: any) {
+        container = isString(container) ? document.querySelector(container as any) : container
+        app.container = container
+        app.inlineTemplate = container.innerHTML
+        container.innerHTML = ''
+
+        if (!rootComponent.template && !rootComponent.render) {
+            rootComponent.template = app.inlineTemplate
+        }
+
+        app.rootVnode = createComponent(rootComponent, null, null)
+        mount(app.rootVnode, app.container)
+        app.isMounted = true
     }
-    timeEnd(key: string) {
-        return performance.now() - this.record[key]
+
+
+    function unmountApp() {
+        unmountComponent(app.rootVnode, app.container)
     }
+
+    return app
 }
+
+

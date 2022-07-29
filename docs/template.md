@@ -6,34 +6,53 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 
 ### 插值
 
-```
+```html
     <div> hello {{name}} </div>
 ```
 
 #### 插值修饰符
 
-```
+```html
     <div> {{ @modifier name}} </div>
 ```
 
 可以手动注册一个插值修饰符
 
-
+  
 ### 属性绑定
 
-```
+```html
     <div $id="uid"></div>
 ```
 
+使用 $ 来绑定变量可以与css模板统一
+
 ### 事件绑定
-```
+```html
     <button @click="login"></button>
 ```
 
+对于原生事件的配置
+
+- once
+- capture
+- passive
+
+我们可以采用如下写法
+
+```html
+    <button @click:once:passive:capture="login"></button>
+```
+
+对于阻止默认行为 preventDefault 或者停止冒泡等，我们采用修饰符的形式
+
+```html
+    <button @click:once:passive:capture="login"></button>
+```
 
 ### 属性简写
 
-```
+```html
     <div id></div>
         等同于
     <div id="id"></div>
@@ -52,6 +71,10 @@ crush的模板语法是基于html的拓展上手简单，语法简洁
 ```
     <input --focus>
 ```
+
+> 
+> 关于内置属性，内置指令，自定义指令可能存在疑惑，指令和属性之间有什么区别，所有需要框架在模板编译期间或是渲染期间进行特殊处理的会作为内置属性，而内置指令和自定义指令都是通过外界注入到节点的，在对应的生命周期时机执行相应的操作，这些被称为指令，而内置指令与自定义指令的区别在于，有些指令，在编译时期还要进行额外的处理 
+> 
 
 ### 动态属性
 

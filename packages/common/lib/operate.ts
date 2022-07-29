@@ -10,6 +10,8 @@ export const removeFromArray = (arr: any[], item: any) => {
 
 export const shallowCloneArray = (arr: any[] | any) => arr && [...arr]
 
+export const shallowCloneObject = (obj: any) => obj && { ...obj }
+
 export function mark(target: any, key: any, value: any = true) {
     Object.defineProperty(target, key, {
         value,

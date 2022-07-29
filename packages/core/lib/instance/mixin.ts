@@ -15,21 +15,23 @@ export type MixinType = {
     mixins?: MixinType[]
 }
 
+
+
 export function injectMixin(options: ComponentType, mixin: MixinType) {
     for (let key in mixin) {
         switch (key) {
-            case ComponentOptions.MIXINS:
+            case 'mixins':
                 injectMixins(options, options[key])
                 break
-            case ComponentOptions.BEFORE_CREATE:
-            case ComponentOptions.CREATE:
-            case ComponentOptions.CREATED:
-            case ComponentOptions.BEFORE_MOUNT:
-            case ComponentOptions.MOUNTED:
-            case ComponentOptions.BEFORE_UPDATE:
-            case ComponentOptions.UPDATED:
-            case ComponentOptions.BEFORE_UNMOUNT:
-            case ComponentOptions.UNMOUNTED:
+            case 'beforeCreate':
+            case 'create':
+            case 'created':
+            case 'beforeMount':
+            case 'mounted':
+            case 'beforeUpdate':
+            case 'updated':
+            case 'beforeUnmount':
+            case 'unmounted':
                 injectHook(key as any, options, mixin[key] as Function | Function[])
                 break
             default:

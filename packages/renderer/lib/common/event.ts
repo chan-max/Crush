@@ -63,7 +63,7 @@ export function parseEventName(name: string) {
 }
 
 
-
+// 返回 true 代表停止事件执行
 
 const modifierGuards: any = {
     stop: (e: any) => e.stopPropagation(),
@@ -74,8 +74,18 @@ const modifierGuards: any = {
     alt: (e: any) => !e.altKey,
     meta: (e: any) => !e.metaKey,
     left: (e: any) => 'button' in e && e.button !== 0,
-    middle: (e: any) => 'button' in e && e.button !== 1,
+    middle: (e: any) => {
+        'button' in e && e.button !== 1
+    },
     right: (e: any) => 'button' in e && e.button !== 2,
+
+
+    // 按键修饰符
+    enter: (e: any) => {
+        if (e.key !== 'Enter') {
+            return  true
+        }
+    }
 };
 
 /*

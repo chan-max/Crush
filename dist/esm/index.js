@@ -1,4 +1,4 @@
-// crush.js 1.1.1chan
+// crush.js 1.1.2chan
 import { extend as extend$1 } from 'dayjs';
 
 var crush = /*#__PURE__*/Object.freeze({
@@ -23,7 +23,6 @@ var crush = /*#__PURE__*/Object.freeze({
     get injectMapHooks () { return injectMapHooks; },
     get injectMixin () { return injectMixin; },
     get injectMixins () { return injectMixins; },
-    get ComponentOptions () { return ComponentOptions; },
     get resolveOptions () { return resolveOptions; },
     get defineScopeProperty () { return defineScopeProperty; },
     get createScope () { return createScope; },
@@ -41,6 +40,7 @@ var crush = /*#__PURE__*/Object.freeze({
     get makeMap () { return makeMap; },
     get removeFromArray () { return removeFromArray; },
     get shallowCloneArray () { return shallowCloneArray; },
+    get shallowCloneObject () { return shallowCloneObject; },
     get mark () { return mark; },
     get exec () { return exec; },
     get execCaptureGroups () { return execCaptureGroups; },
@@ -372,6 +372,7 @@ const removeFromArray = (arr, item) => {
     return true;
 };
 const shallowCloneArray = (arr) => arr && [...arr];
+const shallowCloneObject = (obj) => obj && { ...obj };
 function mark(target, key, value = true) {
     Object.defineProperty(target, key, {
         value,
@@ -469,12 +470,31 @@ function onceListener(target, event, handler, options = null) {
     return () => removeListener(target, event, onceHandler, options);
 }
 
+// normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
+function normalizeProps(props) {
+    if (!props) {
+        return;
+    }
+    if (props.bind) { // use bind
+        extend$1(props, props.bind);
+        delete props.bind;
+    }
+    // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
+    if (props.class) {
+        props.class = normalizeClass(props.class);
+    }
+    if (props.style) {
+        props.style = normalizeStyle(props.style);
+    }
+    return props;
+}
+
 var createStyleSheet = (props, children, key = uid()) => {
     return {
         nodeType: 17 /* STYLE */,
         type: 'style',
         children,
-        props,
+        props: normalizeProps(props),
         key,
     };
 };
@@ -793,6 +813,7 @@ function parseEventName(name) {
         modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
     };
 }
+// 返回 true 代表停止事件执行
 const modifierGuards = {
     stop: (e) => e.stopPropagation(),
     prevent: (e) => e.preventDefault(),
@@ -802,8 +823,16 @@ const modifierGuards = {
     alt: (e) => !e.altKey,
     meta: (e) => !e.metaKey,
     left: (e) => 'button' in e && e.button !== 0,
-    middle: (e) => 'button' in e && e.button !== 1,
+    middle: (e) => {
+        'button' in e && e.button !== 1;
+    },
     right: (e) => 'button' in e && e.button !== 2,
+    // 按键修饰符
+    enter: (e) => {
+        if (e.key !== 'Enter') {
+            return true;
+        }
+    }
 };
 /*
     使用修饰符后每次都会创建一个新的函数
@@ -2826,25 +2855,6 @@ function mountComponent(vnode, container, anchor, parent) {
     instance.renderEffect = rednerEffect;
     rednerEffect.run();
     return instance;
-}
-
-// normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
-function normalizeProps(props) {
-    if (!props) {
-        return;
-    }
-    if (props.bind) { // use bind
-        extend$1(props, props.bind);
-        delete props.bind;
-    }
-    // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
-    if (props.class) {
-        props.class = normalizeClass(props.class);
-    }
-    if (props.style) {
-        props.style = normalizeStyle(props.style);
-    }
-    return props;
 }
 
 const COMPONENT_TYPE = Symbol('ComponentType');
@@ -6167,134 +6177,21 @@ const onUpdated = createHook("updated" /* UPDATED */);
 const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
 const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
 
-/*
-    当传入不合理的props时
-*/
-function normalizePropsOptions(options) {
-    if (isArray(options)) {
-        options = arrayToMap(options, emptyObject);
-    }
-    else {
-        for (let key in options) {
-            if (!isObject(options[key])) {
-                options[key] = {
-                    type: options[key]
-                };
-            }
-        }
-    }
-    return options;
-}
-function normalizeEmitsOptions(options) {
-    if (isArray(options)) {
-        return arrayToMap(options, emptyObject);
-    }
-    else {
-        return options;
-    }
-}
-
-var ComponentOptions;
-(function (ComponentOptions) {
-    ComponentOptions["BEFORE_CREATE"] = "beforeCreate";
-    ComponentOptions["CREATE"] = "create";
-    // setup funcition
-    ComponentOptions["CREATED"] = "created";
-    ComponentOptions["BEFORE_MOUNT"] = "beforeMount";
-    ComponentOptions["MOUNTED"] = "mounted";
-    ComponentOptions["BEFORE_UPDATE"] = "beforeUpdate";
-    ComponentOptions["UPDATED"] = "updated";
-    ComponentOptions["BEFORE_UNMOUNT"] = "beforeUnmount";
-    ComponentOptions["UNMOUNTED"] = "unmounted";
-    ComponentOptions["BEFORE_PATCH"] = "beforePatch";
-    // keepalive
-    ComponentOptions["ACTIVATED"] = "activated";
-    ComponentOptions["DEACTIVATED"] = "deactivated";
-    ComponentOptions["BEFORE_ROUTE_ENTER"] = "beforeRouteEnter";
-    ComponentOptions["BEFORE_ROUTE_LEAVE"] = "beforeRouteLeave";
-    ComponentOptions["BEFORE_ROUTE_UPDATE"] = "beforeRouteUpdate";
-    ComponentOptions["TEMPLATE"] = "template";
-    ComponentOptions["RENDER"] = "render";
-    ComponentOptions["PROPS"] = "props";
-    ComponentOptions["EMITS"] = "emits";
-    ComponentOptions["NAME"] = "name";
-    ComponentOptions["MIXINS"] = "mixins";
-    ComponentOptions["COMPOENNTS"] = "components";
-    ComponentOptions["DIRECTIVES"] = "directives";
-})(ComponentOptions || (ComponentOptions = {}));
-function resolveOptions(options) {
-    for (let key in options) {
-        const value = options[key];
-        switch (key) {
-            case ComponentOptions.PROPS:
-                options.propsOptions = normalizePropsOptions(value);
-                break;
-            case ComponentOptions.EMITS:
-                options.emitsOptions = normalizeEmitsOptions(value);
-                break;
-            case ComponentOptions.TEMPLATE:
-                options.createRender = compile(value);
-                break;
-            case ComponentOptions.RENDER:
-                // todo
-                break;
-            case ComponentOptions.CREATE:
-            case ComponentOptions.BEFORE_CREATE:
-            case ComponentOptions.CREATED:
-            case ComponentOptions.BEFORE_MOUNT:
-            case ComponentOptions.MOUNTED:
-            case ComponentOptions.BEFORE_UPDATE:
-            case ComponentOptions.UPDATED:
-            case ComponentOptions.BEFORE_UNMOUNT:
-            case ComponentOptions.UNMOUNTED:
-            case ComponentOptions.BEFORE_PATCH:
-            case ComponentOptions.ACTIVATED:
-            case ComponentOptions.DEACTIVATED:
-            case ComponentOptions.BEFORE_ROUTE_ENTER:
-            case ComponentOptions.BEFORE_ROUTE_LEAVE:
-            case ComponentOptions.BEFORE_ROUTE_UPDATE:
-                // 转换为数组形式
-                if (value && !isArray(value)) {
-                    options[key] = [value];
-                }
-                break;
-            case ComponentOptions.COMPOENNTS:
-                break;
-            case ComponentOptions.DIRECTIVES:
-                break;
-            case ComponentOptions.NAME:
-                break;
-            case 'component':
-                // options key 'component' is used for devide route or component
-                break;
-            default:
-                /*custom options*/
-                const customOptions = options.customOptions ||= {};
-                customOptions[key] = value;
-                break;
-        }
-        // 组件定义了name 可以递归
-        if (options[ComponentOptions.NAME]) {
-            (options[ComponentOptions.COMPOENNTS] ||= {})[options[ComponentOptions.NAME]] = options;
-        }
-    }
-}
-
 function injectMixin(options, mixin) {
     for (let key in mixin) {
         switch (key) {
-            case ComponentOptions.MIXINS:
+            case 'mixins':
                 injectMixins(options, options[key]);
                 break;
-            case ComponentOptions.BEFORE_CREATE:
-            case ComponentOptions.CREATE:
-            case ComponentOptions.CREATED:
-            case ComponentOptions.BEFORE_MOUNT:
-            case ComponentOptions.MOUNTED:
-            case ComponentOptions.BEFORE_UPDATE:
-            case ComponentOptions.UPDATED:
-            case ComponentOptions.BEFORE_UNMOUNT:
-            case ComponentOptions.UNMOUNTED:
+            case 'beforeCreate':
+            case 'create':
+            case 'created':
+            case 'beforeMount':
+            case 'mounted':
+            case 'beforeUpdate':
+            case 'updated':
+            case 'beforeUnmount':
+            case 'unmounted':
                 injectHook(key, options, mixin[key]);
                 break;
             default:
@@ -6469,6 +6366,7 @@ function doQuerySelectorAll(selector, type, vnode, results) {
 }
 
 const scopeProperties = {
+    $: () => '',
     $uid: (instance) => instance.uid,
     $uuid: uid,
     $instance: (instance) => instance,
@@ -6502,13 +6400,6 @@ const scopeProperties = {
     $on: (instance) => instance.on,
     $off: (instance) => instance.off,
     $once: (instance) => instance.once,
-    // 执行 keyframes动画 ， 参数与 animation相同 , 与ref配合
-    $animate: (instance) => (ref, animationOptions) => {
-        let el = instance.refs[ref];
-        if (el) {
-            return doKeyframesAnimation(el, animationOptions);
-        }
-    },
     // 查询当前组件内的元素 , 组件的话返回组件实例
     $querySelector: (instance) => (selector) => {
         // 先当做组件选择器，如果不是定义的组件则当做普通元素
@@ -6772,6 +6663,89 @@ function processRenderComponentHook(type, vnode, pVnode) {
     }
 }
 
+/*
+    当传入不合理的props时
+*/
+function normalizePropsOptions(options) {
+    if (isArray(options)) {
+        options = arrayToMap(options, emptyObject);
+    }
+    else {
+        for (let key in options) {
+            if (!isObject(options[key])) {
+                options[key] = {
+                    type: options[key]
+                };
+            }
+        }
+    }
+    return options;
+}
+function normalizeEmitsOptions(options) {
+    if (isArray(options)) {
+        return arrayToMap(options, emptyObject);
+    }
+    else {
+        return options;
+    }
+}
+
+function resolveOptions(options) {
+    for (let key in options) {
+        const value = options[key];
+        switch (key) {
+            case "props" /* PROPS */:
+                options.propsOptions = normalizePropsOptions(value);
+                break;
+            case "emits" /* EMITS */:
+                options.emitsOptions = normalizeEmitsOptions(value);
+                break;
+            case "template" /* TEMPLATE */:
+                options.createRender = compile(value);
+                break;
+            case "render" /* RENDER */:
+                // todo
+                break;
+            case "create" /* CREATE */:
+            case "beforeCreate" /* BEFORE_CREATE */:
+            case "created" /* CREATED */:
+            case "beforeMount" /* BEFORE_MOUNT */:
+            case "mounted" /* MOUNTED */:
+            case "beforeUpdate" /* BEFORE_UPDATE */:
+            case "updated" /* UPDATED */:
+            case "beforeUnmount" /* BEFORE_UNMOUNT */:
+            case "unmounted" /* UNMOUNTED */:
+            case "beforePatch" /* BEFORE_PATCH */:
+            case "activated" /* ACTIVATED */:
+            case "deactivated" /* DEACTIVATED */:
+            case "beforeRouteEnter" /* BEFORE_ROUTE_ENTER */:
+            case "beforeRouteLeave" /* BEFORE_ROUTE_LEAVE */:
+            case "beforeRouteUpdate" /* BEFORE_ROUTE_UPDATE */:
+                // 转换为数组形式
+                if (value && !isArray(value)) {
+                    options[key] = [value];
+                }
+                break;
+            case "components" /* COMPOENNTS */:
+                break;
+            case "directives" /* DIRECTIVES */:
+                break;
+            case "name" /* NAME */:
+                break;
+            default:
+                /*custom options*/
+                const customOptions = options.customOptions ||= {};
+                customOptions[key] = value;
+                break;
+        }
+        // 组件定义了name 可以递归 
+        // 这种是组件配置的名称，但可以被create中注册的名字替代
+        if (options["name" /* NAME */]) {
+            (options["components" /* COMPOENNTS */] ||= {})[options["name" /* NAME */]] = options;
+        }
+    }
+}
+
 function useRefState(value, refOptions) {
     let scope = getCurrentScope();
     var state = ref(value, refOptions);
@@ -6802,4 +6776,4 @@ function useRefState(value, refOptions) {
     });
 }
 
-export { $var, App, Comment, ComponentOptions, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NODES, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, declare, defineScopeProperty, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useRefState, useString, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
+export { $var, App, Comment, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NODES, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayHandler, arrayToMap, attr, builtInComponents, builtInDirectives, cache, calc, callFn, callHook, camelize, cleaarRefDeps, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, declare, defineScopeProperty, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getDeps, getDepsMap, getDirective, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeKeyText, normalizeStyle, objectStringify, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useRefState, useString, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };

@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "detail.md",
+            "file": "reactivity.md",
             "mode": "source",
             "source": false
           }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "detail.md",
+                "file": "reactivity.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "961ba6a88882cc73",
   "lastOpenFiles": [
-    "transitionAndAnimation.md",
+    "introduction.md",
+    "detail.md",
+    "reactivity.md",
     "template.md",
     "readme.md",
-    "_sidebar.md",
-    "detail.md",
-    "application.md",
-    "introduction.md",
-    "component.md",
     "router.md",
-    "reactivity.md"
+    "component.md",
+    "application.md",
+    "builtIn.md",
+    "api.md"
   ]
 }

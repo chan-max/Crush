@@ -6,7 +6,7 @@ import {
 } from '@crush/compiler'
 import { normalizeEmitsOptions, normalizePropsOptions } from "./props";
 
-export enum ComponentOptions {
+export const enum ComponentOptions {
     BEFORE_CREATE = 'beforeCreate',
     CREATE = 'create',
     // setup funcition
@@ -40,7 +40,6 @@ export enum ComponentOptions {
     MIXINS = 'mixins',
     COMPOENNTS = 'components',
     DIRECTIVES = 'directives',
-
 
 }
 
@@ -89,9 +88,6 @@ export function resolveOptions(options: any) {
                 break
             case ComponentOptions.NAME:
                 break
-            case 'component':
-                // options key 'component' is used for devide route or component
-                break
             default:
                 /*custom options*/
                 const customOptions = options.customOptions ||= {}
@@ -99,9 +95,11 @@ export function resolveOptions(options: any) {
                 break
         }
 
-        // 组件定义了name 可以递归
+        // 组件定义了name 可以递归 
+        // 这种是组件配置的名称，但可以被create中注册的名字替代
         if (options[ComponentOptions.NAME]) {
             (options[ComponentOptions.COMPOENNTS] ||= {})[options[ComponentOptions.NAME]] = options
         }
     }
 }
+

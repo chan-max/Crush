@@ -1,19 +1,21 @@
 import { resolveOptions } from "./option";
 import { ComponentType } from "./component";
 import { getCurrentApp } from "../app/app";
-import { emptyArray, emptyObject, isFunction, shallowCloneArray, uid } from "@crush/common";
+import { emptyArray, emptyObject, isFunction, shallowCloneArray, shallowCloneObject, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
 import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener, onceInstanceListener, getInstanceEvents } from "@crush/renderer/lib/render/componentListener";
 
 import { createInstanceWatch } from "./watch";
+import { getCurrentInstance } from "@crush/renderer";
 
 export const createComponentInstance = (options: any, parent: any) => {
     let app = getCurrentApp()
     let instance: ComponentInstance = {
         app,
         parent,
+        options, // 保存自身的配置来源
         uid: uid(),
         update: null,
         isMounted: false,
@@ -37,11 +39,11 @@ export const createComponentInstance = (options: any, parent: any) => {
         watch: null,
         renderEffect: null,
         render: options.render,
-        customOptions: options.customOptions ,
+        customOptions: options.customOptions,
         propsOptions: options.propsOptions || emptyObject,
         emitsOptions: options.emitsOptions || emptyObject,
         createRender: options.createRender,
-        components: options.components,
+        components: shallowCloneObject(options.components), // 不同组件定义的name可能不同
         directives: options.directives,
         // hooks will always be an array
         create: shallowCloneArray(options.create),
@@ -79,7 +81,8 @@ export const createComponentInstance = (options: any, parent: any) => {
 
 export interface ComponentInstance {
     update: any
-    isMounted: any
+    isMounted: any,
+    options: any
     uid: number
     scope: any
     renderScope: any
@@ -120,9 +123,10 @@ export interface ComponentInstance {
     once: any
     watch: any,
     renderEffect: any,
-    activated:any,
-    deactivated:any
-    beforeRouteEnter:any,
-    beforeRouteLeave:any
-    beforeRouteUpdate:any
+    activated: any,
+    deactivated: any
+    beforeRouteEnter: any,
+    beforeRouteLeave: any
+    beforeRouteUpdate: any
 }
+
