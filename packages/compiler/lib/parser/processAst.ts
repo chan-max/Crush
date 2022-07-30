@@ -1,8 +1,9 @@
-import { camelize, emptyFunction, hasOwn, hyphenate, initialUpperCase, isArray, isUndefined } from "@crush/common"
+import { camelize, emptyFunction, hasOwn, hyphenate, initialUpperCase, isArray, isUndefined, error } from "@crush/common"
 import { isHTMLTag, isSVGTag, Nodes } from "@crush/const"
 import { declare, toArrowFunction } from "../stringify"
 import { parseIterator } from "./parseIterator"
 import { parseText } from "./parseText"
+
 
 import { parseCSS } from './parseCSS'
 import { processRules } from './processRules'
@@ -83,7 +84,10 @@ const builtInTags: Record<string, any> = {
     },
     element(ast: any) {
         ast.type = Nodes.DYNAMIC_ELEMENT
-        const is = ast.attributeMap.is
+        const is = ast?.attributeMap?.is
+        if (!is) {
+            error('built-in tag <element> need attribute is')
+        }
         const { isDynamicValue, value } = is
         ast.is = value
         ast.isDynamicIs = isDynamicValue

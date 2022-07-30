@@ -1,20 +1,22 @@
-import { computed, createApp, defineSelfName, doKeyframesAnimation, effect, h, reactive, ref, rgb, shallowCloneObject, } from "./packages/core";
+import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, effect, h, reactive, ref, rgb, shallowCloneObject, throttle, } from "./packages/core";
 
 
 let root = {
     template: /*html*/`
-        <h1>{{text}} </h1>
-        <textarea --model.number.trim="text">
+        <button @click="throttle(add,1000)"> {{count}} </button>
     `,
     create({ $self }: any) {
-        $self.text = 666
-        window.$self = $self
+        $self.count = 5
+        $self.add = () => {
+            console.log('add');
+            $self.count++
+        }
     }
 }
+ 
 
 
 const app = createApp(root)
 console.log(app);
 
 app.mount('#app')
-

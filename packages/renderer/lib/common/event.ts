@@ -79,14 +79,17 @@ const modifierGuards: any = {
     },
     right: (e: any) => 'button' in e && e.button !== 2,
 
-
     // 按键修饰符
     enter: (e: any) => {
         if (e.key !== 'Enter') {
-            return  true
+            return true
         }
     }
 };
+
+const nativeEventModifiers = {
+    
+}
 
 /*
     使用修饰符后每次都会创建一个新的函数    

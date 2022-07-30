@@ -1,25 +1,24 @@
 
-
-// compiler required : 
-
 import { isArray, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
+import { debounce } from '@crush/common'
+
 
 export const modelText = {
-    created(el: any, { value, modifiers: { lazy, number, trim } }: any, vnode: any) {
+    created(el: any, { value, modifiers: { lazy, number, trim, debounce: useDebounce } }: any, vnode: any) {
         const setter = vnode.props._setter
         // 设置input初始值
         el.value = value;
-        addListener(el, lazy ? 'change' : 'input', () => {
+        let inputHandler = () => {
             let inputValue = el.value
-            // number 和 trim 不能同时使用
+            // number 和 trim 不能同时使用 , 空字符串转数字会变为0
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
-
             // 标记输入框刚刚输入完毕
             el._inputing = true
             setter(inputValue)
-        })
+        }
+        addListener(el, lazy ? 'change' : 'input', useDebounce ? debounce(inputHandler, 100) : inputHandler)
     },
     beforeUpdate(el: any, { value }: any) {
         // 由输入框输入引发的更新，不会重新设置输入框的值
@@ -30,6 +29,8 @@ export const modelText = {
         }
     }
 }
+
+
 
 // 多个相同name的input同时出现
 export const modelRadio = {
@@ -55,14 +56,16 @@ export const modelRadio = {
 
 // modelcheckbox dont need setter
 export const modelCheckbox = {
-    created(el: any, { value: checked }: any) {
+    created(el: any, { value: checked }: any, vnode: any) {
         if (!isArray(checked)) {
             return
         }
+        // 设置初始化值
         if (checked.includes(el.value)) {
             el.checked = true
         }
         addListener(el, 'change', () => {
+
             if (el.checked) {
                 checked.push(el.value)
             } else {
@@ -75,8 +78,6 @@ export const modelCheckbox = {
         el.checked = value.includes(el.value)
     }
 }
-
-
 
 function getSelectedValue(selectEl: any) {
     let selected = []
@@ -135,10 +136,10 @@ export const modelSelectMultiple = {
 
 // 目前只支持 16 进制
 export const modelColor = {
-    created(el: any, { value }: any, vnode: any) {
+    created(el: any, { value, modifiers: { lazy } }: any, vnode: any) {
         const setter = vnode.props._setter
         el.value = value;
-        addListener(el, 'input', () => {
+        addListener(el, lazy ? 'change' : 'input', () => {
             setter(el.value)
         })
     },
@@ -148,9 +149,9 @@ export const modelColor = {
 }
 
 export const modelRange = {
-    created(el: HTMLInputElement, { value }: any, { props: { _setter } }: any) {
+    created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setter } }: any) {
         el.value = value
-        addListener(el, 'input', () => {
+        addListener(el, lazy ? 'change' : 'input', () => {
             _setter(el.value)
         })
     },

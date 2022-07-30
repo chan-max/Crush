@@ -7,12 +7,9 @@ import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/quer
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
 
-
+import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 
 const scopeProperties: any = {
-
-    $: () => '', // 选择器
-
     $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
     $uuid: uid, // 每次访问均返回不同的id
     $instance: (instance: ComponentInstance) => instance,
@@ -60,9 +57,16 @@ const scopeProperties: any = {
     },
 }
 
+
 export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter
 
+function templateDebounce() {
+
+}
+
 const protoMethods = {
+    debounce,
+    throttle,
     ...cssMethods,
     ...scopeProperties, // todo bug (with)
 }
@@ -88,14 +92,25 @@ export function createScope(instance: any) {
     })
 }
 
+// 这些方法只能提供给模板使用
+const specialRenderMethods: any = {
+    debounce(fn: any, wait: number) {
+        return cacheDebounce(fn, wait)()
+    },
+    throttle(fn: any, wait: number) {
+        return cacheThrottle(fn, wait)()
+    },
+}
 
-
-// process ref
 export function createRenderScope(instanceScope: any) {
     return new Proxy(instanceScope, {
         get(target: any, key: any, receiver: any) {
             if (key === Symbol.unscopables) {
                 return
+            }
+
+            if (hasOwn(specialRenderMethods, key)) {
+                return specialRenderMethods[key]
             }
 
             // todo magic variables
