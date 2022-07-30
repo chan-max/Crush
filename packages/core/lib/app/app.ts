@@ -5,7 +5,7 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 import { MixinType } from "../instance/mixin"
 import { PluginType } from "../instance/plugin"
-import { mount, mountComponent, unmountComponent } from "@crush/renderer"
+import { mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'

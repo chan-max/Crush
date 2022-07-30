@@ -32,9 +32,9 @@ function normalizeDirective(directive: any) {
 }
 
 
-function injectDirective(target: any, [directive, ...bindings]: any) {
+function injectDirective(target: any, bindings: any) {
     var directives = target.directives ||= new Map()
-    directives.set(directive, bindings)
+    directives.set(bindings.directive, bindings)
 }
 
 export function injectDirectives(target: any, directives: any[]) {
@@ -79,21 +79,17 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
 
     var directives = vnode.directives
     if (directives) {
-        for (let [dir, [value, _arguments, modifiers]] of directives) {
+        for (let [dir, bindings] of directives) {
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
             if (hook) {
-                var bindings: any = {
-                    directive: dir, //保留原始指令
-                    value,
-                    _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
-                    modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
-                }
                 if (pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir)[0]
+                    bindings.oldValue = pVnode.directives.get(dir).value
                 }
-                // 
+                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
                 hook(scope, bindings, vnode, pVnode)
             }
         }
@@ -110,21 +106,17 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     let el = vnode.el
     var directives = vnode.directives
     if (directives) {
-        for (let [dir, [value, _arguments, modifiers]] of directives) {
+        for (let [dir, bindings] of directives) {
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
             if (hook) {
-                var bindings: any = {
-                    directive: dir, //保留原始指令
-                    value,
-                    _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
-                    modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
-                }
                 if (pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir)[0]
+                    bindings.oldValue = pVnode.directives.get(dir)?.value
                 }
-                // 
+                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
                 hook(el, bindings, vnode, pVnode)
             }
         }
@@ -140,20 +132,17 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
 function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     var directives = vnode.directives
     if (directives) {
-        for (let [dir, [value, _arguments, modifiers]] of directives) {
+        for (let [dir, bindings] of directives) {
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
             if (hook) {
-                var bindings: any = {
-                    directive: dir, //保留原始指令
-                    value,
-                    _arguments: _arguments ? setOwnKey(_arguments) : emptyObject,
-                    modifiers: modifiers ? setOwnKey(modifiers) : emptyObject,
-                }
                 if (pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir)[0]
+                    bindings.oldValue = pVnode.directives.get(dir).value
                 }
+                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
                 // 这里不能省略第一个参数，是为了和其他两种参数保持一致
                 hook(null, bindings, vnode, pVnode)
             }

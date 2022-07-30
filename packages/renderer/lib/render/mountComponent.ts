@@ -19,6 +19,9 @@ import {
 } from '@crush/scheduler'
 import { mountComponentProps } from "./componentProps"
 
+import { isPromise } from '@crush/common'
+
+
 // rendering instance and creating instance
 export var currentInstance: any = null
 export function setCurrentInstance(instance: any) {
@@ -36,10 +39,19 @@ export function getCurrentRenderScope() {
 }
 
 function setScopeData(scope: any, data: any) {
-    if (!isObject(data)) { return }
-    for (let key in data) {
-        // data 存在时应该警告
-        scope[key] = data[key]
+    if (!data) {
+        return
+    }
+    if (isObject(data)) {
+        for (let key in data) {
+            // data 存在时应该警告
+            scope[key] = data[key]
+        }
+    } else if (isPromise(data)) {
+        // async create
+        data.then((result: any) => {
+            setScopeData(scope, result)
+        })
     }
 }
 
@@ -75,14 +87,8 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         render 优先级
         create 返回的渲染函数  > render > template , 暂时不支持无状态组件
     */
-    let render: any
-    if (instance.render) {
-        render = instance.render.bind(renderScope)
-    } else if (instance.createRender) {
-        render = instance.createRender(renderMethods)
-    } else {
-        render = emptyFunction
-    }
+
+    let render = instance.render ? instance.render.bind(renderScope) : instance.createRender ? instance.createRender(renderMethods) : emptyFunction
 
     instance.render = render
 
@@ -118,17 +124,10 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         nVnode = processVnodePrerender(nVnode)
         instance.renderingVnode = nVnode
 
-        if (vnode.transition) {
-            // todo , 组件transition需要重新设计
-            nVnode.forEach((_: any) => { _.transition = vnode.transition });
-        }
-
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
 
         beforePatch && beforePatch(pVnode, nVnode)
-
         console.log(pVnode,nVnode);
-        
         patch(pVnode, nVnode, container, anchor, instance)
 
         instance.vnode = nVnode

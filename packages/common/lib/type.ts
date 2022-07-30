@@ -22,12 +22,19 @@ function typeOf(value: any) {
 }
 
 const isPromise = (value: any) => {
-    return isObject(value) && isFunction(value.then) && isFunction(value.catch);
+    return isFunction(value.then) && isFunction(value.catch);
 };
 
 const isDate = (value: any) => value instanceof Date
 
 const isArray = Array.isArray
+
+// 将一个值转换成数字，失败的话，返回本身
+function toNumber(value: any) {
+    let numberValue = Number(value)
+    return isNumber(numberValue) ? numberValue : value
+}
+
 
 export {
     isNumber,
@@ -38,5 +45,7 @@ export {
     isObject,
     typeOf,
     isPromise,
-    isNumberString
+    isDate,
+    isNumberString,
+    toNumber
 }

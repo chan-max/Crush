@@ -2,20 +2,32 @@
 
 // compiler required : 
 
-import { isArray, removeFromArray } from "@crush/common";
+import { isArray, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
 
 export const modelText = {
-    beforeUpdate(el: any, { value }: any,) {
-        el.value = value;
-    },
-    created(el: any, { value }: any, vnode: any) {
+    created(el: any, { value, modifiers: { lazy, number, trim } }: any, vnode: any) {
         const setter = vnode.props._setter
+        // 设置input初始值
         el.value = value;
-        addListener(el, 'input', () => {
-            setter(el.value)
+        addListener(el, lazy ? 'change' : 'input', () => {
+            let inputValue = el.value
+            // number 和 trim 不能同时使用
+            inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
+
+            // 标记输入框刚刚输入完毕
+            el._inputing = true
+            setter(inputValue)
         })
+    },
+    beforeUpdate(el: any, { value }: any) {
+        // 由输入框输入引发的更新，不会重新设置输入框的值
+        if (el._inputing) {
+            el._inputing = false
+        } else {
+            el.value = value;
+        }
     }
 }
 

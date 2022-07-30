@@ -1648,7 +1648,7 @@ var Crush = (function (exports, dayjs) {
                 updateText(p, n);
                 break;
             case 13 /* HTML_ELEMENT */:
-                updateHTMLElement(p, n, container, anchor, parent);
+                updateElement(p, n, container, anchor, parent);
                 break;
             case 17 /* STYLE */:
                 updateStyleSheet(p, n);
@@ -1667,7 +1667,7 @@ var Crush = (function (exports, dayjs) {
             el.textContent = n.children;
         }
     }
-    function updateHTMLElement(p, n, container, anchor, parent) {
+    function updateElement(p, n, container, anchor, parent) {
         const el = n.el = p.el;
         processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
         updateAttributes(el, p.props, n.props, parent);

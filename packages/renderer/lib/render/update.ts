@@ -11,8 +11,10 @@ export function update(p: any, n: any, container: any, anchor: any, parent: any)
             updateText(p, n)
             break
         case Nodes.HTML_ELEMENT:
-            updateHTMLElement(p, n, container, anchor, parent)
+            updateElement(p, n, container, anchor, parent)
             break
+        case Nodes.SVG_ELEMENT:
+            updateElement(p, n, container, anchor, parent, true)
         case Nodes.STYLE:
             updateStyleSheet(p, n,)
             break
@@ -43,10 +45,10 @@ function updateText(p: any, n: any) {
 }
 
 
-function updateHTMLElement(p: any, n: any, container: any, anchor: any, parent: ComponentInstance) {
+function updateElement(p: any, n: any, container: any, anchor: any, parent: ComponentInstance, isSVG = false) {
     const el = n.el = p.el
     processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
-    updateAttributes(el, p.props, n.props, parent)
+    updateAttributes(el, p.props, n.props, parent, isSVG)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor, parent)
@@ -54,8 +56,7 @@ function updateHTMLElement(p: any, n: any, container: any, anchor: any, parent: 
 
 
 export function updateChildren(pChildren: any, nChildren: any, container: any, anchor: any, parent: any) {
-    var {p, n } = sortChildren(pChildren, nChildren, false)
-
+    var { p, n } = sortChildren(pChildren, nChildren)
     var max = Math.max(p.length, n.length)
     for (let i = 0; i < max; i++) {
         patch(p[i], n[i], container, getAnchor(p, i + 1), parent)

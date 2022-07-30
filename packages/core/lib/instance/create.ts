@@ -12,7 +12,7 @@ export function defineSelfName(name: string) {
 
 export function useUid() {
     return getCurrentInstance().uid
-}
+}  
 
 export function useOptions() {
     return getCurrentInstance().customOptions

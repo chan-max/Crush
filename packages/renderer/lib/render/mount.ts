@@ -14,11 +14,13 @@ export function mount(vnode: any, container: any, anchor: any = null, parent: an
             break
         case Nodes.SVG_ELEMENT:
             mountElement(vnode, container, anchor, parent, true)
+            break
         case Nodes.TEXT:
             mountText(vnode, container, anchor, parent)
             break
         case Nodes.HTML_COMMENT:
             insertElement(vnode.el = docCreateComment(vnode.children), container, anchor)
+            break
         case Nodes.COMPONENT:
             mountComponent(vnode, container, anchor, parent)
             break
@@ -59,7 +61,6 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     processHook(LifecycleHooks.CREATED, vnode)
 
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
-
     // 进入动画不影响节点的插入
     if (transition) {
         transition.processMount(el, () => insertElement(el, container, anchor))
@@ -78,6 +79,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
 function mountText(vnode: any, container: any, anchor: any, parent: any) {
     var el = docCreateText(vnode.children)
     vnode.el = el
+    vnode.instance = parent
     insertElement(el, container, anchor)
 }
 

@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "reactivity.md",
+            "file": "detail.md",
             "mode": "source",
             "source": false
           }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "reactivity.md",
+                "file": "detail.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,10 +89,10 @@
   },
   "active": "961ba6a88882cc73",
   "lastOpenFiles": [
-    "introduction.md",
-    "detail.md",
     "reactivity.md",
     "template.md",
+    "introduction.md",
+    "detail.md",
     "readme.md",
     "router.md",
     "component.md",

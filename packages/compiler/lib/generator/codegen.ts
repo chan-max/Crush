@@ -142,17 +142,27 @@ function genDirs(code: string, node: any, context: any) {
 
 function genCustomDirectives(code: any, directives: any, context: any) {
     var dirs = directives.map((directive: any) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers } = directive
+        var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive
         var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
         if (!isDynamicProperty) {
             directive = context.hoistExpression(directive)
         }
-        return [
-            directive,
-            value,
-            _arguments && _arguments.map(toSingleQuotes),
-            modifiers && modifiers.map(toSingleQuotes)
-        ]
+        let bindings: any = {
+            directive
+        }
+        if (value) {
+            bindings.value = value
+        }
+        if (_arguments) {
+            bindings._arguments = _arguments && _arguments.map(toSingleQuotes)
+        }
+        if (modifiers) {
+            bindings.modifiers = modifiers && modifiers.map(toSingleQuotes)
+        }
+        if (filters) {
+            bindings.filters = filters && filters.map(toSingleQuotes)
+        }
+        return bindings
     });
     return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
 }
