@@ -60,10 +60,6 @@ const scopeProperties: any = {
 
 export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter
 
-function templateDebounce() {
-
-}
-
 const protoMethods = {
     debounce,
     throttle,
@@ -94,6 +90,7 @@ export function createScope(instance: any) {
 
 // 这些方法只能提供给模板使用
 const specialRenderMethods: any = {
+    // 模板会编译成 () => debounce(...) 所以函数会直接调用
     debounce(fn: any, wait: number) {
         return cacheDebounce(fn, wait)()
     },

@@ -2,11 +2,12 @@
 import { isArray, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
-import { debounce } from '@crush/common'
+import { debounce, isNumber, } from '@crush/common'
 
 
 export const modelText = {
-    created(el: any, { value, modifiers: { lazy, number, trim, debounce: useDebounce } }: any, vnode: any) {
+    created(el: any, { value, modifiers }: any, vnode: any) {
+        const { lazy, number, trim, debounce: useDebounce } = modifiers
         const setter = vnode.props._setter
         // 设置input初始值
         el.value = value;
@@ -18,7 +19,16 @@ export const modelText = {
             el._inputing = true
             setter(inputValue)
         }
-        addListener(el, lazy ? 'change' : 'input', useDebounce ? debounce(inputHandler, 100) : inputHandler)
+
+        if (useDebounce) {
+            let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1]
+            let numberValue = toNumber(debounceNextModifier)
+            // 如果是合理地数字
+            let wait = isNumber(numberValue) ? numberValue : 500
+            inputHandler = debounce(inputHandler, wait)
+        }
+
+        addListener(el, lazy ? 'change' : 'input', inputHandler)
     },
     beforeUpdate(el: any, { value }: any) {
         // 由输入框输入引发的更新，不会重新设置输入框的值

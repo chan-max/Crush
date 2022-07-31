@@ -158,7 +158,27 @@ let root = {
 - lazy 侦听input还是change
 - number 会尝试把输入的值转为数字
 - trim 自动去除两端空白
-- debounce 防抖  
+- debounce 防抖 ，debounce 的下一个修饰符用于定义防抖时间，默认为500毫秒
+
+```js
+let root = {
+
+    template: /*html*/`
+
+        <h1> {{text}} </h1>
+
+        <input --model.debounce.2000="text">
+
+    `,
+
+    create({ $self}: any) {
+
+        $self.text = '123465'
+
+    }
+
+}
+```
 
 ### radio
 

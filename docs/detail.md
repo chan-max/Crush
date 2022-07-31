@@ -117,5 +117,42 @@ let root = {
 ```
 
 
+## 防抖与节流 debounce & throttle
 
+内部提供了防抖与节流方法,并且直接挂载在作用域上，使用如下
+
+```js
+let root = {
+    template: /*html*/`
+        <button @click="add"> {{count}} </button>
+    `,
+    create({ $self, debounce }: any) {
+        $self.count = 5
+        $self.add = debounce(() => {
+            $self.count++
+        }, 2000)
+    }
+}
+```
+
+还有一种是在模板中直接使用，相比与正常的方法有些不同，在模板中使用时为了使其能够正常工作框架内部做了特殊的处理，但用户不需要特殊关注，使用如下
+
+```js
+let root = {
+    template: /*html*/`
+        <button @click="debounce(add,2000)"> {{count}} </button>
+    `,
+    create({ $self}: any) {
+        $self.count = 5
+        $self.add = () => {
+            $self.count++
+        }
+    }
+}
+```
+
+
+### 异步组件
+
+#### defineAsyncComponent
 

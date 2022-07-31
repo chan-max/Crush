@@ -1,5 +1,5 @@
 import { normalizeClass, normalizeStyle } from "@crush/core"
-import { extend } from "dayjs"
+import { extend } from "@crush/common"
 
 
 // normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在

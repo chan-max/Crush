@@ -5,7 +5,7 @@ import { camelize, isUndefined } from "@crush/common"
 const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/
 
 
-enum AttributeFlag {
+const AttributeFlags = [
     '$--', // dynamic css variable
     '--', // custo directive
     '...', // attribute bind shorthand
@@ -13,11 +13,11 @@ enum AttributeFlag {
     '@', // event
     '#', // id shorthand
     '.' // class shorthand
-}
+]
 
-enum AttributeEndFlag {
+const AttributeEndFlags = [
     '!' // important css property
-}
+]
 
 
 const staticAttributeNameRE = /[\w-]+/
@@ -29,7 +29,7 @@ export function parseAttribute(attr: any) {
     let flag, endFlag
 
     // 提取开始标志
-    for (let _flag in AttributeFlag) {
+    for (let _flag of AttributeFlags) {
         if (attribute.startsWith(_flag)) {
             flag = _flag
             attribute = attribute.slice(_flag.length)
@@ -38,7 +38,7 @@ export function parseAttribute(attr: any) {
     }
 
     // 提取结尾标志
-    for (let _flag in AttributeEndFlag) {
+    for (let _flag of AttributeEndFlags) {
         if (attribute.endsWith(_flag)) {
             endFlag = _flag
             attribute = attribute.slice(0, attribute.length - _flag.length - 1)
@@ -64,7 +64,6 @@ export function parseAttribute(attr: any) {
         property = (staticAttributeNameRE.exec(attribute) as any)[0]
 
         var tokens = attributeModifierRE.exec(attribute.slice(property?.length))
-
         let [_, __arguments, _filters, _modifiers]: any = tokens
         _arguments = __arguments && __arguments.split(':')
         filters = _filters && _filters.split('|')
@@ -81,5 +80,6 @@ export function parseAttribute(attr: any) {
     attr.value = value
     attr.flag = flag
     attr.endFlag = endFlag
+
     return attr
 }

@@ -1,7 +1,5 @@
 import { Nodes } from '@crush/const'
-import {
-    renderMethodsNameMap
-} from './source'
+
 
 import {
     ternaryExp,
@@ -97,7 +95,7 @@ import {
 } from '../parser/parseIterator'
 
 const genFor = (target: string, iterator: Iterator, context: any) => context.callRenderFn(
-    renderMethodsNameMap.renderList,
+    'renderList',
     iterator.iterable, toArrowFunction(target, ...iterator.items),
     uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
 )
@@ -143,7 +141,7 @@ function genDirs(code: string, node: any, context: any) {
 function genCustomDirectives(code: any, directives: any, context: any) {
     var dirs = directives.map((directive: any) => {
         var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive
-        var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property))
+        var directive = context.callRenderFn('getDirective', isDynamicProperty ? property : toSingleQuotes(property))
         if (!isDynamicProperty) {
             directive = context.hoistExpression(directive)
         }
@@ -164,7 +162,7 @@ function genCustomDirectives(code: any, directives: any, context: any) {
         }
         return bindings
     });
-    return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs))
+    return context.callRenderFn('injectDirectives', code, stringify(dirs))
 }
 
 function genSlotContent(node: any, context: any) {
@@ -199,7 +197,7 @@ function genSlotContent(node: any, context: any) {
 function genNode(node: any, context: any): any {
     switch (node.type) {
         case Nodes.HTML_COMMENT:
-            return context.callRenderFn(renderMethodsNameMap.createComment, toBackQuotes(node.children), uid())
+            return context.callRenderFn('createComment', toBackQuotes(node.children), uid())
         case Nodes.IF:
         case Nodes.ELSE_IF:
         case Nodes.ELSE:
@@ -214,7 +212,7 @@ function genNode(node: any, context: any): any {
         case Nodes.SLOT:
             const { slotName, isDynamicSlot, children } = node
             return context.callRenderFn(
-                renderMethodsNameMap.renderSlot,
+                'renderSlot',
                 isDynamicSlot ? slotName : toBackQuotes(slotName),
                 genProps(node, context),
                 children ? toArrowFunction(genNodes(children, context)) : NULL,
@@ -224,7 +222,7 @@ function genNode(node: any, context: any): any {
         case Nodes.DYNAMIC_ELEMENT:
             var { is, isDynamicIs } = node
             var code: string = context.callRenderFn(
-                renderMethodsNameMap.createElement,
+                'createElement',
                 isDynamicIs ? is : toSingleQuotes(is),
                 genProps(node, context), // 正常生成props
                 genChildrenString(node.children, context),
@@ -232,54 +230,54 @@ function genNode(node: any, context: any): any {
             code = genDirs(code, node, context)
             return code
         case Nodes.HTML_ELEMENT:
-            var code: string = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.SVG_ELEMENT:
-            var code: string = context.callRenderFn(renderMethodsNameMap.createSVGElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.DYNAMIC_COMPONENT:
             var { is, isDynamicIs } = node
-            var component: string = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is),)
+            var component: string = context.callRenderFn('getComponent', isDynamicIs ? is : toSingleQuotes(is),)
             // 动态组件不会提升
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId())
+            code = context.callRenderFn('createComponent', component, props, slots, uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.COMPONENT:
-            var code: string = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName))
+            var code: string = context.callRenderFn('getComponent', toBackQuotes(node.tagName))
             var uv = context.hoistExpression(code)
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId())
+            code = context.callRenderFn('createComponent', uv, props, slots, uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.TEXT:
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
             var props = genProps(node, context)
-            var code: string = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId())
+            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.STYLE_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
+            return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.MEDIA_RULE:
             const rules = stringify(genChildren(node.children, context))
-            return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId())
+            return context.callRenderFn('createMedia', toBackQuotes(node.media), rules, uStringId())
         case Nodes.KEYFRAMES_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
+            return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.KEYFRAME_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId())
+            return context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.SUPPORTS_RULE:
-            return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId())
+            return context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.DECLARATION_GROUP:
-            return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId())
+            return context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId())
     }
 }
 
-const genFragment = (code: string, context: any) => context.callRenderFn(renderMethodsNameMap.createFragment, code, uStringId())
+const genFragment = (code: string, context: any) => context.callRenderFn('createFragment', code, uStringId())
 
 const genTextContent = (texts: any, context: any) => {
     return texts.map((text: any) => {
@@ -336,7 +334,7 @@ function genSelector(selectors: Array<any>, context: any) {
 
     return selectorCode.length === 1 ?
         selectorCode[0] :
-        context.callRenderFn(renderMethodsNameMap.mergeSelectors, ...selectorCode)
+        context.callRenderFn('mergeSelectors', ...selectorCode)
 
     //! one dynamic selector will effect all 
 }
@@ -382,7 +380,7 @@ function genDeclartion(declarationGroup: any[], context: any) {
             }
 
             if (isImportant) {
-                value = context.callRenderFn(renderMethodsNameMap.important, value)
+                value = context.callRenderFn('important', value)
             }
 
             target[property] = value
@@ -400,7 +398,7 @@ function genDeclartion(declarationGroup: any[], context: any) {
     if (_res.length === 1) {
         return _res[0]
     } else {
-        return context.callRenderFn(renderMethodsNameMap.mixin, ..._res)
+        return context.callRenderFn('mixin', ..._res)
     }
 }
 
@@ -427,15 +425,15 @@ function genProps(node: any, context: any) {
                 value ||= property // 简写形似
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
-                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
-                        dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes))))) :
+                        dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
+                        dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
                     (isComponent ?
                         toEventName(property, _arguments, modifiers) :
                         toNativeEventName(property, _arguments));
 
                 var callback = isHandler ? value : toArrowFunction(value)
                 if (modifiers && !isComponent) {
-                    callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)))
+                    callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
                 }
                 props[handlerKey] = callback
                 break

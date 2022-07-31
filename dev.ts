@@ -3,20 +3,14 @@ import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, ef
 
 let root = {
     template: /*html*/`
-        <button @click="throttle(add,1000)"> {{count}} </button>
+        <h1> {{text}} </h1>
+        <input --model.debounce.2000="text">
     `,
-    create({ $self }: any) {
-        $self.count = 5
-        $self.add = () => {
-            console.log('add');
-            $self.count++
-        }
+    create({ $self}: any) {
+        $self.text = '123465'
     }
 }
- 
-
 
 const app = createApp(root)
-console.log(app);
 
 app.mount('#app')

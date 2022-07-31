@@ -17,9 +17,6 @@ import {
     callFn
 } from '../stringify'
 
-import {
-    renderMethodsNameMap,
-} from './source'
 import { uVar } from '@crush/common'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
@@ -78,12 +75,11 @@ export function compile(template: string) {
 
     var ast = baseParseHTML(template)
     processAst(ast)
-    console.log('nodeast', ast)
 
     var context = new CodeGenerator()
     // 初始化所有渲染方法
 
-    var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentRenderScope))
+    var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
     const renderCode: any = genNodes(ast as any[], context)
 
     const content = `
