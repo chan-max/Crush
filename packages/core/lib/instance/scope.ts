@@ -6,7 +6,7 @@ import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
-
+import {getEL} from '@crush/renderer'
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 
 const scopeProperties: any = {
@@ -21,7 +21,7 @@ const scopeProperties: any = {
         if (!isMounted || !vnode) {
             return null
         }
-        let el = vnode.map((_vnode: any) => _vnode.el)
+        let el = vnode.map((_vnode: any) => getEL(_vnode))
         // 有多个根元素会返回多个元素
         return el.length === 1 ? el[0] : el
     },

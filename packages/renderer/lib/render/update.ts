@@ -74,19 +74,21 @@ function getAnchor(vnodes: any, index: number) {
             // 这里可能出现为空是因为排序时增加的空节点
             continue
         }
-        return getVnodeAnchor(nextSibiling)
+        return getEL(nextSibiling)
     }
 }
 
-function getVnodeAnchor(vnode: any): any {
+
+
+export function getEL(vnode: any): any {
     if (!vnode) {
         return null
     }
     switch (vnode.nodeType) {
         case Nodes.COMPONENT:
-            return getVnodeAnchor(vnode.instance.vnode[0])
+            return getEL(vnode.instance.vnode[0])
         case Nodes.RENDER_COMPONENT:
-            return getVnodeAnchor(vnode.vnode[0])
+            return getEL(vnode.vnode[0])
         case Nodes.HTML_ELEMENT:
         case Nodes.SVG_ELEMENT:
         case Nodes.TEXT:

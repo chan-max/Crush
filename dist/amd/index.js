@@ -326,7 +326,7 @@ define(['exports'], (function (exports) { 'use strict';
         get getInstancetEventListeners () { return getInstancetEventListeners; },
         get createInstanceEventEmitter () { return createInstanceEventEmitter; },
         get emitInstancetEvent () { return emitInstancetEvent; },
-        get arrayHandler () { return arrayHandler; },
+        get normalizeHandler () { return normalizeHandler; },
         get updateInstanceListeners () { return updateInstanceListeners; },
         get addInstanceListener () { return addInstanceListener; },
         get removeInstanceListener () { return removeInstanceListener; },
@@ -1058,7 +1058,7 @@ define(['exports'], (function (exports) { 'use strict';
         });
     }
     /* handler 标准化，转成数组格式 */
-    function arrayHandler(handler) {
+    function normalizeHandler(handler) {
         return (isArray(handler) ? handler : [handler]).filter(isFunction);
     }
     function updateInstanceListeners(instance, event, pHandler, nHandler) {
@@ -1068,19 +1068,19 @@ define(['exports'], (function (exports) { 'use strict';
     }
     function addInstanceListener(instance, event, rawHandler) {
         const listeners = getInstancetEventListeners(instance, event);
-        arrayHandler(rawHandler).forEach((handler) => {
+        normalizeHandler(rawHandler).forEach((handler) => {
             listeners.add(handler);
         });
     }
     function removeInstanceListener(instance, event, rawHandler) {
         const listeners = getInstancetEventListeners(instance, event);
-        arrayHandler(rawHandler).forEach((handler) => {
+        normalizeHandler(rawHandler).forEach((handler) => {
             listeners.delete(handler);
         });
     }
     function onceInstanceListener(instance, event, rawHandler) {
         const listeners = getInstancetEventListeners(instance, event);
-        arrayHandler(rawHandler).forEach((handler) => {
+        normalizeHandler(rawHandler).forEach((handler) => {
             const onceHandler = (...args) => {
                 handler(...args);
                 listeners.delete(onceHandler);
@@ -1159,10 +1159,10 @@ define(['exports'], (function (exports) { 'use strict';
         原生侦听器支持一维数组格式，[a,b,c]
     */
     function updateNativeEvents(el, event, pHandler, nHandler, options) {
-        arrayHandler(pHandler).forEach((ph) => {
+        normalizeHandler(pHandler).forEach((ph) => {
             removeListener(el, event, ph, options);
         });
-        arrayHandler(nHandler).forEach((nh) => {
+        normalizeHandler(nHandler).forEach((nh) => {
             addListener(el, event, nh, options);
         });
     }
@@ -2105,11 +2105,11 @@ define(['exports'], (function (exports) { 'use strict';
             return _isShallow ? value : reactive(value);
         }
     };
-    function arrayHandlerWithTrack(...args) {
+    function normalizeHandlerWithTrack(...args) {
         let result = _target[_key](...args);
         return result;
     }
-    function arrayHandlerWithTrigger(...args) {
+    function normalizeHandlerWithTrigger(...args) {
         if (_isReadonly) {
             // 只读不能修改
             return;
@@ -2120,17 +2120,17 @@ define(['exports'], (function (exports) { 'use strict';
         [...oldKeys, 'length'].forEach((key) => trigger(_target, key));
         return result;
     }
-    const arrayHandlers = {
+    const normalizeHandlers = {
         // should track
-        includes: arrayHandlerWithTrack,
-        indexOf: arrayHandlerWithTrack,
-        lastIndexOf: arrayHandlerWithTrack,
+        includes: normalizeHandlerWithTrack,
+        indexOf: normalizeHandlerWithTrack,
+        lastIndexOf: normalizeHandlerWithTrack,
         // should trigger
-        push: arrayHandlerWithTrigger,
-        pop: arrayHandlerWithTrigger,
-        shift: arrayHandlerWithTrigger,
-        unshift: arrayHandlerWithTrigger,
-        splice: arrayHandlerWithTrigger
+        push: normalizeHandlerWithTrigger,
+        pop: normalizeHandlerWithTrigger,
+        shift: normalizeHandlerWithTrigger,
+        unshift: normalizeHandlerWithTrigger,
+        splice: normalizeHandlerWithTrigger
     };
     const specialKeyHandler = {
         [Symbol.iterator]: (value) => {
@@ -2179,9 +2179,9 @@ define(['exports'], (function (exports) { 'use strict';
                 }
                 return isReadonly ? readonly(value) : reactive(value);
             }
-            else if (isArray(target) && hasOwn(arrayHandlers, key)) {
+            else if (isArray(target) && hasOwn(normalizeHandlers, key)) {
                 // 数组重写方法
-                return arrayHandlers[key];
+                return normalizeHandlers[key];
             }
             var value = Reflect.get(target, key, receiver);
             // 特殊key处理器
@@ -6899,7 +6899,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.addInstanceListener = addInstanceListener;
     exports.addListener = addListener;
     exports.appendMedium = appendMedium;
-    exports.arrayHandler = arrayHandler;
+    exports.normalizeHandler = normalizeHandler;
     exports.arrayToMap = arrayToMap;
     exports.attr = attr;
     exports.builtInComponents = builtInComponents;

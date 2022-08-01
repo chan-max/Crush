@@ -40,7 +40,7 @@ export function emitInstancetEvent(instance: any, event: any, ...args: any[]) {
 
 
 /* handler 标准化，转成数组格式 */
-export function arrayHandler(handler: any): any {
+export function normalizeHandler(handler: any): any {
     return (isArray(handler) ? handler : [handler]).filter(isFunction)
 }
 
@@ -53,21 +53,21 @@ export function updateInstanceListeners(instance: any, event: any, pHandler: Eve
 
 export function addInstanceListener(instance: any, event: string, rawHandler: EventHandler) {
     const listeners = getInstancetEventListeners(instance, event)
-    arrayHandler(rawHandler).forEach((handler: any) => {
+    normalizeHandler(rawHandler).forEach((handler: any) => {
         listeners.add(handler)
     })
 }
 
 export function removeInstanceListener(instance: any, event: string, rawHandler: EventHandler) {
     const listeners = getInstancetEventListeners(instance, event)
-    arrayHandler(rawHandler).forEach((handler: any) => {
+    normalizeHandler(rawHandler).forEach((handler: any) => {
         listeners.delete(handler)
     })
 }
 
 export function onceInstanceListener(instance: any, event: string, rawHandler: EventHandler) {
     const listeners = getInstancetEventListeners(instance, event)
-    arrayHandler(rawHandler).forEach((handler: any) => {
+    normalizeHandler(rawHandler).forEach((handler: any) => {
         const onceHandler = (...args: any[]) => {
             handler(...args)
             listeners.delete(onceHandler)

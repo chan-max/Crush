@@ -92,16 +92,16 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: Co
 
 
 // unmountAttribute
-import { arrayHandler } from './componentListener'
+import { normalizeHandler } from './componentListener'
 
 /*
     原生侦听器支持一维数组格式，[a,b,c]
 */
 function updateNativeEvents(el: HTMLElement, event: string, pHandler: any, nHandler: any, options: any) {
-    arrayHandler(pHandler).forEach((ph: any) => {
+    normalizeHandler(pHandler).forEach((ph: any) => {
         removeListener(el, event, ph, options)
     });
-    arrayHandler(nHandler).forEach((nh: any) => {
+    normalizeHandler(nHandler).forEach((nh: any) => {
         addListener(el, event, nh, options)
     });
 }

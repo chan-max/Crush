@@ -107,7 +107,7 @@ const collectionHandlers: Record<string, any> = {
 }
 
 
-function arrayHandlerWithTrack(...args: any[]) {
+function normalizeHandlerWithTrack(...args: any[]) {
     if (!_isReadonly) { // 非只读才会收集
 
     }
@@ -116,7 +116,7 @@ function arrayHandlerWithTrack(...args: any[]) {
     return result
 }
 
-function arrayHandlerWithTrigger(...args: any[]) {
+function normalizeHandlerWithTrigger(...args: any[]) {
     if (_isReadonly) {
         // 只读不能修改
         return
@@ -128,17 +128,17 @@ function arrayHandlerWithTrigger(...args: any[]) {
     return result
 }
 
-const arrayHandlers: Record<string, any> = {
+const normalizeHandlers: Record<string, any> = {
     // should track
-    includes: arrayHandlerWithTrack,
-    indexOf: arrayHandlerWithTrack,
-    lastIndexOf: arrayHandlerWithTrack,
+    includes: normalizeHandlerWithTrack,
+    indexOf: normalizeHandlerWithTrack,
+    lastIndexOf: normalizeHandlerWithTrack,
     // should trigger
-    push: arrayHandlerWithTrigger,
-    pop: arrayHandlerWithTrigger,
-    shift: arrayHandlerWithTrigger,
-    unshift: arrayHandlerWithTrigger,
-    splice: arrayHandlerWithTrigger
+    push: normalizeHandlerWithTrigger,
+    pop: normalizeHandlerWithTrigger,
+    shift: normalizeHandlerWithTrigger,
+    unshift: normalizeHandlerWithTrigger,
+    splice: normalizeHandlerWithTrigger
 };
 
 
@@ -195,9 +195,9 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
 
             return isReadonly ? readonly(value) : reactive(value)
 
-        } else if (isArray(target) && hasOwn(arrayHandlers, key)) {
+        } else if (isArray(target) && hasOwn(normalizeHandlers, key)) {
             // 数组重写方法
-            return arrayHandlers[key]
+            return normalizeHandlers[key]
         }
 
         var value = Reflect.get(target, key, receiver)
