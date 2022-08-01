@@ -5,17 +5,38 @@ import { removeClass, addClass, addListener, removeListener, setAttribute, remov
 
 import { unionkeys } from "./common";
 
+
+
+const beoforeClassMountHooks: any = new Set()
+
+export function onBeforeClassMount(hook: any) {
+    beoforeClassMountHooks.add(hook)
+    return () => {
+        beoforeClassMountHooks.delete(hook)
+    }
+}
+
 export function updateClass(el: Element, pClass: any, nClass: any,) {
     pClass = normalizeClass(pClass)
     nClass = normalizeClass(nClass)
     for (let className of unionkeys(pClass, nClass)) {
         var p = pClass[className]
         var n = nClass[className]
-        p ? (
-            n || removeClass(el, className)
-        ) : (
-            n && addClass(el, className)
-        )
+
+        if (!p === !n) {
+            continue
+        }
+
+        if (p) {
+            removeClass(el, className)
+        }
+
+        if (n) {
+            for (let beoforeClassMountHook of beoforeClassMountHooks) {
+                beoforeClassMountHook(className, el)
+            }
+            addClass(el, className)
+        }
     }
 }
 
@@ -82,7 +103,7 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: Co
                 } else if (propName in el && !isSVG) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue)
                 } else {
-                    
+
                     // attribute
                     (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
                 }

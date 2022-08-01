@@ -1,13 +1,9 @@
-import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, effect, h, reactive, ref, rgb, shallowCloneObject, throttle, onMounted } from "./packages/core";
+import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, effect, h, reactive, ref, rgb, shallowCloneObject, throttle, onMounted, onBeforeClassMount } from "./packages/core";
 
 
 let root = {
-    components: {
-        tom: { template: `<h6> 我是 tom </h6>` },
-        jerry: { template: `<h6> 我是 jerry </h6>` },
-    },
     template: /*html*/`
-        <h1> 猫和老鼠 </h1>
+        <h1 .a .b .c> 猫和老鼠 </h1>
     `,
     create({ $self }: any) {
         onMounted(() => {
@@ -15,6 +11,11 @@ let root = {
         })
     }
 }
+
+onBeforeClassMount((className: any, el: any) => {
+    console.log(className,el);
+})
+
 
 const app = createApp(root)
 
