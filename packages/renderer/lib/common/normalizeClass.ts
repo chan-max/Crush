@@ -3,7 +3,7 @@ import { isFunction, isArray, isObject, isString, emptyObject } from "@crush/com
 import { parseInlineClass } from "@crush/compiler"
 import {
     extend
-} from './extend'
+} from '@crush/common'
 
 // normalized class always will be a map with true value
 export function normalizeClass(rawClass: any): Record<string, any> {

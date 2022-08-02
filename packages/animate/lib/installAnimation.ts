@@ -1,8 +1,7 @@
 import { keyframes, mount } from '@crush/renderer'
 import { createStyleSheet } from '@crush/renderer'
 import { Nodes } from '@crush/const'
-
-export const NODES: any = Nodes.AT
+import { onBeforeClassMount, mountStyleRule, createStyle } from '@crush/renderer'
 
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'
 import { zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp } from './animations/zoom'
@@ -66,6 +65,20 @@ const animationFrames = {
 // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
 const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))
 
+// 关于 animate的class
+let animationClassStyleSheet, animationClassRecord: any = {}
+function initAnimationClass(className: any) {
+    if (!className.startsWith('animate_') || animationClassRecord[className]) {
+        return
+    }
+    let targetSheet = animationClassStyleSheet ||= mount(createStyleSheet(null, animations), document.head)
+    let declaration = className.split('animate_')[1].split('_')
+    mountStyleRule(targetSheet, createStyle('.' + className, { animation: declaration }))
+}
 
-
-export const installAnimation = () => mount(createStyleSheet(null, animations), document.head)
+export const installAnimation = () => {
+    // 挂载所有动画帧
+    mount(createStyleSheet(null, animations), document.head)
+ 
+    onBeforeClassMount(initAnimationClass)
+}

@@ -3,18 +3,21 @@ import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, ef
 
 let root = {
     template: /*html*/`
-        <h1 .a .b .c> 猫和老鼠 </h1>
+        <style>
+                .box{
+                    width:200px;
+                    height:200px;
+                    background-color:red;
+                }
+        </style>
+        <div class="animate_rollIn_2s_infinite box">
+        </div>
     `,
     create({ $self }: any) {
-        onMounted(() => {
-            console.log($self.$el);
-        })
+
     }
 }
 
-onBeforeClassMount((className: any, el: any) => {
-    console.log(className,el);
-})
 
 
 const app = createApp(root)

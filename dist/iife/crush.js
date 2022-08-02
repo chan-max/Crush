@@ -2,340 +2,6 @@
 var Crush = (function (exports) {
     'use strict';
 
-    var crush = /*#__PURE__*/Object.freeze({
-        __proto__: null,
-        get getCurrentApp () { return getCurrentApp; },
-        get createApp () { return createApp; },
-        get createComponentInstance () { return createComponentInstance; },
-        get injectDirectives () { return injectDirectives; },
-        get processHook () { return processHook; },
-        get isElementLifecycleHook () { return isElementLifecycleHook; },
-        get isComponentLifecycleHook () { return isComponentLifecycleHook; },
-        get injectHook () { return injectHook; },
-        get callHook () { return callHook; },
-        get onCreated () { return onCreated; },
-        get onBeforeMount () { return onBeforeMount; },
-        get onBeforeUnmount () { return onBeforeUnmount; },
-        get onBeforeUpdate () { return onBeforeUpdate; },
-        get onMounted () { return onMounted; },
-        get onUnmounted () { return onUnmounted; },
-        get onUpdated () { return onUpdated; },
-        get injectMapHooks () { return injectMapHooks; },
-        get injectMixin () { return injectMixin; },
-        get injectMixins () { return injectMixins; },
-        get resolveOptions () { return resolveOptions; },
-        get defineScopeProperty () { return defineScopeProperty; },
-        get createScope () { return createScope; },
-        get createRenderScope () { return createRenderScope; },
-        get useRefState () { return useRefState; },
-        get defineSelfName () { return defineSelfName; },
-        get useUid () { return useUid; },
-        get useOptions () { return useOptions; },
-        get doKeyframesAnimation () { return doKeyframesAnimation; },
-        get NODES () { return NODES; },
-        get installAnimation () { return installAnimation; },
-        get setElementTranstion () { return setElementTranstion; },
-        get cache () { return cache; },
-        get warn () { return warn; },
-        get error () { return error; },
-        get arrayToMap () { return arrayToMap; },
-        get stringToMap () { return stringToMap; },
-        get makeMap () { return makeMap; },
-        get removeFromArray () { return removeFromArray; },
-        get shallowCloneArray () { return shallowCloneArray; },
-        get shallowCloneObject () { return shallowCloneObject; },
-        get mark () { return mark; },
-        get exec () { return exec; },
-        get execCaptureGroups () { return execCaptureGroups; },
-        get getEmptyObject () { return getEmptyObject; },
-        get uid () { return uid; },
-        get uStringId () { return uStringId; },
-        get uVar () { return uVar; },
-        get emptyObject () { return emptyObject; },
-        get emptyArray () { return emptyArray; },
-        get emptyFunction () { return emptyFunction; },
-        get createMap () { return createMap; },
-        get isNumber () { return isNumber; },
-        get isArray () { return isArray; },
-        get isString () { return isString; },
-        get isFunction () { return isFunction; },
-        get isUndefined () { return isUndefined; },
-        get isObject () { return isObject; },
-        get typeOf () { return typeOf; },
-        get isPromise () { return isPromise; },
-        get isDate () { return isDate; },
-        get isNumberString () { return isNumberString; },
-        get toNumber () { return toNumber; },
-        get camelize () { return camelize; },
-        get hyphenate () { return hyphenate; },
-        get initialLowerCase () { return initialLowerCase; },
-        get initialUpperCase () { return initialUpperCase; },
-        get hasOwn () { return hasOwn; },
-        get debounce () { return debounce; },
-        get throttle () { return throttle; },
-        get cacheDebounce () { return cacheDebounce; },
-        get cacheThrottle () { return cacheThrottle; },
-        get builtInComponents () { return builtInComponents; },
-        get builtInDirectives () { return builtInDirectives; },
-        get withScope () { return withScope; },
-        get ternaryExp () { return ternaryExp; },
-        get ternaryChains () { return ternaryChains; },
-        get dynamicMapKey () { return dynamicMapKey; },
-        get toBackQuotes () { return toBackQuotes; },
-        get toTernaryExp () { return toTernaryExp; },
-        get toArray () { return toArray; },
-        get toSingleQuotes () { return toSingleQuotes; },
-        get objectStringify () { return objectStringify; },
-        get toArrowFunction () { return toArrowFunction; },
-        get callFn () { return callFn; },
-        get destructur () { return destructur; },
-        get declare () { return declare; },
-        get NULL () { return NULL; },
-        get stringify () { return stringify; },
-        get toReservedProp () { return toReservedProp; },
-        get createFunction () { return createFunction; },
-        get compile () { return compile; },
-        get parseInlineStyle () { return parseInlineStyle; },
-        get parseInlineClass () { return parseInlineClass; },
-        get NodesMap () { return exports.NodesMap; },
-        get keyOf () { return keyOf; },
-        get isHTMLTag () { return isHTMLTag; },
-        get isSVGTag () { return isSVGTag; },
-        get createReactiveObject () { return createReactiveObject; },
-        get createReadonlyObject () { return createReadonlyObject; },
-        get createShallowReactiveObject () { return createShallowReactiveObject; },
-        get createShallowReadonlyObject () { return createShallowReadonlyObject; },
-        get createReactiveCollection () { return createReactiveCollection; },
-        get createReadonlyCollection () { return createReadonlyCollection; },
-        get createShallowReactiveCollection () { return createShallowReactiveCollection; },
-        get createShallowReadonlyCollection () { return createShallowReadonlyCollection; },
-        get reactive () { return reactive; },
-        get shallowReactive () { return shallowReactive; },
-        get readonly () { return readonly; },
-        get shallowReadonly () { return shallowReadonly; },
-        get ReactiveTypeSymbol () { return ReactiveTypeSymbol; },
-        get isProxy () { return isProxy; },
-        get isProxyType () { return isProxyType; },
-        get markRaw () { return markRaw; },
-        get ReactiveTypes () { return exports.ReactiveTypes; },
-        get toRaw () { return toRaw; },
-        get isReactive () { return isReactive; },
-        get isShallow () { return isShallow; },
-        get isRef () { return isRef; },
-        get TARGET_MAP () { return TARGET_MAP; },
-        get getDepsMap () { return getDepsMap; },
-        get getDeps () { return getDeps; },
-        get track () { return track; },
-        get targetObserverSymbol () { return targetObserverSymbol; },
-        get trackTargetObserver () { return trackTargetObserver; },
-        get triggerTargetObserver () { return triggerTargetObserver; },
-        get trigger () { return trigger; },
-        get triggerAllDepsMap () { return triggerAllDepsMap; },
-        get triggerTargetKey () { return triggerTargetKey; },
-        get getActiveEffect () { return getActiveEffect; },
-        get setActiveEffect () { return setActiveEffect; },
-        get deleteActiveEffect () { return deleteActiveEffect; },
-        get isEffect () { return isEffect; },
-        get ReactiveEffect () { return ReactiveEffect; },
-        get createReactiveEffect () { return createReactiveEffect; },
-        get effect () { return effect; },
-        get getLastVisitTarget () { return getLastVisitTarget; },
-        get getLastVisitKey () { return getLastVisitKey; },
-        get getLastSetTarget () { return getLastSetTarget; },
-        get getLastSetKey () { return getLastSetKey; },
-        get getLastSetOldValue () { return getLastSetOldValue; },
-        get getLastSetNewValue () { return getLastSetNewValue; },
-        get onSetCallbacks () { return onSetCallbacks; },
-        get onSet () { return onSet; },
-        get createSetter () { return createSetter; },
-        get reactiveHandler () { return reactiveHandler; },
-        get shallowReactiveHandler () { return shallowReactiveHandler; },
-        get readonlyHandler () { return readonlyHandler; },
-        get shallowReadonlyHandler () { return shallowReadonlyHandler; },
-        get reactiveCollectionHandler () { return reactiveCollectionHandler; },
-        get readonlyCollectionHandler () { return readonlyCollectionHandler; },
-        get shallowReactiveCollectionHandler () { return shallowReactiveCollectionHandler; },
-        get shallowReadonlyCollectionHandler () { return shallowReadonlyCollectionHandler; },
-        get ref () { return ref; },
-        get createRefValueSetter () { return createRefValueSetter; },
-        get Ref () { return Ref; },
-        get cleaarRefDeps () { return cleaarRefDeps; },
-        get computed () { return computed; },
-        get isComputed () { return isComputed; },
-        get ComputedRef () { return ComputedRef; },
-        get shallowWatchReactive () { return shallowWatchReactive; },
-        get watchReactive () { return watchReactive; },
-        get watchTargetKey () { return watchTargetKey; },
-        get watchRef () { return watchRef; },
-        get useBoolean () { return useBoolean; },
-        get toHex () { return toHex; },
-        get toDec () { return toDec; },
-        get rgbToHex () { return rgbToHex; },
-        get hexToRgb () { return hexToRgb; },
-        get useColor () { return useColor; },
-        get useDate () { return useDate; },
-        get dateFormatRE () { return dateFormatRE; },
-        get useNumber () { return useNumber; },
-        get useString () { return useString; },
-        get addClass () { return addClass; },
-        get removeClass () { return removeClass; },
-        get docCreateElement () { return docCreateElement; },
-        get docCreateComment () { return docCreateComment; },
-        get docCreateText () { return docCreateText; },
-        get setText () { return setText; },
-        get insertElement () { return insertElement; },
-        get removeElement () { return removeElement; },
-        get remountElement () { return remountElement; },
-        get setAttribute () { return setAttribute; },
-        get removeAttribute () { return removeAttribute; },
-        get addListener () { return addListener; },
-        get removeListener () { return removeListener; },
-        get onceListener () { return onceListener; },
-        get normalizeKeyText () { return normalizeKeyText; },
-        get setKeyText () { return setKeyText; },
-        get insertRule () { return insertRule; },
-        get insertStyle () { return insertStyle; },
-        get insertMedia () { return insertMedia; },
-        get insertSupports () { return insertSupports; },
-        get insertKeyframes () { return insertKeyframes; },
-        get insertKeyframe () { return insertKeyframe; },
-        get deleteRule () { return deleteRule; },
-        get deleteKeyframe () { return deleteKeyframe; },
-        get setSelector () { return setSelector; },
-        get setKeyframesName () { return setKeyframesName; },
-        get deleteMedium () { return deleteMedium; },
-        get appendMedium () { return appendMedium; },
-        get setStyleProperty () { return setStyleProperty; },
-        get toPositiveValue () { return toPositiveValue; },
-        get toNegativeValue () { return toNegativeValue; },
-        get toAbsoluteValue () { return toAbsoluteValue; },
-        get rgba () { return rgba; },
-        get rgb () { return rgb; },
-        get hsl () { return hsl; },
-        get hsla () { return hsla; },
-        get $var () { return $var; },
-        get attr () { return attr; },
-        get calc () { return calc; },
-        get cubicBezier () { return cubicBezier; },
-        get max () { return max; },
-        get min () { return min; },
-        get translateX () { return translateX; },
-        get translateY () { return translateY; },
-        get scale () { return scale; },
-        get rotate3d () { return rotate3d; },
-        get translate3d () { return translate3d; },
-        get rotate () { return rotate; },
-        get perspective () { return perspective; },
-        get scale3d () { return scale3d; },
-        get skew () { return skew; },
-        get skewX () { return skewX; },
-        get skewY () { return skewY; },
-        get scaleY () { return scaleY; },
-        get scaleX () { return scaleX; },
-        get rotateY () { return rotateY; },
-        get conicGradient () { return conicGradient; },
-        get linearGradient () { return linearGradient; },
-        get radialGradient () { return radialGradient; },
-        get getComponent () { return getComponent; },
-        get getDirective () { return getDirective; },
-        get defineTextModifier () { return defineTextModifier; },
-        get display () { return display; },
-        get doFlat () { return doFlat; },
-        get isEvent () { return isEvent; },
-        get toNativeEventName () { return toNativeEventName; },
-        get parseNativeEventName () { return parseNativeEventName; },
-        get toEventName () { return toEventName; },
-        get getEventName () { return getEventName; },
-        get parseEventName () { return parseEventName; },
-        get withEventModifiers () { return withEventModifiers; },
-        get flatRules () { return flatRules; },
-        get IMPORTANT_SYMBOL () { return IMPORTANT_SYMBOL; },
-        get IMPORTANT_KEY () { return IMPORTANT_KEY; },
-        get IMPORTANT () { return IMPORTANT; },
-        get important () { return important; },
-        get renderSlot () { return renderSlot; },
-        get processVnodePrerender () { return processVnodePrerender; },
-        get normalizeStyle () { return normalizeStyle; },
-        get normalizeClass () { return normalizeClass; },
-        get renderList () { return renderList; },
-        get mixin () { return mixin; },
-        get splitSelector () { return splitSelector; },
-        get mergeSplitedSelector () { return mergeSplitedSelector; },
-        get mergeSelectors () { return mergeSelectors; },
-        get joinSelector () { return joinSelector; },
-        get mergeSplitedSelectorsAndJoin () { return mergeSplitedSelectorsAndJoin; },
-        get updateClass () { return updateClass; },
-        get mountClass () { return mountClass; },
-        get unmountClass () { return unmountClass; },
-        get mountAttributes () { return mountAttributes; },
-        get updateAttributes () { return updateAttributes; },
-        get insertNull () { return insertNull; },
-        get unionkeys () { return unionkeys; },
-        get createMapEntries () { return createMapEntries; },
-        get parseStyleValue () { return parseStyleValue; },
-        get updateDeclaration () { return updateDeclaration; },
-        get mountDeclaration () { return mountDeclaration; },
-        get setElementStyleDeclaration () { return setElementStyleDeclaration; },
-        get unmountDeclaration () { return unmountDeclaration; },
-        get getStyleValue () { return getStyleValue; },
-        get getElementStyleValue () { return getElementStyleValue; },
-        get getElementComputedStyleValue () { return getElementComputedStyleValue; },
-        get getStyle () { return getStyle; },
-        get getElementStyle () { return getElementStyle; },
-        get getElementComputedStyle () { return getElementComputedStyle; },
-        get mount () { return mount; },
-        get mountChildren () { return mountChildren; },
-        get currentInstance () { return exports.currentInstance; },
-        get setCurrentInstance () { return setCurrentInstance; },
-        get getCurrentInstance () { return getCurrentInstance; },
-        get getCurrentScope () { return getCurrentScope; },
-        get getCurrentRenderScope () { return getCurrentRenderScope; },
-        get mountComponent () { return mountComponent; },
-        get mountStyleSheet () { return mountStyleSheet; },
-        get mountRule () { return mountRule; },
-        get mountStyleRule () { return mountStyleRule; },
-        get mountKeyframeRule () { return mountKeyframeRule; },
-        get updateStyleSheet () { return updateStyleSheet; },
-        get updateComponent () { return updateComponent; },
-        get update () { return update; },
-        get updateChildren () { return updateChildren; },
-        get unmountComponent () { return unmountComponent; },
-        get unmount () { return unmount; },
-        get unmountChildren () { return unmountChildren; },
-        get sortChildren () { return sortChildren; },
-        get sortRules () { return sortRules; },
-        get patch () { return patch; },
-        get createStyleSheet () { return createStyleSheet; },
-        get createStyle () { return createStyle; },
-        get createDeclaration () { return createDeclaration; },
-        get createKeyframe () { return createKeyframe; },
-        get createMedia () { return createMedia; },
-        get createSupports () { return createSupports; },
-        get createKeyframes () { return createKeyframes; },
-        get createSVGElement () { return createSVGElement; },
-        get Text () { return Text; },
-        get Comment () { return Comment; },
-        get createComment () { return createComment; },
-        get createComponent () { return createComponent; },
-        get createElement () { return createElement; },
-        get createText () { return createText; },
-        get createFragment () { return createFragment; },
-        get keyframes () { return keyframes; },
-        get keyframe () { return keyframe; },
-        get h () { return h; },
-        get getInstanceEvents () { return getInstanceEvents; },
-        get getInstancetEventListeners () { return getInstancetEventListeners; },
-        get createInstanceEventEmitter () { return createInstanceEventEmitter; },
-        get emitInstancetEvent () { return emitInstancetEvent; },
-        get normalizeHandler () { return normalizeHandler; },
-        get updateInstanceListeners () { return updateInstanceListeners; },
-        get addInstanceListener () { return addInstanceListener; },
-        get removeInstanceListener () { return removeInstanceListener; },
-        get onceInstanceListener () { return onceInstanceListener; },
-        get nextTick () { return nextTick; },
-        get queueJob () { return queueJob; }
-    });
-
     const cache = (fn) => {
         const cache = Object.create(null);
         return ((key) => {
@@ -360,7 +26,7 @@ var Crush = (function (exports) {
     const emptyArray = Object.freeze([]);
     const emptyFunction = () => null;
     const createMap = (entries) => new Map(entries);
-    const extend$1 = Object.assign;
+    const extend = (...args) => Object.assign({}, ...args);
 
     const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
         res[item] = mapValue;
@@ -541,7 +207,7 @@ var Crush = (function (exports) {
             return;
         }
         if (props.bind) { // use bind
-            extend$1(props, props.bind);
+            extend(props, props.bind);
             delete props.bind;
         }
         // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
@@ -1091,13 +757,31 @@ var Crush = (function (exports) {
     }
     // native events
 
+    const beoforeClassMountHooks = new Set();
+    function onBeforeClassMount(hook) {
+        beoforeClassMountHooks.add(hook);
+        return () => {
+            beoforeClassMountHooks.delete(hook);
+        };
+    }
     function updateClass(el, pClass, nClass) {
         pClass = normalizeClass(pClass);
         nClass = normalizeClass(nClass);
         for (let className of unionkeys(pClass, nClass)) {
             var p = pClass[className];
             var n = nClass[className];
-            p ? (n || removeClass(el, className)) : (n && addClass(el, className));
+            if (!p === !n) {
+                continue;
+            }
+            if (p) {
+                removeClass(el, className);
+            }
+            if (n) {
+                for (let beoforeClassMountHook of beoforeClassMountHooks) {
+                    beoforeClassMountHook(className, el);
+                }
+                addClass(el, className);
+            }
         }
     }
     function mountClass(el, _class) {
@@ -1764,18 +1448,18 @@ var Crush = (function (exports) {
                 // 这里可能出现为空是因为排序时增加的空节点
                 continue;
             }
-            return getVnodeAnchor(nextSibiling);
+            return getEL(nextSibiling);
         }
     }
-    function getVnodeAnchor(vnode) {
+    function getEL(vnode) {
         if (!vnode) {
             return null;
         }
         switch (vnode.nodeType) {
             case 14 /* COMPONENT */:
-                return getVnodeAnchor(vnode.instance.vnode[0]);
+                return getEL(vnode.instance.vnode[0]);
             case 15 /* RENDER_COMPONENT */:
-                return getVnodeAnchor(vnode.vnode[0]);
+                return getEL(vnode.vnode[0]);
             case 13 /* HTML_ELEMENT */:
             case 9 /* SVG_ELEMENT */:
             case 12 /* TEXT */:
@@ -3408,27 +3092,25 @@ var Crush = (function (exports) {
 
     // arguments , filters , modifiers
     const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/;
-    var AttributeFlag;
-    (function (AttributeFlag) {
-        AttributeFlag[AttributeFlag["$--"] = 0] = "$--";
-        AttributeFlag[AttributeFlag["--"] = 1] = "--";
-        AttributeFlag[AttributeFlag["..."] = 2] = "...";
-        AttributeFlag[AttributeFlag["$"] = 3] = "$";
-        AttributeFlag[AttributeFlag["@"] = 4] = "@";
-        AttributeFlag[AttributeFlag["#"] = 5] = "#";
-        AttributeFlag[AttributeFlag["."] = 6] = "."; // class shorthand
-    })(AttributeFlag || (AttributeFlag = {}));
-    var AttributeEndFlag;
-    (function (AttributeEndFlag) {
-        AttributeEndFlag[AttributeEndFlag["!"] = 0] = "!"; // important css property
-    })(AttributeEndFlag || (AttributeEndFlag = {}));
+    const AttributeFlags = [
+        '$--',
+        '--',
+        '...',
+        '$',
+        '@',
+        '#',
+        '.' // class shorthand
+    ];
+    const AttributeEndFlags = [
+        '!' // important css property
+    ];
     const staticAttributeNameRE = /[\w-]+/;
     // both for html attribute and css declaration
     function parseAttribute(attr) {
         let { attribute, value } = attr;
         let flag, endFlag;
         // 提取开始标志
-        for (let _flag in AttributeFlag) {
+        for (let _flag of AttributeFlags) {
             if (attribute.startsWith(_flag)) {
                 flag = _flag;
                 attribute = attribute.slice(_flag.length);
@@ -3436,7 +3118,7 @@ var Crush = (function (exports) {
             }
         }
         // 提取结尾标志
-        for (let _flag in AttributeEndFlag) {
+        for (let _flag of AttributeEndFlags) {
             if (attribute.endsWith(_flag)) {
                 endFlag = _flag;
                 attribute = attribute.slice(0, attribute.length - _flag.length - 1);
@@ -3956,46 +3638,6 @@ var Crush = (function (exports) {
         }
     }
 
-    var rfs = {
-        createComment: '',
-        createElement: '',
-        createFragment: '',
-        createKeyframe: '',
-        createKeyframes: '',
-        createMedia: '',
-        createSVGElement: '',
-        createStyleSheet: '',
-        createStyle: '',
-        createText: '',
-        renderList: '',
-        mergeSelectors: '',
-        display: '',
-        createDeclaration: '',
-        mixin: '',
-        important: '',
-        createSupports: '',
-        flatRules: '',
-        createComponent: '',
-        getComponent: '',
-        getDirective: '',
-        getCurrentScope: '',
-        withEventModifiers: '',
-        toNativeEventName: '',
-        normalizeClass: '',
-        normalizeStyle: '',
-        renderSlot: '',
-        injectDirective: '',
-        injectDirectives: '',
-        injectReservedProps: '',
-        createMap: '',
-        getCurrentRenderScope: ''
-    };
-    const renderMethodsNameMap = Object.entries(rfs).reduce((res, [name, method]) => {
-        res[name] = name;
-        //res[name] = method.name
-        return res;
-    }, {});
-
     // the code Entrance
     const genNodes = (nodes, context) => {
         if (!nodes) {
@@ -4055,7 +3697,7 @@ var Crush = (function (exports) {
         });
         return children;
     }
-    const genFor = (target, iterator, context) => context.callRenderFn(renderMethodsNameMap.renderList, iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
+    const genFor = (target, iterator, context) => context.callRenderFn('renderList', iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
     const genIf = (target, condition) => ternaryExp(condition, target, NULL);
     function genForWithFragment(target, iterator, context) {
         return genFragment(genFor(target, iterator, context), context);
@@ -4099,7 +3741,7 @@ var Crush = (function (exports) {
     function genCustomDirectives(code, directives, context) {
         var dirs = directives.map((directive) => {
             var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive;
-            var directive = context.callRenderFn(renderMethodsNameMap.getDirective, isDynamicProperty ? property : toSingleQuotes(property));
+            var directive = context.callRenderFn('getDirective', isDynamicProperty ? property : toSingleQuotes(property));
             if (!isDynamicProperty) {
                 directive = context.hoistExpression(directive);
             }
@@ -4120,7 +3762,7 @@ var Crush = (function (exports) {
             }
             return bindings;
         });
-        return context.callRenderFn(renderMethodsNameMap.injectDirectives, code, stringify(dirs));
+        return context.callRenderFn('injectDirectives', code, stringify(dirs));
     }
     function genSlotContent(node, context) {
         var { children } = node;
@@ -4153,7 +3795,7 @@ var Crush = (function (exports) {
     function genNode(node, context) {
         switch (node.type) {
             case 10 /* HTML_COMMENT */:
-                return context.callRenderFn(renderMethodsNameMap.createComment, toBackQuotes(node.children), uid());
+                return context.callRenderFn('createComment', toBackQuotes(node.children), uid());
             case 3 /* IF */:
             case 4 /* ELSE_IF */:
             case 5 /* ELSE */:
@@ -4167,63 +3809,63 @@ var Crush = (function (exports) {
                 return genDirectives(code, node.directives, context);
             case 35 /* SLOT */:
                 const { slotName, isDynamicSlot, children } = node;
-                return context.callRenderFn(renderMethodsNameMap.renderSlot, isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
+                return context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
             case 36 /* OUTLET */:
                 return genNodes(node.children, context);
             case 11 /* DYNAMIC_ELEMENT */:
                 var { is, isDynamicIs } = node;
-                var code = context.callRenderFn(renderMethodsNameMap.createElement, isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
+                var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
                 genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 13 /* HTML_ELEMENT */:
-                var code = context.callRenderFn(renderMethodsNameMap.createElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+                var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 9 /* SVG_ELEMENT */:
-                var code = context.callRenderFn(renderMethodsNameMap.createSVGElement, toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+                var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 16 /* DYNAMIC_COMPONENT */:
                 var { is, isDynamicIs } = node;
-                var component = context.callRenderFn(renderMethodsNameMap.getComponent, isDynamicIs ? is : toSingleQuotes(is));
+                var component = context.callRenderFn('getComponent', isDynamicIs ? is : toSingleQuotes(is));
                 // 动态组件不会提升
                 var props = genProps(node, context);
                 var slots = genSlotContent(node, context);
-                code = context.callRenderFn(renderMethodsNameMap.createComponent, component, props, slots, uStringId());
+                code = context.callRenderFn('createComponent', component, props, slots, uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 14 /* COMPONENT */:
-                var code = context.callRenderFn(renderMethodsNameMap.getComponent, toBackQuotes(node.tagName));
+                var code = context.callRenderFn('getComponent', toBackQuotes(node.tagName));
                 var uv = context.hoistExpression(code);
                 var props = genProps(node, context);
                 var slots = genSlotContent(node, context);
-                code = context.callRenderFn(renderMethodsNameMap.createComponent, uv, props, slots, uStringId());
+                code = context.callRenderFn('createComponent', uv, props, slots, uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 12 /* TEXT */:
                 return genText(node.children, context);
             case 17 /* STYLE */:
                 var props = genProps(node, context);
-                var code = context.callRenderFn(renderMethodsNameMap.createStyleSheet, props, stringify(genChildren(node.children, context)), uStringId());
+                var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), uStringId());
                 code = genDirs(code, node, context);
                 return code;
             case 26 /* STYLE_RULE */:
-                return context.callRenderFn(renderMethodsNameMap.createStyle, genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
+                return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
             case 22 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
-                return context.callRenderFn(renderMethodsNameMap.createMedia, toBackQuotes(node.media), rules, uStringId());
+                return context.callRenderFn('createMedia', toBackQuotes(node.media), rules, uStringId());
             case 24 /* KEYFRAMES_RULE */:
-                return context.callRenderFn(renderMethodsNameMap.createKeyframes, toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
+                return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
             case 27 /* KEYFRAME_RULE */:
-                return context.callRenderFn(renderMethodsNameMap.createKeyframe, toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
+                return context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
             case 23 /* SUPPORTS_RULE */:
-                return context.callRenderFn(renderMethodsNameMap.createSupports, toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
+                return context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
             case 28 /* DECLARATION_GROUP */:
-                return context.callRenderFn(renderMethodsNameMap.createDeclaration, genDeclartion(node.children, context), uStringId());
+                return context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId());
         }
     }
-    const genFragment = (code, context) => context.callRenderFn(renderMethodsNameMap.createFragment, code, uStringId());
+    const genFragment = (code, context) => context.callRenderFn('createFragment', code, uStringId());
     const genTextContent = (texts, context) => {
         return texts.map((text) => {
             const { content, isDynamic, modifier } = text;
@@ -4266,7 +3908,7 @@ var Crush = (function (exports) {
         });
         return selectorCode.length === 1 ?
             selectorCode[0] :
-            context.callRenderFn(renderMethodsNameMap.mergeSelectors, ...selectorCode);
+            context.callRenderFn('mergeSelectors', ...selectorCode);
         //! one dynamic selector will effect all 
     }
     // declaration and mixin
@@ -4303,7 +3945,7 @@ var Crush = (function (exports) {
                     value = toBackQuotes(value);
                 }
                 if (isImportant) {
-                    value = context.callRenderFn(renderMethodsNameMap.important, value);
+                    value = context.callRenderFn('important', value);
                 }
                 target[property] = value;
             }
@@ -4320,7 +3962,7 @@ var Crush = (function (exports) {
             return _res[0];
         }
         else {
-            return context.callRenderFn(renderMethodsNameMap.mixin, ..._res);
+            return context.callRenderFn('mixin', ..._res);
         }
     }
     function genProps(node, context) {
@@ -4337,14 +3979,14 @@ var Crush = (function (exports) {
                     value ||= property; // 简写形似
                     const handlerKey = isDynamicProperty ?
                         (isComponent ?
-                            dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toEventName, property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
-                            dynamicMapKey(context.callRenderFn(renderMethodsNameMap.toNativeEventName, property, stringify(_arguments.map(toBackQuotes))))) :
+                            dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
+                            dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
                         (isComponent ?
                             toEventName(property, _arguments, modifiers) :
                             toNativeEventName(property, _arguments));
                     var callback = isHandler ? value : toArrowFunction(value);
                     if (modifiers && !isComponent) {
-                        callback = context.callRenderFn(renderMethodsNameMap.withEventModifiers, callback, stringify(modifiers.map(toBackQuotes)));
+                        callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
                     }
                     props[handlerKey] = callback;
                     break;
@@ -4411,10 +4053,9 @@ var Crush = (function (exports) {
     function compile(template) {
         var ast = baseParseHTML(template);
         processAst(ast);
-        console.log('nodeast', ast);
         var context = new CodeGenerator();
         // 初始化所有渲染方法
-        var SCOPE = context.hoistExpression(context.callRenderFn(renderMethodsNameMap.getCurrentRenderScope));
+        var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
         const renderCode = genNodes(ast, context);
         const content = `
         with(${SCOPE}){
@@ -4443,9 +4084,6 @@ var Crush = (function (exports) {
     }
     const inlineClassDelimiter = /\s+/;
     const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
-
-    /* object extend */
-    const extend = Object.assign;
 
     // normalized class always will be a map with true value
     function normalizeClass(rawClass) {
@@ -4713,7 +4351,8 @@ var Crush = (function (exports) {
     }
 
     const modelText = {
-        created(el, { value, modifiers: { lazy, number, trim, debounce: useDebounce } }, vnode) {
+        created(el, { value, modifiers }, vnode) {
+            const { lazy, number, trim, debounce: useDebounce } = modifiers;
             const setter = vnode.props._setter;
             // 设置input初始值
             el.value = value;
@@ -4725,7 +4364,14 @@ var Crush = (function (exports) {
                 el._inputing = true;
                 setter(inputValue);
             };
-            addListener(el, lazy ? 'change' : 'input', useDebounce ? debounce(inputHandler, 100) : inputHandler);
+            if (useDebounce) {
+                let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1];
+                let numberValue = toNumber(debounceNextModifier);
+                // 如果是合理地数字
+                let wait = isNumber(numberValue) ? numberValue : 500;
+                inputHandler = debounce(inputHandler, wait);
+            }
+            addListener(el, lazy ? 'change' : 'input', inputHandler);
         },
         beforeUpdate(el, { value }) {
             // 由输入框输入引发的更新，不会重新设置输入框的值
@@ -6170,7 +5816,7 @@ var Crush = (function (exports) {
             if (app.plugins.has(plugin))
                 return;
             let install = isFunction(plugin) ? plugin : plugin.install;
-            install.call(plugin, app, crush, ...options);
+            install.call(plugin, app, ...options);
             app.plugins.add(plugin);
         }
         function mountApp(container) {
@@ -6467,7 +6113,7 @@ var Crush = (function (exports) {
             if (!isMounted || !vnode) {
                 return null;
             }
-            let el = vnode.map((_vnode) => _vnode.el);
+            let el = vnode.map((_vnode) => getEL(_vnode));
             // 有多个根元素会返回多个元素
             return el.length === 1 ? el[0] : el;
         },
@@ -6900,7 +6546,6 @@ var Crush = (function (exports) {
     exports.addInstanceListener = addInstanceListener;
     exports.addListener = addListener;
     exports.appendMedium = appendMedium;
-    exports.normalizeHandler = normalizeHandler;
     exports.arrayToMap = arrayToMap;
     exports.attr = attr;
     exports.builtInComponents = builtInComponents;
@@ -6975,6 +6620,7 @@ var Crush = (function (exports) {
     exports.error = error;
     exports.exec = exec;
     exports.execCaptureGroups = execCaptureGroups;
+    exports.extend = extend;
     exports.flatRules = flatRules;
     exports.getActiveEffect = getActiveEffect;
     exports.getComponent = getComponent;
@@ -6985,6 +6631,7 @@ var Crush = (function (exports) {
     exports.getDeps = getDeps;
     exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
+    exports.getEL = getEL;
     exports.getElementComputedStyle = getElementComputedStyle;
     exports.getElementComputedStyleValue = getElementComputedStyleValue;
     exports.getElementStyle = getElementStyle;
@@ -7071,9 +6718,11 @@ var Crush = (function (exports) {
     exports.mountStyleSheet = mountStyleSheet;
     exports.nextTick = nextTick;
     exports.normalizeClass = normalizeClass;
+    exports.normalizeHandler = normalizeHandler;
     exports.normalizeKeyText = normalizeKeyText;
     exports.normalizeStyle = normalizeStyle;
     exports.objectStringify = objectStringify;
+    exports.onBeforeClassMount = onBeforeClassMount;
     exports.onBeforeMount = onBeforeMount;
     exports.onBeforeUnmount = onBeforeUnmount;
     exports.onBeforeUpdate = onBeforeUpdate;

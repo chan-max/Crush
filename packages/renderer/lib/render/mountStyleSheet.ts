@@ -15,31 +15,32 @@ export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent:
     vnode.el = el
     insertElement(el, container, anchor)
     var sheet = el.sheet
-    mountSheet(sheet, children, vnode)
+    mountSheet(sheet, children)
+    return sheet
 }
 
-function mountSheet(sheet: CSSStyleSheet, rules: any, vnode: any) {
+function mountSheet(sheet: CSSStyleSheet, rules: any) {
     rules.forEach((rule: any) => {
-        mountRule(sheet, rule, vnode)
+        mountRule(sheet, rule)
     })
 }
 
-export function mountRule(sheet: any, rule: any, vnode: any, index: number = sheet.cssRules.length) {
+export function mountRule(sheet: any, rule: any, index: number = sheet.cssRules.length) {
     switch (rule.nodeType) {
         case Nodes.STYLE_RULE:
-            mountStyleRule(sheet, rule, vnode, index)
+            mountStyleRule(sheet, rule, index)
             break
         case Nodes.MEDIA_RULE:
-            mountMediaRule(sheet, rule, vnode, index)
+            mountMediaRule(sheet, rule, index)
             break
         case Nodes.SUPPORTS_RULE:
-            mountSupportsRule(sheet, rule, vnode, index)
+            mountSupportsRule(sheet, rule, index)
             break
         case Nodes.KEYFRAMES_RULE:
-            mountKeyframesRule(sheet, rule, vnode, index)
+            mountKeyframesRule(sheet, rule, index)
             break
         case Nodes.KEYFRAME_RULE:
-            mountKeyframeRule(sheet, rule, vnode, index)
+            mountKeyframeRule(sheet, rule)
             break
     }
 }
@@ -55,7 +56,6 @@ import { mountAttributes } from "./attribute"
 export function mountStyleRule(
     sheet: any,
     rule: any,
-    vnode: any, // this is style vnode, it carry the special attrs for rendering
     insertIndex = sheet.cssRules.length
 ) {
     const {
@@ -71,7 +71,7 @@ export function mountStyleRule(
     mountDeclaration(insertedRuleStyle, declaration)
 }
 
-function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+function mountMediaRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {
     var media = rule.media
     var rules = rule.children
 
@@ -82,30 +82,30 @@ function mountMediaRule(sheet: any, rule: any, vnode: any, insertIndex: number =
     var index = insertMedia(sheet, media, insertIndex)
     var newSheet = sheet.cssRules[index]
     rule.rule = newSheet
-    mountSheet(newSheet, rules, vnode)
+    mountSheet(newSheet, rules)
 }
 
-function mountSupportsRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+function mountSupportsRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {
     var supports = rule.supports
     var rules = rule.children
     var index = insertSupports(sheet, supports, insertIndex)
     var newSheet = sheet.cssRules[index]
-    mountSheet(newSheet, rules, vnode)
+    mountSheet(newSheet, rules,)
 }
 
-function mountKeyframesRule(sheet: any, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+function mountKeyframesRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {
     var keyframes = rule.keyframes
     var rules = rule.children
     var index = insertKeyframes(sheet, keyframes, insertIndex)
     rule.rule = sheet.cssRules[insertIndex]
     var newSheet = sheet.cssRules[index]
-    mountSheet(newSheet, rules, vnode)
+    mountSheet(newSheet, rules)
 }
 
 
 
 
-export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any, vnode: any, insertIndex: number = sheet.cssRules.length) {
+export function mountKeyframeRule(sheet: CSSKeyframesRule, rule: any) {
     var { keyframe, children: declaration } = rule
 
     insertKeyframe(sheet, keyframe)

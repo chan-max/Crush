@@ -9,12 +9,12 @@ var createStyleSheet = (props: any, children: any, key: any = uid()) => {
         nodeType: Nodes.STYLE,
         type: 'style',
         children,
-        props:normalizeProps(props),
+        props: normalizeProps(props),
         key,
     }
 }
 
-var createStyle = (selector: string, children: any, key: any) => {
+var createStyle = (selector: string, children: any, key: any = uid) => {
     return {
         nodeType: Nodes.STYLE_RULE,
         selector,
@@ -23,7 +23,7 @@ var createStyle = (selector: string, children: any, key: any) => {
     }
 }
 
-var createMedia = (media: string, children: any, key: any) => ({
+var createMedia = (media: string, children: any, key: any = uid()) => ({
     nodeType: Nodes.MEDIA_RULE,
     media,
     children,
@@ -31,7 +31,7 @@ var createMedia = (media: string, children: any, key: any) => ({
 })
 
 
-function createKeyframes(keyframes: any, children: any, key: any = uid()){
+function createKeyframes(keyframes: any, children: any, key: any = uid()) {
     return {
         nodeType: Nodes.KEYFRAMES_RULE,
         keyframes,
@@ -51,14 +51,14 @@ function createKeyframe(keyframe: any, children: any, key: any = uid()) {
 
 
 
-var createSupports = (supports: string, children: any, key: any) => ({
+var createSupports = (supports: string, children: any, key: any = uid()) => ({
     nodeType: Nodes.SUPPORTS_RULE,
     supports,
     children,
     key
 })
 
-var createDeclaration = (children: any, key: any) => {
+var createDeclaration = (children: any, key: any = uid()) => {
     return {
         nodeType: Nodes.DECLARATION,
         /*

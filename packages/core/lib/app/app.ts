@@ -10,8 +10,6 @@ import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
 
-import * as crush from '../../index'
-
 
 var currentApp: any
 
@@ -61,7 +59,7 @@ export function createApp(rootComponent: any) {
     function use(plugin: PluginType, ...options: any[]) {
         if (app.plugins.has(plugin)) return
         let install = isFunction(plugin) ? plugin : plugin.install
-        install.call(plugin, app, crush, ...options)
+        install.call(plugin, app, ...options)
         app.plugins.add(plugin)
     }
 

@@ -10,26 +10,19 @@ import { mountComponent } from "./mountComponent";
 export function mount(vnode: any, container: any, anchor: any = null, parent: any = null) {
     switch (vnode.nodeType) {
         case Nodes.HTML_ELEMENT:
-            mountElement(vnode, container, anchor, parent)
-            break
+            return mountElement(vnode, container, anchor, parent)
         case Nodes.SVG_ELEMENT:
-            mountElement(vnode, container, anchor, parent, true)
-            break
+            return mountElement(vnode, container, anchor, parent, true)
         case Nodes.TEXT:
-            mountText(vnode, container, anchor, parent)
-            break
+            return mountText(vnode, container, anchor, parent)
         case Nodes.HTML_COMMENT:
-            insertElement(vnode.el = docCreateComment(vnode.children), container, anchor)
-            break
+            return insertElement(vnode.el = docCreateComment(vnode.children), container, anchor)
         case Nodes.COMPONENT:
-            mountComponent(vnode, container, anchor, parent)
-            break
+            return mountComponent(vnode, container, anchor, parent)
         case Nodes.RENDER_COMPONENT:
-            mountRenderComponent(vnode, container, anchor, parent)
-            break
+            return mountRenderComponent(vnode, container, anchor, parent)
         case Nodes.STYLE:
-            mountStyleSheet(vnode, container, anchor, parent)
-            break
+            return mountStyleSheet(vnode, container, anchor, parent)
     }
 }
 
