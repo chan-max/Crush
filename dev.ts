@@ -8,7 +8,7 @@ let root = {
                     width:200px;
                     height:200px;
                     background-color:black;
-                    @media {
+                    @media (min-width:500px){
                         background-color:red;
                     }
                 }

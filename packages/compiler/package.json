@@ -25,6 +25,7 @@
     "@crush/common": "^0.0.0",
     "@crush/const": "^0.0.0",
     "@crush/core": "^0.0.0",
+    "@crush/css": "^0.0.0",
     "@crush/reactivity": "^0.0.0",
     "@crush/renderer": "^0.0.0",
     "@crush/router": "^0.0.0",
