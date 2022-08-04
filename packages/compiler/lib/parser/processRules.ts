@@ -35,4 +35,4 @@ export const processRules = (rules: any, isKeyframe = false) => {
             processRules(rule.children, isKeyframe)
         }
     })
-}
+} 

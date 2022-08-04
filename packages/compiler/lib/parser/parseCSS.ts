@@ -12,18 +12,16 @@ import {
     parseAttribute,
 } from './parseAttribute'
 
-import {
-    camelize
-} from '@crush/common'
 
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/
 
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
 
-const AtRuleRE = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/
-const mixinRE = /\.\.\.([^;]+);/
+const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/
+const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/
 
+const mixinRE = /\.\.\.([^;]+);/
 
 const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
 /*
@@ -32,8 +30,7 @@ const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
 const cssReservedWord = /^(if|else-if|else|for|elseIf)/
 
 import {
-    keyOf,
-    Nodes, NodesMap
+    Nodes
 } from '@crush/const'
 
 import { parseIterator } from './parseIterator'
@@ -41,9 +38,9 @@ import { parseIterator } from './parseIterator'
 
 export const parseCSS = (source: string): any => {
     var scanner = createScanner(source)
-    var ast: any = [],
-        stack: any = [],
-        exResult: any,
+    var ast: any = [], // 存储编译结果
+        stack: any = [], // 保留层级结构
+        exResult: any, // 尝试捕获
         current: any,
         parent = null,
         closing = false,
@@ -53,22 +50,43 @@ export const parseCSS = (source: string): any => {
             closing = true
         } else if (scanner.startsWith('@')) {
             /*
-                media conditions
+                一个 at-rule 是一个CSS 语句，以 at 符号开头， '@'  后跟一个标识符，并包括直到下一个分号的所有内容， 或下一个 CSS 块，以先到者为准。 --mdn
             */
-            var [key, content]: any = scanner.exec(AtRuleRE)
-            var type: any = NodesMap[key]
-            current = {
-                type
-            }
-            if (type === Nodes.MEDIA_RULE) {
-                current.media = content
-            } else if (type === Nodes.KEYFRAMES_RULE) {
-                current.keyframes = content
-            } else if (type === Nodes.SUPPORTS_RULE) {
-                current.supports = content
+            let groupPosition = scanner.indexOf('{')
+            let linePosition = scanner.indexOf(';')
+            if (groupPosition > linePosition) {
+                // line at rule
+                const [key, content]: any = scanner.exec(AtLineRuleRE)
+                // todo
+            } else {
+                // group at rule
+                const [key, content]: any = scanner.exec(AtGroupRuleRE)
+                switch (key) {
+                    case 'media':
+                        current = {
+                            type: Nodes.MEDIA_RULE,
+                            media: content
+                        }
+                        break
+                    case 'keyframes':
+                        current = {
+                            type: Nodes.KEYFRAMES_RULE,
+                            keyframes: content
+                        }
+                        break
+                    case 'supports':
+                        current = {
+                            type: Nodes.SUPPORTS_RULE,
+                            keyframes: content
+                        }
+                        break
+                    default:
+                        debugger
+                        break
+                }
             }
         } else if (scanner.expect('/*')) {
-            /* comment continue */
+            /* comment */
         } else if (scanner.startsWith('...')) {
             var [mixin]: any = scanner.exec(mixinRE);
             var m = {
@@ -78,33 +96,32 @@ export const parseCSS = (source: string): any => {
             (declarationGroup ||= []).push(m)
             continue
         } else if (cssReservedWord.test(scanner.source)) {
-            /* 
+            /*
                 处理指令，指令不再需要通过标识符去判断
             */
             var [dir, content]: any = scanner.exec(CSSDir)
-            var d: any = {}
+            current = {}
             switch (dir) {
                 case 'for':
-                    d.type = Nodes.FOR
-                    d.iterator = parseIterator(content)
+                    current.type = Nodes.FOR
+                    current.iterator = parseIterator(content)
                     break
                 case 'if':
-                    d.type = Nodes.IF
-                    d.condition = content
-                    d.isBranchStart = true
+                    current.type = Nodes.IF
+                    current.condition = content
+                    current.isBranchStart = true
                     break
                 case 'else-if':
                 case 'elseIf':
-                    d.type = Nodes.ELSE_IF
-                    d.condition = content
-                    d.isBranch = true
+                    current.type = Nodes.ELSE_IF
+                    current.condition = content
+                    current.isBranch = true
                     break
                 case 'else':
-                    d.type = Nodes.ELSE
-                    d.isBranch = true
+                    current.type = Nodes.ELSE
+                    current.isBranch = true
                     break
             }
-            current = d
         } else if (exResult = scanner.exec(selectorRE)) {
             /*
                 try to get the selector
@@ -117,7 +134,7 @@ export const parseCSS = (source: string): any => {
             /*
                 the last declaration must end with  " ; "
             */
-            var declaration: any = parseAttribute({ attribute: exResult[0],  value: exResult[1]  });
+            var declaration: any = parseAttribute({ attribute: exResult[0], value: exResult[1] });
 
             var {
                 property,

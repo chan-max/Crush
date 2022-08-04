@@ -1,10 +1,10 @@
-import { error,exec  } from "@crush/common"
+import { error, exec } from "@crush/common"
 
 export const createScanner = (source: string) => new Scanner(source)
 
 // operate the string template
 class Scanner {
-    source
+    source = ''
     constructor(source: string) {
         this.source = source.trim()
     }
@@ -21,6 +21,11 @@ class Scanner {
         // same as use expect without the second arg
         return this.source.startsWith(expect)
     }
+
+    indexOf(target:string){
+        return this.source.indexOf(target)
+    }
+
     exec(extractor: RegExp,) {
         var res = exec(this.source, extractor) as string[]
         if (!res) {

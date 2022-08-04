@@ -430,8 +430,7 @@ function genProps(node: any, context: any) {
                     (isComponent ?
                         toEventName(property, _arguments, modifiers) :
                         toNativeEventName(property, _arguments));
-
-                var callback = isHandler ? value : toArrowFunction(value)
+                var callback = isHandler ? value : toArrowFunction(value,'$') // 包裹函数都需要传入一个 $ 参数
                 if (modifiers && !isComponent) {
                     callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
                 }

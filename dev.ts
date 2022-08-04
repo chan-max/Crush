@@ -7,10 +7,13 @@ let root = {
                 .box{
                     width:200px;
                     height:200px;
-                    background-color:red;
+                    background-color:black;
+                    @media {
+                        background-color:red;
+                    }
                 }
         </style>
-        <div class="animate_rollIn_2s_infinite box">
+        <div .box>
         </div>
     `,
     create({ $self }: any) {

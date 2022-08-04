@@ -4,18 +4,22 @@
 */
 
 import { isArray, isNumber, isString, hyphenate } from "@crush/common"
-
+import { processHook,LifecycleHooks } from '@crush/core'
 import { Nodes } from "@crush/const"
 import { docCreateElement, insertElement } from "../dom"
 
 export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent: any) => {
     const { props, children } = vnode
+    processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     var el: any = docCreateElement('style')
     mountAttributes(el, props, parent, false)
+    processHook(LifecycleHooks.CREATED, vnode)
     vnode.el = el
+    processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     var sheet = el.sheet
     mountSheet(sheet, children)
+    processHook(LifecycleHooks.MOUNTED, vnode)
     return sheet
 }
 

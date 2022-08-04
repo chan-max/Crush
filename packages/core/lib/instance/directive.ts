@@ -63,6 +63,7 @@ export function processHook(type: LifecycleHooks, vnode: any, pVnode: any = null
         case Nodes.RENDER_COMPONENT:
             processRenderComponentHook(type, vnode, pVnode)
             break
+        case Nodes.STYLE:
         case Nodes.HTML_ELEMENT:
         case Nodes.SVG_ELEMENT:
             processElementHook(type, vnode, pVnode)
