@@ -52,7 +52,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
             不存在两个对应位置都为空的情况
         */
         if (!pRule) {
-            mountRule(sheet, nRule, vnode, cursor)
+            mountRule(sheet, nRule,  cursor)
             cursor++
         } else if (!nRule) {
             // unmount
@@ -61,7 +61,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
         } else if (pRule.nodeType !== nRule.nodeType) {
             // 当节点类型不同时，先卸载，再挂载 
             deleteRule(sheet, cursor)
-            mountRule(sheet, nRule, vnode, cursor)
+            mountRule(sheet, nRule,  cursor)
         } else {
             // update
             switch (nRule.nodeType) {
@@ -74,7 +74,7 @@ function updateSheet(pRules: any, nRules: any, sheet: any, vnode: any) {
                 case Nodes.SUPPORTS_RULE:
                     // supports can't update 
                     deleteRule(sheet, cursor)
-                    mountRule(sheet, nRule, vnode, cursor)
+                    mountRule(sheet, nRule,cursor)
                     break
                 case Nodes.KEYFRAMES_RULE:
                     updateKeyframesRule(pRule, nRule, vnode)
@@ -151,7 +151,7 @@ function updateKeyframesRule(pRule: any, nRule: any, vnode: any) {
         var pk = pRules[i]
         var nk = nRules[i]
         if (!pk) {
-            mountKeyframeRule(keyframesrule, nk, vnode)
+            mountKeyframeRule(keyframesrule, nk)
         } else if (!nk) {
             deleteKeyframe(keyframesrule, pk.keyframe)
         } else {

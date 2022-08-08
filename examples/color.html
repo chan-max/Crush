@@ -1,0 +1,73 @@
+<html>
+
+<head>
+</head>
+
+<body>
+    <div id="app">
+        <style>
+            #container{
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+        <div #container>
+        <for iterator="red in colors">
+            <for iterator="green in colors">
+                <for iterator="blue in colors">
+                    <color-card $red $green $blue>
+                </for>
+            </for>
+        </for>
+        </div>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+
+<script>
+    const {
+        createApp
+    } = Crush
+
+    const colorCard = {
+        props: ['red', 'green', 'blue'],
+        template: /*html*/ `
+            <style>
+                #card$($uid){
+                    width:250px;
+                    height:100px;
+                    font-weight:bold;
+                    text-align:center;
+                    line-height:100px;
+                    $color:rgb(255-red,255-green,255-blue);
+                    $background-color:rgb(red,green,blue);
+                }
+            </style>
+            <div $id="'card'+ $uid">red:{{red}}- green:{{green}}-blue:{{blue}}</div>
+        `
+    }
+
+    const root = {
+        components: {
+            colorCard
+        },
+        create({
+            $self
+        }) {
+            let colors = []
+            for (let i = 0; i < 255; i += 20) {
+                colors.push(i)
+            }
+            $self.colors = colors
+        }
+    }
+
+
+    let app = createApp(root)
+
+    app.mount('#app')
+</script>
+
+</html>

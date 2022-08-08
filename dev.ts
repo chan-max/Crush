@@ -11,7 +11,7 @@ let root = {
                     @media (min-width:500px){
                         background-color:red;
                     }
-                }
+                } 
         </style>
         <div .box>
         </div>

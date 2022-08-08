@@ -229,7 +229,7 @@ var Crush = (function (exports) {
             key,
         };
     };
-    var createStyle = (selector, children, key) => {
+    var createStyle = (selector, children, key = uid) => {
         return {
             nodeType: 26 /* STYLE_RULE */,
             selector,
@@ -237,7 +237,7 @@ var Crush = (function (exports) {
             key
         };
     };
-    var createMedia = (media, children, key) => ({
+    var createMedia = (media, children, key = uid()) => ({
         nodeType: 22 /* MEDIA_RULE */,
         media,
         children,
@@ -259,13 +259,13 @@ var Crush = (function (exports) {
             children,
         };
     }
-    var createSupports = (supports, children, key) => ({
+    var createSupports = (supports, children, key = uid()) => ({
         nodeType: 23 /* SUPPORTS_RULE */,
         supports,
         children,
         key
     });
-    var createDeclaration = (children, key) => {
+    var createDeclaration = (children, key = uid()) => {
         return {
             nodeType: 29 /* DECLARATION */,
             /*
@@ -857,39 +857,43 @@ var Crush = (function (exports) {
     */
     const mountStyleSheet = (vnode, container, anchor, parent) => {
         const { props, children } = vnode;
+        processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
         var el = docCreateElement('style');
         mountAttributes(el, props, parent, false);
+        processHook("created" /* CREATED */, vnode);
         vnode.el = el;
+        processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
         insertElement(el, container, anchor);
         var sheet = el.sheet;
-        mountSheet(sheet, children, vnode);
+        mountSheet(sheet, children);
+        processHook("mounted" /* MOUNTED */, vnode);
+        return sheet;
     };
-    function mountSheet(sheet, rules, vnode) {
+    function mountSheet(sheet, rules) {
         rules.forEach((rule) => {
-            mountRule(sheet, rule, vnode);
+            mountRule(sheet, rule);
         });
     }
-    function mountRule(sheet, rule, vnode, index = sheet.cssRules.length) {
+    function mountRule(sheet, rule, index = sheet.cssRules.length) {
         switch (rule.nodeType) {
             case 26 /* STYLE_RULE */:
-                mountStyleRule(sheet, rule, vnode, index);
+                mountStyleRule(sheet, rule, index);
                 break;
             case 22 /* MEDIA_RULE */:
-                mountMediaRule(sheet, rule, vnode, index);
+                mountMediaRule(sheet, rule, index);
                 break;
             case 23 /* SUPPORTS_RULE */:
-                mountSupportsRule(sheet, rule, vnode, index);
+                mountSupportsRule(sheet, rule, index);
                 break;
             case 24 /* KEYFRAMES_RULE */:
-                mountKeyframesRule(sheet, rule, vnode, index);
+                mountKeyframesRule(sheet, rule, index);
                 break;
             case 27 /* KEYFRAME_RULE */:
-                mountKeyframeRule(sheet, rule, vnode, index);
+                mountKeyframeRule(sheet, rule);
                 break;
         }
     }
-    function mountStyleRule(sheet, rule, vnode, // this is style vnode, it carry the special attrs for rendering
-    insertIndex = sheet.cssRules.length) {
+    function mountStyleRule(sheet, rule, insertIndex = sheet.cssRules.length) {
         const { selector, children: declaration } = rule;
         if (!declaration)
             return;
@@ -899,7 +903,7 @@ var Crush = (function (exports) {
         const insertedRuleStyle = insertedRule.style;
         mountDeclaration(insertedRuleStyle, declaration);
     }
-    function mountMediaRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    function mountMediaRule(sheet, rule, insertIndex = sheet.cssRules.length) {
         var media = rule.media;
         var rules = rule.children;
         if (isArray(media)) {
@@ -908,24 +912,24 @@ var Crush = (function (exports) {
         var index = insertMedia(sheet, media, insertIndex);
         var newSheet = sheet.cssRules[index];
         rule.rule = newSheet;
-        mountSheet(newSheet, rules, vnode);
+        mountSheet(newSheet, rules);
     }
-    function mountSupportsRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    function mountSupportsRule(sheet, rule, insertIndex = sheet.cssRules.length) {
         var supports = rule.supports;
         var rules = rule.children;
         var index = insertSupports(sheet, supports, insertIndex);
         var newSheet = sheet.cssRules[index];
-        mountSheet(newSheet, rules, vnode);
+        mountSheet(newSheet, rules);
     }
-    function mountKeyframesRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    function mountKeyframesRule(sheet, rule, insertIndex = sheet.cssRules.length) {
         var keyframes = rule.keyframes;
         var rules = rule.children;
         var index = insertKeyframes(sheet, keyframes, insertIndex);
         rule.rule = sheet.cssRules[insertIndex];
         var newSheet = sheet.cssRules[index];
-        mountSheet(newSheet, rules, vnode);
+        mountSheet(newSheet, rules);
     }
-    function mountKeyframeRule(sheet, rule, vnode, insertIndex = sheet.cssRules.length) {
+    function mountKeyframeRule(sheet, rule) {
         var { keyframe, children: declaration } = rule;
         insertKeyframe(sheet, keyframe);
         sheet.appendRule(`${keyframe}{}`);
@@ -973,26 +977,19 @@ var Crush = (function (exports) {
     function mount(vnode, container, anchor = null, parent = null) {
         switch (vnode.nodeType) {
             case 13 /* HTML_ELEMENT */:
-                mountElement(vnode, container, anchor, parent);
-                break;
+                return mountElement(vnode, container, anchor, parent);
             case 9 /* SVG_ELEMENT */:
-                mountElement(vnode, container, anchor, parent, true);
-                break;
+                return mountElement(vnode, container, anchor, parent, true);
             case 12 /* TEXT */:
-                mountText(vnode, container, anchor, parent);
-                break;
+                return mountText(vnode, container, anchor, parent);
             case 10 /* HTML_COMMENT */:
-                insertElement(vnode.el = docCreateComment(vnode.children), container, anchor);
-                break;
+                return insertElement(vnode.el = docCreateComment(vnode.children), container, anchor);
             case 14 /* COMPONENT */:
-                mountComponent(vnode, container, anchor, parent);
-                break;
+                return mountComponent(vnode, container, anchor, parent);
             case 15 /* RENDER_COMPONENT */:
-                mountRenderComponent(vnode, container, anchor, parent);
-                break;
+                return mountRenderComponent(vnode, container, anchor, parent);
             case 17 /* STYLE */:
-                mountStyleSheet(vnode, container, anchor, parent);
-                break;
+                return mountStyleSheet(vnode, container, anchor, parent);
         }
     }
     function mountChildren(children, container, anchor, parent) {
@@ -1267,7 +1264,7 @@ var Crush = (function (exports) {
         /*
             更新style元素的props，并且处理特殊属性如，unit,url 等
         */
-        updateSheet(p.children, n.children, sheet, n);
+        updateSheet(p.children, n.children, sheet);
     };
     function updateSheet(pRules, nRules, sheet, vnode) {
         /*
@@ -1291,7 +1288,7 @@ var Crush = (function (exports) {
                 不存在两个对应位置都为空的情况
             */
             if (!pRule) {
-                mountRule(sheet, nRule, vnode, cursor);
+                mountRule(sheet, nRule, cursor);
                 cursor++;
             }
             else if (!nRule) {
@@ -1302,7 +1299,7 @@ var Crush = (function (exports) {
             else if (pRule.nodeType !== nRule.nodeType) {
                 // 当节点类型不同时，先卸载，再挂载 
                 deleteRule(sheet, cursor);
-                mountRule(sheet, nRule, vnode, cursor);
+                mountRule(sheet, nRule, cursor);
             }
             else {
                 // update
@@ -1311,12 +1308,12 @@ var Crush = (function (exports) {
                         updateStyleRule(pRule, nRule);
                         break;
                     case 22 /* MEDIA_RULE */:
-                        updateMediaRule(pRule, nRule, vnode);
+                        updateMediaRule(pRule, nRule);
                         break;
                     case 23 /* SUPPORTS_RULE */:
                         // supports can't update 
                         deleteRule(sheet, cursor);
-                        mountRule(sheet, nRule, vnode, cursor);
+                        mountRule(sheet, nRule, cursor);
                         break;
                     case 24 /* KEYFRAMES_RULE */:
                         updateKeyframesRule(pRule, nRule);
@@ -1360,7 +1357,7 @@ var Crush = (function (exports) {
         var { media: pMedia, children: pRules } = pRule;
         var { media: nMedia, children: nRules } = nRule;
         updateMedium(rule, pMedia, nMedia);
-        updateSheet(pRules, nRules, rule, vnode);
+        updateSheet(pRules, nRules, rule);
     }
     function updateKeyframesRule(pRule, nRule, vnode) {
         var keyframesrule = nRule.rule = pRule.rule;
@@ -2593,7 +2590,6 @@ var Crush = (function (exports) {
             instance.renderingVnode = nVnode;
             processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nComponentVnode, pComponentVnode);
             beforePatch && beforePatch(pVnode, nVnode);
-            console.log(pVnode, nVnode);
             patch(pVnode, nVnode, container, anchor, instance);
             instance.vnode = nVnode;
             instance.isMounted = true;
@@ -2855,7 +2851,7 @@ var Crush = (function (exports) {
     const createScanner = (source) => new Scanner(source);
     // operate the string template
     class Scanner {
-        source;
+        source = '';
         constructor(source) {
             this.source = source.trim();
         }
@@ -2871,6 +2867,9 @@ var Crush = (function (exports) {
         startsWith(expect) {
             // same as use expect without the second arg
             return this.source.startsWith(expect);
+        }
+        indexOf(target) {
+            return this.source.indexOf(target);
         }
         exec(extractor) {
             var res = exec(this.source, extractor);
@@ -3161,7 +3160,8 @@ var Crush = (function (exports) {
 
     const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
     const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
-    const AtRuleRE = /^@([\w]+)\s*([^{]+)(?<!\s)\s*{/;
+    const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/;
+    const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/;
     const mixinRE = /\.\.\.([^;]+);/;
     const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
     /*
@@ -3170,28 +3170,51 @@ var Crush = (function (exports) {
     const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
     const parseCSS = (source) => {
         var scanner = createScanner(source);
-        var ast = [], stack = [], exResult, current, parent = null, closing = false, declarationGroup;
+        var ast = [], // 存储编译结果
+        stack = [], // 保留层级结构
+        exResult, // 尝试捕获
+        current, parent = null, closing = false, declarationGroup;
         while (scanner.source) {
             if (scanner.startsWith('}')) {
                 closing = true;
             }
             else if (scanner.startsWith('@')) {
                 /*
-                    media conditions
+                    一个 at-rule 是一个CSS 语句，以 at 符号开头， '@'  后跟一个标识符，并包括直到下一个分号的所有内容， 或下一个 CSS 块，以先到者为准。 --mdn
                 */
-                var [key, content] = scanner.exec(AtRuleRE);
-                var type = exports.NodesMap[key];
-                current = {
-                    type
-                };
-                if (type === 22 /* MEDIA_RULE */) {
-                    current.media = content;
+                let groupPosition = scanner.indexOf('{');
+                let linePosition = scanner.indexOf(';');
+                if (groupPosition > linePosition) {
+                    // line at rule
+                    scanner.exec(AtLineRuleRE);
+                    // todo
                 }
-                else if (type === 24 /* KEYFRAMES_RULE */) {
-                    current.keyframes = content;
-                }
-                else if (type === 23 /* SUPPORTS_RULE */) {
-                    current.supports = content;
+                else {
+                    // group at rule
+                    const [key, content] = scanner.exec(AtGroupRuleRE);
+                    switch (key) {
+                        case 'media':
+                            current = {
+                                type: 22 /* MEDIA_RULE */,
+                                media: content
+                            };
+                            break;
+                        case 'keyframes':
+                            current = {
+                                type: 24 /* KEYFRAMES_RULE */,
+                                keyframes: content
+                            };
+                            break;
+                        case 'supports':
+                            current = {
+                                type: 23 /* SUPPORTS_RULE */,
+                                keyframes: content
+                            };
+                            break;
+                        default:
+                            debugger;
+                            break;
+                    }
                 }
             }
             else if (scanner.expect('/*')) ;
@@ -3209,29 +3232,28 @@ var Crush = (function (exports) {
                     处理指令，指令不再需要通过标识符去判断
                 */
                 var [dir, content] = scanner.exec(CSSDir);
-                var d = {};
+                current = {};
                 switch (dir) {
                     case 'for':
-                        d.type = 6 /* FOR */;
-                        d.iterator = parseIterator(content);
+                        current.type = 6 /* FOR */;
+                        current.iterator = parseIterator(content);
                         break;
                     case 'if':
-                        d.type = 3 /* IF */;
-                        d.condition = content;
-                        d.isBranchStart = true;
+                        current.type = 3 /* IF */;
+                        current.condition = content;
+                        current.isBranchStart = true;
                         break;
                     case 'else-if':
                     case 'elseIf':
-                        d.type = 4 /* ELSE_IF */;
-                        d.condition = content;
-                        d.isBranch = true;
+                        current.type = 4 /* ELSE_IF */;
+                        current.condition = content;
+                        current.isBranch = true;
                         break;
                     case 'else':
-                        d.type = 5 /* ELSE */;
-                        d.isBranch = true;
+                        current.type = 5 /* ELSE */;
+                        current.isBranch = true;
                         break;
                 }
-                current = d;
             }
             else if (exResult = scanner.exec(selectorRE)) {
                 /*
@@ -3984,7 +4006,7 @@ var Crush = (function (exports) {
                         (isComponent ?
                             toEventName(property, _arguments, modifiers) :
                             toNativeEventName(property, _arguments));
-                    var callback = isHandler ? value : toArrowFunction(value);
+                    var callback = isHandler ? value : toArrowFunction(value, '$'); // 包裹函数都需要传入一个 $ 参数
                     if (modifiers && !isComponent) {
                         callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
                     }
@@ -5366,7 +5388,6 @@ var Crush = (function (exports) {
         keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
     ];
 
-    const NODES = 21 /* AT */;
     const animationFrames = {
         // slide 滑动
         slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
@@ -5407,7 +5428,21 @@ var Crush = (function (exports) {
     };
     // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
     const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames));
-    const installAnimation = () => mount(createStyleSheet(null, animations), document.head);
+    // 关于 animate的class
+    let animationClassStyleSheet, animationClassRecord = {};
+    function initAnimationClass(className) {
+        if (!className.startsWith('animate_') || animationClassRecord[className]) {
+            return;
+        }
+        let targetSheet = animationClassStyleSheet ||= mount(createStyleSheet(null, animations), document.head);
+        let declaration = className.split('animate_')[1].split('_');
+        mountStyleRule(targetSheet, createStyle('.' + className, { animation: declaration }));
+    }
+    const installAnimation = () => {
+        // 挂载所有动画帧
+        mount(createStyleSheet(null, animations), document.head);
+        onBeforeClassMount(initAnimationClass);
+    };
 
     function setElementTranstion(el) {
     }
@@ -6317,6 +6352,7 @@ var Crush = (function (exports) {
             case 15 /* RENDER_COMPONENT */:
                 processRenderComponentHook(type, vnode, pVnode);
                 break;
+            case 17 /* STYLE */:
             case 13 /* HTML_ELEMENT */:
             case 9 /* SVG_ELEMENT */:
                 processElementHook(type, vnode, pVnode);
@@ -6529,13 +6565,20 @@ var Crush = (function (exports) {
         return getCurrentInstance().customOptions;
     }
 
+    const responsiveLayoutMedias = {
+        xs: '(max-width:768px)',
+        sm: '(min-width:768px) and (max-width:992px)',
+        md: '(min-width:992px) and (max-width:1200px)',
+        lg: '(min-width:1200px) and (max-width:1920px)',
+        xl: '(min-width:1920px)'
+    };
+
     exports.$var = $var;
     exports.Comment = Comment;
     exports.ComputedRef = ComputedRef;
     exports.IMPORTANT = IMPORTANT;
     exports.IMPORTANT_KEY = IMPORTANT_KEY;
     exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;
-    exports.NODES = NODES;
     exports.NULL = NULL;
     exports.ReactiveEffect = ReactiveEffect;
     exports.ReactiveTypeSymbol = ReactiveTypeSymbol;
@@ -6762,6 +6805,7 @@ var Crush = (function (exports) {
     exports.renderList = renderList;
     exports.renderSlot = renderSlot;
     exports.resolveOptions = resolveOptions;
+    exports.responsiveLayoutMedias = responsiveLayoutMedias;
     exports.rgb = rgb;
     exports.rgbToHex = rgbToHex;
     exports.rgba = rgba;
