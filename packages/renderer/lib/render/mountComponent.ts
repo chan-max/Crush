@@ -45,7 +45,15 @@ function setScopeData(scope: any, data: any) {
     if (isObject(data)) {
         for (let key in data) {
             // data 存在时应该警告
-            scope[key] = data[key]
+            let value = data[key]
+            // 挂载到实例的promise会自动请求
+            if (isPromise(value)) {
+                value.then((result: any) => {
+                    scope[key] = result
+                })
+            } else {
+                scope[key] = value
+            }
         }
     } else if (isPromise(data)) {
         // async create
@@ -99,7 +107,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     // component update
 
     // component update fn
-    function update() { // !传入next代表为非自更新
+    function update() {
         const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance
         // 每次 更新生成新树
         setCurrentInstance(instance)
@@ -136,7 +144,6 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         processHook(isMounted ? LifecycleHooks.UPDATED : LifecycleHooks.MOUNTED, nComponentVnode, pComponentVnode)
     }
 
-    //  call at every update
     instance.update = update
 
     const rednerEffect = createReactiveEffect(update, queueJob)

@@ -1,4 +1,16 @@
-import { computed, createApp, debounce, defineSelfName, doKeyframesAnimation, effect, h, reactive, ref, rgb, shallowCloneObject, throttle, onMounted, onBeforeClassMount } from "./packages/core";
+import { computed, createApp, } from "./packages/core";
+
+
+function getData() {
+    return new Promise((resolve: any) => {
+        setTimeout(() => {
+            resolve({
+                name: 'yauso',
+                age: 20
+            })
+        }, 2000);
+    })
+}
 
 
 let root = {
@@ -7,17 +19,16 @@ let root = {
                 .box{
                     width:200px;
                     height:200px;
-                    background-color:black;
-                    @media (min-width:500px){
-                        background-color:red;
-                    }
+                    border:5px solid red;
                 } 
         </style>
         <div .box>
+            {{data}}
         </div>
     `,
     create({ $self }: any) {
-
+        window.$self = $self
+        $self.data = getData()
     }
 }
 

@@ -1,12 +1,12 @@
 import { doKeyframesAnimation } from "@crush/animate";
-import { hasOwn, uid, warn } from "@crush/common";
+import { hasOwn, isPromise, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
 import { addInstanceListener, createInstanceEventEmitter, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
-import {getEL} from '@crush/renderer'
+import { getEL } from '@crush/renderer'
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 
 const scopeProperties: any = {
@@ -74,22 +74,35 @@ export function createScope(instance: any) {
     return new Proxy(scope, {
         get(target: any, key: any, receiver: any) {
             if (hasOwn(scopeProperties, key)) {
+                // 实例方法
                 return scopeProperties[key](instance)
             }
             return Reflect.get(target, key, receiver)
         },
         set(target: any, key: any, newValue: any, receiver: any) {
             if (hasOwn(scopeProperties, key)) {
+                // 实例方法不能设置
                 return true
+            }
+
+            // 挂载到作用于上的promise异步数据会被自动请求
+            if (isPromise(newValue)) {
+                // 先设置一个默认值,不然会出现bug
+                Reflect.set(target, key, null, receiver)
+                newValue.then((result: any) => {
+                    return Reflect.set(target, key, result, receiver)
+                })
             } else {
                 return Reflect.set(target, key, newValue, receiver)
             }
+
+            return true
         }
     })
 }
 
 // 这些方法只能提供给模板使用
-const specialRenderMethods: any = {
+const specialTemplateMethods: any = {
     // 模板会编译成 () => debounce(...) 所以函数会直接调用
     debounce(fn: any, wait: number) {
         return cacheDebounce(fn, wait)()
@@ -106,14 +119,14 @@ export function createRenderScope(instanceScope: any) {
                 return
             }
 
-            if (hasOwn(specialRenderMethods, key)) {
-                return specialRenderMethods[key]
+            if (hasOwn(specialTemplateMethods, key)) {
+                return specialTemplateMethods[key]
             }
 
             // todo magic variables
-
             var result = Reflect.get(target, key, receiver)
             return isRef(result) ? result.value : result
         }
     })
 }
+

@@ -1,8 +1,6 @@
-
 import {
     createScanner
 } from './scanner'
-
 
 import {
     parseSelector,
@@ -100,26 +98,33 @@ export const parseCSS = (source: string): any => {
                 处理指令，指令不再需要通过标识符去判断
             */
             var [dir, content]: any = scanner.exec(CSSDir)
-            current = {}
             switch (dir) {
                 case 'for':
-                    current.type = Nodes.FOR
-                    current.iterator = parseIterator(content)
+                    current = {
+                        type: Nodes.FOR,
+                        iterator: parseIterator(content)
+                    }
                     break
                 case 'if':
-                    current.type = Nodes.IF
-                    current.condition = content
-                    current.isBranchStart = true
+                    current = {
+                        type: Nodes.IF,
+                        condition: content,
+                        isBranchStart: true
+                    }
                     break
                 case 'else-if':
                 case 'elseIf':
-                    current.type = Nodes.ELSE_IF
-                    current.condition = content
-                    current.isBranch = true
+                    current = {
+                        type: Nodes.ELSE_IF,
+                        condition: content,
+                        isBranch: true
+                    }
                     break
                 case 'else':
-                    current.type = Nodes.ELSE
-                    current.isBranch = true
+                    current = {
+                        type: Nodes.ELSE,
+                        isBranch: true
+                    }
                     break
             }
         } else if (exResult = scanner.exec(selectorRE)) {

@@ -22,7 +22,7 @@ function typeOf(value: any) {
 }
 
 const isPromise = (value: any) => {
-    return isFunction(value.then) && isFunction(value.catch);
+    return value && isFunction(value.then) && isFunction(value.catch);
 };
 
 const isDate = (value: any) => value instanceof Date
