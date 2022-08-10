@@ -35,7 +35,7 @@ class CodeGenerator {
     getCode = () => {
         this.unshift(declare(
             `{${Object.keys(this.methods).join(',')}}`
-            , RENDER_METHODS))
+            , 'renderMethods'))
         return this.code
     }
 
@@ -62,14 +62,11 @@ class CodeGenerator {
     }
 
     setScope() {
-        
+
     }
 
 }
 
-
-
-const RENDER_METHODS = 'renderMethods'
 
 export function compile(template: string) {
 
@@ -79,8 +76,10 @@ export function compile(template: string) {
     var context = new CodeGenerator()
     // 初始化所有渲染方法
 
+    // 模板的渲染作用域
     var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
-    const renderCode: any = genNodes(ast as any[], context)
+
+    const renderCode: any = genNodes(ast, context)
 
     const content = `
         with(${SCOPE}){
@@ -90,11 +89,8 @@ export function compile(template: string) {
 
     context.pushNewLine(content)
 
-    /*  
-        the dom template ast will alwways return an array
-    */
-    var rf = createFunction(context.getCode(), RENDER_METHODS)
-    console.log(rf);
-    return rf
+    var renderFunction = createFunction(context.getCode(), 'renderMethods')
+    console.log(renderFunction);
+    return renderFunction
 }
 

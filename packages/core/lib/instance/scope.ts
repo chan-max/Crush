@@ -12,6 +12,7 @@ import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common"
 const scopeProperties: any = {
     $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
     $uuid: uid, // 每次访问均返回不同的id
+    $options:(instance:any) => instance.options,
     $instance: (instance: ComponentInstance) => instance,
     $refs: (instance: ComponentInstance) => {
         return instance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs

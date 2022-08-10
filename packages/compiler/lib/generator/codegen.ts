@@ -265,7 +265,7 @@ function genNode(node: any, context: any): any {
             return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.MEDIA_RULE:
             const rules = stringify(genChildren(node.children, context))
-            return context.callRenderFn('createMedia', toBackQuotes(node.media), rules, uStringId())
+            return context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId())
         case Nodes.KEYFRAMES_RULE:
             return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
         case Nodes.KEYFRAME_RULE:
@@ -430,7 +430,7 @@ function genProps(node: any, context: any) {
                     (isComponent ?
                         toEventName(property, _arguments, modifiers) :
                         toNativeEventName(property, _arguments));
-                var callback = isHandler ? value : toArrowFunction(value,'$') // 包裹函数都需要传入一个 $ 参数
+                var callback = isHandler ? value : toArrowFunction(value, '$') // 包裹函数都需要传入一个 $ 参数
                 if (modifiers && !isComponent) {
                     callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
                 }

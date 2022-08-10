@@ -425,12 +425,33 @@ crush提供的css模板是基于原生css的一种拓展，目标是对原生css
 - keyframes
 - supports
 
-拓展的如下
+### @screens
 
-- sm
-- md
-- lg
-- xl
+@screens 是对@meida的另一种简写 , 并且可以通过app的配置来自定义尺寸
+
+```
+    app.config.customScreens.myipad = `(min-width:800px;) and (max-width:1200px)`
+
+    <style>
+        div{
+            @screens myipad{
+                background-color:red;
+            }
+        }
+
+        // 等同于
+
+        div{
+            @media (min-width:800px;) and (max-width:1200px){
+                background-color:red;
+            }
+        }
+    </style>
+```
+
+
+
+
 
 ### css原生模板
 

@@ -78,6 +78,14 @@ export const parseCSS = (source: string): any => {
                             keyframes: content
                         }
                         break
+                    case 'screens':
+                        // 转换为动态 media
+                        current = {
+                            type: Nodes.MEDIA_RULE,
+                            media: content.trim(),
+                            appConfigMedia: true // 使用应用配置
+                        }
+                        break
                     default:
                         debugger
                         break

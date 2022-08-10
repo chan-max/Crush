@@ -1,5 +1,5 @@
 import { builtInComponents, builtInDirectives } from "@crush/builtin"
-import { error, isFunction, warn } from "@crush/common"
+import { error, isFunction, isObject, warn } from "@crush/common"
 import { isString } from "@crush/common"
 import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
@@ -9,6 +9,7 @@ import { mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
+import { responsiveLayoutMedia } from "@crush/css"
 
 
 var currentApp: any
@@ -19,6 +20,11 @@ export function getCurrentApp(): any {
 
 
 export function createApp(rootComponent: any) {
+
+    if (currentApp) {
+        // 只能有一个应用
+        return
+    }
 
     const app: any = {
         isMounted: false,
@@ -32,7 +38,12 @@ export function createApp(rootComponent: any) {
         mixins: [],
         use,
         mount: mountApp,
-        unmount: unmountApp
+        unmount: unmountApp,
+
+        config: {
+            // @screens
+            customScreens: responsiveLayoutMedia
+        }
     }
 
     currentApp = app
@@ -80,10 +91,24 @@ export function createApp(rootComponent: any) {
 
 
     function unmountApp() {
+
+        // 卸载已安装的插件
+        app.plugins.forEach((plugin: any) => {
+            let uninstall = isObject(plugin) && plugin.uninstall
+            if (uninstall) {
+                uninstall(app)
+            }
+        });
+
         unmountComponent(app.rootVnode, app.container)
+        app.isMounted = false
+        currentApp = null
     }
 
     return app
 }
 
 
+export function getCustomScreensMedia(screen: string) {
+    return getCurrentApp().config.customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
+}

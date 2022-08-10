@@ -1,39 +1,33 @@
-import { computed, createApp, } from "./packages/core";
-
-
-function getData() {
-    return new Promise((resolve: any) => {
-        setTimeout(() => {
-            resolve({
-                name: 'yauso',
-                age: 20
-            })
-        }, 2000);
-    })
-}
+import { computed, createApp, usePromise, watchRef, } from "./packages/core";
 
 
 let root = {
     template: /*html*/`
-        <style>
+        <style> 
                 .box{
-                    width:200px;
-                    height:200px;
-                    border:5px solid red;
-                } 
+                    width:100px;
+                    height:100px;
+                    background-color:black;
+                    @screens myipad{
+                        background-color:blue;
+                    }
+                }
         </style>
-        <div .box>
-            {{data}}
+        <div class="box">
+            
         </div>
     `,
-    create({ $self }: any) {
-        window.$self = $self
-        $self.data = getData()
+    create({ $self,$options }: any) {
+
     }
 }
 
 
-
 const app = createApp(root)
 
+
+console.log(app);
+
+
 app.mount('#app')
+

@@ -12,7 +12,7 @@ import {
 } from './vnode/dom'
 
 import { important } from './common/important'
-import { mergeSelectors } from '@crush/core'
+import { mergeSelectors , getCustomScreensMedia } from '@crush/core'
 
 import {
     createStyleSheet,
@@ -83,5 +83,6 @@ export default {
     createComponent,
     renderSlot,
     mergeSelectors,
-    withEventModifiers
+    withEventModifiers,
+    getCustomScreensMedia
 }

@@ -39,7 +39,6 @@ export const createComponentInstance = (options: any, parent: any) => {
         watch: null,
         renderEffect: null,
         render: options.render,
-        customOptions: options.customOptions,
         propsOptions: options.propsOptions || emptyObject,
         emitsOptions: options.emitsOptions || emptyObject,
         createRender: options.createRender,
@@ -95,7 +94,6 @@ export interface ComponentInstance {
     props: any
     attrs: any
     refs: any
-    customOptions: any
     propsOptions: any
     emitsOptions: any
     createRender: any

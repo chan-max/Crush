@@ -89,9 +89,6 @@ export function resolveOptions(options: any) {
             case ComponentOptions.NAME:
                 break
             default:
-                /*custom options*/
-                const customOptions = options.customOptions ||= {}
-                customOptions[key] = value
                 break
         }
 
