@@ -1,8 +1,26 @@
 import { computed, createApp, usePromise, watchRef, } from "./packages/core";
+import { parseAttribute } from '@crush/compiler'
+
+
+
+
+let tom = {
+    template: `
+        <h1 @click="log"> 我是汤姆猫 </h1>
+    `,
+    create({ $self }) {
+        $self.log = () => {
+            console.log($self.$x);
+        }
+    }
+}
 
 
 
 let root = {
+    components: {
+        tom
+    },
     template: /*html*/`
         <style> 
                 .box{
@@ -14,25 +32,27 @@ let root = {
                     }
                 }
         </style>
-        <div class="box" @click="log" for="i in count">
-            {{i}}
+        <div class="box" @click="log">
         </div>
+        <tom>
     `,
     create({ $self }: any) {
-        window.$self = $self
-        $self.count = 1
         $self.log = () => {
-     
-            $self.count++
-            console.log($self.$el)
+            console.log($self.$x)
         }
     }
 }
 
 const app = createApp(root)
+
+
+
 app.customScreens.myipad = `(min-width:800px) and (max-width:1200px)`
 
+app.globalProperties.$x = 123456789
 
 
 app.mount('#app')
+
+console.log(app);
 

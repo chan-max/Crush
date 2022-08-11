@@ -44,7 +44,10 @@ export function createApp(rootComponent: any) {
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
-        scopeProperties: scopeProperties
+        // scope property
+        globalProperties: scopeProperties,
+
+        compilerOptions: null
     }
 
     currentApp = app

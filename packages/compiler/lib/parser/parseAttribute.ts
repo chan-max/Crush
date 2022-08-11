@@ -19,8 +19,9 @@ const AttributeEndFlags = [
     '!' // important css property
 ]
 
-
+// 合法的属性名称
 const staticAttributeNameRE = /[\w-]+/
+
 
 // both for html attribute and css declaration
 export function parseAttribute(attr: any) {
@@ -47,27 +48,35 @@ export function parseAttribute(attr: any) {
     }
 
 
-    let isDynamicProperty, property, _arguments, filters, modifiers
+    let isDynamicProperty, property, decorators
 
     if (attribute.startsWith('(')) {
+        // dynamic attribute
         let lastIndexOfBorder = attribute.lastIndexOf(')')
         property = attribute.slice(1, lastIndexOfBorder)
         isDynamicProperty = true
         let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1) // 防止内部表达式太复杂解析出错
-        var tokens = attributeModifierRE.exec(argumentsAndModifiers)
-        let [_, __arguments, _modifiers]: any = tokens
-        _arguments = __arguments && __arguments.split(':')
-        modifiers = _modifiers && _modifiers.split('.')
+
     } else {
         isDynamicProperty = false
         // 非动态属性， 先提取出 属性名称
         property = (staticAttributeNameRE.exec(attribute) as any)[0]
+        decorators = attribute.slice(property?.length)
+    }
 
-        var tokens = attributeModifierRE.exec(attribute.slice(property?.length))
-        let [_, __arguments, _filters, _modifiers]: any = tokens
-        _arguments = __arguments && __arguments.split(':')
-        filters = _filters && _filters.split('|')
-        modifiers = _modifiers && _modifiers.split('.')
+    let _arguments, filters, modifiers
+
+    if (decorators) {
+        let tokens: any = decorators.split(/(?=[\.|:])/)
+        tokens.forEach((token: any) => {
+            if (token[0] === ':') {
+                (_arguments ||= []).push(token.slice(1))
+            } else if (token[0] === '|') {
+                (filters ||= []).push(token.slice(1))
+            } else if (token[0] === '.') {
+                (modifiers ||= []).push(token.slice(1))
+            }
+        });
     }
 
     attr.isBooleanProperty = isUndefined(value)

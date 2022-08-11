@@ -2532,6 +2532,7 @@ function setCurrentInstance(instance) {
 function getCurrentInstance() {
     return currentInstance;
 }
+// 清除当前组件引用
 function clearCurrentInstance() {
     currentInstance = null;
 }
@@ -5876,6 +5877,306 @@ const responsiveLayoutMedia = {
     xl: '(min-width:1920px)'
 };
 
+var cssMethods = {
+    rgba,
+    rgb,
+    hsl,
+    hsla,
+    $var,
+    attr,
+    calc,
+    cubicBezier,
+    max,
+    min,
+    translateX,
+    translateY,
+    scale,
+    rotate3d,
+    translate3d,
+    rotate,
+    perspective,
+    scale3d,
+    skew,
+    skewX,
+    skewY,
+    scaleY,
+    rotateY,
+    conicGradient,
+    linearGradient,
+    radialGradient
+};
+
+//  基于 vnode 的元素选择器，在vnode树中查找元素，必须是处理过的树，也可以查询组件等
+/*
+    *  所有元素
+    #  id 选择器
+    .  class 选择器
+    普通标签选择 ， 组件会返回实例
+*/
+// 如果是组件标签的话，直接通过实例身上的components，可获得组件的type
+var QuerySelectorType;
+(function (QuerySelectorType) {
+    QuerySelectorType[QuerySelectorType["ID"] = 0] = "ID";
+    QuerySelectorType[QuerySelectorType["CLASS"] = 1] = "CLASS";
+    QuerySelectorType[QuerySelectorType["ELEMENT_TYPE"] = 2] = "ELEMENT_TYPE";
+    QuerySelectorType[QuerySelectorType["COMPONENT_TYPE"] = 3] = "COMPONENT_TYPE";
+    QuerySelectorType[QuerySelectorType["RENDER_COMPONENT_TYPE"] = 4] = "RENDER_COMPONENT_TYPE"; // 渲染函数没有实例
+})(QuerySelectorType || (QuerySelectorType = {}));
+function parseQuerySelector(selector) {
+    let type, value;
+    if (isFunction(selector)) {
+        // render component
+        type = QuerySelectorType.RENDER_COMPONENT_TYPE;
+        value = selector;
+    }
+    else if (isObject(selector)) {
+        type = QuerySelectorType.COMPONENT_TYPE;
+        value = selector;
+    }
+    else if (selector.startsWith('.')) {
+        type = QuerySelectorType.CLASS;
+        value = selector.slice(1);
+    }
+    else if (selector.startsWith('#')) {
+        type = QuerySelectorType.ID;
+        value = selector.slice(1);
+    }
+    else {
+        type = QuerySelectorType.ELEMENT_TYPE;
+        value = selector;
+    }
+    return {
+        type,
+        value
+    };
+}
+function querySelector(selector, vnode) {
+    if (!selector || !vnode) {
+        return null;
+    }
+    let { type, value } = parseQuerySelector(selector);
+    return doQuerySelector(value, type, vnode);
+}
+function doQuerySelector(selector, type, vnode) {
+    let result = null;
+    // vnode 始终是数组形式 
+    for (let item of vnode) {
+        if (type === QuerySelectorType.CLASS) {
+            // class 中 selector 为 true
+            if (item?.props?.class?.[selector]) {
+                result = item.el || item.instance;
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.ID) {
+            if (item?.props?.id === selector) {
+                result = item.el || item.instance;
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
+            if (item.type === selector) {
+                result = item.el || item.instance; // 元素节点身上也有 instance属性
+                break;
+            }
+        }
+        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) {
+            // render component 暂时没有相应的元素或实例
+            // 或者 render component 返回对应的子元素或实例
+            result = null;
+        }
+        else {
+            continue;
+        }
+        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
+            // 有状态组件，无状态组件，样式表 不会寻找子元素
+            result = doQuerySelector(selector, type, item.children);
+        }
+    }
+    return result;
+}
+function querySelectorAll(selector, vnode) {
+    if (!selector || !vnode) {
+        return null;
+    }
+    let { type, value } = parseQuerySelector(selector);
+    return doQuerySelectorAll(value, type, vnode, []);
+}
+function doQuerySelectorAll(selector, type, vnode, results) {
+    for (let item of vnode) {
+        if (type === QuerySelectorType.CLASS) {
+            // class 中 selector 为 true
+            if (item?.props?.class?.[selector]) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.ID) {
+            if (item?.props?.id === selector) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
+            if (item.type === selector) {
+                results.push(item.el || item.instance);
+            }
+        }
+        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) ;
+        else {
+            continue;
+        }
+        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
+            // 有状态组件，无状态组件，样式表 不会寻找子元素
+            doQuerySelectorAll(selector, type, item.children, results);
+        }
+    }
+    return results;
+}
+
+const scopeProperties = {
+    _currentPropertyAccessInstance: null,
+    get $uid() {
+        return this._currentPropertyAccessInstance.uid;
+    },
+    get $uuid() {
+        return uid();
+    },
+    get $options() {
+        return this._currentPropertyAccessInstance.options;
+    },
+    get $instance() {
+        return this._currentPropertyAccessInstance;
+    },
+    get $refs() {
+        return this._currentPropertyAccessInstance.refs ||= {}; // ! 确保组件没挂载时可以拿到 refs
+    },
+    get $el() {
+        let { vnode, isMounted } = this._currentPropertyAccessInstance;
+        if (!isMounted || !vnode) {
+            return null;
+        }
+        let el = vnode.map((_vnode) => getEL(_vnode));
+        // 有多个根元素会返回多个元素
+        return el.length === 1 ? el[0] : el;
+    },
+    get $root() {
+        return this._currentPropertyAccessInstance.root;
+    },
+    get $props() {
+        return this._currentPropertyAccessInstance.props;
+    },
+    get $attrs() {
+        return this._currentPropertyAccessInstance.attrs;
+    },
+    get $slots() {
+        return this._currentPropertyAccessInstance.slots;
+    },
+    get $parent() {
+        return this._currentPropertyAccessInstance.parent;
+    },
+    get $watch() {
+        return this._currentPropertyAccessInstance.watch;
+    },
+    get $nextTick() {
+        return nextTick.bind(this._currentPropertyAccessInstance.scope);
+    },
+    get $self() {
+        return this._currentPropertyAccessInstance.scope;
+    },
+    get $forceUpdate() {
+        if (!this._currentPropertyAccessInstance.isMounted) {
+            return this._currentPropertyAccessInstance.update;
+        }
+    },
+    // evnets
+    get $emit() {
+        return this._currentPropertyAccessInstance.emit;
+    },
+    get $on() {
+        return this._currentPropertyAccessInstance.on;
+    },
+    get $off() {
+        return this._currentPropertyAccessInstance.off;
+    },
+    get $once() {
+        return this._currentPropertyAccessInstance.once;
+    },
+    // 查询当前组件内的元素 , 组件的话返回组件实例
+    get $querySelector() {
+        return (selector) => {
+            // 先当做组件选择器，如果不是定义的组件则当做普通元素
+            let type = this._currentPropertyAccessInstance?.components?.[selector] || selector;
+            return querySelector(type, this._currentPropertyAccessInstance.vnode);
+        };
+    },
+    get $querySelectorAll() {
+        return (selector) => {
+            // 先当做组件选择器，如果不是定义的组件则当做普通元素
+            let type = this._currentPropertyAccessInstance?.components?.[selector] || selector;
+            return querySelectorAll(type, this._currentPropertyAccessInstance.vnode);
+        };
+    },
+};
+const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
+const protoMethods = {
+    debounce,
+    throttle,
+    ...cssMethods,
+};
+// inject scope property
+function createScope(instance) {
+    const scope = reactive(Object.create(protoMethods));
+    return new Proxy(scope, {
+        get(target, key, receiver) {
+            scopeProperties._currentPropertyAccessInstance = instance;
+            let value = hasOwn(scopeProperties, key) ? scopeProperties[key] : Reflect.get(target, key, receiver);
+            return value;
+        },
+        set(target, key, newValue, receiver) {
+            if (hasOwn(scopeProperties, key)) {
+                // 实例方法不能设置
+                return true;
+            }
+            // 挂载到作用于上的promise异步数据会被自动请求
+            if (isPromise(newValue)) {
+                // 先设置一个默认值,不然会出现bug
+                Reflect.set(target, key, null, receiver);
+                newValue.then((result) => {
+                    return Reflect.set(target, key, result, receiver);
+                });
+            }
+            else {
+                return Reflect.set(target, key, newValue, receiver);
+            }
+            return true;
+        }
+    });
+}
+// 这些方法只能提供给模板使用
+const specialTemplateMethods = {
+    // 模板会编译成 () => debounce(...) 所以函数会直接调用
+    debounce(fn, wait) {
+        return cacheDebounce(fn, wait)();
+    },
+    throttle(fn, wait) {
+        return cacheThrottle(fn, wait)();
+    },
+};
+function createRenderScope(instanceScope) {
+    return new Proxy(instanceScope, {
+        get(target, key, receiver) {
+            if (key === Symbol.unscopables) {
+                return;
+            }
+            if (hasOwn(specialTemplateMethods, key)) {
+                return specialTemplateMethods[key];
+            }
+            // todo magic variables
+            var result = Reflect.get(target, key, receiver);
+            return isRef(result) ? result.value : result;
+        }
+    });
+}
+
 var currentApp;
 function getCurrentApp() {
     return currentApp;
@@ -5901,7 +6202,9 @@ function createApp(rootComponent) {
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
-        // scopeProperties: scopeProperties
+        // scope property
+        globalProperties: scopeProperties,
+        compilerOptions: null
     };
     currentApp = app;
     // 安装动画
@@ -6063,277 +6366,6 @@ function injectMixins(target, mixins) {
         injectMixin(target, mixin);
     });
     return target;
-}
-
-var cssMethods = {
-    rgba,
-    rgb,
-    hsl,
-    hsla,
-    $var,
-    attr,
-    calc,
-    cubicBezier,
-    max,
-    min,
-    translateX,
-    translateY,
-    scale,
-    rotate3d,
-    translate3d,
-    rotate,
-    perspective,
-    scale3d,
-    skew,
-    skewX,
-    skewY,
-    scaleY,
-    rotateY,
-    conicGradient,
-    linearGradient,
-    radialGradient
-};
-
-//  基于 vnode 的元素选择器，在vnode树中查找元素，必须是处理过的树，也可以查询组件等
-/*
-    *  所有元素
-    #  id 选择器
-    .  class 选择器
-    普通标签选择 ， 组件会返回实例
-*/
-// 如果是组件标签的话，直接通过实例身上的components，可获得组件的type
-var QuerySelectorType;
-(function (QuerySelectorType) {
-    QuerySelectorType[QuerySelectorType["ID"] = 0] = "ID";
-    QuerySelectorType[QuerySelectorType["CLASS"] = 1] = "CLASS";
-    QuerySelectorType[QuerySelectorType["ELEMENT_TYPE"] = 2] = "ELEMENT_TYPE";
-    QuerySelectorType[QuerySelectorType["COMPONENT_TYPE"] = 3] = "COMPONENT_TYPE";
-    QuerySelectorType[QuerySelectorType["RENDER_COMPONENT_TYPE"] = 4] = "RENDER_COMPONENT_TYPE"; // 渲染函数没有实例
-})(QuerySelectorType || (QuerySelectorType = {}));
-function parseQuerySelector(selector) {
-    let type, value;
-    if (isFunction(selector)) {
-        // render component
-        type = QuerySelectorType.RENDER_COMPONENT_TYPE;
-        value = selector;
-    }
-    else if (isObject(selector)) {
-        type = QuerySelectorType.COMPONENT_TYPE;
-        value = selector;
-    }
-    else if (selector.startsWith('.')) {
-        type = QuerySelectorType.CLASS;
-        value = selector.slice(1);
-    }
-    else if (selector.startsWith('#')) {
-        type = QuerySelectorType.ID;
-        value = selector.slice(1);
-    }
-    else {
-        type = QuerySelectorType.ELEMENT_TYPE;
-        value = selector;
-    }
-    return {
-        type,
-        value
-    };
-}
-function querySelector(selector, vnode) {
-    if (!selector || !vnode) {
-        return null;
-    }
-    let { type, value } = parseQuerySelector(selector);
-    return doQuerySelector(value, type, vnode);
-}
-function doQuerySelector(selector, type, vnode) {
-    let result = null;
-    // vnode 始终是数组形式 
-    for (let item of vnode) {
-        if (type === QuerySelectorType.CLASS) {
-            // class 中 selector 为 true
-            if (item?.props?.class?.[selector]) {
-                result = item.el || item.instance;
-                break;
-            }
-        }
-        else if (type === QuerySelectorType.ID) {
-            if (item?.props?.id === selector) {
-                result = item.el || item.instance;
-                break;
-            }
-        }
-        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
-            if (item.type === selector) {
-                result = item.el || item.instance; // 元素节点身上也有 instance属性
-                break;
-            }
-        }
-        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) {
-            // render component 暂时没有相应的元素或实例
-            // 或者 render component 返回对应的子元素或实例
-            result = null;
-        }
-        else {
-            continue;
-        }
-        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
-            // 有状态组件，无状态组件，样式表 不会寻找子元素
-            result = doQuerySelector(selector, type, item.children);
-        }
-    }
-    return result;
-}
-function querySelectorAll(selector, vnode) {
-    if (!selector || !vnode) {
-        return null;
-    }
-    let { type, value } = parseQuerySelector(selector);
-    return doQuerySelectorAll(value, type, vnode, []);
-}
-function doQuerySelectorAll(selector, type, vnode, results) {
-    for (let item of vnode) {
-        if (type === QuerySelectorType.CLASS) {
-            // class 中 selector 为 true
-            if (item?.props?.class?.[selector]) {
-                results.push(item.el || item.instance);
-            }
-        }
-        else if (type === QuerySelectorType.ID) {
-            if (item?.props?.id === selector) {
-                results.push(item.el || item.instance);
-            }
-        }
-        else if (type === QuerySelectorType.ELEMENT_TYPE || type === QuerySelectorType.COMPONENT_TYPE) {
-            if (item.type === selector) {
-                results.push(item.el || item.instance);
-            }
-        }
-        else if (type === QuerySelectorType.RENDER_COMPONENT_TYPE) ;
-        else {
-            continue;
-        }
-        if (item.children && (item.nodeType == 13 /* HTML_ELEMENT */ || item.nodeType == 9 /* SVG_ELEMENT */)) {
-            // 有状态组件，无状态组件，样式表 不会寻找子元素
-            doQuerySelectorAll(selector, type, item.children, results);
-        }
-    }
-    return results;
-}
-
-const scopeProperties = {
-    $uid: (instance) => instance.uid,
-    $uuid: uid,
-    $options: (instance) => instance.options,
-    $instance: (instance) => instance,
-    $refs: (instance) => {
-        return instance.refs ||= {}; // ! 确保组件没挂载时可以拿到 refs
-    },
-    get x() {
-        console.log('xxx');
-        return 666;
-    },
-    get $el() {
-        // let { vnode, isMounted } = getCurrentInstance()
-        // if (!isMounted || !vnode) {
-        //     return null
-        // }
-        // let el = vnode.map((_vnode: any) => getEL(_vnode))
-        // // 有多个根元素会返回多个元素
-        // return el.length === 1 ? el[0] : el
-        console.log('yyy');
-        return 999;
-    },
-    $root: (instance) => instance.root,
-    $props: (instance) => instance.props ||= {},
-    $attrs: (instance) => instance.attrs ||= {},
-    $slots: (instance) => instance.slots,
-    $parent: (instance) => instance.parent,
-    $watch: (instance) => instance.watch,
-    $nextTick: (instance) => nextTick.bind(instance.scope),
-    $self: (instance) => instance.scope,
-    $forceUpdate: (instance) => {
-        if (!instance.isMounted) {
-            return instance.update;
-        }
-    },
-    // evnets
-    $emit: (instance) => instance.emit,
-    $on: (instance) => instance.on,
-    $off: (instance) => instance.off,
-    $once: (instance) => instance.once,
-    // 查询当前组件内的元素 , 组件的话返回组件实例
-    $querySelector: (instance) => (selector) => {
-        // 先当做组件选择器，如果不是定义的组件则当做普通元素
-        let type = instance?.components[selector] || selector;
-        return querySelector(type, instance.vnode);
-    },
-    $querySelectorAll: (instance) => (selector) => {
-        // 先当做组件选择器，如果不是定义的组件则当做普通元素
-        let type = instance?.components[selector] || selector;
-        return querySelectorAll(type, instance.vnode);
-    },
-};
-const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
-const protoMethods = {
-    debounce,
-    throttle,
-    ...cssMethods,
-    ...scopeProperties, // todo bug (with)
-};
-// inject scope property
-function createScope(instance) {
-    const scope = reactive(Object.create(protoMethods));
-    return new Proxy(scope, {
-        get(target, key, receiver) {
-            setCurrentInstance(instance);
-            let value = hasOwn(scopeProperties, key) ? scopeProperties[key] : Reflect.get(target, key, receiver);
-            clearCurrentInstance();
-            return value;
-        },
-        set(target, key, newValue, receiver) {
-            if (hasOwn(scopeProperties, key)) {
-                // 实例方法不能设置
-                return true;
-            }
-            // 挂载到作用于上的promise异步数据会被自动请求
-            if (isPromise(newValue)) {
-                // 先设置一个默认值,不然会出现bug
-                Reflect.set(target, key, null, receiver);
-                newValue.then((result) => {
-                    return Reflect.set(target, key, result, receiver);
-                });
-            }
-            else {
-                return Reflect.set(target, key, newValue, receiver);
-            }
-            return true;
-        }
-    });
-}
-// 这些方法只能提供给模板使用
-const specialTemplateMethods = {
-    // 模板会编译成 () => debounce(...) 所以函数会直接调用
-    debounce(fn, wait) {
-        return cacheDebounce(fn, wait)();
-    },
-    throttle(fn, wait) {
-        return cacheThrottle(fn, wait)();
-    },
-};
-function createRenderScope(instanceScope) {
-    return new Proxy(instanceScope, {
-        get(target, key, receiver) {
-            if (key === Symbol.unscopables) {
-                return;
-            }
-            if (hasOwn(specialTemplateMethods, key)) {
-                return specialTemplateMethods[key];
-            }
-            // todo magic variables
-            var result = Reflect.get(target, key, receiver);
-            return isRef(result) ? result.value : result;
-        }
-    });
 }
 
 function createInstanceWatch(instance) {
