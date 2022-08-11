@@ -30,13 +30,20 @@ export function setCurrentInstance(instance: any) {
 export function getCurrentInstance() {
     return currentInstance
 }
+// 清除当前组件引用
+export function clearCurrentInstance() {
+    currentInstance = null
+}
+
+
 export function getCurrentScope() {
     return getCurrentInstance().scope
 }
-
 export function getCurrentRenderScope() {
     return getCurrentInstance().renderScope
 }
+
+
 
 function setScopeData(scope: any, data: any) {
     if (!data) {

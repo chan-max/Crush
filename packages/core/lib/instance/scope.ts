@@ -1,24 +1,33 @@
 import { doKeyframesAnimation } from "@crush/animate";
 import { hasOwn, isPromise, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
-import { addInstanceListener, createInstanceEventEmitter, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener } from "@crush/renderer";
+import { addInstanceListener, clearCurrentInstance, createInstanceEventEmitter, getCurrentInstance, getEL, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener, setCurrentInstance } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
-import { getEL } from '@crush/renderer'
+
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 
-const scopeProperties: any = {
-    $uid: (instance: ComponentInstance) => instance.uid, // 组件级别的唯一id
-    $uuid: uid, // 每次访问均返回不同的id
-    $options:(instance:any) => instance.options,
-    $instance: (instance: ComponentInstance) => instance,
-    $refs: (instance: ComponentInstance) => {
-        return instance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
+export const scopeProperties: any = {
+    _currentPropertyAccessInstance: null, // 保存当前属性访问的组件实例，在那个组件实例中访问的属性
+    get $uid() {
+        return this._currentPropertyAccessInstance.uid
+    }, // 组件级别的唯一id
+    get $uuid() {
+        return uid()
+    }, // 每次访问均返回不同的id
+    get $options() {
+        return this._currentPropertyAccessInstance.options
     },
-    $el: (instance: any) => {
-        let { vnode, isMounted } = instance
+    get $instance() {
+        return this._currentPropertyAccessInstance
+    },
+    get $refs() {
+        return this._currentPropertyAccessInstance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
+    },
+    get $el() {
+        let { vnode, isMounted } = this._currentPropertyAccessInstance
         if (!isMounted || !vnode) {
             return null
         }
@@ -26,35 +35,62 @@ const scopeProperties: any = {
         // 有多个根元素会返回多个元素
         return el.length === 1 ? el[0] : el
     },
-    $root: (instance: any) => instance.root,
-    $props: (instance: any) => instance.props ||= {}, // props包括 props， attrs 和 events
-    $attrs: (instance: any) => instance.attrs ||= {},
-    $slots: (instance: any) => instance.slots,
-    $parent: (instance: any) => instance.parent,
-    $watch: (instance: any) => instance.watch,
-    $nextTick: (instance: any) => nextTick.bind(instance.scope),
-    $self: (instance: any) => instance.scope,
-    $forceUpdate: (instance: any) => {
-        if (!instance.isMounted) {
-            return instance.update
+    get $root() {
+        return this._currentPropertyAccessInstance.root
+    },
+    get $props() {
+        return this._currentPropertyAccessInstance.props
+    }, // props包括 props， attrs 和 events
+    get $attrs() {
+        return this._currentPropertyAccessInstance.attrs
+    },
+    get $slots() {
+        return this._currentPropertyAccessInstance.slots
+    },
+    get $parent() {
+        return this._currentPropertyAccessInstance.parent
+    },
+    get $watch() {
+        return this._currentPropertyAccessInstance.watch
+    },
+    get $nextTick() {
+        return nextTick.bind(this._currentPropertyAccessInstance.scope)
+    },
+    get $self() {
+        return this._currentPropertyAccessInstance.scope
+    },
+    get $forceUpdate() {
+        if (!this._currentPropertyAccessInstance.isMounted) {
+            return this._currentPropertyAccessInstance.update
         }
     },
     // evnets
-    $emit: (instance: any) => instance.emit, // init component instance
-    $on: (instance: any) => instance.on,
-    $off: (instance: any) => instance.off,
-    $once: (instance: any) => instance.once,
-
-    // 查询当前组件内的元素 , 组件的话返回组件实例
-    $querySelector: (instance: any) => (selector: any) => {
-        // 先当做组件选择器，如果不是定义的组件则当做普通元素
-        let type = instance?.components[selector] || selector
-        return querySelector(type, instance.vnode)
+    get $emit() {
+        return this._currentPropertyAccessInstance.emit
+    }, // init component instance
+    get $on() {
+        return this._currentPropertyAccessInstance.on
     },
-    $querySelectorAll: (instance: any) => (selector: any) => {
-        // 先当做组件选择器，如果不是定义的组件则当做普通元素
-        let type = instance?.components[selector] || selector
-        return querySelectorAll(type, instance.vnode)
+    get $off() {
+        return this._currentPropertyAccessInstance.off
+    },
+    get $once() {
+        return this._currentPropertyAccessInstance.once
+    },
+    // 查询当前组件内的元素 , 组件的话返回组件实例
+    get $querySelector() {
+        return (selector: any) => {
+            // 先当做组件选择器，如果不是定义的组件则当做普通元素
+            let type = this._currentPropertyAccessInstance?.components?.[selector] || selector
+            return querySelector(type, this._currentPropertyAccessInstance.vnode)
+        }
+    },
+    get $querySelectorAll() {
+        return (selector: any) => {
+            // 先当做组件选择器，如果不是定义的组件则当做普通元素
+            let type = this._currentPropertyAccessInstance?.components?.[selector] || selector
+            return querySelectorAll(type, this._currentPropertyAccessInstance.vnode)
+        }
     },
 }
 
@@ -65,8 +101,8 @@ const protoMethods = {
     debounce,
     throttle,
     ...cssMethods,
-    ...scopeProperties, // todo bug (with)
 }
+
 
 
 // inject scope property
@@ -74,11 +110,9 @@ export function createScope(instance: any) {
     const scope = reactive(Object.create(protoMethods))
     return new Proxy(scope, {
         get(target: any, key: any, receiver: any) {
-            if (hasOwn(scopeProperties, key)) {
-                // 实例方法
-                return scopeProperties[key](instance)
-            }
-            return Reflect.get(target, key, receiver)
+            scopeProperties._currentPropertyAccessInstance = instance
+            let value = hasOwn(scopeProperties, key) ? scopeProperties[key] : Reflect.get(target, key, receiver)
+            return value
         },
         set(target: any, key: any, newValue: any, receiver: any) {
             if (hasOwn(scopeProperties, key)) {
@@ -112,6 +146,9 @@ const specialTemplateMethods: any = {
         return cacheThrottle(fn, wait)()
     },
 }
+
+// 当作用域没有值时显示的默认值
+const defaultTemplateScopeValue = ':-)'
 
 export function createRenderScope(instanceScope: any) {
     return new Proxy(instanceScope, {

@@ -1,6 +1,7 @@
 import { computed, createApp, usePromise, watchRef, } from "./packages/core";
 
 
+
 let root = {
     template: /*html*/`
         <style> 
@@ -13,20 +14,24 @@ let root = {
                     }
                 }
         </style>
-        <div class="box">
-            
+        <div class="box" @click="log" for="i in count">
+            {{i}}
         </div>
     `,
-    create({ $self,$options }: any) {
-
+    create({ $self }: any) {
+        window.$self = $self
+        $self.count = 1
+        $self.log = () => {
+     
+            $self.count++
+            console.log($self.$el)
+        }
     }
 }
 
-
 const app = createApp(root)
+app.customScreens.myipad = `(min-width:800px) and (max-width:1200px)`
 
-
-console.log(app);
 
 
 app.mount('#app')

@@ -10,6 +10,7 @@ import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
 import { responsiveLayoutMedia } from "@crush/css"
+import { scopeProperties } from "../instance/scope"
 
 
 var currentApp: any
@@ -40,10 +41,10 @@ export function createApp(rootComponent: any) {
         mount: mountApp,
         unmount: unmountApp,
 
-        config: {
-            // @screens
-            customScreens: responsiveLayoutMedia
-        }
+        // config
+        // @screens
+        customScreens: responsiveLayoutMedia,
+        scopeProperties: scopeProperties
     }
 
     currentApp = app
@@ -110,5 +111,5 @@ export function createApp(rootComponent: any) {
 
 
 export function getCustomScreensMedia(screen: string) {
-    return getCurrentApp().config.customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
+    return getCurrentApp().customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
 }

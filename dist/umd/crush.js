@@ -90,7 +90,7 @@
         return objectToString.call(value).slice(8, -1);
     }
     const isPromise = (value) => {
-        return isFunction(value.then) && isFunction(value.catch);
+        return value && isFunction(value.then) && isFunction(value.catch);
     };
     const isDate = (value) => value instanceof Date;
     const isArray = Array.isArray;
@@ -2495,6 +2495,25 @@
         return new ReactiveString(value);
     }
 
+    function usePromise(promise) {
+        promise = isPromise(promise) ? promise : new Promise(promise);
+        return new PromiseRef(promise);
+    }
+    class PromiseRef extends Ref {
+        resolved = false;
+        rejected = false;
+        constructor(promise) {
+            super(null);
+            promise.then((result) => {
+                this.value = result;
+                this.resolved = true;
+            }).catch((err) => {
+                this.value = null; //
+                this.rejected = true;
+            });
+        }
+    }
+
     var nextTick = (fn, args = undefined) => {
         var p = Promise.resolve(args);
         p.then(fn.bind(null));
@@ -2519,6 +2538,9 @@
     function getCurrentInstance() {
         return exports.currentInstance;
     }
+    function clearCurrentInstance() {
+        exports.currentInstance = null;
+    }
     function getCurrentScope() {
         return getCurrentInstance().scope;
     }
@@ -2532,7 +2554,16 @@
         if (isObject(data)) {
             for (let key in data) {
                 // data 存在时应该警告
-                scope[key] = data[key];
+                let value = data[key];
+                // 挂载到实例的promise会自动请求
+                if (isPromise(value)) {
+                    value.then((result) => {
+                        scope[key] = result;
+                    });
+                }
+                else {
+                    scope[key] = value;
+                }
             }
         }
         else if (isPromise(data)) {
@@ -2599,7 +2630,6 @@
             instance.renderingVnode = null;
             processHook(isMounted ? "updated" /* UPDATED */ : "mounted" /* MOUNTED */, nComponentVnode, pComponentVnode);
         }
-        //  call at every update
         instance.update = update;
         const rednerEffect = createReactiveEffect(update, queueJob);
         // 手动渲染
@@ -2755,6 +2785,13 @@
         return directive;
     }
 
+    /*
+        examples
+        x => scope.x
+        x + y
+        x.y
+
+    */
     function setScope(variable, scope) {
         return scope + '.' + variable;
     }
@@ -2804,6 +2841,14 @@
                 return replaceVariable(expression, scope);
         }
         return '';
+    }
+    // 提取一段表达式中的所有变量
+    function extractExpressionVariables(expression) {
+        expression = expression.trim();
+        let firstLetter = expression[0]; // 第一个字符
+        if (firstLetter === "'" || firstLetter === '"') { // 普通字符串
+            expression.indexOf(firstLetter, 1);
+        }
     }
 
     const NULL = 'null';
@@ -3214,6 +3259,14 @@
                                 keyframes: content
                             };
                             break;
+                        case 'screens':
+                            // 转换为动态 media
+                            current = {
+                                type: 22 /* MEDIA_RULE */,
+                                media: content.trim(),
+                                appConfigMedia: true // 使用应用配置
+                            };
+                            break;
                         default:
                             debugger;
                             break;
@@ -3235,26 +3288,33 @@
                     处理指令，指令不再需要通过标识符去判断
                 */
                 var [dir, content] = scanner.exec(CSSDir);
-                current = {};
                 switch (dir) {
                     case 'for':
-                        current.type = 6 /* FOR */;
-                        current.iterator = parseIterator(content);
+                        current = {
+                            type: 6 /* FOR */,
+                            iterator: parseIterator(content)
+                        };
                         break;
                     case 'if':
-                        current.type = 3 /* IF */;
-                        current.condition = content;
-                        current.isBranchStart = true;
+                        current = {
+                            type: 3 /* IF */,
+                            condition: content,
+                            isBranchStart: true
+                        };
                         break;
                     case 'else-if':
                     case 'elseIf':
-                        current.type = 4 /* ELSE_IF */;
-                        current.condition = content;
-                        current.isBranch = true;
+                        current = {
+                            type: 4 /* ELSE_IF */,
+                            condition: content,
+                            isBranch: true
+                        };
                         break;
                     case 'else':
-                        current.type = 5 /* ELSE */;
-                        current.isBranch = true;
+                        current = {
+                            type: 5 /* ELSE */,
+                            isBranch: true
+                        };
                         break;
                 }
             }
@@ -3879,7 +3939,7 @@
                 return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
             case 22 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
-                return context.callRenderFn('createMedia', toBackQuotes(node.media), rules, uStringId());
+                return context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
             case 24 /* KEYFRAMES_RULE */:
                 return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
             case 27 /* KEYFRAME_RULE */:
@@ -4050,7 +4110,7 @@
             this.methods = {};
         }
         getCode = () => {
-            this.unshift(declare(`{${Object.keys(this.methods).join(',')}}`, RENDER_METHODS));
+            this.unshift(declare(`{${Object.keys(this.methods).join(',')}}`, 'renderMethods'));
             return this.code;
         };
         push = (code) => this.code += code;
@@ -4074,12 +4134,12 @@
         setScope() {
         }
     }
-    const RENDER_METHODS = 'renderMethods';
     function compile(template) {
         var ast = baseParseHTML(template);
         processAst(ast);
         var context = new CodeGenerator();
         // 初始化所有渲染方法
+        // 模板的渲染作用域
         var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
         const renderCode = genNodes(ast, context);
         const content = `
@@ -4088,12 +4148,9 @@
         }    
     `;
         context.pushNewLine(content);
-        /*
-            the dom template ast will alwways return an array
-        */
-        var rf = createFunction(context.getCode(), RENDER_METHODS);
-        console.log(rf);
-        return rf;
+        var renderFunction = createFunction(context.getCode(), 'renderMethods');
+        console.log(renderFunction);
+        return renderFunction;
     }
 
     const inlineStyleDelimiter = /\s*[:;]\s*/;
@@ -4198,7 +4255,8 @@
         createComponent,
         renderSlot,
         mergeSelectors,
-        withEventModifiers
+        withEventModifiers,
+        getCustomScreensMedia
     };
 
     // if you are using css function with dynamic binding , use camelized function name 
@@ -5815,11 +5873,24 @@
         transitionGroup: transitionGroupDirective,
     };
 
+    // app.config.responsive
+    const responsiveLayoutMedia = {
+        xs: '(max-width:768px)',
+        sm: '(min-width:768px) and (max-width:992px)',
+        md: '(min-width:992px) and (max-width:1200px)',
+        lg: '(min-width:1200px) and (max-width:1920px)',
+        xl: '(min-width:1920px)'
+    };
+
     var currentApp;
     function getCurrentApp() {
         return currentApp;
     }
     function createApp(rootComponent) {
+        if (currentApp) {
+            // 只能有一个应用
+            return;
+        }
         const app = {
             isMounted: false,
             rootComponent,
@@ -5832,7 +5903,11 @@
             mixins: [],
             use,
             mount: mountApp,
-            unmount: unmountApp
+            unmount: unmountApp,
+            // config
+            // @screens
+            customScreens: responsiveLayoutMedia,
+            // scopeProperties: scopeProperties
         };
         currentApp = app;
         // 安装动画
@@ -5870,9 +5945,21 @@
             app.isMounted = true;
         }
         function unmountApp() {
+            // 卸载已安装的插件
+            app.plugins.forEach((plugin) => {
+                let uninstall = isObject(plugin) && plugin.uninstall;
+                if (uninstall) {
+                    uninstall(app);
+                }
+            });
             unmountComponent(app.rootVnode, app.container);
+            app.isMounted = false;
+            currentApp = null;
         }
         return app;
+    }
+    function getCustomScreensMedia(screen) {
+        return getCurrentApp().customScreens[screen] || 'screen'; // 默认屏幕 , 所有情况都生效
     }
 
     function injectHook(type, target, hook) {
@@ -6142,18 +6229,25 @@
     const scopeProperties = {
         $uid: (instance) => instance.uid,
         $uuid: uid,
+        $options: (instance) => instance.options,
         $instance: (instance) => instance,
         $refs: (instance) => {
             return instance.refs ||= {}; // ! 确保组件没挂载时可以拿到 refs
         },
-        $el: (instance) => {
-            let { vnode, isMounted } = instance;
-            if (!isMounted || !vnode) {
-                return null;
-            }
-            let el = vnode.map((_vnode) => getEL(_vnode));
-            // 有多个根元素会返回多个元素
-            return el.length === 1 ? el[0] : el;
+        get x() {
+            console.log('xxx');
+            return 666;
+        },
+        get $el() {
+            // let { vnode, isMounted } = getCurrentInstance()
+            // if (!isMounted || !vnode) {
+            //     return null
+            // }
+            // let el = vnode.map((_vnode: any) => getEL(_vnode))
+            // // 有多个根元素会返回多个元素
+            // return el.length === 1 ? el[0] : el
+            console.log('yyy');
+            return 999;
         },
         $root: (instance) => instance.root,
         $props: (instance) => instance.props ||= {},
@@ -6197,23 +6291,33 @@
         const scope = reactive(Object.create(protoMethods));
         return new Proxy(scope, {
             get(target, key, receiver) {
-                if (hasOwn(scopeProperties, key)) {
-                    return scopeProperties[key](instance);
-                }
-                return Reflect.get(target, key, receiver);
+                setCurrentInstance(instance);
+                let value = hasOwn(scopeProperties, key) ? scopeProperties[key] : Reflect.get(target, key, receiver);
+                clearCurrentInstance();
+                return value;
             },
             set(target, key, newValue, receiver) {
                 if (hasOwn(scopeProperties, key)) {
+                    // 实例方法不能设置
                     return true;
+                }
+                // 挂载到作用于上的promise异步数据会被自动请求
+                if (isPromise(newValue)) {
+                    // 先设置一个默认值,不然会出现bug
+                    Reflect.set(target, key, null, receiver);
+                    newValue.then((result) => {
+                        return Reflect.set(target, key, result, receiver);
+                    });
                 }
                 else {
                     return Reflect.set(target, key, newValue, receiver);
                 }
+                return true;
             }
         });
     }
     // 这些方法只能提供给模板使用
-    const specialRenderMethods = {
+    const specialTemplateMethods = {
         // 模板会编译成 () => debounce(...) 所以函数会直接调用
         debounce(fn, wait) {
             return cacheDebounce(fn, wait)();
@@ -6228,8 +6332,8 @@
                 if (key === Symbol.unscopables) {
                     return;
                 }
-                if (hasOwn(specialRenderMethods, key)) {
-                    return specialRenderMethods[key];
+                if (hasOwn(specialTemplateMethods, key)) {
+                    return specialTemplateMethods[key];
                 }
                 // todo magic variables
                 var result = Reflect.get(target, key, receiver);
@@ -6282,7 +6386,6 @@
             watch: null,
             renderEffect: null,
             render: options.render,
-            customOptions: options.customOptions,
             propsOptions: options.propsOptions || emptyObject,
             emitsOptions: options.emitsOptions || emptyObject,
             createRender: options.createRender,
@@ -6504,17 +6607,6 @@
                         options[key] = [value];
                     }
                     break;
-                case "components" /* COMPOENNTS */:
-                    break;
-                case "directives" /* DIRECTIVES */:
-                    break;
-                case "name" /* NAME */:
-                    break;
-                default:
-                    /*custom options*/
-                    const customOptions = options.customOptions ||= {};
-                    customOptions[key] = value;
-                    break;
             }
             // 组件定义了name 可以递归 
             // 这种是组件配置的名称，但可以被create中注册的名字替代
@@ -6568,14 +6660,6 @@
         return getCurrentInstance().customOptions;
     }
 
-    const responsiveLayoutMedias = {
-        xs: '(max-width:768px)',
-        sm: '(min-width:768px) and (max-width:992px)',
-        md: '(min-width:992px) and (max-width:1200px)',
-        lg: '(min-width:1200px) and (max-width:1920px)',
-        xl: '(min-width:1920px)'
-    };
-
     exports.$var = $var;
     exports.Comment = Comment;
     exports.ComputedRef = ComputedRef;
@@ -6604,6 +6688,7 @@
     exports.callHook = callHook;
     exports.camelize = camelize;
     exports.cleaarRefDeps = cleaarRefDeps;
+    exports.clearCurrentInstance = clearCurrentInstance;
     exports.compile = compile;
     exports.computed = computed;
     exports.conicGradient = conicGradient;
@@ -6667,6 +6752,7 @@
     exports.exec = exec;
     exports.execCaptureGroups = execCaptureGroups;
     exports.extend = extend;
+    exports.extractExpressionVariables = extractExpressionVariables;
     exports.flatRules = flatRules;
     exports.getActiveEffect = getActiveEffect;
     exports.getComponent = getComponent;
@@ -6674,6 +6760,7 @@
     exports.getCurrentInstance = getCurrentInstance;
     exports.getCurrentRenderScope = getCurrentRenderScope;
     exports.getCurrentScope = getCurrentScope;
+    exports.getCustomScreensMedia = getCustomScreensMedia;
     exports.getDeps = getDeps;
     exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
@@ -6808,7 +6895,7 @@
     exports.renderList = renderList;
     exports.renderSlot = renderSlot;
     exports.resolveOptions = resolveOptions;
-    exports.responsiveLayoutMedias = responsiveLayoutMedias;
+    exports.responsiveLayoutMedia = responsiveLayoutMedia;
     exports.rgb = rgb;
     exports.rgbToHex = rgbToHex;
     exports.rgba = rgba;
@@ -6819,6 +6906,7 @@
     exports.scale3d = scale3d;
     exports.scaleX = scaleX;
     exports.scaleY = scaleY;
+    exports.scopeProperties = scopeProperties;
     exports.setActiveEffect = setActiveEffect;
     exports.setAttribute = setAttribute;
     exports.setCurrentInstance = setCurrentInstance;
@@ -6897,6 +6985,7 @@
     exports.useDate = useDate;
     exports.useNumber = useNumber;
     exports.useOptions = useOptions;
+    exports.usePromise = usePromise;
     exports.useRefState = useRefState;
     exports.useString = useString;
     exports.useUid = useUid;
