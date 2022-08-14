@@ -2,7 +2,7 @@
 import { Nodes } from "@crush/const";
 import {
     docCreateComment,
-    docCreateElement, docCreateText, insertElement, onceListener
+    docCreateElement, docCreateText, insertElement, onceListener, setAttribute
 } from '../dom'
 import { mountAttributes } from "./attribute"
 import { mountComponent } from "./mountComponent";
@@ -46,13 +46,18 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // 2
-    const { type, props, children, transition, patchKey } = vnode
+    const { type, props, children, transition } = vnode
+    const { scopedId } = parent
+
     // create 
     const el: any = vnode.el = docCreateElement(type, isSVG)
     el._vnode = vnode
+    // set scoped id
+    if (scopedId) {
+        setAttribute(el, String(scopedId))
+    }
     mountAttributes(el, props, parent, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
-
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     // 进入动画不影响节点的插入
     if (transition) {

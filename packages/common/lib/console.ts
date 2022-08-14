@@ -1,12 +1,19 @@
 
 
-const warn = (...msg: any) => console.warn(...msg)
+
+const warn = (...msg: any) => {
+    console.warn(...msg)
+}
 const error = (...msg: any) => {
-    throw new Error(...msg)
+    console.error(...msg)
 }
 
+const log = (...msg: any) => {
+    console.log(...msg)
+}
 
 export {
     warn,
-    error
+    error,
+    log
 }

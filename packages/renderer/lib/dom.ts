@@ -32,7 +32,7 @@ export function remountElement(el: HTMLElement) {
     insertElement(el, parent as Element, anchor)
 }
 
-export const setAttribute = (el: Element, attribute: string, value: string) => el.setAttribute(attribute, value)
+export const setAttribute = (el: Element, attribute: string, value: string = '') => el.setAttribute(attribute, value)
 export const removeAttribute = (el: Element, attribute: string) => el.removeAttribute(attribute)
 
 export const addListener = (target: EventTarget, event: string, handler: any, options: any = null) => target.addEventListener(event, handler, options);

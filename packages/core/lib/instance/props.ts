@@ -1,5 +1,5 @@
 
-import { arrayToMap, emptyObject, isArray, isObject } from "@crush/common";
+import { arrayToMap, emptyObject, initialUpperCase, isArray, isObject } from "@crush/common";
 
 /*
     当传入不合理的props时
@@ -22,7 +22,7 @@ export function normalizePropsOptions(options: any) {
 
 export function normalizeEmitsOptions(options: any[] | Record<string, any>) {
     if (isArray(options)) {
-        return arrayToMap(options, emptyObject)
+        return arrayToMap(options.map((eventName: any) => `on${initialUpperCase(eventName)}`), emptyObject)
     } else {
         return options
     }

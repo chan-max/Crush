@@ -206,6 +206,9 @@ const builtInRawAttributes: any = {
 
         // 清空style的children
         ast.children = null
+    },
+    scoped(attr: any, ast: any) {
+        ast.scoped = true
     }
 }
 
@@ -314,4 +317,9 @@ export function processAst(ast: any) {
     if (!ast.ignoreChildren && ast.children) {
         processAst(ast.children)
     }
-} 
+}
+
+
+const enum Tag {
+
+}

@@ -21,6 +21,7 @@ import {
 import {
     camelize,
     emptyObject,
+    hasOwn,
     uid,
     uStringId
 } from '@crush/common'
@@ -258,7 +259,7 @@ function genNode(node: any, context: any): any {
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
             var props = genProps(node, context)
-            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), uStringId())
+            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node,'scoped'), uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.STYLE_RULE:

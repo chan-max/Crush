@@ -4,12 +4,12 @@
 */
 
 import { isArray, isNumber, isString, hyphenate } from "@crush/common"
-import { processHook,LifecycleHooks } from '@crush/core'
+import { processHook, LifecycleHooks, setSelectorAttribute } from '@crush/core'
 import { Nodes } from "@crush/const"
 import { docCreateElement, insertElement } from "../dom"
 
-export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent: any) => {
-    const { props, children } = vnode
+export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent?: any) => {
+    const { props, children, scoped } = vnode
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     var el: any = docCreateElement('style')
     mountAttributes(el, props, parent, false)
@@ -18,30 +18,30 @@ export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent:
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     var sheet = el.sheet
-    mountSheet(sheet, children)
+    mountSheet(sheet, children, scoped && parent.scopedId)
     processHook(LifecycleHooks.MOUNTED, vnode)
     return sheet
 }
 
-function mountSheet(sheet: CSSStyleSheet, rules: any) {
+function mountSheet(sheet: CSSStyleSheet, rules: any, scopedId?: string) {
     rules.forEach((rule: any) => {
-        mountRule(sheet, rule)
+        mountRule(sheet, rule, scopedId)
     })
 }
 
-export function mountRule(sheet: any, rule: any, index: number = sheet.cssRules.length) {
+export function mountRule(sheet: any, rule: any, scopedId: any) {
     switch (rule.nodeType) {
         case Nodes.STYLE_RULE:
-            mountStyleRule(sheet, rule, index)
+            mountStyleRule(sheet, rule, sheet.cssRules.length, scopedId)
             break
         case Nodes.MEDIA_RULE:
-            mountMediaRule(sheet, rule, index)
+            mountMediaRule(sheet, rule, sheet.cssRules.length, scopedId)
             break
         case Nodes.SUPPORTS_RULE:
-            mountSupportsRule(sheet, rule, index)
+            mountSupportsRule(sheet, rule, sheet.cssRules.length, scopedId)
             break
         case Nodes.KEYFRAMES_RULE:
-            mountKeyframesRule(sheet, rule, index)
+            mountKeyframesRule(sheet, rule, sheet.cssRules.length)
             break
         case Nodes.KEYFRAME_RULE:
             mountKeyframeRule(sheet, rule)
@@ -60,14 +60,20 @@ import { mountAttributes } from "./attribute"
 export function mountStyleRule(
     sheet: any,
     rule: any,
-    insertIndex = sheet.cssRules.length
+    insertIndex = sheet.cssRules.length,
+    scopedId: any
 ) {
-    const {
+    let {
         selector,
         children: declaration
     } = rule
 
     if (!declaration) return
+
+    if (scopedId) {
+        selector = setSelectorAttribute(selector, scopedId)
+    }
+
     const index = insertStyle(sheet, selector, insertIndex)
     const insertedRule = sheet.cssRules[index]
     rule.rule = insertedRule // set rule
@@ -75,7 +81,7 @@ export function mountStyleRule(
     mountDeclaration(insertedRuleStyle, declaration)
 }
 
-function mountMediaRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {
+function mountMediaRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length, scopedId: any) {
     var media = rule.media
     var rules = rule.children
 
@@ -86,15 +92,15 @@ function mountMediaRule(sheet: any, rule: any, insertIndex: number = sheet.cssRu
     var index = insertMedia(sheet, media, insertIndex)
     var newSheet = sheet.cssRules[index]
     rule.rule = newSheet
-    mountSheet(newSheet, rules)
+    mountSheet(newSheet, rules, scopedId)
 }
 
-function mountSupportsRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {
+function mountSupportsRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length, scopedId: any) {
     var supports = rule.supports
     var rules = rule.children
     var index = insertSupports(sheet, supports, insertIndex)
     var newSheet = sheet.cssRules[index]
-    mountSheet(newSheet, rules,)
+    mountSheet(newSheet, rules, scopedId)
 }
 
 function mountKeyframesRule(sheet: any, rule: any, insertIndex: number = sheet.cssRules.length) {

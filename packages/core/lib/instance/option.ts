@@ -24,9 +24,9 @@ export const enum ComponentOptions {
     ACTIVATED = 'activated',
     DEACTIVATED = 'deactivated',
 
-    BEFORE_ROUTE_ENTER = 'beforeRouteEnter' , 
-    BEFORE_ROUTE_LEAVE = 'beforeRouteLeave' , 
-    BEFORE_ROUTE_UPDATE = 'beforeRouteUpdate' , 
+    BEFORE_ROUTE_ENTER = 'beforeRouteEnter',
+    BEFORE_ROUTE_LEAVE = 'beforeRouteLeave',
+    BEFORE_ROUTE_UPDATE = 'beforeRouteUpdate',
 
     TEMPLATE = 'template',
     RENDER = 'render',
@@ -41,6 +41,7 @@ export const enum ComponentOptions {
     COMPOENNTS = 'components',
     DIRECTIVES = 'directives',
 
+    SCOPED_ID = 'scopedId'
 }
 
 
@@ -87,6 +88,8 @@ export function resolveOptions(options: any) {
             case ComponentOptions.DIRECTIVES:
                 break
             case ComponentOptions.NAME:
+                break
+            case ComponentOptions.SCOPED_ID:
                 break
             default:
                 break

@@ -1,5 +1,5 @@
 
-import { emptyObject, isArray } from "@crush/common";
+import { emptyObject, hyphenate, isArray } from "@crush/common";
 import { keyOf, Nodes } from "@crush/const";
 import { removeClass, addClass, addListener, removeListener, setAttribute, removeAttribute } from "../dom";
 
@@ -103,8 +103,8 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: Co
                 } else if (propName in el && !isSVG) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue)
                 } else {
-
                     // attribute
+                    propName = hyphenate(propName); // 连字符属性
                     (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
                 }
         }

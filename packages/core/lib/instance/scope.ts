@@ -95,14 +95,19 @@ export const scopeProperties: any = {
 }
 
 
-export const defineScopeProperty = (key: string, getter: any) => scopeProperties[key] = getter
+export const defineScopeProperty = (key: string, property: any) => scopeProperties[key] = property
 
-const protoMethods = {
+const protoMethods: any = {
     debounce,
     throttle,
     ...cssMethods,
 }
 
+// todo bug
+
+Object.keys(scopeProperties).forEach(prop => {
+    protoMethods[prop] = ''
+});
 
 
 // inject scope property

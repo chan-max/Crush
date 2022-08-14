@@ -1,9 +1,9 @@
 import { builtInComponents, builtInDirectives } from "@crush/builtin"
-import { error, isFunction, isObject, warn } from "@crush/common"
+import { camelize, error, hyphenate, isFunction, isObject, log, warn } from "@crush/common"
 import { isString } from "@crush/common"
 import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
-import { MixinType } from "../instance/mixin"
+
 import { PluginType } from "../instance/plugin"
 import { mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
@@ -12,6 +12,8 @@ import { installAnimation } from '@crush/animate'
 import { responsiveLayoutMedia } from "@crush/css"
 import { scopeProperties } from "../instance/scope"
 
+// forward
+log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`)
 
 var currentApp: any
 
@@ -24,6 +26,7 @@ export function createApp(rootComponent: any) {
 
     if (currentApp) {
         // 只能有一个应用
+        warn('APP', currentApp, 'is runing and there can only be one application in your webpage')
         return
     }
 
@@ -41,6 +44,9 @@ export function createApp(rootComponent: any) {
         mount: mountApp,
         unmount: unmountApp,
 
+        errorHandler: null,
+        warnHandler: null,
+
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
@@ -55,10 +61,12 @@ export function createApp(rootComponent: any) {
     use(installAnimation)
 
     function component(name: string, component: ComponentType) {
+        name = camelize(name)
         if (!app.components[name]) {
             app.components[name] = component
         }
     }
+
 
 
     function mixin(mixin: any) {
@@ -66,6 +74,7 @@ export function createApp(rootComponent: any) {
     }
 
     function directive(name: string, directive: DirectiveType) {
+        name = camelize(name)
         if (!app.directives[name]) {
             app.directives[name] = directive
         }
@@ -84,8 +93,8 @@ export function createApp(rootComponent: any) {
         app.inlineTemplate = container.innerHTML
         container.innerHTML = ''
 
-        if (!rootComponent.template && !rootComponent.render) {
-            rootComponent.template = app.inlineTemplate
+        if (!app.rootComponent.template && !app.rootComponent.render) {
+            app.rootComponent.template = app.inlineTemplate
         }
 
         app.rootVnode = createComponent(rootComponent, null, null)

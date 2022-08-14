@@ -14,6 +14,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
         let pValue = pProps[prop]
         let nValue = nProps[prop]
+
         if (prop.startsWith('_')) {
             // 组件保留属性 skip
         } else if (prop === 'ref') {
@@ -23,9 +24,11 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                 pValue && (refs[pValue] = null);
                 nValue && (refs[nValue] = instance);
             }
-        } else if (prop === 'bind') {
-            updateComponentProps(instance, pValue, nValue)
-        } else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
+        } else if (prop === 'style') {
+
+        } else if (prop === 'class') {
+
+        } else if (!propsOptions[prop] && !emitsOptions[prop]) {
             let attrs = instance.attrs ||= {}
             attrs[prop] = nValue
         } else if (isEvent(prop)) {
@@ -38,6 +41,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
         } else {
             // props
             const { default: _default, type, validator, required } = propsOptions[prop]
+
             if (isUndefined(nValue)) {
                 // nValue 不存在在时应该使用默认值
                 if (required) {
