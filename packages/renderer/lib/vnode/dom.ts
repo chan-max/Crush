@@ -19,6 +19,13 @@ function createComponent(type: any, props: any, children: any, key: any = uid())
         mark(type, COMPONENT_TYPE, componentFlag)
     }
 
+    // 记录组件被使用多少次
+    if (type.count === undefined) {
+        type.count = 0
+    } else {
+        type.count++
+    }
+
     return {
         uid: uid(),
         nodeType: componentFlag,

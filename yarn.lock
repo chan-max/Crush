@@ -275,10 +275,10 @@
     "chalk" "^2.0.0"
     "js-tokens" "^4.0.0"
 
-"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.16.4", "@babel/parser@^7.16.7", "@babel/parser@^7.17.0":
-  "integrity" "sha512-VKXSCQx5D8S04ej+Dqsr1CzYvvWgf20jIw2D+YhQCrIlr2UZGaDds23Y0xg75/skOxpLCRpUZvk/1EAVkGoDOw=="
-  "resolved" "https://registry.npmjs.org/@babel/parser/-/parser-7.17.0.tgz"
-  "version" "7.17.0"
+"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.16.4", "@babel/parser@^7.16.7", "@babel/parser@^7.17.0", "@babel/parser@^7.18.11":
+  "integrity" "sha512-9JKn5vN+hDt0Hdqn1PiJ2guflwP+B6Ga8qbDuoF0PzzVhrzsKIJo8yGqVk6CmMHiMei9w1C1Bp9IMJSIK+HPIQ=="
+  "resolved" "https://registry.npmjs.org/@babel/parser/-/parser-7.18.11.tgz"
+  "version" "7.18.11"
 
 "@babel/plugin-syntax-async-generators@^7.8.4":
   "integrity" "sha512-tycmZxkGfZaxhMRbXlPXuVFpdWlXpir2W4AMhSJgRKzk/eDlIXOhb2LHWoLpDF7TEHylV5zNhykX6KAgHJmTNw=="
@@ -487,6 +487,12 @@
     "@crush/renderer" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
+"@crush/css@^0.0.0", "@crush/css@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\css":
+  "resolved" "file:packages/css"
+  "version" "0.0.0"
+  dependencies:
+    "@crush/compiler" "^0.0.0"
+
 "@crush/reactivity@^0.0.0", "@crush/reactivity@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\reactivity":
   "resolved" "file:packages/reactivity"
   "version" "0.0.0"
@@ -513,7 +519,7 @@
     "@crush/reactivity" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/router@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\router":
+"@crush/router@^0.0.0", "@crush/router@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\router":
   "resolved" "file:packages/router"
   "version" "0.0.0"
   dependencies:
@@ -2662,6 +2668,10 @@
   dependencies:
     "array-ify" "^1.0.0"
     "dot-prop" "^5.1.0"
+
+"components@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\components":
+  "resolved" "file:packages/components"
+  "version" "0.0.0"
 
 "concat-map@0.0.1":
   "integrity" "sha1-2Klr13/Wjfd5OnMDajug1UBdR3s="

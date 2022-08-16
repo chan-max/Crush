@@ -7,9 +7,14 @@ const cache = (fn) => {
     });
 };
 
-const warn = (...msg) => console.warn(...msg);
+const warn = (...msg) => {
+    console.warn(...msg);
+};
 const error = (...msg) => {
-    throw new Error(...msg);
+    console.error(...msg);
+};
+const log = (...msg) => {
+    console.log(...msg);
 };
 
 function getEmptyObject() {
@@ -184,7 +189,7 @@ function remountElement(el) {
     removeElement(el);
     insertElement(el, parent, anchor);
 }
-const setAttribute = (el, attribute, value) => el.setAttribute(attribute, value);
+const setAttribute = (el, attribute, value = '') => el.setAttribute(attribute, value);
 const removeAttribute = (el, attribute) => el.removeAttribute(attribute);
 const addListener = (target, event, handler, options = null) => target.addEventListener(event, handler, options);
 const removeListener = (target, event, handler, options = null) => target.removeEventListener(event, handler, options);
@@ -217,11 +222,12 @@ function normalizeProps(props) {
     return props;
 }
 
-var createStyleSheet = (props, children, key = uid()) => {
+var createStyleSheet = (props, children, scoped = false, key = uid()) => {
     return {
         nodeType: 17 /* STYLE */,
         type: 'style',
         children,
+        scoped,
         props: normalizeProps(props),
         key,
     };
@@ -832,6 +838,7 @@ function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
                 }
                 else {
                     // attribute
+                    propName = hyphenate(propName); // 连字符属性
                     (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
                 }
         }
@@ -853,7 +860,7 @@ function updateNativeEvents(el, event, pHandler, nHandler, options) {
     mountStyleSheet will create a style element
 */
 const mountStyleSheet = (vnode, container, anchor, parent) => {
-    const { props, children } = vnode;
+    const { props, children, scoped } = vnode;
     processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
     var el = docCreateElement('style');
     mountAttributes(el, props, parent, false);
@@ -862,45 +869,49 @@ const mountStyleSheet = (vnode, container, anchor, parent) => {
     processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
     insertElement(el, container, anchor);
     var sheet = el.sheet;
-    mountSheet(sheet, children);
+    mountSheet(sheet, children, scoped && parent.scopedId);
     processHook("mounted" /* MOUNTED */, vnode);
     return sheet;
 };
-function mountSheet(sheet, rules) {
+function mountSheet(sheet, rules, scopedId) {
     rules.forEach((rule) => {
-        mountRule(sheet, rule);
+        mountRule(sheet, rule, scopedId);
     });
 }
-function mountRule(sheet, rule, index = sheet.cssRules.length) {
+function mountRule(sheet, rule, scopedId) {
     switch (rule.nodeType) {
         case 26 /* STYLE_RULE */:
-            mountStyleRule(sheet, rule, index);
+            mountStyleRule(sheet, rule, sheet.cssRules.length, scopedId);
             break;
         case 22 /* MEDIA_RULE */:
-            mountMediaRule(sheet, rule, index);
+            mountMediaRule(sheet, rule, sheet.cssRules.length, scopedId);
             break;
         case 23 /* SUPPORTS_RULE */:
-            mountSupportsRule(sheet, rule, index);
+            mountSupportsRule(sheet, rule, sheet.cssRules.length, scopedId);
             break;
         case 24 /* KEYFRAMES_RULE */:
-            mountKeyframesRule(sheet, rule, index);
+            mountKeyframesRule(sheet, rule, sheet.cssRules.length);
             break;
         case 27 /* KEYFRAME_RULE */:
             mountKeyframeRule(sheet, rule);
             break;
     }
 }
-function mountStyleRule(sheet, rule, insertIndex = sheet.cssRules.length) {
-    const { selector, children: declaration } = rule;
+function mountStyleRule(sheet, rule, insertIndex = sheet.cssRules.length, scopedId = '' // 默认没有作用域id
+) {
+    let { selector, children: declaration } = rule;
     if (!declaration)
         return;
+    if (scopedId) {
+        selector = setSelectorAttribute(selector, scopedId);
+    }
     const index = insertStyle(sheet, selector, insertIndex);
     const insertedRule = sheet.cssRules[index];
     rule.rule = insertedRule; // set rule
     const insertedRuleStyle = insertedRule.style;
     mountDeclaration(insertedRuleStyle, declaration);
 }
-function mountMediaRule(sheet, rule, insertIndex = sheet.cssRules.length) {
+function mountMediaRule(sheet, rule, insertIndex = sheet.cssRules.length, scopedId) {
     var media = rule.media;
     var rules = rule.children;
     if (isArray(media)) {
@@ -909,14 +920,14 @@ function mountMediaRule(sheet, rule, insertIndex = sheet.cssRules.length) {
     var index = insertMedia(sheet, media, insertIndex);
     var newSheet = sheet.cssRules[index];
     rule.rule = newSheet;
-    mountSheet(newSheet, rules);
+    mountSheet(newSheet, rules, scopedId);
 }
-function mountSupportsRule(sheet, rule, insertIndex = sheet.cssRules.length) {
+function mountSupportsRule(sheet, rule, insertIndex = sheet.cssRules.length, scopedId) {
     var supports = rule.supports;
     var rules = rule.children;
     var index = insertSupports(sheet, supports, insertIndex);
     var newSheet = sheet.cssRules[index];
-    mountSheet(newSheet, rules);
+    mountSheet(newSheet, rules, scopedId);
 }
 function mountKeyframesRule(sheet, rule, insertIndex = sheet.cssRules.length) {
     var keyframes = rule.keyframes;
@@ -1001,10 +1012,15 @@ function mountElement(vnode, container, anchor, parent, isSVG = false) {
     // 1
     processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
     // 2
-    const { type, props, children, transition, patchKey } = vnode;
+    const { type, props, children, transition } = vnode;
+    const { scopedId } = parent;
     // create 
     const el = vnode.el = docCreateElement(type, isSVG);
     el._vnode = vnode;
+    // set scoped id
+    if (scopedId) {
+        setAttribute(el, String(scopedId));
+    }
     mountAttributes(el, props, parent, isSVG);
     processHook("created" /* CREATED */, vnode);
     processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
@@ -1097,10 +1113,9 @@ function updateComponentProps(instance, pProps, nProps) {
                 nValue && (refs[nValue] = instance);
             }
         }
-        else if (prop === 'bind') {
-            updateComponentProps(instance, pValue, nValue);
-        }
-        else if (!propsOptions[prop] || (isEvent(prop) && !emitsOptions[getEventName(prop)])) {
+        else if (prop === 'style') ;
+        else if (prop === 'class') ;
+        else if (!propsOptions[prop] && !emitsOptions[prop]) {
             let attrs = instance.attrs ||= {};
             attrs[prop] = nValue;
         }
@@ -2648,6 +2663,13 @@ function createComponent(type, props, children, key = uid()) {
         }
         mark(type, COMPONENT_TYPE, componentFlag);
     }
+    // 记录组件被使用多少次
+    if (type.count === undefined) {
+        type.count = 0;
+    }
+    else {
+        type.count++;
+    }
     return {
         uid: uid(),
         nodeType: componentFlag,
@@ -2836,14 +2858,6 @@ function withScope(expression, scope = 'Crush', stepsIndex = 0) {
             return replaceVariable(expression, scope);
     }
     return '';
-}
-// 提取一段表达式中的所有变量
-function extractExpressionVariables(expression) {
-    expression = expression.trim();
-    let firstLetter = expression[0]; // 第一个字符
-    if (firstLetter === "'" || firstLetter === '"') { // 普通字符串
-        expression.indexOf(firstLetter, 1);
-    }
 }
 
 const NULL = 'null';
@@ -3132,8 +3146,6 @@ function parseSelector(selector) {
     };
 }
 
-// arguments , filters , modifiers
-const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/;
 const AttributeFlags = [
     '$--',
     '--',
@@ -3146,6 +3158,7 @@ const AttributeFlags = [
 const AttributeEndFlags = [
     '!' // important css property
 ];
+// 合法的属性名称
 const staticAttributeNameRE = /[\w-]+/;
 // both for html attribute and css declaration
 function parseAttribute(attr) {
@@ -3167,26 +3180,34 @@ function parseAttribute(attr) {
             break;
         }
     }
-    let isDynamicProperty, property, _arguments, filters, modifiers;
+    let isDynamicProperty, property, decorators;
     if (attribute.startsWith('(')) {
+        // dynamic attribute
         let lastIndexOfBorder = attribute.lastIndexOf(')');
         property = attribute.slice(1, lastIndexOfBorder);
         isDynamicProperty = true;
-        let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
-        var tokens = attributeModifierRE.exec(argumentsAndModifiers);
-        let [_, __arguments, _modifiers] = tokens;
-        _arguments = __arguments && __arguments.split(':');
-        modifiers = _modifiers && _modifiers.split('.');
+        attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
     }
     else {
         isDynamicProperty = false;
         // 非动态属性， 先提取出 属性名称
         property = staticAttributeNameRE.exec(attribute)[0];
-        var tokens = attributeModifierRE.exec(attribute.slice(property?.length));
-        let [_, __arguments, _filters, _modifiers] = tokens;
-        _arguments = __arguments && __arguments.split(':');
-        filters = _filters && _filters.split('|');
-        modifiers = _modifiers && _modifiers.split('.');
+        decorators = attribute.slice(property?.length);
+    }
+    let _arguments, filters, modifiers;
+    if (decorators) {
+        let tokens = decorators.split(/(?=[\.|:])/);
+        tokens.forEach((token) => {
+            if (token[0] === ':') {
+                (_arguments ||= []).push(token.slice(1));
+            }
+            else if (token[0] === '|') {
+                (filters ||= []).push(token.slice(1));
+            }
+            else if (token[0] === '.') {
+                (modifiers ||= []).push(token.slice(1));
+            }
+        });
     }
     attr.isBooleanProperty = isUndefined(value);
     attr.isDynamicProperty = isDynamicProperty;
@@ -3194,7 +3215,7 @@ function parseAttribute(attr) {
     attr._arguments = _arguments;
     attr.modifiers = modifiers;
     attr.filters = filters;
-    attr.property = attr.isDynamicProperty ? property : camelize(property);
+    attr.property = property;
     attr.value = value;
     attr.flag = flag;
     attr.endFlag = endFlag;
@@ -3608,6 +3629,9 @@ const builtInRawAttributes = {
         attr.value = ast.children[0].children; // use native template
         // 清空style的children
         ast.children = null;
+    },
+    scoped(attr, ast) {
+        ast.scoped = true;
     }
 };
 const builtInEvents = {};
@@ -3927,7 +3951,7 @@ function genNode(node, context) {
             return genText(node.children, context);
         case 17 /* STYLE */:
             var props = genProps(node, context);
-            var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), uStringId());
+            var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId());
             code = genDirs(code, node, context);
             return code;
         case 26 /* STYLE_RULE */:
@@ -4053,10 +4077,10 @@ function genProps(node, context) {
     }
     var props = {};
     attributes.forEach((attr) => {
+        attr.value ||= attr.property;
         switch (attr.type) {
             case 25 /* EVENT */:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
-                value ||= property; // 简写形似
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
                         dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
@@ -4081,7 +4105,6 @@ function genProps(node, context) {
             case 7 /* ATTRIBUTE */:
                 // normal attributes
                 var { property, value, isDynamicProperty, isDynamicValue, } = attr;
-                value ||= property; // 简写形式
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
                 break;
         }
@@ -4161,6 +4184,20 @@ function parseInlineStyle(styleString) {
 }
 const inlineClassDelimiter = /\s+/;
 const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
+
+// 提取一段表达式中的所有变量
+function extractExpressionVariables(expression) {
+    let processingExpression = expression.trim();
+    while (processingExpression) {
+        let firstLetter = processingExpression[0]; // 第一个字符
+        if (firstLetter === "'" || firstLetter === '"') { // 普通字符串
+            let stringEnd = expression.indexOf(firstLetter, 1);
+            processingExpression.slice(0, stringEnd + 1);
+            processingExpression = processingExpression.slice(stringEnd + 1);
+        }
+        debugger;
+    }
+}
 
 // normalized class always will be a map with true value
 function normalizeClass(rawClass) {
@@ -4373,17 +4410,16 @@ function scaleX(n) {
     return `scaleX(${n})`;
 }
 
-// rebuilding
 const groupSelectorDelimiter = /\s*,\s*/;
 const splitSelector = (selector) => selector.split(groupSelectorDelimiter);
 const joinSelector = (splitedSelector) => splitedSelector.join(',');
 function mergeSelector(p, c) {
-    var ref = false; // is using & 
+    var useParentSelector = false; // is using & 
     var merged = c.replace('&', () => {
-        ref = true;
+        useParentSelector = true;
         return p;
     });
-    return ref ? merged : p + ' ' + c; // default merge
+    return useParentSelector ? merged : p + ' ' + c; // default merge
 }
 /*
     ['header','footer'] , ['h1','h2'] ===> ['header h1' , 'header h2' , 'footer h1' , 'footer h2']
@@ -4397,6 +4433,19 @@ const mergeSplitedSelectors = (...selectors) => selectors.reduce(mergeSplitedSel
 const mergeSplitedSelectorsAndJoin = (...selectors) => joinSelector(mergeSplitedSelectors(...selectors));
 function mergeSelectors(...selectors) {
     return mergeSplitedSelectors(...selectors.map(splitSelector)).join(',');
+}
+function baseSetSelectorAttribute(selector, attribute) {
+    let pseduoClassPosition = selector.indexOf(':');
+    if (pseduoClassPosition < 0) {
+        // 带有伪类选择器
+        return `${selector}[${attribute}]`;
+    }
+    else {
+        return `${selector.slice(0, pseduoClassPosition)}[${attribute}]${selector.slice(pseduoClassPosition)}`;
+    }
+}
+function setSelectorAttribute(selector, attribute) {
+    return joinSelector(splitSelector(selector).map((sel) => baseSetSelectorAttribute(sel, attribute)));
 }
 
 function keyframes(name, keyframes) {
@@ -6116,12 +6165,16 @@ const scopeProperties = {
         };
     },
 };
-const defineScopeProperty = (key, getter) => scopeProperties[key] = getter;
+const defineScopeProperty = (key, property) => scopeProperties[key] = property;
 const protoMethods = {
     debounce,
     throttle,
     ...cssMethods,
 };
+// todo bug
+Object.keys(scopeProperties).forEach(prop => {
+    protoMethods[prop] = '';
+});
 // inject scope property
 function createScope(instance) {
     const scope = reactive(Object.create(protoMethods));
@@ -6177,6 +6230,8 @@ function createRenderScope(instanceScope) {
     });
 }
 
+// forward
+log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`);
 var currentApp;
 function getCurrentApp() {
     return currentApp;
@@ -6184,6 +6239,7 @@ function getCurrentApp() {
 function createApp(rootComponent) {
     if (currentApp) {
         // 只能有一个应用
+        warn('APP', currentApp, 'is runing and there can only be one application in your webpage');
         return;
     }
     const app = {
@@ -6199,6 +6255,8 @@ function createApp(rootComponent) {
         use,
         mount: mountApp,
         unmount: unmountApp,
+        errorHandler: null,
+        warnHandler: null,
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
@@ -6210,6 +6268,7 @@ function createApp(rootComponent) {
     // 安装动画
     use(installAnimation);
     function component(name, component) {
+        name = camelize(name);
         if (!app.components[name]) {
             app.components[name] = component;
         }
@@ -6218,6 +6277,7 @@ function createApp(rootComponent) {
         app.mixins.push(mixin);
     }
     function directive(name, directive) {
+        name = camelize(name);
         if (!app.directives[name]) {
             app.directives[name] = directive;
         }
@@ -6234,8 +6294,8 @@ function createApp(rootComponent) {
         app.container = container;
         app.inlineTemplate = container.innerHTML;
         container.innerHTML = '';
-        if (!rootComponent.template && !rootComponent.render) {
-            rootComponent.template = app.inlineTemplate;
+        if (!app.rootComponent.template && !app.rootComponent.render) {
+            app.rootComponent.template = app.inlineTemplate;
         }
         app.rootVnode = createComponent(rootComponent, null, null);
         mount(app.rootVnode, app.container);
@@ -6412,6 +6472,7 @@ const createComponentInstance = (options, parent) => {
         watch: null,
         renderEffect: null,
         render: options.render,
+        scopedId: options.scopedId,
         propsOptions: options.propsOptions || emptyObject,
         emitsOptions: options.emitsOptions || emptyObject,
         createRender: options.createRender,
@@ -6590,7 +6651,7 @@ function normalizePropsOptions(options) {
 }
 function normalizeEmitsOptions(options) {
     if (isArray(options)) {
-        return arrayToMap(options, emptyObject);
+        return arrayToMap(options.map((eventName) => `on${initialUpperCase(eventName)}`), emptyObject);
     }
     else {
         return options;
@@ -6686,4 +6747,4 @@ function useOptions() {
     return getCurrentInstance().customOptions;
 }
 
-export { $var, Comment, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, extractExpressionVariables, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEL, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useOptions, usePromise, useRefState, useString, useUid, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };
+export { $var, Comment, ComputedRef, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, NodesMap, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, extend, extractExpressionVariables, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEL, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyOf, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateAttributes, updateChildren, updateClass, updateComponent, updateDeclaration, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useOptions, usePromise, useRefState, useString, useUid, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers, withScope };

@@ -413,6 +413,9 @@ function genProps(node: any, context: any) {
     if (!attributes) { return NULL }
     var props: any = {}
     attributes.forEach((attr: any) => {
+
+        attr.value ||= attr.property
+        
         switch (attr.type) {
             case Nodes.EVENT:
                 var {
@@ -423,7 +426,7 @@ function genProps(node: any, context: any) {
                     _arguments,
                     modifiers
                 } = attr
-                value ||= property // 简写形似
+
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
                         dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
@@ -453,7 +456,7 @@ function genProps(node: any, context: any) {
                     isDynamicProperty,
                     isDynamicValue,
                 } = attr
-                value ||= property // 简写形式
+
                 props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
                 break
         }

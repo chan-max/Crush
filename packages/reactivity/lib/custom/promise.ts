@@ -8,11 +8,8 @@ export function usePromise(promise: any) {
 }
 
 class PromiseRef extends Ref {
-
     resolved = false
-
     rejected = false
-
     constructor(promise: any) {
         super(null)
         promise.then((result: any) => {

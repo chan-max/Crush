@@ -1,13 +1,14 @@
-import { computed, createApp, usePromise, watchRef, warn, error } from "./packages/core";
+import { computed, createApp, usePromise, watchRef, warn, error, extractExpressionVariables } from "./packages/core";
+import {parse,parseExpression} from '@babel/parser'
 
-import { setSelectorAttribute } from "./packages/core";
 
-
+console.log(parseExpression('[(x,y)=> 666 ,(x,y)=> 666 ]'))
 
 
 
 let root = {
     template: /*html*/`
+
     `,
     create({ $self }: any) {
         $self.count = 0
@@ -22,8 +23,8 @@ let root = {
 const app = createApp(root)
 
 
-app.mount('#app')
 
+app.mount('#app')
 
 
 

@@ -61,7 +61,7 @@ export function mountStyleRule(
     sheet: any,
     rule: any,
     insertIndex = sheet.cssRules.length,
-    scopedId: any
+    scopedId: any = '' // 默认没有作用域id
 ) {
     let {
         selector,

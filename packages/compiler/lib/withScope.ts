@@ -96,17 +96,3 @@ export function withScope(expression: string, scope: string = 'Crush', stepsInde
 
 
 
-
-// 提取一段表达式中的所有变量
-export function extractExpressionVariables(expression: string) {
-    expression = expression.trim()
-
-    let UNKNOWN = true // 未知情况
-
-    let firstLetter = expression[0] // 第一个字符
-
-    if (firstLetter === "'" || firstLetter === '"') { // 普通字符串
-        let stringEnd = expression.indexOf(firstLetter, 1)
-    }
-            
-}

@@ -23,6 +23,7 @@
   "author": "chan",
   "license": "MIT",
   "dependencies": {
+    "@babel/parser": "^7.18.11",
     "@vitejs/plugin-vue": "^2.2.4",
     "axios": "^0.26.0",
     "concurrently": "^7.0.0",

@@ -85,7 +85,7 @@ export function parseAttribute(attr: any) {
     attr._arguments = _arguments
     attr.modifiers = modifiers
     attr.filters = filters
-    attr.property = attr.isDynamicProperty ? property : camelize(property)
+    attr.property = property
     attr.value = value
     attr.flag = flag
     attr.endFlag = endFlag

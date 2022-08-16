@@ -4,7 +4,7 @@ import { Nodes } from "@crush/core"
 import { normalizeProps } from "../render/normalizeProps"
 
 
-var createStyleSheet = (props: any, children: any, scoped:any, key: any = uid()) => {
+var createStyleSheet = (props: any, children: any, scoped: any = false, key: any = uid()) => {
     return {
         nodeType: Nodes.STYLE,
         type: 'style',
