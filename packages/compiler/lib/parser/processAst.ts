@@ -318,8 +318,3 @@ export function processAst(ast: any) {
         processAst(ast.children)
     }
 }
-
-
-const enum Tag {
-
-}

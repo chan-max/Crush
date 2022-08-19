@@ -18,6 +18,7 @@ import {
 } from '../stringify'
 
 import { uVar } from '@crush/common'
+import { expressionWithScope, SetScopeContext } from '../withScope'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
@@ -25,17 +26,21 @@ class CodeGenerator {
 
     code: string
 
+    // 记录使用的方法
     methods: Record<string, boolean>
+
+    renderScope: any
+    scope: any
 
     constructor() {
         this.code = ''
         this.methods = {}
     }
 
+    scopeContext = new SetScopeContext()
+
     getCode = () => {
-        this.unshift(declare(
-            `{${Object.keys(this.methods).join(',')}}`
-            , 'renderMethods'))
+        this.unshift(declare(`{${Object.keys(this.methods).join(',')}}`, 'renderMethods'))
         return this.code
     }
 
@@ -61,31 +66,45 @@ class CodeGenerator {
         return callFn(fn, ...args)
     }
 
-    setScope() {
-
+    setRenderScope(exp: string) {
+        return expressionWithScope(exp, this.scopeContext)
     }
 
+    pushScope(scope: any) {
+        this.scopeContext.pushScope(scope)
+    }
+
+    popScope() {
+        this.scopeContext.popScope()
+    }
 }
 
+const compilerDefaultOptions: any = [
 
-export function compile(template: string) {
+]
 
-    var ast = baseParseHTML(template)
-    processAst(ast)
+export function compile(template: string, compilerOptions: any = compilerDefaultOptions) {
 
     var context = new CodeGenerator()
+
+
+
+
+    // 初始化渲染作用域
+    context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
+    context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'))
     // 初始化所有渲染方法
+    context.scopeContext.scope = context.renderScope
 
-    // 模板的渲染作用域
-    var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
+    var htmlAst = baseParseHTML(template)
 
-    const renderCode: any = genNodes(ast, context)
+    debugger
 
-    const content = `
-        with(${SCOPE}){
-            return ${toArrowFunction(renderCode)} // the return function is render function
-        }    
-    `
+    processAst(htmlAst)
+
+    const renderCode: any = genNodes(htmlAst, context)
+
+    const content = `return ${toArrowFunction(renderCode)} // the return function is render function`
 
     context.pushNewLine(content)
 

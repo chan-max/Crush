@@ -103,12 +103,6 @@ const protoMethods: any = {
     ...cssMethods,
 }
 
-// todo bug
-
-Object.keys(scopeProperties).forEach(prop => {
-    protoMethods[prop] = ''
-});
-
 
 // inject scope property
 export function createScope(instance: any) {

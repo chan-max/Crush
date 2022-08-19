@@ -1,30 +1,20 @@
-import { computed, createApp, usePromise, watchRef, warn, error, extractExpressionVariables } from "./packages/core";
-import {parse,parseExpression} from '@babel/parser'
+import {
+    findTemplateStringEnd,
+    computed, createApp, usePromise, watchRef, warn, error, linearGradient, objectExpressionWithScope, arrayExpressionWithScope, expressionWithScope, findNextCodeBlockClosingPosition
+    ,
+
+} from "./packages/core";
 
 
-console.log(parseExpression('[(x,y)=> 666 ,(x,y)=> 666 ]'))
-
-
-
-let root = {
-    template: /*html*/`
-
+createApp({
+    template:/*html*/`
+        <for iterator="i in  10">
+            <for iterator="j in 5">
+                <li> {{i}} {{j}} </li>
+            </for>
+        </for>
     `,
-    create({ $self }: any) {
-        $self.count = 0
-        $self.toggle = () => {
-            $self.count++
-        }
+    create({$self}:any){
+        $self.l = 6
     }
-}
-
-
-
-const app = createApp(root)
-
-
-
-app.mount('#app')
-
-
-
+}).mount('#app')

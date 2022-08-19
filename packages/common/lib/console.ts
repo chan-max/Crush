@@ -12,6 +12,10 @@ const log = (...msg: any) => {
     console.log(...msg)
 }
 
+export const throwError = (...msg: any) => {
+    throw new Error(...msg)
+}
+
 export {
     warn,
     error,

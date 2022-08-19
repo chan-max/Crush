@@ -41,7 +41,6 @@ export const genNodes = (nodes: any[], context: any): string => {
     } else {
         return genFragment(stringify(children), context)
     }
-
 }
 
 
@@ -79,9 +78,10 @@ function genChildren(nodes: any[], context: any): string[] {
             inBranch = false
         }
     })
+
     children = children.map((child: any) => {
         if (isArray(child)) {
-            const branchCondition = child.map((b) => b.condition).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
+            const branchCondition = child.map((b) => context.setRenderScope(b.condition)).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
             const branchContent = child.map((b) => genNode(b, context))
             return ternaryChains(branchCondition, branchContent)
         } else {
@@ -95,11 +95,19 @@ import {
     Iterator
 } from '../parser/parseIterator'
 
-const genFor = (target: string, iterator: Iterator, context: any) => context.callRenderFn(
-    'renderList',
-    iterator.iterable, toArrowFunction(target, ...iterator.items),
-    uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
-)
+const genFor = (target: string, iterator: Iterator, context: any) => {
+
+    context.pushScope(iterator.items)
+    let result = context.callRenderFn(
+        'renderList',
+        context.setRenderScope(iterator.iterable), toArrowFunction(target, ...iterator.items),
+        uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
+    )
+    context.popScope()
+    return result
+}
+
+
 const genIf = (target: string, condition: string) => ternaryExp(condition, target, NULL)
 
 function genForWithFragment(target: string, iterator: Iterator, context: any) {
@@ -107,9 +115,6 @@ function genForWithFragment(target: string, iterator: Iterator, context: any) {
 }
 
 const genDirectives = (target: string, dirs: any[], context: any): string => {
-    /*
-        there is no possible to exist else-if or else
-    */
     if (!dirs || dirs.length === 0) {
         return target
     } else {
@@ -205,7 +210,10 @@ function genNode(node: any, context: any): any {
             return genNodes(node.children as any[], context)
         case Nodes.FOR:
             // use the fragment , cause the iterator will set the u key in each node , 
-            return genForWithFragment(genNodes(node.children, context), node.iterator, context)
+            context.pushScope(node.iterator.items)
+            let result = genForWithFragment(genNodes(node.children, context), node.iterator, context)
+            context.popScope()
+            return result
         case Nodes.TEMPLATE:
             var code = genNodes(node.children as any[], context)
             // 只有模板上的保留属性会生效
@@ -222,20 +230,29 @@ function genNode(node: any, context: any): any {
             return genNodes(node.children as any[], context)
         case Nodes.DYNAMIC_ELEMENT:
             var { is, isDynamicIs } = node
+            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
+            directiveFor && context.pushScope(directiveFor.iterator.items)
             var code: string = context.callRenderFn(
                 'createElement',
                 isDynamicIs ? is : toSingleQuotes(is),
                 genProps(node, context), // 正常生成props
                 genChildrenString(node.children, context),
                 uStringId())
+            directiveFor && context.popScope()
             code = genDirs(code, node, context)
             return code
         case Nodes.HTML_ELEMENT:
+            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
+            directiveFor && context.pushScope(directiveFor.iterator.items)
             var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            directiveFor && context.popScope()
             code = genDirs(code, node, context)
             return code
         case Nodes.SVG_ELEMENT:
+            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
+            directiveFor && context.pushScope(directiveFor.iterator.items)
             var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            directiveFor && context.popScope()
             code = genDirs(code, node, context)
             return code
         case Nodes.DYNAMIC_COMPONENT:
@@ -259,7 +276,7 @@ function genNode(node: any, context: any): any {
             return genText(node.children as Text[], context)
         case Nodes.STYLE:
             var props = genProps(node, context)
-            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node,'scoped'), uStringId())
+            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId())
             code = genDirs(code, node, context)
             return code
         case Nodes.STYLE_RULE:
@@ -283,7 +300,7 @@ const genFragment = (code: string, context: any) => context.callRenderFn('create
 const genTextContent = (texts: any, context: any) => {
     return texts.map((text: any) => {
         const { content, isDynamic, modifier } = text
-        return isDynamic ? context.callRenderFn('display', content, toSingleQuotes(modifier)) : toBackQuotes(content)
+        return isDynamic ? context.callRenderFn('display', context.setRenderScope(content), modifier && toSingleQuotes(modifier)) : toBackQuotes(content)
     }).join('+')
 }
 
@@ -415,7 +432,7 @@ function genProps(node: any, context: any) {
     attributes.forEach((attr: any) => {
 
         attr.value ||= attr.property
-        
+
         switch (attr.type) {
             case Nodes.EVENT:
                 var {
