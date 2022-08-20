@@ -18,11 +18,13 @@ import {
 } from '../stringify'
 
 import { uVar } from '@crush/common'
-import { expressionWithScope, SetScopeContext } from '../withScope'
+import { createExpression } from '../withScope'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
-class CodeGenerator {
+export class CodeGenerator {
+
+    compilerOptions: any
 
     code: string
 
@@ -36,8 +38,6 @@ class CodeGenerator {
         this.code = ''
         this.methods = {}
     }
-
-    scopeContext = new SetScopeContext()
 
     getCode = () => {
         this.unshift(declare(`{${Object.keys(this.methods).join(',')}}`, 'renderMethods'))
@@ -67,49 +67,57 @@ class CodeGenerator {
     }
 
     setRenderScope(exp: string) {
-        return expressionWithScope(exp, this.scopeContext)
+        let expInstance = createExpression(exp)
+        expInstance.pushScope(this.scopes)
+        return expInstance.scopedExpression(this.renderScope)
     }
 
+    scopes: any = []
+
     pushScope(scope: any) {
-        this.scopeContext.pushScope(scope)
+        this.scopes.push(scope)
     }
 
     popScope() {
-        this.scopeContext.popScope()
+        this.scopes.pop()
     }
 }
 
-const compilerDefaultOptions: any = [
+import { isHTMLTag, isSVGTag } from '@crush/const'
 
-]
+const compilerDefaultOptions: any = {
+    isHTMLTag,
+    isSVGTag
+}
+
+import { processTemplateAst } from '../parser/parseTemplate'
 
 export function compile(template: string, compilerOptions: any = compilerDefaultOptions) {
 
     var context = new CodeGenerator()
 
-
-
+    context.compilerOptions = compilerOptions
 
     // 初始化渲染作用域
     context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
     context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'))
-    // 初始化所有渲染方法
-    context.scopeContext.scope = context.renderScope
 
     var htmlAst = baseParseHTML(template)
 
-    debugger
+    processTemplateAst(htmlAst, context)
 
-    processAst(htmlAst)
+    console.log(htmlAst);
 
     const renderCode: any = genNodes(htmlAst, context)
 
-    const content = `return ${toArrowFunction(renderCode)} // the return function is render function`
+
+    const content = `return ${toArrowFunction(renderCode)}`
 
     context.pushNewLine(content)
 
     var renderFunction = createFunction(context.getCode(), 'renderMethods')
     console.log(renderFunction);
+
     return renderFunction
 }
 

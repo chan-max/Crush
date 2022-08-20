@@ -16,12 +16,17 @@ export function findStringFromArray(str: string, arr: any): boolean {
     return find
 }
 
+export class Expression {
 
+    // 记录表达式中用到的变量
+    variables: any = []
 
-export class SetScopeContext {
-    scope: any
-    constructor(scope: string = '_') {
-        this.scope = scope
+    expression: string
+
+    scope = '_' // 默认值
+
+    constructor(expression: string) {
+        this.expression = expression
     }
 
     scopeStack: any = []
@@ -39,15 +44,31 @@ export class SetScopeContext {
     }
 
     setScope(variable: any, scope: any = this.scope) {
-        return this.isVariable(variable) ? scope + '.' + variable : variable
+        if (this.isVariable(variable)) {
+            this.variables.push(variable)
+            return scope + '.' + variable
+        } else {
+            return variable
+        }
+    }
+
+    scopedExpression(scoped: string) {
+        this.scope = scoped
+        return expressionWithScope(this.expression, this)
     }
 }
+
+
+export function createExpression(expression: string) {
+    return new Expression(expression)
+}
+
 
 let isJsVarStart = (str: string) => /^[\$_a-zA-Z]/.test(str)
 
 const jsVarRE = /[\$_A-Za-z][A-Za-z0-9]*/
 
-export function expressionWithScope(expression: string, scopeContext: any = new SetScopeContext('scope')) {
+export function expressionWithScope(expression: string, expressionContext: Expression) {
     let processingExpression = expression
     let withScopedExpression = ''
 
@@ -70,7 +91,7 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
             case '`':
                 let templateStringEnd = findTemplateStringEnd(processingExpression)
                 let templateString = processingExpression.slice(0, templateStringEnd + 1)
-                let withScopedTemplateString = templateStringWithScope(templateString)
+                let withScopedTemplateString = templateStringWithScope(templateString, expressionContext)
                 withScopedExpression += withScopedTemplateString
                 processingExpression = processingExpression.slice(templateStringEnd + 1)
                 lastIsVar = false
@@ -79,7 +100,7 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
                 // object
                 let objectEnd = findNextCodeBlockClosingPosition(processingExpression)
                 let object = processingExpression.slice(0, objectEnd + 1)
-                let withScopedObject = objectExpressionWithScope(object, scopeContext)
+                let withScopedObject = objectExpressionWithScope(object, expressionContext)
                 withScopedExpression += withScopedObject
                 processingExpression = processingExpression.slice(objectEnd + 1)
                 lastIsVar = false
@@ -89,7 +110,7 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
                     // dynamic object key
                     let dynamicObjectKeyEnd = findNextCodeBlockClosingPosition(processingExpression)
                     let dynamicObjectKey = processingExpression.slice(1, dynamicObjectKeyEnd)
-                    let withScopedDynamicObjectKey = expressionWithScope(dynamicObjectKey, scopeContext)
+                    let withScopedDynamicObjectKey = expressionWithScope(dynamicObjectKey, expressionContext)
                     withScopedExpression += `[${withScopedDynamicObjectKey}]`
                     processingExpression = processingExpression.slice(dynamicObjectKeyEnd + 1)
                     lastIsVar = true
@@ -97,7 +118,7 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
                     // array
                     let arrayEnd = findNextCodeBlockClosingPosition(processingExpression)
                     let array = processingExpression.slice(0, arrayEnd + 1)
-                    let withScopedArray = arrayExpressionWithScope(array, scopeContext)
+                    let withScopedArray = arrayExpressionWithScope(array, expressionContext)
                     withScopedExpression += withScopedArray
                     processingExpression = processingExpression.slice(arrayEnd + 1)
                     lastIsVar = false
@@ -109,20 +130,21 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
                 let restContent = processingExpression.slice(blockEnd + 1)
                 if (lastIsVar) {
                     // 函数调用  , 参数也应该设置作用域
-                    withScopedExpression += `(${listExpressionWithScope(blockContent, scopeContext)})`
+                    withScopedExpression += `(${listExpressionWithScope(blockContent, expressionContext)})`
                     processingExpression = processingExpression.slice(blockEnd + 1)
                     lastIsVar = true
                 } else if (restContent.trim().startsWith('=>')) {
                     // 箭头函数
-                    let args = blockContent.split(',') // 箭头函数的形参
+                    let args = extractArrayFunctionArgs(blockContent) // 箭头函数的形参
                     let fnContent = restContent.trim().slice(2).trim()
-                    scopeContext.pushScope(args)
-                    let withScopedFnContent = expressionWithScope(fnContent, scopeContext)
-                    scopeContext.popScope()
+                    expressionContext.pushScope(args)
+                    let withScopedFnContent = expressionWithScope(fnContent, expressionContext)
+                    expressionContext.popScope()
                     withScopedExpression += `(${args.join(',')})=>${withScopedFnContent}`
                     processingExpression = ''
                 } else {
-                    withScopedExpression += `(${expressionWithScope(blockContent)})`
+                    // 当做普通结构体处理
+                    withScopedExpression += `(${expressionWithScope(blockContent, expressionContext)})`
                     processingExpression = processingExpression.slice(blockEnd + 1)
                 }
                 break
@@ -151,15 +173,15 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
                         // 没有括号的情况只能有一个参数
                         let arg = jsVar
                         let fnContent = restContent.trim().slice(2).trim()
-                        scopeContext.pushScope(arg)
-                        let withScopedFnContent = expressionWithScope(fnContent, scopeContext)
-                        scopeContext.popScope()
+                        expressionContext.pushScope(arg)
+                        let withScopedFnContent = expressionWithScope(fnContent, expressionContext)
+                        expressionContext.popScope()
                         withScopedExpression += `${jsVar}=>${withScopedFnContent}`
                         processingExpression = '' // 直接介素
                         lastIsVar = false
                     } else {
                         // 普通的 js变量
-                        withScopedExpression += scopeContext.setScope(jsVar)
+                        withScopedExpression += expressionContext.setScope(jsVar)
                         processingExpression = processingExpression.slice(jsVar.length)
                         lastIsVar = true
                     }
@@ -175,9 +197,32 @@ export function expressionWithScope(expression: string, scopeContext: any = new 
     return withScopedExpression
 }
 
+export function extractArrayFunctionArgs(argsExpression: any): any {
+    if (!argsExpression.trim()) {
+        return []
+    }
+    let commaList = findFirstLevelComma(argsExpression)
+    let items = devideString(argsExpression, commaList)
+    let args: any = []
+    items.forEach((item: string) => {
+        item = item.trim()
+        if (item.startsWith('{')) {
+            item.slice(1, -1).split(',').forEach((_item: string) => {
+                let deArgs: any = _item.split(':') // rename args
+                if (deArgs.length === 1) {
+                    args.push(deArgs[0])
+                } else {
+                    args.push(deArgs[1])
+                }
+            })
+        } else {
+            args.push(item)
+        }
+    })
+    return args
+}
 
-
-export function objectExpressionWithScope(objectExpression: string, scopeContext: any) {
+export function objectExpressionWithScope(objectExpression: string, expressionContext: any) {
     objectExpression = objectExpression.trim()
     let objectContent = objectExpression.slice(1, objectExpression.length - 1)
     let positions = findFirstLevelComma(objectContent)
@@ -191,19 +236,19 @@ export function objectExpressionWithScope(objectExpression: string, scopeContext
             // dynamic object key , dynamicKey 一定没有简写
             let dynamicKeyEndPosition = findNextCodeBlockClosingPosition(keyValue)
             let dynamicKey = keyValue.slice(1, dynamicKeyEndPosition) // 去掉中括号 
-            let withScopedDynamicKey = '[' + expressionWithScope(dynamicKey, scopeContext) + ']'
+            let withScopedDynamicKey = '[' + expressionWithScope(dynamicKey, expressionContext) + ']'
             let value = keyValue.slice(dynamicKeyEndPosition + 1).trim().slice(1) // 去掉最开始冒号
-            let withScopedValue = expressionWithScope(value, scopeContext)
+            let withScopedValue = expressionWithScope(value, expressionContext)
             withScopedKeyValue.push(`${withScopedDynamicKey}:${withScopedValue}`)
         } else {
             let keyValueDeviderPosition = keyValue.indexOf(':')
             if (keyValueDeviderPosition === -1) {
                 // 对象key简写
-                withScopedKeyValue.push(`${keyValue}:${scopeContext.setScope(keyValue, scopeContext)}`)
+                withScopedKeyValue.push(`${keyValue}:${expressionContext.setScope(keyValue, expressionContext)}`)
             } else {
                 let key = keyValue.slice(0, keyValueDeviderPosition)
                 let value = keyValue.slice(keyValueDeviderPosition + 1)
-                withScopedKeyValue.push(`${key}:${expressionWithScope(value)}`)
+                withScopedKeyValue.push(`${key}:${expressionWithScope(value, expressionContext)}`)
             }
         }
     })
@@ -230,7 +275,7 @@ export function findTemplateStringEnd(templateString: string): any {
     }
 }
 
-function templateStringWithScope(templateString: string) {
+function templateStringWithScope(templateString: string, expressionContext: any) {
     // 必须以反引号开头 结尾
     let result = '`'
     let cursor = 1
@@ -248,7 +293,7 @@ function templateStringWithScope(templateString: string) {
             // 第一个template 结束
             let staticContent = templateString.slice(cursor, templateStartPosition)
             let templateContent = templateString.slice(templateStartPosition + 2, templateEnd) // +2 是把 ${ 去掉
-            let withScopedTempalteContent = expressionWithScope(templateContent)
+            let withScopedTempalteContent = expressionWithScope(templateContent, expressionContext)
             result += staticContent
             result += '${' + withScopedTempalteContent + '}'
             cursor = templateEnd + 1
@@ -258,14 +303,14 @@ function templateStringWithScope(templateString: string) {
 }
 
 // 使用 ， 分隔
-function listExpressionWithScope(expression: string, scopeContext: SetScopeContext) {
+function listExpressionWithScope(expression: string, expressionContext: Expression) {
     let commaList = findFirstLevelComma(expression)
     let items = devideString(expression, commaList)
-    return items.map((item: string) => expressionWithScope(item, scopeContext)).join(',')
+    return items.map((item: string) => expressionWithScope(item, expressionContext)).join(',')
 }
 
-export function arrayExpressionWithScope(arrayExpression: string, scopeContext: SetScopeContext) {
-    return `[${listExpressionWithScope(arrayExpression.slice(1, -1), scopeContext)}]`
+export function arrayExpressionWithScope(arrayExpression: string, expressionContext: Expression) {
+    return `[${listExpressionWithScope(arrayExpression.slice(1, -1), expressionContext)}]`
 }
 
 

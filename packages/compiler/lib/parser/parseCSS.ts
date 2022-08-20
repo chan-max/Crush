@@ -28,13 +28,13 @@ const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
 const cssReservedWord = /^(if|else-if|else|for|elseIf)/
 
 import {
-    Nodes
-} from '@crush/const'
+    AstTypes
+} from './parseTemplate'
 
 import { parseIterator } from './parseIterator'
 
 
-export const parseCSS = (source: string): any => {
+export const parseCSS = (source: string, context: any): any => {
     var scanner = createScanner(source)
     var ast: any = [], // 存储编译结果
         stack: any = [], // 保留层级结构
@@ -43,6 +43,7 @@ export const parseCSS = (source: string): any => {
         parent = null,
         closing = false,
         declarationGroup: any
+    
     while (scanner.source) {
         if (scanner.startsWith('}')) {
             closing = true
@@ -62,26 +63,26 @@ export const parseCSS = (source: string): any => {
                 switch (key) {
                     case 'media':
                         current = {
-                            type: Nodes.MEDIA_RULE,
+                            type: AstTypes.MEDIA_RULE,
                             media: content
                         }
                         break
                     case 'keyframes':
                         current = {
-                            type: Nodes.KEYFRAMES_RULE,
+                            type: AstTypes.KEYFRAMES_RULE,
                             keyframes: content
                         }
                         break
                     case 'supports':
                         current = {
-                            type: Nodes.SUPPORTS_RULE,
+                            type: AstTypes.SUPPORTS_RULE,
                             keyframes: content
                         }
                         break
                     case 'screens':
                         // 转换为动态 media
                         current = {
-                            type: Nodes.MEDIA_RULE,
+                            type: AstTypes.MEDIA_RULE,
                             media: content.trim(),
                             appConfigMedia: true // 使用应用配置
                         }
@@ -96,7 +97,7 @@ export const parseCSS = (source: string): any => {
         } else if (scanner.startsWith('...')) {
             var [mixin]: any = scanner.exec(mixinRE);
             var m = {
-                type: Nodes.MIXIN,
+                type: AstTypes.MIXIN,
                 mixin
             };
             (declarationGroup ||= []).push(m)
@@ -109,13 +110,13 @@ export const parseCSS = (source: string): any => {
             switch (dir) {
                 case 'for':
                     current = {
-                        type: Nodes.FOR,
+                        type: AstTypes.LIST_RENDER,
                         iterator: parseIterator(content)
                     }
                     break
                 case 'if':
                     current = {
-                        type: Nodes.IF,
+                        type: AstTypes.CONDITION_RENDER_IF,
                         condition: content,
                         isBranchStart: true
                     }
@@ -123,14 +124,14 @@ export const parseCSS = (source: string): any => {
                 case 'else-if':
                 case 'elseIf':
                     current = {
-                        type: Nodes.ELSE_IF,
+                        type: AstTypes.CONDITION_RENDER_ELSE_IF,
                         condition: content,
                         isBranch: true
                     }
                     break
                 case 'else':
                     current = {
-                        type: Nodes.ELSE,
+                        type: AstTypes.CONDITION_RENDER_ELSE,
                         isBranch: true
                     }
                     break
@@ -140,7 +141,7 @@ export const parseCSS = (source: string): any => {
                 try to get the selector
             */
             current = {
-                type: Nodes.STYLE_RULE,
+                type: AstTypes.STYLE_RULE,
                 selector: parseSelector(exResult[0])
             }
         } else if (exResult = scanner.exec(declarationRE)) {
@@ -170,7 +171,7 @@ export const parseCSS = (source: string): any => {
 
             (declarationGroup ||= []).push({
                 declaration,
-                type: Nodes.DECLARATION
+                type: AstTypes.DECLARATION
             })
             continue
         } else {
@@ -181,7 +182,7 @@ export const parseCSS = (source: string): any => {
         /* process the relation , with cascading struct */
 
         if (declarationGroup) {
-            var asb: any = { type: Nodes.DECLARATION_GROUP };
+            var asb: any = { type: AstTypes.DECLARATION_GROUP };
             asb.children = declarationGroup;
             asb.parent = parent;
             (parent.children ||= []).push(asb)

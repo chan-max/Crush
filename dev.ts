@@ -1,20 +1,22 @@
 import {
     findTemplateStringEnd,
-    computed, createApp, usePromise, watchRef, warn, error, linearGradient, objectExpressionWithScope, arrayExpressionWithScope, expressionWithScope, findNextCodeBlockClosingPosition
-    ,
+    computed, createApp, usePromise, watchRef, warn, error, linearGradient, objectExpressionWithScope, arrayExpressionWithScope, expressionWithScope, findNextCodeBlockClosingPosition, createExpression
+    ,extractArrayFunctionArgs
 
 } from "./packages/core";
 
-
 createApp({
     template:/*html*/`
-        <for iterator="i in  10">
-            <for iterator="j in 5">
-                <li> {{i}} {{j}} </li>
-            </for>
-        </for>
+        <style>
+            div{
+                h$(i){
+                    color:red;
+                }
+            }
+        </style>
+        <element for="i in 6" $is="'h'+i">6666</element>
     `,
-    create({$self}:any){
+    create({ $self }: any) {
         $self.l = 6
     }
 }).mount('#app')

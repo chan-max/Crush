@@ -212,92 +212,15 @@ const builtInRawAttributes: any = {
     }
 }
 
-
 const builtInEvents: any = {}
 
-function processAttribute(ast: any) {
-    var attributes = ast.attributes
-    if (!attributes) return
-    for (let i = 0; i < attributes.length; i++) {
-        let attribute = attributes[i]
-        let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)] // 驼峰化
-        if (rawAttributeHandler) {
-            rawAttributeHandler(attribute, ast)
-        } else {
-            parseAttribute(attribute)
-            let { property, flag, isDynamicProperty } = attribute
-            let attributeMap = ast.attributeMap ||= {}
-            attributeMap[property] = attribute
-            if (flag === '@') {
-                // event
-                attribute.type = Nodes.EVENT
-                attribute.isHandler = isHandler(attribute.value)
-                if (!isDynamicProperty && builtInEvents[attribute.property]) {
-                    // 保留事件
-                    builtInEvents[attribute.property](attribute, ast)
-                }
-            } else if (flag === '--') {
-                // 所有带 -- 一定是外界注入的指令
-                attribute.type = Nodes.CUSTOM_DIRECTIVE;
-                // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
-                const customDirectiveHandler = customDirectiveHandlers[attribute.property];
-                (ast.customDirectives ||= []).push(attribute);
-                if (!isDynamicProperty && customDirectiveHandler) {
-                    customDirectiveHandler(attribute, ast)
-                }
-            } else if (flag === '#') {
-                /*
-                    <div #app> </div> => <div #app> </div>
-                    <template #header></template> =>  <template slot:header></template>
-                    <Hello #app> => ref ??
-                */
-                if (ast.tagName === 'template') {
-                    // 模板上的# 会转换为插槽的定义
-                    ast.defineSlotName = attribute.property
-                    ast.isDynamicDefineSlotName = attribute.isDynamicProperty
-                    ast.slotScope = attribute.value
-                } else {
-                    attribute.type = Nodes.ATTRIBUTE
-                    // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                    attribute.value = hyphenate(attribute.property)
-                    attribute.property = 'id'
-                    attribute.isDynamicValue = attribute.isDynamicProperty
-                    attribute.isDynamicProperty = false
-                }
-            } else if (flag === '.') {
-                // class shourthand
-                attribute.type = Nodes.CLASS
-                attribute.value = attribute.property
-                attribute.property = 'class'
-                attribute.isDynamicValue = attribute.isDynamicProperty
-                attribute.isDynamicProperty = false
-            } else if (flag === '...') {
-                // bind shorthand
-                attribute.type = Nodes.ATTRIBUTE
-                attribute.value = attribute.property
-                attribute.property = 'bind'
-                attribute.isDynamicValue = true
-            } else {
-                // normal property , if for 等也会作为属性出现
-                const attrHandler = builtInAttributes[attribute.property]
-                if (!attrHandler || attribute.isDynamicProperty) {
-                    attribute.type = Nodes.ATTRIBUTE
-                } else {
-                    ast.directives ||= []
-                    attrHandler(attribute, ast)
-                }
-            }
-        }
-    }
-}
 
-export function processAst(ast: any) {
+export function processAst(ast: any, context: any) {
     if (isArray(ast)) {
-        ast.forEach(processAst)
+        ast.forEach(processAst, context)
         return
     }
     const tagName = ast.tagName = camelize(ast.tag)
-
     let builtInTagHandler = builtInTags[tagName]
 
     if (!builtInTagHandler) {
@@ -308,13 +231,86 @@ export function processAst(ast: any) {
     }
 
     // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
-    processAttribute(ast)
-
+    var attributes = ast.attributes
+    if (attributes) {
+        for (let i = 0; i < attributes.length; i++) {
+            let attribute = attributes[i]
+            let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)] // 驼峰化
+            if (rawAttributeHandler) {
+                rawAttributeHandler(attribute, ast)
+            } else {
+                parseAttribute(attribute)
+                let { property, flag, isDynamicProperty } = attribute
+                let attributeMap = ast.attributeMap ||= {}
+                attributeMap[property] = attribute
+                if (flag === '@') {
+                    // event
+                    attribute.type = Nodes.EVENT
+                    attribute.isHandler = isHandler(attribute.value)
+                    if (!isDynamicProperty && builtInEvents[attribute.property]) {
+                        // 保留事件
+                        builtInEvents[attribute.property](attribute, ast)
+                    }
+                } else if (flag === '--') {
+                    // 所有带 -- 一定是外界注入的指令
+                    attribute.type = Nodes.CUSTOM_DIRECTIVE;
+                    // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
+                    const customDirectiveHandler = customDirectiveHandlers[attribute.property];
+                    (ast.customDirectives ||= []).push(attribute);
+                    if (!isDynamicProperty && customDirectiveHandler) {
+                        customDirectiveHandler(attribute, ast)
+                    }
+                } else if (flag === '#') {
+                    /*
+                        <div #app> </div> => <div #app> </div>
+                        <template #header></template> =>  <template slot:header></template>
+                        <Hello #app> => ref ??
+                    */
+                    if (ast.tagName === 'template') {
+                        // 模板上的# 会转换为插槽的定义
+                        ast.defineSlotName = attribute.property
+                        ast.isDynamicDefineSlotName = attribute.isDynamicProperty
+                        ast.slotScope = attribute.value
+                    } else {
+                        attribute.type = Nodes.ATTRIBUTE
+                        // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                        attribute.value = hyphenate(attribute.property)
+                        attribute.property = 'id'
+                        attribute.isDynamicValue = attribute.isDynamicProperty
+                        attribute.isDynamicProperty = false
+                    }
+                } else if (flag === '.') {
+                    // class shourthand
+                    attribute.type = Nodes.CLASS
+                    attribute.value = attribute.property
+                    attribute.property = 'class'
+                    attribute.isDynamicValue = attribute.isDynamicProperty
+                    attribute.isDynamicProperty = false
+                } else if (flag === '...') {
+                    // bind shorthand
+                    attribute.type = Nodes.ATTRIBUTE
+                    attribute.value = attribute.property
+                    attribute.property = 'bind'
+                    attribute.isDynamicValue = true
+                } else {
+                    // normal property , if for 等也会作为属性出现
+                    const attrHandler = builtInAttributes[attribute.property]
+                    if (!attrHandler || attribute.isDynamicProperty) {
+                        attribute.type = Nodes.ATTRIBUTE
+                    } else {
+                        ast.directives ||= []
+                        attrHandler(attribute, ast)
+                    }
+                }
+            }
+        }
+    }
+    
     if (builtInTagHandler) {
         builtInTagHandler(ast)
     }
 
     if (!ast.ignoreChildren && ast.children) {
-        processAst(ast.children)
+        processAst(ast.children, context)
     }
 }

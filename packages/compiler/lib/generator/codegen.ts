@@ -1,5 +1,4 @@
-import { Nodes } from '@crush/const'
-
+import { AstTypes } from '../parser/parseTemplate'
 
 import {
     ternaryExp,
@@ -49,21 +48,18 @@ export const genNodes = (nodes: any[], context: any): string => {
 */
 
 function genChildren(nodes: any[], context: any): string[] {
-
     if (!nodes) {
         return []
     }
-
+    // 所有节点都会再此处理
     /*
         process the condition branch and the first dir is condition ,
         处理分支时会为if边际上branch start ， elseif else 标记为branch，或者元素的第一个指令为分支
     */
     var children: any = []
     var inBranch = false
+
     nodes.forEach((node) => {
-        /*
-            branchstart mean if frgment and if the element has the first directive is if 
-        */
         if (node.isBranchStart) {
             children.push([node])
             inBranch = true
@@ -74,15 +70,19 @@ function genChildren(nodes: any[], context: any): string[] {
                 //error
             }
         } else {
-            children.push(genNode(node, context))
+            let nodeCode = genNode(node, context)
+            children.push(nodeCode)
             inBranch = false
         }
     })
 
     children = children.map((child: any) => {
         if (isArray(child)) {
-            const branchCondition = child.map((b) => context.setRenderScope(b.condition)).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
-            const branchContent = child.map((b) => genNode(b, context))
+            const branchCondition = child.map((b) => b.condition).filter(Boolean) // 勇于筛除else的condition ， 其他应该在之前就报错
+            const branchContent = child.map((b) => {
+                let nodeCode = genNode(b, context)
+                return nodeCode
+            })
             return ternaryChains(branchCondition, branchContent)
         } else {
             return child
@@ -96,42 +96,19 @@ import {
 } from '../parser/parseIterator'
 
 const genFor = (target: string, iterator: Iterator, context: any) => {
-
-    context.pushScope(iterator.items)
-    let result = context.callRenderFn(
+    return context.callRenderFn(
         'renderList',
-        context.setRenderScope(iterator.iterable), toArrowFunction(target, ...iterator.items),
+        iterator.iterable, toArrowFunction(target, ...iterator.items),
         uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */
     )
-    context.popScope()
-    return result
 }
 
-
-const genIf = (target: string, condition: string) => ternaryExp(condition, target, NULL)
 
 function genForWithFragment(target: string, iterator: Iterator, context: any) {
     return genFragment(genFor(target, iterator, context), context)
 }
 
-const genDirectives = (target: string, dirs: any[], context: any): string => {
-    if (!dirs || dirs.length === 0) {
-        return target
-    } else {
-        // from end to start
-        var dir = dirs[dirs.length - 1]
-        dirs.pop()
-        switch (dir.type) {
-            case Nodes.IF:
-                target = genIf(target, dir.value)
-                break
-            case Nodes.FOR:
-                target = genForWithFragment(target, dir.iterator, context)
-                break
-        }
-        return genDirectives(target, dirs, context)
-    }
-}
+
 
 function genChildrenString(children: any, context: any) {
     if (!children) return NULL
@@ -140,7 +117,6 @@ function genChildrenString(children: any, context: any) {
 
 function genDirs(code: string, node: any, context: any) {
     if (node.customDirectives) { code = genCustomDirectives(code, node.customDirectives, context) }
-    if (node.directives) { code = genDirectives(code, node.directives, context) }
     return code
 }
 
@@ -201,61 +177,68 @@ function genSlotContent(node: any, context: any) {
 }
 
 function genNode(node: any, context: any): any {
+    let nodeCode: any = null
     switch (node.type) {
-        case Nodes.HTML_COMMENT:
-            return context.callRenderFn('createComment', toBackQuotes(node.children), uid())
-        case Nodes.IF:
-        case Nodes.ELSE_IF:
-        case Nodes.ELSE:
-            return genNodes(node.children as any[], context)
-        case Nodes.FOR:
+        case AstTypes.HTML_COMMENT:
+            nodeCode = context.callRenderFn('createComment', toBackQuotes(node.children), uid())
+            break
+        case AstTypes.CONDITION_RENDER_IF:
+        case AstTypes.CONDITION_RENDER_ELSE_IF:
+        case AstTypes.CONDITION_RENDER_ELSE:
+            nodeCode = genNodes(node.children as any[], context)
+            break
+        case AstTypes.LIST_RENDER:
             // use the fragment , cause the iterator will set the u key in each node , 
-            context.pushScope(node.iterator.items)
-            let result = genForWithFragment(genNodes(node.children, context), node.iterator, context)
-            context.popScope()
-            return result
-        case Nodes.TEMPLATE:
-            var code = genNodes(node.children as any[], context)
-            // 只有模板上的保留属性会生效
-            return genDirectives(code, node.directives, context)
-        case Nodes.SLOT:
+            nodeCode = genForWithFragment(genNodes(node.children, context), node.iterator, context)
+            break
+        case AstTypes.FRAGMENT:
+            nodeCode = genNodes(node.children as any[], context)
+            break
+        case AstTypes.USE_COMPONENT_SLOT:
             const { slotName, isDynamicSlot, children } = node
-            return context.callRenderFn(
+            nodeCode = context.callRenderFn(
                 'renderSlot',
                 isDynamicSlot ? slotName : toBackQuotes(slotName),
                 genProps(node, context),
                 children ? toArrowFunction(genNodes(children, context)) : NULL,
                 uid())
-        case Nodes.OUTLET:
-            return genNodes(node.children as any[], context)
-        case Nodes.DYNAMIC_ELEMENT:
+            break
+        case AstTypes.DEFINE_COMPONENT_SLOT:
+            nodeCode = genNodes(node.children as any[], context)
+            break
+        case AstTypes.DYNAMIC_HTML_ELEMENT:
             var { is, isDynamicIs } = node
-            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
-            directiveFor && context.pushScope(directiveFor.iterator.items)
             var code: string = context.callRenderFn(
                 'createElement',
                 isDynamicIs ? is : toSingleQuotes(is),
                 genProps(node, context), // 正常生成props
                 genChildrenString(node.children, context),
                 uStringId())
-            directiveFor && context.popScope()
             code = genDirs(code, node, context)
-            return code
-        case Nodes.HTML_ELEMENT:
-            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
-            directiveFor && context.pushScope(directiveFor.iterator.items)
+            nodeCode = code
+            break
+        case AstTypes.DYNAMIC_SVG_ELEMENT:
+            var { is, isDynamicIs } = node
+            var code: string = context.callRenderFn(
+                'createSVGElement',
+                isDynamicIs ? is : toSingleQuotes(is),
+                genProps(node, context), // 正常生成props
+                genChildrenString(node.children, context),
+                uStringId())
+            code = genDirs(code, node, context)
+            nodeCode = code
+            break
+        case AstTypes.HTML_ELEMENT:
             var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
-            directiveFor && context.popScope()
             code = genDirs(code, node, context)
-            return code
-        case Nodes.SVG_ELEMENT:
-            var directiveFor = node?.directives?.find((dir: any) => dir.type === Nodes.FOR)
-            directiveFor && context.pushScope(directiveFor.iterator.items)
+            nodeCode = code
+            break
+        case AstTypes.SVG_ELEMENT:
             var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
-            directiveFor && context.popScope()
             code = genDirs(code, node, context)
-            return code
-        case Nodes.DYNAMIC_COMPONENT:
+            nodeCode = code
+            break
+        case AstTypes.DYNAMIC_COMPONENT:
             var { is, isDynamicIs } = node
             var component: string = context.callRenderFn('getComponent', isDynamicIs ? is : toSingleQuotes(is),)
             // 动态组件不会提升
@@ -263,36 +246,57 @@ function genNode(node: any, context: any): any {
             var slots = genSlotContent(node, context)
             code = context.callRenderFn('createComponent', component, props, slots, uStringId())
             code = genDirs(code, node, context)
-            return code
-        case Nodes.COMPONENT:
+            nodeCode = code
+            break
+        case AstTypes.COMPONENT:
             var code: string = context.callRenderFn('getComponent', toBackQuotes(node.tagName))
             var uv = context.hoistExpression(code)
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
             code = context.callRenderFn('createComponent', uv, props, slots, uStringId())
             code = genDirs(code, node, context)
-            return code
-        case Nodes.TEXT:
-            return genText(node.children as Text[], context)
-        case Nodes.STYLE:
+            nodeCode = code
+            break
+        case AstTypes.TEXT:
+            nodeCode = genText(node.children as Text[], context)
+            break
+        case AstTypes.STYLESHEET:
             var props = genProps(node, context)
             var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId())
             code = genDirs(code, node, context)
-            return code
-        case Nodes.STYLE_RULE:
-            return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
-        case Nodes.MEDIA_RULE:
+            nodeCode = code
+            break
+        case AstTypes.STYLE_RULE:
+            nodeCode = context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId())
+            break
+        case AstTypes.MEDIA_RULE:
             const rules = stringify(genChildren(node.children, context))
-            return context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId())
-        case Nodes.KEYFRAMES_RULE:
-            return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
-        case Nodes.KEYFRAME_RULE:
-            return context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId())
-        case Nodes.SUPPORTS_RULE:
-            return context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId())
-        case Nodes.DECLARATION_GROUP:
-            return context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId())
+            nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId())
+            break
+        case AstTypes.KEYFRAMES_RULE:
+            nodeCode = context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())
+            break
+        case AstTypes.KEYFRAME_RULE:
+            nodeCode = context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId())
+            break
+        case AstTypes.SUPPORTS_RULE:
+            nodeCode = context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId())
+            break
+        case AstTypes.DECLARATION_GROUP:
+            nodeCode = context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId())
+            break
     }
+
+    if (node.directives) {
+        node.directives.reverse().forEach((dir: any) => {
+            if (dir.type == AstTypes.LIST_RENDER) {
+                nodeCode = genForWithFragment(nodeCode, dir.iterator, context)
+            } else if (dir.type === AstTypes.CONDITION_RENDER_IF) {
+                nodeCode = ternaryExp(dir.condition, nodeCode, NULL)
+            }
+        })
+    }
+    return nodeCode
 }
 
 const genFragment = (code: string, context: any) => context.callRenderFn('createFragment', code, uStringId())
@@ -300,7 +304,7 @@ const genFragment = (code: string, context: any) => context.callRenderFn('create
 const genTextContent = (texts: any, context: any) => {
     return texts.map((text: any) => {
         const { content, isDynamic, modifier } = text
-        return isDynamic ? context.callRenderFn('display', context.setRenderScope(content), modifier && toSingleQuotes(modifier)) : toBackQuotes(content)
+        return isDynamic ? context.callRenderFn('display', content, modifier && toSingleQuotes(modifier)) : toBackQuotes(content)
     }).join('+')
 }
 
@@ -362,10 +366,10 @@ function genDeclartion(declarationGroup: any[], context: any) {
     var res: any = []
     var lastIsDeclaration = false
     declarationGroup.forEach((declaration) => {
-        if (declaration.type === Nodes.MIXIN) {
+        if (declaration.type === AstTypes.MIXIN) {
             res.push(declaration.mixin)
             lastIsDeclaration = false
-        } else if (declaration.type === Nodes.DECLARATION) {
+        } else if (declaration.type === AstTypes.DECLARATION) {
             var target
             if (lastIsDeclaration) {
                 target = res[res.length - 1]
@@ -426,15 +430,14 @@ import {
 
 function genProps(node: any, context: any) {
     const { type, attributes } = node
-    const isComponent = type === Nodes.COMPONENT
+    const isComponent = type === AstTypes.COMPONENT
     if (!attributes) { return NULL }
     var props: any = {}
     attributes.forEach((attr: any) => {
-
+        // 属性简写
         attr.value ||= attr.property
-
         switch (attr.type) {
-            case Nodes.EVENT:
+            case AstTypes.EVENT:
                 var {
                     property,
                     isDynamicProperty,
@@ -443,7 +446,6 @@ function genProps(node: any, context: any) {
                     _arguments,
                     modifiers
                 } = attr
-
                 const handlerKey = isDynamicProperty ?
                     (isComponent ?
                         dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
@@ -457,15 +459,15 @@ function genProps(node: any, context: any) {
                 }
                 props[handlerKey] = callback
                 break
-            case Nodes.CLASS:
+            case AstTypes.ATTRIBUTE_CLASS:
                 var _class = props.class ||= []
                 _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 break
-            case Nodes.STYLE:
+            case AstTypes.ATTRIBUTE_STYLE:
                 var style = props.style ||= []
                 style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 break
-            case Nodes.ATTRIBUTE:
+            case AstTypes.ATTRIBUTE:
                 // normal attributes
                 var {
                     property,
