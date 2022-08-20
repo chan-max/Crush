@@ -11,7 +11,10 @@ export const processRules = (rules: any, context: any, isKeyframe = false) => {
                 if (isKeyframe) {
                     rule.type = AstTypes.KEYFRAME_RULE
                 } else {
-                    const { selector, parent } = rule
+                    let { selector, parent } = rule
+                    if (selector.isDynamic) {
+                        selector.selectorText = context.setRenderScope(selector.selectorText)
+                    }
                     var extendSelectors = parent?.selectors
                     if (extendSelectors) {
                         rule.selectors = [...extendSelectors, selector]
@@ -22,15 +25,21 @@ export const processRules = (rules: any, context: any, isKeyframe = false) => {
                 break
             case AstTypes.CONDITION_RENDER_IF:
                 rule.selectors = rule.parent?.selectors
+                rule.condition = context.setRenderScope(rule.condition)
                 break
             case AstTypes.CONDITION_RENDER_ELSE_IF:
                 rule.selectors = rule.parent?.selectors
+                rule.condition = context.setRenderScope(rule.condition)
                 break
             case AstTypes.CONDITION_RENDER_ELSE:
                 rule.selectors = rule.parent?.selectors
                 break
             case AstTypes.LIST_RENDER:
                 rule.selectors = rule.parent?.selectors
+                let iterator = rule.iterator
+                iterator.iterable = context.setRenderScope(iterator.iterable)
+                context.pushScope(iterator.items)
+                shouldPopScope = true
                 break
             case AstTypes.MEDIA_RULE:
                 rule.selectors = rule.parent?.selectors
@@ -42,6 +51,17 @@ export const processRules = (rules: any, context: any, isKeyframe = false) => {
                 isKeyframe = true
                 break
             case AstTypes.DECLARATION:
+                let declaration = rule.declaration
+                if (declaration.isDynamicPrperty) {
+                    declaration.property = context.setRenderScope(declaration.property)
+                }
+                if (declaration.isDynamicValue) {
+                    declaration.value = context.setRenderScope(declaration.value)
+                }
+                break
+            case AstTypes.MIXIN:
+                rule.mixin = context.setRenderScope(rule.mixin)
+                break
             case AstTypes.DECLARATION_GROUP:
                 break
         }

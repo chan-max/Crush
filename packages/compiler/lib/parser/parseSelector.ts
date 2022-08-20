@@ -10,11 +10,12 @@ export type SelectorType = {
 
 export function parseSelector(selector: string): SelectorType {
     var isDynamic = false
+    let selectorText = selector.replace(extractDynamicSelector, (_, content): string => {
+        isDynamic = true
+        return '${' + content + '}'
+    })
     return {
-        selectorText: selector.replace(extractDynamicSelector, (_, content): string => {
-            isDynamic = true
-            return '${' + content + '}'
-        }),
-        isDynamic
+        isDynamic,
+        selectorText: isDynamic ? '`' + selectorText + '`' : selectorText
     }
 }

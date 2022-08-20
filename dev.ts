@@ -1,22 +1,25 @@
 import {
     findTemplateStringEnd,
     computed, createApp, usePromise, watchRef, warn, error, linearGradient, objectExpressionWithScope, arrayExpressionWithScope, expressionWithScope, findNextCodeBlockClosingPosition, createExpression
-    ,extractArrayFunctionArgs
+    , extractArrayFunctionArgs
 
 } from "./packages/core";
 
 createApp({
     template:/*html*/`
         <style>
-            div{
-                h$(i){
-                    color:red;
-                }
+            button{
+                $color: l%2 === 0? 'red':'blue';
+                $backgroundColor: l%2 !== 0? 'red':'blue';
+                ...btnStyle;
             }
         </style>
-        <element for="i in 6" $is="'h'+i">6666</element>
+        <button @click="l++"> {{l}} </button>
     `,
     create({ $self }: any) {
-        $self.l = 6
+        $self.l = 3
+        $self.btnStyle = {
+            border:'1px solid black'
+        }
     }
 }).mount('#app')

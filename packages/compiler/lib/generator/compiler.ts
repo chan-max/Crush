@@ -3,9 +3,6 @@
 import {
     baseParseHTML
 } from '../parser/baseParseHTML'
-import {
-    processAst
-} from '../parser/processAst'
 
 import {
     genNodes

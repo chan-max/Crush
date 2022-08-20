@@ -350,7 +350,7 @@ function genSelector(selectors: Array<any>, context: any) {
             return toBackQuotes(joinSelector(item))
         } else { // dynamic
             // scope  
-            return toBackQuotes(item)
+            return item
         }
     })
 
