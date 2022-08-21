@@ -52,7 +52,7 @@ export class Expression {
         }
     }
 
-    scopedExpression(scoped: string) {
+    scopedExpression(scoped: string = '_') {
         this.scope = scoped
         return expressionWithScope(this.expression, this)
     }

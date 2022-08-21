@@ -41,10 +41,9 @@ export const enum ComponentOptions {
     COMPOENNTS = 'components',
     DIRECTIVES = 'directives',
 
+    // 手写render时需要指定该选项
     SCOPED_ID = 'scopedId'
 }
-
-
 
 
 export function resolveOptions(options: any) {
@@ -58,7 +57,11 @@ export function resolveOptions(options: any) {
                 options.emitsOptions = normalizeEmitsOptions(value)
                 break
             case ComponentOptions.TEMPLATE:
-                options.createRender = compile(value as string)
+                let render = compile(value as string)
+                let {
+                    createRender
+                } = render
+                options.createRender = createRender
                 break
             case ComponentOptions.RENDER:
                 // todo

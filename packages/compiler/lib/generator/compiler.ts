@@ -142,7 +142,7 @@ export function compile(template: string, compilerOptions: any = compilerDefault
 
     console.log(htmlAst);
 
-    const renderCode: any = genNodes(htmlAst, context)
+    let renderCode: any = genNodes(htmlAst, context)
 
     const content = `return ${toArrowFunction(renderCode)}`
 
@@ -151,6 +151,8 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     var renderFunction = createFunction(context.getCode(), 'renderMethods')
     console.log(renderFunction);
 
-    return renderFunction
+    return {
+        createRender: renderFunction
+    }
 }
 

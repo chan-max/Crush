@@ -1,9 +1,11 @@
 import {
-    findTemplateStringEnd,
-    computed, createApp, usePromise, watchRef, warn, error, linearGradient, objectExpressionWithScope, arrayExpressionWithScope, expressionWithScope, findNextCodeBlockClosingPosition, createExpression
-    , extractArrayFunctionArgs,ref
-
+    createExpression, createApp, ref
 } from "./packages/core";
+
+let exp = createExpression('x+y')
+
+console.log(exp.scopedExpression());
+
 
 createApp({
     template:/*html*/`

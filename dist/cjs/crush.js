@@ -20,6 +20,9 @@ const error = (...msg) => {
 const log = (...msg) => {
     console.log(...msg);
 };
+const throwError = (...msg) => {
+    throw new Error(...msg);
+};
 
 function getEmptyObject() {
     return Object.create(null);
@@ -2783,6 +2786,7 @@ function display(data, modifier) {
 
 function getComponent(name) {
     let currentInstance = getCurrentInstance();
+    name = String(name);
     if (name === 'self') { // 内部提供的self标签，用于递归自身
         return currentInstance.options;
     }
@@ -2799,6 +2803,7 @@ function getDirective(name) {
     let instancedirectives = getCurrentInstance().directives;
     let appdirectives = getCurrentApp().directives;
     // 支持组件首字母大写
+    name = String(name);
     var directive = instancedirectives?.[name] || instancedirectives?.[initialUpperCase(name)] || appdirectives?.[name] || appdirectives?.[initialUpperCase(name)];
     if (!directive) {
         error(`can't find directive ${name}`);
@@ -2806,62 +2811,367 @@ function getDirective(name) {
     return directive;
 }
 
-/*
-    examples
-    x => scope.x
-    x + y
-    x.y
-
-*/
-function setScope(variable, scope) {
-    return scope + '.' + variable;
-}
-function createExpression(content, isStatic = false) {
-    return {
-        content,
-        isStatic
-    };
-}
-const extractString = /(['"])[^\1]*\1/g;
-function extractStringTokens(exp) {
-    let tokens = [], cursor = 0, token;
-    while (token = extractString.exec(exp)) {
-        let str = token[0];
-        let length = str.length;
-        let index = token.index;
-        if (token.index > cursor) {
-            tokens.push(createExpression(exp.slice(cursor, index)));
+function findStringFromArray(str, arr) {
+    let find = false;
+    for (let item of arr) {
+        if (isArray(item)) {
+            return findStringFromArray(str, item);
         }
-        tokens.push(createExpression(str, true));
-        cursor = index + length;
+        else if (isString(item)) {
+            if (str === item) {
+                find = true;
+                break;
+            }
+        }
     }
-    if (cursor < exp.length) {
-        tokens.push(createExpression(exp.slice(cursor, exp.length)));
-    }
-    return tokens;
+    return find;
 }
-const variableRE = /[\$_a-zA-Z][a-zA-Z0-9]*/g;
-function replaceVariable(expression, scope) {
-    return expression.replace(variableRE, (variable) => {
-        return setScope(variable, scope);
+class Expression {
+    // 记录表达式中用到的变量
+    variables = [];
+    expression;
+    scope = '_'; // 默认值
+    constructor(expression) {
+        this.expression = expression;
+    }
+    scopeStack = [];
+    pushScope(scope) {
+        this.scopeStack.push(scope);
+    }
+    popScope() {
+        this.scopeStack.pop();
+    }
+    isVariable(variable) {
+        return !findStringFromArray(variable, this.scopeStack);
+    }
+    setScope(variable, scope = this.scope) {
+        if (this.isVariable(variable)) {
+            this.variables.push(variable);
+            return scope + '.' + variable;
+        }
+        else {
+            return variable;
+        }
+    }
+    scopedExpression(scoped) {
+        this.scope = scoped;
+        return expressionWithScope(this.expression, this);
+    }
+}
+function createExpression(expression) {
+    return new Expression(expression);
+}
+let isJsVarStart = (str) => /^[\$_a-zA-Z]/.test(str);
+const jsVarRE = /[\$_A-Za-z][A-Za-z0-9]*/;
+function expressionWithScope(expression, expressionContext) {
+    let processingExpression = expression || '';
+    let withScopedExpression = '';
+    let lastIsVar = false; // 记录上一个处理的是不是变量
+    while (processingExpression = processingExpression.trim()) {
+        let firstLetter = processingExpression[0];
+        switch (firstLetter) {
+            case '"':
+            case "'":
+                // string
+                let stringEnd = processingExpression.indexOf(firstLetter, 1);
+                let stringContent = processingExpression.slice(0, stringEnd + 1);
+                withScopedExpression += stringContent;
+                processingExpression = processingExpression.slice(stringEnd + 1);
+                lastIsVar = false;
+                break;
+            case '`':
+                let templateStringEnd = findTemplateStringEnd(processingExpression);
+                let templateString = processingExpression.slice(0, templateStringEnd + 1);
+                let withScopedTemplateString = templateStringWithScope(templateString, expressionContext);
+                withScopedExpression += withScopedTemplateString;
+                processingExpression = processingExpression.slice(templateStringEnd + 1);
+                lastIsVar = false;
+                break;
+            case '{':
+                // object
+                let objectEnd = findNextCodeBlockClosingPosition(processingExpression);
+                let object = processingExpression.slice(0, objectEnd + 1);
+                let withScopedObject = objectExpressionWithScope(object, expressionContext);
+                withScopedExpression += withScopedObject;
+                processingExpression = processingExpression.slice(objectEnd + 1);
+                lastIsVar = false;
+                break;
+            case '[':
+                if (lastIsVar) {
+                    // dynamic object key
+                    let dynamicObjectKeyEnd = findNextCodeBlockClosingPosition(processingExpression);
+                    let dynamicObjectKey = processingExpression.slice(1, dynamicObjectKeyEnd);
+                    let withScopedDynamicObjectKey = expressionWithScope(dynamicObjectKey, expressionContext);
+                    withScopedExpression += `[${withScopedDynamicObjectKey}]`;
+                    processingExpression = processingExpression.slice(dynamicObjectKeyEnd + 1);
+                    lastIsVar = true;
+                }
+                else {
+                    // array
+                    let arrayEnd = findNextCodeBlockClosingPosition(processingExpression);
+                    let array = processingExpression.slice(0, arrayEnd + 1);
+                    let withScopedArray = arrayExpressionWithScope(array, expressionContext);
+                    withScopedExpression += withScopedArray;
+                    processingExpression = processingExpression.slice(arrayEnd + 1);
+                    lastIsVar = false;
+                }
+                break;
+            case '(':
+                let blockEnd = findNextCodeBlockClosingPosition(processingExpression);
+                let blockContent = processingExpression.slice(1, blockEnd);
+                let restContent = processingExpression.slice(blockEnd + 1);
+                if (lastIsVar) {
+                    // 函数调用  , 参数也应该设置作用域
+                    withScopedExpression += `(${listExpressionWithScope(blockContent, expressionContext)})`;
+                    processingExpression = processingExpression.slice(blockEnd + 1);
+                    lastIsVar = true;
+                }
+                else if (restContent.trim().startsWith('=>')) {
+                    // 箭头函数
+                    let args = extractArrayFunctionArgs(blockContent); // 箭头函数的形参
+                    let fnContent = restContent.trim().slice(2).trim();
+                    expressionContext.pushScope(args);
+                    let withScopedFnContent = expressionWithScope(fnContent, expressionContext);
+                    expressionContext.popScope();
+                    withScopedExpression += `(${args.join(',')})=>${withScopedFnContent}`;
+                    processingExpression = '';
+                }
+                else {
+                    // 当做普通结构体处理
+                    withScopedExpression += `(${expressionWithScope(blockContent, expressionContext)})`;
+                    processingExpression = processingExpression.slice(blockEnd + 1);
+                }
+                break;
+            case '.':
+                let isObjectKey = isJsVarStart(processingExpression.slice(1));
+                if (lastIsVar && isObjectKey) {
+                    let jsVar = jsVarRE.exec(processingExpression)[0];
+                    // 忽略该字符串
+                    withScopedExpression += `.${jsVar}`;
+                    processingExpression = processingExpression.slice(jsVar.length + 1);
+                    lastIsVar = true;
+                }
+                else {
+                    withScopedExpression += '.';
+                    processingExpression = processingExpression.slice(1);
+                    lastIsVar = false;
+                }
+                break;
+            default:
+                if (isJsVarStart(processingExpression)) {
+                    // 合理的变量名开头
+                    let jsVar = jsVarRE.exec(processingExpression)[0];
+                    let restContent = processingExpression.slice(jsVar.length);
+                    if (restContent.trim().startsWith('=>')) {
+                        // array function
+                        // 没有括号的情况只能有一个参数
+                        let arg = jsVar;
+                        let fnContent = restContent.trim().slice(2).trim();
+                        expressionContext.pushScope(arg);
+                        let withScopedFnContent = expressionWithScope(fnContent, expressionContext);
+                        expressionContext.popScope();
+                        withScopedExpression += `${jsVar}=>${withScopedFnContent}`;
+                        processingExpression = ''; // 直接介素
+                        lastIsVar = false;
+                    }
+                    else {
+                        // 普通的 js变量
+                        withScopedExpression += expressionContext.setScope(jsVar);
+                        processingExpression = processingExpression.slice(jsVar.length);
+                        lastIsVar = true;
+                    }
+                }
+                else {
+                    // 其他特殊符号
+                    withScopedExpression += processingExpression.slice(0, 1);
+                    processingExpression = processingExpression.slice(1);
+                }
+                break;
+        }
+    }
+    return withScopedExpression;
+}
+function extractArrayFunctionArgs(argsExpression) {
+    if (!argsExpression.trim()) {
+        return [];
+    }
+    let commaList = findFirstLevelComma(argsExpression);
+    let items = devideString(argsExpression, commaList);
+    let args = [];
+    items.forEach((item) => {
+        item = item.trim();
+        if (item.startsWith('{')) {
+            item.slice(1, -1).split(',').forEach((_item) => {
+                let deArgs = _item.split(':'); // rename args
+                if (deArgs.length === 1) {
+                    args.push(deArgs[0]);
+                }
+                else {
+                    args.push(deArgs[1]);
+                }
+            });
+        }
+        else {
+            args.push(item);
+        }
     });
+    return args;
 }
-function expressionTokensToResult(expressions, scope, stepsIndex) {
-    return expressions.reduce((result, { content, isStatic }) => {
-        return result + (isStatic ? content : withScope(content, scope, stepsIndex));
-    }, '');
+function objectExpressionWithScope(objectExpression, expressionContext) {
+    objectExpression = objectExpression.trim();
+    let objectContent = objectExpression.slice(1, objectExpression.length - 1);
+    let positions = findFirstLevelComma(objectContent);
+    // 去除首尾空格
+    let objectTokens = devideString(objectContent, positions).map((token) => token.trim()).filter(Boolean);
+    let withScopedKeyValue = [];
+    objectTokens.forEach((keyValue) => {
+        if (keyValue.startsWith('[')) {
+            // dynamic object key , dynamicKey 一定没有简写
+            let dynamicKeyEndPosition = findNextCodeBlockClosingPosition(keyValue);
+            let dynamicKey = keyValue.slice(1, dynamicKeyEndPosition); // 去掉中括号 
+            let withScopedDynamicKey = '[' + expressionWithScope(dynamicKey, expressionContext) + ']';
+            let value = keyValue.slice(dynamicKeyEndPosition + 1).trim().slice(1); // 去掉最开始冒号
+            let withScopedValue = expressionWithScope(value, expressionContext);
+            withScopedKeyValue.push(`${withScopedDynamicKey}:${withScopedValue}`);
+        }
+        else {
+            let keyValueDeviderPosition = keyValue.indexOf(':');
+            if (keyValueDeviderPosition === -1) {
+                // 对象key简写
+                withScopedKeyValue.push(`${keyValue}:${expressionContext.setScope(keyValue, expressionContext)}`);
+            }
+            else {
+                let key = keyValue.slice(0, keyValueDeviderPosition);
+                let value = keyValue.slice(keyValueDeviderPosition + 1);
+                withScopedKeyValue.push(`${key}:${expressionWithScope(value, expressionContext)}`);
+            }
+        }
+    });
+    return `{${withScopedKeyValue.join(',')}}`;
 }
-function withScope(expression, scope = 'Crush', stepsIndex = 0) {
-    switch (stepsIndex) {
-        case 0 /* START */:
-            return withScope(expression, scope, stepsIndex + 1);
-        case 1 /* PROCESS_STRING */:
-            let stringTokens = extractStringTokens(expression);
-            return expressionTokensToResult(stringTokens, scope, stepsIndex + 1);
-        case 2 /* REPLACE_VARIABLE */:
-            return replaceVariable(expression, scope);
+function findTemplateStringEnd(templateString) {
+    // 必须以反引号开头
+    let cursor = 1;
+    while (true) {
+        // 当字符串没闭合时，会寻找
+        let nextBackQuotePosition = templateString.indexOf('`', cursor);
+        let templateStartPosition = templateString.indexOf('${', cursor);
+        if (templateStartPosition === -1 || templateStartPosition > nextBackQuotePosition) {
+            return nextBackQuotePosition;
+        }
+        else {
+            // 存在template
+            let templateEnd = findNextCodeBlockClosingPosition(templateString, templateStartPosition + 1); // 会用 ${ 的 { 去寻找
+            // 第一个template 结束
+            cursor = templateEnd;
+        }
     }
-    return '';
+}
+function templateStringWithScope(templateString, expressionContext) {
+    // 必须以反引号开头 结尾
+    let result = '`';
+    let cursor = 1;
+    while (cursor <= templateString.length - 1) {
+        let nextBackQuotePosition = templateString.indexOf('`', cursor);
+        let templateStartPosition = templateString.indexOf('${', cursor);
+        if (templateStartPosition === -1 || templateStartPosition > nextBackQuotePosition) {
+            // 只会执行一次
+            let restStaticContent = templateString.slice(cursor, templateString.length);
+            result += restStaticContent;
+            return result;
+        }
+        else {
+            // 存在template
+            let templateEnd = findNextCodeBlockClosingPosition(templateString, templateStartPosition + 1); // 会用 ${ 的 { 去寻找
+            // 第一个template 结束
+            let staticContent = templateString.slice(cursor, templateStartPosition);
+            let templateContent = templateString.slice(templateStartPosition + 2, templateEnd); // +2 是把 ${ 去掉
+            let withScopedTempalteContent = expressionWithScope(templateContent, expressionContext);
+            result += staticContent;
+            result += '${' + withScopedTempalteContent + '}';
+            cursor = templateEnd + 1;
+        }
+    }
+    return result;
+}
+// 使用 ， 分隔
+function listExpressionWithScope(expression, expressionContext) {
+    let commaList = findFirstLevelComma(expression);
+    let items = devideString(expression, commaList);
+    return items.map((item) => expressionWithScope(item, expressionContext)).join(',');
+}
+function arrayExpressionWithScope(arrayExpression, expressionContext) {
+    return `[${listExpressionWithScope(arrayExpression.slice(1, -1), expressionContext)}]`;
+}
+function isCodeBlockOpening(letter) {
+    return letter === '(' || letter === '[' || letter === '{';
+}
+function isCodeBlockClosing(letter) {
+    return letter === ')' || letter === ']' || letter === '}';
+}
+const codeBlockOpeningToClosing = {
+    '{': '}',
+    '[': ']',
+    '(': ')'
+};
+function findNextCodeBlockClosingPosition(exp, findIndex = 0) {
+    let open = exp[findIndex];
+    let close = codeBlockOpeningToClosing[open];
+    let blockStack = 0;
+    for (let i = findIndex; i < exp.length; i++) {
+        let letter = exp[i];
+        // 忽视普通字符串
+        if (letter === '"' || letter === "'") {
+            let stringEnd = exp.indexOf(letter, i + 1);
+            i = stringEnd;
+            continue;
+        }
+        // 模板字符串
+        if (letter === '`') {
+            let rawTemplate = exp.slice(i);
+            let templateStringEnd = findTemplateStringEnd(rawTemplate);
+            // 忽略掉 template string
+            i += templateStringEnd;
+        }
+        if (letter === close && blockStack === 1) {
+            return i;
+        }
+        if (isCodeBlockOpening(letter)) {
+            blockStack++;
+        }
+        else if (isCodeBlockClosing(letter)) {
+            blockStack--;
+        }
+    }
+}
+function findFirstLevelComma(objectExpression) {
+    let blockStack = 0;
+    let positions = [];
+    for (let i = 0; i < objectExpression.length; i++) {
+        let letter = objectExpression[i];
+        if (letter === ',') {
+            // object devider
+            if (blockStack == 0) { // 默认最外层也会计算在内
+                positions.push(i);
+            }
+        }
+        else if (isCodeBlockOpening(letter)) {
+            blockStack++;
+        }
+        else if (isCodeBlockClosing(letter)) {
+            blockStack--;
+        }
+    }
+    return positions;
+}
+function devideString(str, positions) {
+    // 忽略 position 位置的字符
+    let slicePositions = [-1, ...positions, str.length];
+    let strs = [];
+    for (let i = 0; i < slicePositions.length - 1; i++) {
+        strs.push(str.slice(slicePositions[i] + 1, slicePositions[i + 1]));
+    }
+    return strs;
 }
 
 const NULL = 'null';
@@ -3036,6 +3346,393 @@ function baseParseHTML(template) {
     return ast;
 }
 
+// the code Entrance
+const genNodes = (nodes, context) => {
+    if (!nodes) {
+        return NULL;
+    }
+    const children = genChildren(nodes, context);
+    if (children.length === 0) {
+        return 'null';
+    }
+    else if (children.length === 1) {
+        return children[0];
+    }
+    else {
+        return genFragment(stringify(children), context);
+    }
+};
+/*
+    process if elseIf else branch
+*/
+function genChildren(nodes, context) {
+    if (!nodes) {
+        return [];
+    }
+    // 所有节点都会再此处理
+    /*
+        process the condition branch and the first dir is condition ,
+        处理分支时会为if边际上branch start ， elseif else 标记为branch，或者元素的第一个指令为分支
+    */
+    var children = [];
+    var inBranch = false;
+    nodes.forEach((node) => {
+        if (node.isBranchStart) {
+            children.push([node]);
+            inBranch = true;
+        }
+        else if (node.isBranch) {
+            if (inBranch) {
+                children[children.length - 1].push(node);
+            }
+        }
+        else {
+            let nodeCode = genNode(node, context);
+            children.push(nodeCode);
+            inBranch = false;
+        }
+    });
+    children = children.map((child) => {
+        if (isArray(child)) {
+            const branchCondition = child.map((b) => b.condition).filter(Boolean); // 勇于筛除else的condition ， 其他应该在之前就报错
+            const branchContent = child.map((b) => {
+                let nodeCode = genNode(b, context);
+                return nodeCode;
+            });
+            return ternaryChains(branchCondition, branchContent);
+        }
+        else {
+            return child;
+        }
+    });
+    return children;
+}
+const genFor = (target, iterator, context) => {
+    return context.callRenderFn('renderList', iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
+};
+function genForWithFragment(target, iterator, context) {
+    return genFragment(genFor(target, iterator, context), context);
+}
+function genChildrenString(children, context) {
+    if (!children)
+        return NULL;
+    return stringify(genChildren(children, context));
+}
+function genDirs(code, node, context) {
+    if (node.customDirectives) {
+        code = genCustomDirectives(code, node.customDirectives, context);
+    }
+    return code;
+}
+function genCustomDirectives(code, directives, context) {
+    var dirs = directives.map((directive) => {
+        var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive;
+        var directive = context.useDirective(property, isDynamicProperty);
+        let bindings = {
+            directive
+        };
+        if (value) {
+            bindings.value = value;
+        }
+        if (_arguments) {
+            bindings._arguments = _arguments && _arguments.map(toSingleQuotes);
+        }
+        if (modifiers) {
+            bindings.modifiers = modifiers && modifiers.map(toSingleQuotes);
+        }
+        if (filters) {
+            bindings.filters = filters && filters.map(toSingleQuotes);
+        }
+        return bindings;
+    });
+    return context.callRenderFn('injectDirectives', code, stringify(dirs));
+}
+function genSlotContent(node, context) {
+    var { children } = node;
+    /*
+        关于插槽的定义 ,
+        插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
+        如 <template slot="header" slot-scope="x"> ,
+        暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
+    */
+    if (!children)
+        return NULL;
+    var _default;
+    var slots = {};
+    children.forEach((child) => {
+        var { defineSlotName, slotScope } = child;
+        // 作用域插槽只能在具名插槽上
+        if (defineSlotName) {
+            slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope);
+        }
+        else {
+            (_default ||= []).push(child);
+        }
+    });
+    if (_default) {
+        // ! 默认插槽不存在作用域插槽
+        slots.default = toArrowFunction(genNodes(_default, context));
+    }
+    return stringify(slots);
+}
+function genNode(node, context) {
+    let nodeCode = null;
+    switch (node.type) {
+        case 2 /* HTML_COMMENT */:
+            nodeCode = context.callRenderFn('createComment', toBackQuotes(node.children), uid());
+            break;
+        case 7 /* CONDITION_RENDER_IF */:
+        case 8 /* CONDITION_RENDER_ELSE_IF */:
+        case 9 /* CONDITION_RENDER_ELSE */:
+            nodeCode = genNodes(node.children, context);
+            break;
+        case 10 /* LIST_RENDER */:
+            // use the fragment , cause the iterator will set the u key in each node , 
+            nodeCode = genForWithFragment(genNodes(node.children, context), node.iterator, context);
+            break;
+        case 11 /* FRAGMENT */:
+            nodeCode = genNodes(node.children, context);
+            break;
+        case 13 /* USE_COMPONENT_SLOT */:
+            const { slotName, isDynamicSlot, children } = node;
+            nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
+            break;
+        case 14 /* DEFINE_COMPONENT_SLOT */:
+            nodeCode = genNodes(node.children, context);
+            break;
+        case 20 /* DYNAMIC_HTML_ELEMENT */:
+            var { is, isDynamicIs } = node;
+            var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
+            genChildrenString(node.children, context), uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 21 /* DYNAMIC_SVG_ELEMENT */:
+            var { is, isDynamicIs } = node;
+            var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
+            genChildrenString(node.children, context), uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 1 /* HTML_ELEMENT */:
+            var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 3 /* SVG_ELEMENT */:
+            var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 22 /* DYNAMIC_COMPONENT */:
+            var { is, isDynamicIs } = node;
+            var component = context.useComponent(is, isDynamicIs);
+            var props = genProps(node, context);
+            var slots = genSlotContent(node, context);
+            code = context.callRenderFn('createComponent', component, props, slots, uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 4 /* COMPONENT */:
+            var component = context.useComponent(node.tagName, false);
+            var props = genProps(node, context);
+            var slots = genSlotContent(node, context);
+            code = context.callRenderFn('createComponent', component, props, slots, uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 5 /* TEXT */:
+            nodeCode = genText(node.children, context);
+            break;
+        case 6 /* STYLESHEET */:
+            var props = genProps(node, context);
+            var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId());
+            code = genDirs(code, node, context);
+            nodeCode = code;
+            break;
+        case 24 /* STYLE_RULE */:
+            nodeCode = context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
+            break;
+        case 23 /* MEDIA_RULE */:
+            const rules = stringify(genChildren(node.children, context));
+            nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
+            break;
+        case 25 /* KEYFRAMES_RULE */:
+            nodeCode = context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
+            break;
+        case 26 /* KEYFRAME_RULE */:
+            nodeCode = context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
+            break;
+        case 27 /* SUPPORTS_RULE */:
+            nodeCode = context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
+            break;
+        case 29 /* DECLARATION_GROUP */:
+            nodeCode = context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId());
+            break;
+    }
+    if (node.directives) {
+        node.directives.reverse().forEach((dir) => {
+            if (dir.type == 10 /* LIST_RENDER */) {
+                nodeCode = genForWithFragment(nodeCode, dir.iterator, context);
+            }
+            else if (dir.type === 7 /* CONDITION_RENDER_IF */) {
+                nodeCode = ternaryExp(dir.condition, nodeCode, NULL);
+            }
+        });
+    }
+    return nodeCode;
+}
+const genFragment = (code, context) => context.callRenderFn('createFragment', code, uStringId());
+const genTextContent = (texts, context) => {
+    return texts.map((text) => {
+        const { content, isDynamic, modifier } = text;
+        return isDynamic ? context.callRenderFn('display', content, modifier && toSingleQuotes(modifier)) : toBackQuotes(content);
+    }).join('+');
+};
+const genText = (texts, context) => {
+    return context.callRenderFn('createText', genTextContent(texts, context));
+};
+function genSelector(selectors, context) {
+    /*
+        先保留数组形式,再进行处理
+    */
+    var res = [];
+    var lastIsStatic = false;
+    selectors.forEach(({ selectorText, isDynamic }) => {
+        if (isDynamic) {
+            res.push(selectorText);
+            lastIsStatic = false;
+        }
+        else {
+            var splitedSelector = splitSelector(selectorText);
+            if (lastIsStatic) {
+                res[res.length - 1] = mergeSplitedSelector(res[res.length - 1], splitedSelector);
+            }
+            else {
+                res.push(splitedSelector);
+            }
+            lastIsStatic = true;
+        }
+    });
+    var selectorCode = res.map((item) => {
+        if (isArray(item)) { // static
+            return toBackQuotes(joinSelector(item));
+        }
+        else { // dynamic
+            // scope  
+            return item;
+        }
+    });
+    return selectorCode.length === 1 ?
+        selectorCode[0] :
+        context.callRenderFn('mergeSelectors', ...selectorCode);
+    //! one dynamic selector will effect all 
+}
+// declaration and mixin
+function genDeclartion(declarationGroup, context) {
+    var res = [];
+    var lastIsDeclaration = false;
+    declarationGroup.forEach((declaration) => {
+        if (declaration.type === 30 /* MIXIN */) {
+            res.push(declaration.mixin);
+            lastIsDeclaration = false;
+        }
+        else if (declaration.type === 28 /* DECLARATION */) {
+            var target;
+            if (lastIsDeclaration) {
+                target = res[res.length - 1];
+            }
+            else {
+                target = {};
+                res.push(target);
+                lastIsDeclaration = true;
+            }
+            var { property, value, isDynamicProperty, isDynamicValue, isImportant, illegalKey } = declaration.declaration;
+            if (isDynamicProperty) {
+                // 动态的key不存在不合法情况
+                property = dynamicMapKey(property);
+            }
+            else if (illegalKey) {
+                property = dynamicMapKey(toSingleQuotes(property));
+            }
+            else {
+                property = camelize(property);
+            }
+            if (!isDynamicValue) {
+                value = toBackQuotes(value);
+            }
+            if (isImportant) {
+                value = context.callRenderFn('important', value);
+            }
+            target[property] = value;
+        }
+    });
+    const _res = res.map((item) => {
+        if (isObject(item)) {
+            return objectStringify(item);
+        }
+        else {
+            return item;
+        }
+    });
+    if (_res.length === 1) {
+        return _res[0];
+    }
+    else {
+        return context.callRenderFn('mixin', ..._res);
+    }
+}
+function genProps(node, context) {
+    const { type, attributes } = node;
+    const isComponent = type === 4 /* COMPONENT */;
+    if (!attributes) {
+        return NULL;
+    }
+    var props = {};
+    attributes.forEach((attr) => {
+        // 属性简写
+        attr.value ||= attr.property;
+        switch (attr.type) {
+            case 16 /* EVENT */:
+                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
+                const handlerKey = isDynamicProperty ?
+                    (isComponent ?
+                        dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
+                        dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
+                    (isComponent ?
+                        toEventName(property, _arguments, modifiers) :
+                        toNativeEventName(property, _arguments));
+                var callback = isHandler ? value : toArrowFunction(value, '$'); // 包裹函数都需要传入一个 $ 参数
+                if (modifiers && !isComponent) {
+                    callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
+                }
+                props[handlerKey] = callback;
+                break;
+            case 17 /* ATTRIBUTE_CLASS */:
+                var _class = props.class ||= [];
+                _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
+                break;
+            case 18 /* ATTRIBUTE_STYLE */:
+                var style = props.style ||= [];
+                style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
+                break;
+            case 15 /* ATTRIBUTE */:
+                // normal attributes
+                var { property, value, isDynamicProperty, isDynamicValue, } = attr;
+                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
+                break;
+        }
+    });
+    // merge class , there could be more than one class , 不应该在render函数中使用normalize
+    if (props.class) {
+        props.class = stringify(props.class);
+    }
+    if (props.style) {
+        props.style = stringify(props.style);
+    }
+    return stringify(props) === '{}' ? NULL : stringify(props);
+}
+
 /*
     input nodeType return nodeKeyword
     input nodeKeyword return nodeType
@@ -3086,69 +3783,6 @@ const SVG_TAGS = 'svg,animate,animateMotion,animateTransform,circle,clipPath,col
     'polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,' +
     'text,textPath,title,tspan,unknown,use,view';
 const isSVGTag = makeMap(SVG_TAGS);
-
-const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
-function parseIterator(expression) {
-    const [_, items, iterable] = extIteratorExp.exec(expression);
-    return {
-        iterable,
-        items: items.split(',')
-    };
-}
-
-var mustache = /\{\{(.*?)\}\}/g;
-var parseText = (text) => {
-    var texts = [];
-    var cursor = 0;
-    var execArr;
-    while (execArr = mustache.exec(text)) {
-        if (execArr.index > cursor) {
-            texts.push({
-                content: text.slice(cursor, execArr.index),
-                isDynamic: false
-            });
-        }
-        if (execArr[1]) {
-            let exp = execArr[1].trim();
-            var content, modifier;
-            if (exp.startsWith('@')) {
-                // 使用修饰非一定要用一个空格作为分隔
-                let firstWhitespace = exp.indexOf(' ');
-                modifier = exp.slice(1, firstWhitespace);
-                content = exp.slice(firstWhitespace);
-            }
-            else {
-                content = exp;
-            }
-            texts.push({
-                modifier,
-                content,
-                isDynamic: true
-            });
-        }
-        cursor = execArr[0].length + execArr.index;
-    }
-    if (cursor < text.length) {
-        texts.push({
-            content: text.slice(cursor),
-            isDynamic: false
-        });
-    }
-    return texts;
-};
-
-// we can use $(exp) as a dynamic content
-var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
-function parseSelector(selector) {
-    var isDynamic = false;
-    return {
-        selectorText: selector.replace(extractDynamicSelector, (_, content) => {
-            isDynamic = true;
-            return '${' + content + '}';
-        }),
-        isDynamic
-    };
-}
 
 const AttributeFlags = [
     '$--',
@@ -3226,6 +3860,29 @@ function parseAttribute(attr) {
     return attr;
 }
 
+// we can use $(exp) as a dynamic content
+var extractDynamicSelector = /\$\(([^\)s]*)\)/g;
+function parseSelector(selector) {
+    var isDynamic = false;
+    let selectorText = selector.replace(extractDynamicSelector, (_, content) => {
+        isDynamic = true;
+        return '${' + content + '}';
+    });
+    return {
+        isDynamic,
+        selectorText: isDynamic ? '`' + selectorText + '`' : selectorText
+    };
+}
+
+const extIteratorExp = /(?:[\{\[\(]?)([\w,]+)(?:[\}\]\)]?)\s*(?:in|of)\s*(.+)/;
+function parseIterator(expression) {
+    const [_, items, iterable] = extIteratorExp.exec(expression);
+    return {
+        iterable,
+        items: items.split(',')
+    };
+}
+
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
 const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/;
@@ -3236,7 +3893,7 @@ const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
     判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
 */
 const cssReservedWord = /^(if|else-if|else|for|elseIf)/;
-const parseCSS = (source) => {
+const parseCSS = (source, context) => {
     var scanner = createScanner(source);
     var ast = [], // 存储编译结果
     stack = [], // 保留层级结构
@@ -3263,26 +3920,26 @@ const parseCSS = (source) => {
                 switch (key) {
                     case 'media':
                         current = {
-                            type: 22 /* MEDIA_RULE */,
+                            type: 23 /* MEDIA_RULE */,
                             media: content
                         };
                         break;
                     case 'keyframes':
                         current = {
-                            type: 24 /* KEYFRAMES_RULE */,
+                            type: 25 /* KEYFRAMES_RULE */,
                             keyframes: content
                         };
                         break;
                     case 'supports':
                         current = {
-                            type: 23 /* SUPPORTS_RULE */,
+                            type: 27 /* SUPPORTS_RULE */,
                             keyframes: content
                         };
                         break;
                     case 'screens':
                         // 转换为动态 media
                         current = {
-                            type: 22 /* MEDIA_RULE */,
+                            type: 23 /* MEDIA_RULE */,
                             media: content.trim(),
                             appConfigMedia: true // 使用应用配置
                         };
@@ -3311,13 +3968,13 @@ const parseCSS = (source) => {
             switch (dir) {
                 case 'for':
                     current = {
-                        type: 6 /* FOR */,
+                        type: 10 /* LIST_RENDER */,
                         iterator: parseIterator(content)
                     };
                     break;
                 case 'if':
                     current = {
-                        type: 3 /* IF */,
+                        type: 7 /* CONDITION_RENDER_IF */,
                         condition: content,
                         isBranchStart: true
                     };
@@ -3325,14 +3982,14 @@ const parseCSS = (source) => {
                 case 'else-if':
                 case 'elseIf':
                     current = {
-                        type: 4 /* ELSE_IF */,
+                        type: 8 /* CONDITION_RENDER_ELSE_IF */,
                         condition: content,
                         isBranch: true
                     };
                     break;
                 case 'else':
                     current = {
-                        type: 5 /* ELSE */,
+                        type: 9 /* CONDITION_RENDER_ELSE */,
                         isBranch: true
                     };
                     break;
@@ -3343,7 +4000,7 @@ const parseCSS = (source) => {
                 try to get the selector
             */
             current = {
-                type: 26 /* STYLE_RULE */,
+                type: 24 /* STYLE_RULE */,
                 selector: parseSelector(exResult[0])
             };
         }
@@ -3369,7 +4026,7 @@ const parseCSS = (source) => {
             declaration.isImportant = endFlag === '!';
             (declarationGroup ||= []).push({
                 declaration,
-                type: 29 /* DECLARATION */
+                type: 28 /* DECLARATION */
             });
             continue;
         }
@@ -3379,7 +4036,7 @@ const parseCSS = (source) => {
         }
         /* process the relation , with cascading struct */
         if (declarationGroup) {
-            var asb = { type: 28 /* DECLARATION_GROUP */ };
+            var asb = { type: 29 /* DECLARATION_GROUP */ };
             asb.children = declarationGroup;
             asb.parent = parent;
             (parent.children ||= []).push(asb);
@@ -3407,18 +4064,63 @@ const parseCSS = (source) => {
     return ast;
 };
 
+var mustache = /\{\{(.*?)\}\}/g;
+var parseText = (text) => {
+    var texts = [];
+    var cursor = 0;
+    var execArr;
+    while (execArr = mustache.exec(text)) {
+        if (execArr.index > cursor) {
+            texts.push({
+                content: text.slice(cursor, execArr.index),
+                isDynamic: false
+            });
+        }
+        if (execArr[1]) {
+            let exp = execArr[1].trim();
+            var content, modifier;
+            if (exp.startsWith('@')) {
+                // 使用修饰非一定要用一个空格作为分隔
+                let firstWhitespace = exp.indexOf(' ');
+                modifier = exp.slice(1, firstWhitespace);
+                content = exp.slice(firstWhitespace);
+            }
+            else {
+                content = exp;
+            }
+            texts.push({
+                modifier,
+                content,
+                isDynamic: true
+            });
+        }
+        cursor = execArr[0].length + execArr.index;
+    }
+    if (cursor < text.length) {
+        texts.push({
+            content: text.slice(cursor),
+            isDynamic: false
+        });
+    }
+    return texts;
+};
+
 /*
     extend the selectors and process keyframes
 */
-const processRules = (rules, isKeyframe = false) => {
+const processRules = (rules, context, isKeyframe = false) => {
     rules.forEach((rule) => {
+        let shouldPopScope = false;
         switch (rule.type) {
-            case 26 /* STYLE_RULE */:
-                const { selector, parent } = rule;
+            case 24 /* STYLE_RULE */:
                 if (isKeyframe) {
-                    rule.type = 27 /* KEYFRAME_RULE */;
+                    rule.type = 26 /* KEYFRAME_RULE */;
                 }
                 else {
+                    let { selector, parent } = rule;
+                    if (selector.isDynamic) {
+                        selector.selectorText = context.setRenderScope(selector.selectorText);
+                    }
                     var extendSelectors = parent?.selectors;
                     if (extendSelectors) {
                         rule.selectors = [...extendSelectors, selector];
@@ -3428,20 +4130,51 @@ const processRules = (rules, isKeyframe = false) => {
                     }
                 }
                 break;
-            case 3 /* IF */:
-            case 4 /* ELSE_IF */:
-            case 5 /* ELSE */:
-            case 6 /* FOR */:
-            case 22 /* MEDIA_RULE */:
-            case 23 /* SUPPORTS_RULE */:
+            case 7 /* CONDITION_RENDER_IF */:
+                rule.selectors = rule.parent?.selectors;
+                rule.condition = context.setRenderScope(rule.condition);
+                break;
+            case 8 /* CONDITION_RENDER_ELSE_IF */:
+                rule.selectors = rule.parent?.selectors;
+                rule.condition = context.setRenderScope(rule.condition);
+                break;
+            case 9 /* CONDITION_RENDER_ELSE */:
                 rule.selectors = rule.parent?.selectors;
                 break;
-            case 24 /* KEYFRAMES_RULE */:
+            case 10 /* LIST_RENDER */:
+                rule.selectors = rule.parent?.selectors;
+                let iterator = rule.iterator;
+                iterator.iterable = context.setRenderScope(iterator.iterable);
+                context.pushScope(iterator.items);
+                shouldPopScope = true;
+                break;
+            case 23 /* MEDIA_RULE */:
+                rule.selectors = rule.parent?.selectors;
+                break;
+            case 27 /* SUPPORTS_RULE */:
+                rule.selectors = rule.parent?.selectors;
+                break;
+            case 25 /* KEYFRAMES_RULE */:
                 isKeyframe = true;
+                break;
+            case 28 /* DECLARATION */:
+                let declaration = rule.declaration;
+                if (declaration.isDynamicPrperty) {
+                    declaration.property = context.setRenderScope(declaration.property);
+                }
+                if (declaration.isDynamicValue) {
+                    declaration.value = context.setRenderScope(declaration.value);
+                }
+                break;
+            case 30 /* MIXIN */:
+                rule.mixin = context.setRenderScope(rule.mixin);
                 break;
         }
         if (rule.children) {
-            processRules(rule.children, isKeyframe);
+            processRules(rule.children, context, isKeyframe);
+        }
+        if (shouldPopScope) {
+            context.popScope();
         }
     });
 };
@@ -3457,679 +4190,350 @@ var arrayRE = /\[.*\]/;
 function isHandler(exp) {
     return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
 }
-const builtInTags = {
-    ''(ast) {
-        ast.type = 12 /* TEXT */;
-        ast.children = parseText(ast.children);
-        ast.ignoreChildren = true;
-    },
-    '!'(ast) {
-        ast.type = 10 /* HTML_COMMENT */;
-        ast.ignoreChildren = true;
-    },
-    if(ast) {
-        ast.type = 3 /* IF */;
-        ast.condition = ast.rawAttributeMap.condition;
-        ast.isBranchStart = true;
-    },
-    elseIf(ast) {
-        ast.type = 4 /* ELSE_IF */;
-        ast.condition = ast.rawAttributeMap.condition;
-        ast.isBranch = true;
-    },
-    else(ast) {
-        ast.type = 5 /* ELSE */;
-        ast.isBranch = true;
-    },
-    for(ast) {
-        ast.type = 6 /* FOR */;
-        ast.iterator = parseIterator(ast.rawAttributeMap.iterator);
-    },
-    template(ast) {
-        ast.type = 2 /* TEMPLATE */;
-    },
-    fragment(ast) {
-        ast.type = 2 /* TEMPLATE */;
-    },
-    // ! 新策略 slot 标签用于使用插槽 ， slot指令用于定义插槽
-    slot(ast) {
-        ast.type = 35 /* SLOT */;
-        // 插槽名称支持动态， 作用域不支持动态
-        // ! slot need : slotName , isDynamicSlot 
-        ast.type = 35 /* SLOT */;
-        let name = ast?.attributeMap?.name;
-        if (name) {
-            name.type = 39 /* SKIP */; // 该属性跳过
-            ast.slotName = name.value;
-            ast.isDynamicSlot = name.isDynamicValue;
-        }
-        else {
-            ast.slotName = 'default';
-            ast.isDynamicSlot = false;
-        }
-    },
-    component(ast) {
-        ast.type = 16 /* DYNAMIC_COMPONENT */;
-        const is = ast.attributeMap.is;
-        const { isDynamicValue, value } = is;
-        ast.is = value;
-        ast.isDynamicIs = isDynamicValue;
-        is.type = 39 /* SKIP */;
-    },
-    element(ast) {
-        ast.type = 11 /* DYNAMIC_ELEMENT */;
-        const is = ast?.attributeMap?.is;
-        if (!is) {
-            error('built-in tag <element> need attribute is');
-        }
-        const { isDynamicValue, value } = is;
-        ast.is = value;
-        ast.isDynamicIs = isDynamicValue;
-        is.type = 39 /* SKIP */;
-    },
-    style(ast) {
-        ast.type = 17 /* STYLE */;
-        var template = ast.children?.[0].children;
-        if (template) {
-            var styleAst = parseCSS(template);
-            processRules(styleAst);
-            ast.children = styleAst;
-        }
-        ast.ignoreChildren = true;
+function processTemplateAst(htmlAst, context) {
+    if (isArray(htmlAst)) {
+        return htmlAst.forEach((ast) => processTemplateAst(ast, context));
     }
-};
-// 由外界注入的指令 ， 还需要额外处理
-const customDirectiveHandlers = {
-    model(attribute, ast) {
-        let modelType = ast.tag === 'select' ? (hasOwn(ast.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : ast.rawAttributeMap.type || 'text';
-        // transform 
-        attribute.property = `model${initialUpperCase(modelType)}`;
-        ast.attributes.push({
-            type: 7 /* ATTRIBUTE */,
-            property: '_setter',
-            attribute: '_setter',
-            value: toArrowFunction(`${attribute.value} = _`, '_'),
-            isDynamicValue: true,
-            isDynamicProperty: false
-        });
-    }
-};
-const builtInAttributes = {
-    slot(attr, ast) {
-        // ! slot 指令用于定义插槽 ， 可用于单个元素和 template （fragment）, 需要定义 slotName 
-        /*
-            注意当插槽指令作用于插槽标签时，代表当前定义插槽为上一个插槽传递的内容
-        */
-        attr.type = 39 /* SKIP */;
-        // 定义插槽无动态插槽 , 第一个参数为slot的名称
-        ast.defineSlotName = attr._arguments?.[0];
-        ast.isDynamicDefineSlotName = attr.isDynamicProperty;
-        ast.slotScope = attr.value;
-    },
-    style(attr, ast) {
-        attr.type = 17 /* STYLE */;
-        // attr.value = attr.isDynamicValue ? attr.value : parseInlineStyle(attr.value)
-    },
-    class(attr, ast) {
-        attr.type = 18 /* CLASS */;
-        // attr.value = attr.isDynamicValue ? attr.value : parseInlineClass(attr.value)
-    }
-};
-// 支持某些怪异的写法  , 这些属性不会进行解析
-const builtInRawAttributes = {
-    if(attr, ast) {
-        attr.type = 3 /* IF */;
-        const directives = ast.directives ||= [];
-        if (!directives.length) { // 为元素的第一个指令
-            ast.condition = attr.value;
-            ast.isBranchStart = true;
-        }
-        else {
-            directives.push(attr);
-        }
-    },
-    elseIf(attr, ast) {
-        attr.type = 4 /* ELSE_IF */;
-        if (!ast.directives?.length) {
-            ast.isBranch = true;
-            ast.condition = attr.value;
-        }
-    },
-    else(attr, ast) {
-        attr.type = 5 /* ELSE */;
-        ast.isBranch = true;
-    },
-    for(attr, ast) {
-        attr.type = 6 /* FOR */;
-        attr.iterator = parseIterator(attr.value);
-        (ast.directives ||= []).push(attr);
-    },
-    text(attr, ast) {
-        attr.type = 7 /* ATTRIBUTE */;
-        attr.property = 'innerText';
-        attr.isDynamicValue = true;
-        ast.children = null; // 直接忽略
-    },
-    html(attr, ast) {
-        attr.type = 7 /* ATTRIBUTE */;
-        attr.property = 'innerHTML';
-        attr.isDynamicValue = true;
-        ast.children = null; // 直接忽略
-    },
-    bind(attr) {
-        attr.type = 7 /* ATTRIBUTE */;
-        attr.property = attr.attribute;
-        attr.isDynamicValue = true; // 不需要$绑定
-    },
-    _setter: emptyFunction,
-    native(attr, ast) {
-        if (ast.tagName !== 'style') {
-            return;
-        }
-        // 标记为原生style属性
-        // 转换为对应的 innerHTML 即可
-        attr.type = 7 /* ATTRIBUTE */;
-        attr.property = 'innerHTML';
-        attr.value = ast.children[0].children; // use native template
-        // 清空style的children
-        ast.children = null;
-    },
-    scoped(attr, ast) {
-        ast.scoped = true;
-    }
-};
-const builtInEvents = {};
-function processAttribute(ast) {
-    var attributes = ast.attributes;
-    if (!attributes)
-        return;
-    for (let i = 0; i < attributes.length; i++) {
-        let attribute = attributes[i];
-        let rawAttributeHandler = builtInRawAttributes[camelize(attribute.attribute)]; // 驼峰化
-        if (rawAttributeHandler) {
-            rawAttributeHandler(attribute, ast);
-        }
-        else {
-            parseAttribute(attribute);
-            let { property, flag, isDynamicProperty } = attribute;
-            let attributeMap = ast.attributeMap ||= {};
-            attributeMap[property] = attribute;
-            if (flag === '@') {
-                // event
-                attribute.type = 25 /* EVENT */;
-                attribute.isHandler = isHandler(attribute.value);
-                if (!isDynamicProperty && builtInEvents[attribute.property]) {
-                    // 保留事件
-                    builtInEvents[attribute.property](attribute, ast);
-                }
+    let scopeStack = 0;
+    const tagName = htmlAst.tagName = camelize(htmlAst.tag);
+    htmlAst.type = context.compilerOptions.isHTMLTag(tagName) ?
+        1 /* HTML_ELEMENT */ : context.compilerOptions.isSVGTag(tagName) ?
+        3 /* SVG_ELEMENT */ : tagName === 'style' ?
+        6 /* STYLESHEET */ : 4 /* COMPONENT */;
+    let attributes = htmlAst.attributes;
+    if (attributes) {
+        for (let i = 0; i < attributes.length; i++) {
+            let attr = attributes[i];
+            if (attr.type) {
+                continue;
             }
-            else if (flag === '--') {
-                // 所有带 -- 一定是外界注入的指令
-                attribute.type = 34 /* CUSTOM_DIRECTIVE */;
-                // 这种形式出现的指令，都会是从外界注入的指令，只不过会出现动态或额外处理等情况
-                const customDirectiveHandler = customDirectiveHandlers[attribute.property];
-                (ast.customDirectives ||= []).push(attribute);
-                if (!isDynamicProperty && customDirectiveHandler) {
-                    customDirectiveHandler(attribute, ast);
-                }
+            let { attribute, value } = attr;
+            switch (attribute) {
+                case 'if':
+                    if (htmlAst.directives) {
+                        htmlAst.directives.push({
+                            type: 7 /* CONDITION_RENDER_IF */,
+                            condition: context.setRenderScope(value)
+                        });
+                    }
+                    else {
+                        htmlAst.isBranchStart = true;
+                        htmlAst.condition = context.setRenderScope(value);
+                    }
+                    break;
+                case 'elseIf':
+                case 'else-if':
+                    htmlAst.isBranch = true;
+                    htmlAst.condition = context.setRenderScope(value);
+                    if (htmlAst.directives) {
+                        error('else-if指令必须第一个出现');
+                    }
+                    break;
+                case 'else':
+                    htmlAst.isBranch = true;
+                    if (htmlAst.iterator) {
+                        error('else指令必须第一个出现');
+                    }
+                    break;
+                case 'for':
+                    // for 指令会最最先进行处理 ， 因为要进行变量提升
+                    let iterator = parseIterator(attr.value);
+                    iterator.iterable = context.setRenderScope(iterator.iterable);
+                    context.pushScope(iterator.items);
+                    scopeStack++;
+                    let directives = htmlAst.directives ||= [];
+                    directives.push({
+                        type: 10 /* LIST_RENDER */,
+                        iterator
+                    });
+                    break;
+                case 'text':
+                    attr.type = 15 /* ATTRIBUTE */;
+                    attr.property = 'innerText';
+                    attr.isDynamicValue = true;
+                    attr.value = context.setRenderScope(attr.value);
+                    htmlAst.children = null; // 直接忽略
+                    break;
+                case 'html':
+                    attr.type = 15 /* ATTRIBUTE */;
+                    attr.property = 'innerText';
+                    attr.isDynamicValue = true;
+                    attr.value = context.setRenderScope(attr.value);
+                    htmlAst.children = null; // 直接忽略
+                    break;
+                case 'bind':
+                    attr.type = 15 /* ATTRIBUTE */;
+                    attr.property = attr.attribute;
+                    attr.value = context.setRenderScope(attr.value);
+                    attr.isDynamicValue = true;
+                    break;
+                case 'native':
+                    if (htmlAst.tagName == 'style') {
+                        attr.type = 15 /* ATTRIBUTE */;
+                        attr.property = 'innerHTML';
+                        attr.value = htmlAst.children[0].children;
+                        break;
+                    }
+                case 'scoped':
+                    if (htmlAst.tagName == 'style') {
+                        htmlAst.scoped = true;
+                        break;
+                    }
+                default:
+                    // 深度解析
+                    parseAttribute(attr);
+                    switch (attr.flag) {
+                        case '@':
+                            attr.type = 16 /* EVENT */;
+                            attr.isHandler = isHandler(attr.value);
+                            attr.value = context.setRenderScope(attr.value);
+                            if (attr.isDynamicProperty) {
+                                attr.property = context.setRenderScope(attr.property);
+                            }
+                            break;
+                        case '--':
+                            attr.type = 19 /* CUSTOM_DIRECTIVE */;
+                            (htmlAst.customDirectives ||= []).push(attr);
+                            // 内置指令的特殊处理
+                            if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
+                                if (attr.property === 'model') {
+                                    let modelType = htmlAst.tag === 'select' ? (hasOwn(htmlAst.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : htmlAst.rawAttributeMap.type || 'text';
+                                    // transform 
+                                    attr.property = `model${initialUpperCase(modelType)}`;
+                                    attr.value = context.setRawScope(attr.value);
+                                    attributes.push({
+                                        type: 15 /* ATTRIBUTE */,
+                                        property: '_setter',
+                                        attribute: '_setter',
+                                        value: toArrowFunction(`${attr.value} = _`, '_'),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    });
+                                }
+                            }
+                            else {
+                                // 正常的指令
+                                attr.value = context.setRenderScope(attr.value);
+                                if (attr.isDynamicProperty) {
+                                    attr.property = context.setRenderScope(attr.property);
+                                }
+                            }
+                            break;
+                        case '#':
+                            if (htmlAst.tagName === 'template' || htmlAst.tagName === 'fragment') {
+                                // 模板上的# 会转换为插槽的定义
+                                if (attr.isDynamicProperty) {
+                                    htmlAst.isDynamicDefineSlotName = true;
+                                    htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName);
+                                }
+                                else {
+                                    htmlAst.isDynamicDefineSlotName = false;
+                                    htmlAst.defineSlotName = attr.property;
+                                }
+                                htmlAst.slotScope = attr.value;
+                                let args = extractArrayFunctionArgs(attr.value);
+                                if (args.length) {
+                                    context.pushScope(args);
+                                    scopeStack++;
+                                }
+                            }
+                            else {
+                                attr.type = 15 /* ATTRIBUTE */;
+                                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                                attr.property = 'id';
+                                attr.isDynamicProperty = false;
+                                attr.isDynamicValue = attr.isDynamicProperty;
+                                attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                            }
+                            break;
+                        case '.':
+                            attr.type = 17 /* ATTRIBUTE_CLASS */;
+                            attr.isDynamicProperty = false;
+                            attr.property = 'class';
+                            attr.isDynamicValue = attr.isDynamicProperty;
+                            attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                            break;
+                        case '...':
+                            attr.type = 15 /* ATTRIBUTE */;
+                            attribute.property = 'bind';
+                            attribute.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.property);
+                            break;
+                        default:
+                            switch (attr.property) {
+                                case 'slot':
+                                    htmlAst.defineSlotName = attr?._arguments?.[0] || 'default';
+                                    htmlAst.isDynamicDefineSlotName = false; // todo 暂时不支持动态定义插槽
+                                    htmlAst.slotScope = attr.value;
+                                    let args = extractArrayFunctionArgs(attr.value);
+                                    if (args.length) {
+                                        context.pushScope(args);
+                                        scopeStack++;
+                                    }
+                                    break;
+                                case 'style':
+                                    attr.type = 18 /* ATTRIBUTE_STYLE */;
+                                    if (attr.isDynamicValue) {
+                                        attr.value = context.setRenderScope(attr.value);
+                                    }
+                                    break;
+                                case 'class':
+                                    attr.type = 17 /* ATTRIBUTE_CLASS */;
+                                    if (attr.isDynamicValue) {
+                                        attr.value = context.setRenderScope(attr.value);
+                                    }
+                                    break;
+                                default:
+                                    // 普通属性
+                                    attr.type = 15 /* ATTRIBUTE */;
+                                    if (attr.isDynamicProperty) {
+                                        attr.property = context.setRenderScope(attr.property);
+                                    }
+                                    if (attr.isDynamicValue) {
+                                        attr.value = context.setRenderScope(attr.value);
+                                    }
+                            }
+                    }
+                    break;
             }
-            else if (flag === '#') {
-                /*
-                    <div #app> </div> => <div #app> </div>
-                    <template #header></template> =>  <template slot:header></template>
-                    <Hello #app> => ref ??
-                */
-                if (ast.tagName === 'template') {
-                    // 模板上的# 会转换为插槽的定义
-                    ast.defineSlotName = attribute.property;
-                    ast.isDynamicDefineSlotName = attribute.isDynamicProperty;
-                    ast.slotScope = attribute.value;
+        }
+    }
+    switch (tagName) {
+        case '':
+            htmlAst.type = 5 /* TEXT */;
+            let children = parseText(htmlAst.children);
+            let isDynamic = false;
+            children.forEach((child) => {
+                if (child.isDynamic) {
+                    child.content = context.setRenderScope(child.content);
+                    isDynamic = true;
+                }
+            });
+            htmlAst.isDynamic = isDynamic;
+            htmlAst.children = children;
+            htmlAst.ignoreChildren = true;
+            break;
+        case '!':
+            htmlAst.type = 2 /* HTML_COMMENT */;
+            htmlAst.ignoreChildren = true;
+            break;
+        case 'if':
+            htmlAst.type = 7 /* CONDITION_RENDER_IF */;
+            htmlAst.isBranchStart = true;
+            htmlAst.condition = context.setRenderScope(htmlAst.rawAttributeMap['condition']);
+            break;
+        case 'elseIf':
+            htmlAst.type = 8 /* CONDITION_RENDER_ELSE_IF */;
+            htmlAst.isBranch = true;
+            htmlAst.condition = context.setRenderScope(htmlAst.rawAttributeMap['condition']);
+            break;
+        case 'else':
+            htmlAst.type = 9 /* CONDITION_RENDER_ELSE */;
+            htmlAst.isBranch = true;
+            break;
+        case 'for':
+            htmlAst.type = 10 /* LIST_RENDER */;
+            let iterator = parseIterator(htmlAst.rawAttributeMap['iterator']);
+            iterator.iterable = context.setRenderScope(iterator.iterable);
+            context.pushScope(iterator.items);
+            scopeStack++;
+            htmlAst.iterator = iterator;
+            break;
+        case 'template':
+        case 'fragment':
+            htmlAst.type = 11 /* FRAGMENT */;
+            break;
+        case 'slot':
+            htmlAst.type = 13 /* USE_COMPONENT_SLOT */;
+            let nameAttribute = htmlAst.attributes.find((attr) => attr.property === 'name');
+            if (nameAttribute) {
+                nameAttribute.type = 12 /* SKIP */;
+                if (nameAttribute.isDynamicValue) {
+                    htmlAst.slotName = context.setRenderScope(nameAttribute.value);
+                    htmlAst.isDynamicSlot = true;
                 }
                 else {
-                    attribute.type = 7 /* ATTRIBUTE */;
-                    // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                    attribute.value = hyphenate(attribute.property);
-                    attribute.property = 'id';
-                    attribute.isDynamicValue = attribute.isDynamicProperty;
-                    attribute.isDynamicProperty = false;
+                    htmlAst.slotName = nameAttribute.value;
+                    htmlAst.isDynamicSlot = false;
                 }
             }
-            else if (flag === '.') {
-                // class shourthand
-                attribute.type = 18 /* CLASS */;
-                attribute.value = attribute.property;
-                attribute.property = 'class';
-                attribute.isDynamicValue = attribute.isDynamicProperty;
-                attribute.isDynamicProperty = false;
+            else {
+                htmlAst.slotName = 'default';
+                htmlAst.isDynamicSlot = false;
             }
-            else if (flag === '...') {
-                // bind shorthand
-                attribute.type = 7 /* ATTRIBUTE */;
-                attribute.value = attribute.property;
-                attribute.property = 'bind';
-                attribute.isDynamicValue = true;
+            break;
+        case 'element':
+            htmlAst.type = 20 /* DYNAMIC_HTML_ELEMENT */;
+            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
+            isAttribute.type = 12 /* SKIP */;
+            if (isAttribute.isDynamicValue) {
+                htmlAst.is = context.setRenderScope(isAttribute.value);
+                htmlAst.isDynamicIs = true;
             }
             else {
-                // normal property , if for 等也会作为属性出现
-                const attrHandler = builtInAttributes[attribute.property];
-                if (!attrHandler || attribute.isDynamicProperty) {
-                    attribute.type = 7 /* ATTRIBUTE */;
-                }
-                else {
-                    ast.directives ||= [];
-                    attrHandler(attribute, ast);
-                }
+                htmlAst.is = isAttribute.value;
+                htmlAst.isDynamicIs = false;
             }
-        }
-    }
-}
-function processAst(ast) {
-    if (isArray(ast)) {
-        ast.forEach(processAst);
-        return;
-    }
-    const tagName = ast.tagName = camelize(ast.tag);
-    let builtInTagHandler = builtInTags[tagName];
-    if (!builtInTagHandler) {
-        ast.type = isHTMLTag(tagName) ?
-            13 /* HTML_ELEMENT */ : isSVGTag(tagName) ?
-            9 /* SVG_ELEMENT */ : tagName === 'style' ?
-            17 /* STYLE */ : 14 /* COMPONENT */;
-    }
-    // 处理属性时有时需要拿到标签的节点信息，有些属性在不同的标签上有不同的意义
-    processAttribute(ast);
-    if (builtInTagHandler) {
-        builtInTagHandler(ast);
-    }
-    if (!ast.ignoreChildren && ast.children) {
-        processAst(ast.children);
-    }
-}
-
-// the code Entrance
-const genNodes = (nodes, context) => {
-    if (!nodes) {
-        return NULL;
-    }
-    const children = genChildren(nodes, context);
-    if (children.length === 0) {
-        return 'null';
-    }
-    else if (children.length === 1) {
-        return children[0];
-    }
-    else {
-        return genFragment(stringify(children), context);
-    }
-};
-/*
-    process if elseIf else branch
-*/
-function genChildren(nodes, context) {
-    if (!nodes) {
-        return [];
-    }
-    /*
-        process the condition branch and the first dir is condition ,
-        处理分支时会为if边际上branch start ， elseif else 标记为branch，或者元素的第一个指令为分支
-    */
-    var children = [];
-    var inBranch = false;
-    nodes.forEach((node) => {
-        /*
-            branchstart mean if frgment and if the element has the first directive is if
-        */
-        if (node.isBranchStart) {
-            children.push([node]);
-            inBranch = true;
-        }
-        else if (node.isBranch) {
-            if (inBranch) {
-                children[children.length - 1].push(node);
-            }
-        }
-        else {
-            children.push(genNode(node, context));
-            inBranch = false;
-        }
-    });
-    children = children.map((child) => {
-        if (isArray(child)) {
-            const branchCondition = child.map((b) => b.condition).filter(Boolean); // 勇于筛除else的condition ， 其他应该在之前就报错
-            const branchContent = child.map((b) => genNode(b, context));
-            return ternaryChains(branchCondition, branchContent);
-        }
-        else {
-            return child;
-        }
-    });
-    return children;
-}
-const genFor = (target, iterator, context) => context.callRenderFn('renderList', iterator.iterable, toArrowFunction(target, ...iterator.items), uStringId() /* 显示的在迭代器中传入掺入一个key，每次渲染时这个key不变，并且子节点会根据索引生成唯一key,只需要子层级即可 */);
-const genIf = (target, condition) => ternaryExp(condition, target, NULL);
-function genForWithFragment(target, iterator, context) {
-    return genFragment(genFor(target, iterator, context), context);
-}
-const genDirectives = (target, dirs, context) => {
-    /*
-        there is no possible to exist else-if or else
-    */
-    if (!dirs || dirs.length === 0) {
-        return target;
-    }
-    else {
-        // from end to start
-        var dir = dirs[dirs.length - 1];
-        dirs.pop();
-        switch (dir.type) {
-            case 3 /* IF */:
-                target = genIf(target, dir.value);
-                break;
-            case 6 /* FOR */:
-                target = genForWithFragment(target, dir.iterator, context);
-                break;
-        }
-        return genDirectives(target, dirs, context);
-    }
-};
-function genChildrenString(children, context) {
-    if (!children)
-        return NULL;
-    return stringify(genChildren(children, context));
-}
-function genDirs(code, node, context) {
-    if (node.customDirectives) {
-        code = genCustomDirectives(code, node.customDirectives, context);
-    }
-    if (node.directives) {
-        code = genDirectives(code, node.directives, context);
-    }
-    return code;
-}
-function genCustomDirectives(code, directives, context) {
-    var dirs = directives.map((directive) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive;
-        var directive = context.callRenderFn('getDirective', isDynamicProperty ? property : toSingleQuotes(property));
-        if (!isDynamicProperty) {
-            directive = context.hoistExpression(directive);
-        }
-        let bindings = {
-            directive
-        };
-        if (value) {
-            bindings.value = value;
-        }
-        if (_arguments) {
-            bindings._arguments = _arguments && _arguments.map(toSingleQuotes);
-        }
-        if (modifiers) {
-            bindings.modifiers = modifiers && modifiers.map(toSingleQuotes);
-        }
-        if (filters) {
-            bindings.filters = filters && filters.map(toSingleQuotes);
-        }
-        return bindings;
-    });
-    return context.callRenderFn('injectDirectives', code, stringify(dirs));
-}
-function genSlotContent(node, context) {
-    var { children } = node;
-    /*
-        关于插槽的定义 ,
-        插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
-        如 <template slot="header" slot-scope="x"> ,
-        暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
-    */
-    if (!children)
-        return NULL;
-    var _default;
-    var slots = {};
-    children.forEach((child) => {
-        var { defineSlotName, slotScope } = child;
-        // 作用域插槽只能在具名插槽上
-        if (defineSlotName) {
-            slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope);
-        }
-        else {
-            (_default ||= []).push(child);
-        }
-    });
-    if (_default) {
-        // ! 默认插槽不存在作用域插槽
-        slots.default = toArrowFunction(genNodes(_default, context));
-    }
-    return stringify(slots);
-}
-function genNode(node, context) {
-    switch (node.type) {
-        case 10 /* HTML_COMMENT */:
-            return context.callRenderFn('createComment', toBackQuotes(node.children), uid());
-        case 3 /* IF */:
-        case 4 /* ELSE_IF */:
-        case 5 /* ELSE */:
-            return genNodes(node.children, context);
-        case 6 /* FOR */:
-            // use the fragment , cause the iterator will set the u key in each node , 
-            return genForWithFragment(genNodes(node.children, context), node.iterator, context);
-        case 2 /* TEMPLATE */:
-            var code = genNodes(node.children, context);
-            // 只有模板上的保留属性会生效
-            return genDirectives(code, node.directives, context);
-        case 35 /* SLOT */:
-            const { slotName, isDynamicSlot, children } = node;
-            return context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
-        case 36 /* OUTLET */:
-            return genNodes(node.children, context);
-        case 11 /* DYNAMIC_ELEMENT */:
-            var { is, isDynamicIs } = node;
-            var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
-            genChildrenString(node.children, context), uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 13 /* HTML_ELEMENT */:
-            var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 9 /* SVG_ELEMENT */:
-            var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 16 /* DYNAMIC_COMPONENT */:
-            var { is, isDynamicIs } = node;
-            var component = context.callRenderFn('getComponent', isDynamicIs ? is : toSingleQuotes(is));
-            // 动态组件不会提升
-            var props = genProps(node, context);
-            var slots = genSlotContent(node, context);
-            code = context.callRenderFn('createComponent', component, props, slots, uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 14 /* COMPONENT */:
-            var code = context.callRenderFn('getComponent', toBackQuotes(node.tagName));
-            var uv = context.hoistExpression(code);
-            var props = genProps(node, context);
-            var slots = genSlotContent(node, context);
-            code = context.callRenderFn('createComponent', uv, props, slots, uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 12 /* TEXT */:
-            return genText(node.children, context);
-        case 17 /* STYLE */:
-            var props = genProps(node, context);
-            var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId());
-            code = genDirs(code, node, context);
-            return code;
-        case 26 /* STYLE_RULE */:
-            return context.callRenderFn('createStyle', genSelector(node.selectors, context), stringify(genChildren(node.children, context)), uStringId());
-        case 22 /* MEDIA_RULE */:
-            const rules = stringify(genChildren(node.children, context));
-            return context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
-        case 24 /* KEYFRAMES_RULE */:
-            return context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
-        case 27 /* KEYFRAME_RULE */:
-            return context.callRenderFn('createKeyframe', toBackQuotes(node.selector.selectorText), stringify(genChildren(node.children, context)), uStringId());
-        case 23 /* SUPPORTS_RULE */:
-            return context.callRenderFn('createSupports', toBackQuotes(node.supports), stringify(genChildren(node.children, context)), uStringId());
-        case 28 /* DECLARATION_GROUP */:
-            return context.callRenderFn('createDeclaration', genDeclartion(node.children, context), uStringId());
-    }
-}
-const genFragment = (code, context) => context.callRenderFn('createFragment', code, uStringId());
-const genTextContent = (texts, context) => {
-    return texts.map((text) => {
-        const { content, isDynamic, modifier } = text;
-        return isDynamic ? context.callRenderFn('display', content, toSingleQuotes(modifier)) : toBackQuotes(content);
-    }).join('+');
-};
-const genText = (texts, context) => {
-    return context.callRenderFn('createText', genTextContent(texts, context));
-};
-function genSelector(selectors, context) {
-    /*
-        先保留数组形式,再进行处理
-    */
-    var res = [];
-    var lastIsStatic = false;
-    selectors.forEach(({ selectorText, isDynamic }) => {
-        if (isDynamic) {
-            res.push(selectorText);
-            lastIsStatic = false;
-        }
-        else {
-            var splitedSelector = splitSelector(selectorText);
-            if (lastIsStatic) {
-                res[res.length - 1] = mergeSplitedSelector(res[res.length - 1], splitedSelector);
+            break;
+        case 'component':
+            htmlAst.type = 22 /* DYNAMIC_COMPONENT */;
+            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
+            isAttribute.type = 12 /* SKIP */;
+            if (isAttribute.isDynamicValue) {
+                htmlAst.is = context.setRenderScope(isAttribute.value);
+                htmlAst.isDynamicIs = true;
             }
             else {
-                res.push(splitedSelector);
+                htmlAst.is = isAttribute.value;
+                htmlAst.isDynamicIs = false;
             }
-            lastIsStatic = true;
-        }
-    });
-    var selectorCode = res.map((item) => {
-        if (isArray(item)) { // static
-            return toBackQuotes(joinSelector(item));
-        }
-        else { // dynamic
-            // scope  
-            return toBackQuotes(item);
-        }
-    });
-    return selectorCode.length === 1 ?
-        selectorCode[0] :
-        context.callRenderFn('mergeSelectors', ...selectorCode);
-    //! one dynamic selector will effect all 
-}
-// declaration and mixin
-function genDeclartion(declarationGroup, context) {
-    var res = [];
-    var lastIsDeclaration = false;
-    declarationGroup.forEach((declaration) => {
-        if (declaration.type === 30 /* MIXIN */) {
-            res.push(declaration.mixin);
-            lastIsDeclaration = false;
-        }
-        else if (declaration.type === 29 /* DECLARATION */) {
-            var target;
-            if (lastIsDeclaration) {
-                target = res[res.length - 1];
+            break;
+        case 'svgElement':
+            htmlAst.type = 21 /* DYNAMIC_SVG_ELEMENT */;
+            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
+            isAttribute.type = 12 /* SKIP */;
+            if (isAttribute.isDynamicValue) {
+                htmlAst.is = context.setRenderScope(isAttribute.value);
+                htmlAst.isDynamicIs = true;
             }
             else {
-                target = {};
-                res.push(target);
-                lastIsDeclaration = true;
+                htmlAst.is = isAttribute.value;
+                htmlAst.isDynamicIs = false;
             }
-            var { property, value, isDynamicProperty, isDynamicValue, isImportant, illegalKey } = declaration.declaration;
-            if (isDynamicProperty) {
-                // 动态的key不存在不合法情况
-                property = dynamicMapKey(property);
+            break;
+        case 'style':
+            htmlAst.type = 6 /* STYLESHEET */;
+            var template = htmlAst.children?.[0].children;
+            if (template) {
+                var styleAst = parseCSS(template);
+                processRules(styleAst, context);
+                htmlAst.children = styleAst;
             }
-            else if (illegalKey) {
-                property = dynamicMapKey(toSingleQuotes(property));
-            }
-            else {
-                property = camelize(property);
-            }
-            if (!isDynamicValue) {
-                value = toBackQuotes(value);
-            }
-            if (isImportant) {
-                value = context.callRenderFn('important', value);
-            }
-            target[property] = value;
+            htmlAst.ignoreChildren = true;
+            break;
+    }
+    if (htmlAst.children && !htmlAst.ignoreChildren) {
+        processTemplateAst(htmlAst.children, context);
+    }
+    if (scopeStack) {
+        for (let i = 0; i < scopeStack; i++) {
+            context.popScope();
         }
-    });
-    const _res = res.map((item) => {
-        if (isObject(item)) {
-            return objectStringify(item);
-        }
-        else {
-            return item;
-        }
-    });
-    if (_res.length === 1) {
-        return _res[0];
     }
-    else {
-        return context.callRenderFn('mixin', ..._res);
-    }
-}
-function genProps(node, context) {
-    const { type, attributes } = node;
-    const isComponent = type === 14 /* COMPONENT */;
-    if (!attributes) {
-        return NULL;
-    }
-    var props = {};
-    attributes.forEach((attr) => {
-        attr.value ||= attr.property;
-        switch (attr.type) {
-            case 25 /* EVENT */:
-                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
-                const handlerKey = isDynamicProperty ?
-                    (isComponent ?
-                        dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
-                        dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
-                    (isComponent ?
-                        toEventName(property, _arguments, modifiers) :
-                        toNativeEventName(property, _arguments));
-                var callback = isHandler ? value : toArrowFunction(value, '$'); // 包裹函数都需要传入一个 $ 参数
-                if (modifiers && !isComponent) {
-                    callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
-                }
-                props[handlerKey] = callback;
-                break;
-            case 18 /* CLASS */:
-                var _class = props.class ||= [];
-                _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
-                break;
-            case 17 /* STYLE */:
-                var style = props.style ||= [];
-                style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
-                break;
-            case 7 /* ATTRIBUTE */:
-                // normal attributes
-                var { property, value, isDynamicProperty, isDynamicValue, } = attr;
-                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
-                break;
-        }
-    });
-    // merge class , there could be more than one class , 不应该在render函数中使用normalize
-    if (props.class) {
-        props.class = stringify(props.class);
-    }
-    if (props.style) {
-        props.style = stringify(props.style);
-    }
-    return stringify(props) === '{}' ? NULL : stringify(props);
 }
 
 const createFunction = (content, ...params) => new Function(...params, `${content}`);
 class CodeGenerator {
+    compilerOptions;
     code;
-    methods;
+    // 记录使用的方法
+    methods = {};
+    components = {};
+    directives = {};
+    renderScope;
+    scope;
     constructor() {
         this.code = '';
-        this.methods = {};
     }
     getCode = () => {
         this.unshift(declare(`{${Object.keys(this.methods).join(',')}}`, 'renderMethods'));
@@ -4153,22 +4557,69 @@ class CodeGenerator {
         this.methods[fn] = true;
         return callFn(fn, ...args);
     }
-    setScope() {
+    useComponent(name, isDynamic) {
+        if (isDynamic) {
+            return this.callRenderFn('getComponent', name);
+        }
+        else {
+            if (this.components[name]) {
+                return this.components[name];
+            }
+            else {
+                let component = this.hoistExpression(this.callRenderFn('getComponent', toBackQuotes(name)));
+                this.components[name] = component;
+                return component;
+            }
+        }
+    }
+    useDirective(name, isDynamic) {
+        if (isDynamic) {
+            return this.callRenderFn('getDirective', name);
+        }
+        else {
+            if (this.directives[name]) {
+                return this.directives[name];
+            }
+            else {
+                let directive = this.hoistExpression(this.callRenderFn('getDirective', toBackQuotes(name)));
+                this.directives[name] = directive;
+                return directive;
+            }
+        }
+    }
+    setRenderScope(exp) {
+        let expInstance = createExpression(exp);
+        expInstance.pushScope(this.scopes);
+        return expInstance.scopedExpression(this.renderScope);
+    }
+    setRawScope(exp) {
+        // 原生作用域不会受到模板的影响
+        let expInstance = createExpression(exp);
+        return expInstance.scopedExpression(this.scope);
+    }
+    scopes = [];
+    pushScope(scope) {
+        this.scopes.push(scope);
+    }
+    popScope() {
+        this.scopes.pop();
     }
 }
-function compile(template) {
-    var ast = baseParseHTML(template);
-    processAst(ast);
+const compilerDefaultOptions = {
+    isHTMLTag,
+    isSVGTag
+};
+function compile(template, compilerOptions = compilerDefaultOptions) {
     var context = new CodeGenerator();
-    // 初始化所有渲染方法
-    // 模板的渲染作用域
-    var SCOPE = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
-    const renderCode = genNodes(ast, context);
-    const content = `
-        with(${SCOPE}){
-            return ${toArrowFunction(renderCode)} // the return function is render function
-        }    
-    `;
+    context.compilerOptions = compilerOptions;
+    // 初始化渲染作用域
+    context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
+    context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'));
+    var htmlAst = baseParseHTML(template);
+    processTemplateAst(htmlAst, context);
+    console.log(htmlAst);
+    const renderCode = genNodes(htmlAst, context);
+    const content = `return ${toArrowFunction(renderCode)}`;
     context.pushNewLine(content);
     var renderFunction = createFunction(context.getCode(), 'renderMethods');
     console.log(renderFunction);
@@ -4188,20 +4639,6 @@ function parseInlineStyle(styleString) {
 }
 const inlineClassDelimiter = /\s+/;
 const parseInlineClass = (classString) => stringToMap(classString, inlineClassDelimiter);
-
-// 提取一段表达式中的所有变量
-function extractExpressionVariables(expression) {
-    let processingExpression = expression.trim();
-    while (processingExpression) {
-        let firstLetter = processingExpression[0]; // 第一个字符
-        if (firstLetter === "'" || firstLetter === '"') { // 普通字符串
-            let stringEnd = expression.indexOf(firstLetter, 1);
-            processingExpression.slice(0, stringEnd + 1);
-            processingExpression = processingExpression.slice(stringEnd + 1);
-        }
-        debugger;
-    }
-}
 
 // normalized class always will be a map with true value
 function normalizeClass(rawClass) {
@@ -4486,14 +4923,19 @@ const modelText = {
         const { lazy, number, trim, debounce: useDebounce } = modifiers;
         const setter = vnode.props._setter;
         // 设置input初始值
-        el.value = value;
+        el.value = isRef(value) ? value.value : value;
         let inputHandler = () => {
             let inputValue = el.value;
             // number 和 trim 不能同时使用 , 空字符串转数字会变为0
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue;
             // 标记输入框刚刚输入完毕
             el._inputing = true;
-            setter(inputValue);
+            if (isRef(value)) {
+                value.value = inputValue;
+            }
+            else {
+                setter(inputValue);
+            }
         };
         if (useDebounce) {
             let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1];
@@ -4505,12 +4947,13 @@ const modelText = {
         addListener(el, lazy ? 'change' : 'input', inputHandler);
     },
     beforeUpdate(el, { value }) {
+        debugger;
         // 由输入框输入引发的更新，不会重新设置输入框的值
         if (el._inputing) {
             el._inputing = false;
         }
         else {
-            el.value = value;
+            el.value = isRef(value) ? value.value : value;
         }
     }
 };
@@ -6175,10 +6618,6 @@ const protoMethods = {
     throttle,
     ...cssMethods,
 };
-// todo bug
-Object.keys(scopeProperties).forEach(prop => {
-    protoMethods[prop] = '';
-});
 // inject scope property
 function createScope(instance) {
     const scope = reactive(Object.create(protoMethods));
@@ -6564,6 +7003,9 @@ function processComponentHook(type, vnode, pVnode) {
     var directives = vnode.directives;
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue;
+            }
             var _dir = normalizeDirective(dir);
             var hook = _dir[type];
             if (hook) {
@@ -6589,6 +7031,9 @@ function processElementHook(type, vnode, pVnode) {
     var directives = vnode.directives;
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue;
+            }
             var _dir = normalizeDirective(dir);
             var hook = _dir[type];
             if (hook) {
@@ -6613,6 +7058,9 @@ function processRenderComponentHook(type, vnode, pVnode) {
     var directives = vnode.directives;
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue;
+            }
             var _dir = normalizeDirective(dir);
             var hook = _dir[type];
             if (hook) {
@@ -6752,8 +7200,10 @@ function useOptions() {
 }
 
 exports.$var = $var;
+exports.CodeGenerator = CodeGenerator;
 exports.Comment = Comment;
 exports.ComputedRef = ComputedRef;
+exports.Expression = Expression;
 exports.IMPORTANT = IMPORTANT;
 exports.IMPORTANT_KEY = IMPORTANT_KEY;
 exports.IMPORTANT_SYMBOL = IMPORTANT_SYMBOL;
@@ -6767,6 +7217,7 @@ exports.addClass = addClass;
 exports.addInstanceListener = addInstanceListener;
 exports.addListener = addListener;
 exports.appendMedium = appendMedium;
+exports.arrayExpressionWithScope = arrayExpressionWithScope;
 exports.arrayToMap = arrayToMap;
 exports.attr = attr;
 exports.builtInComponents = builtInComponents;
@@ -6789,6 +7240,7 @@ exports.createComponent = createComponent;
 exports.createComponentInstance = createComponentInstance;
 exports.createDeclaration = createDeclaration;
 exports.createElement = createElement;
+exports.createExpression = createExpression;
 exports.createFragment = createFragment;
 exports.createFunction = createFunction;
 exports.createInstanceEventEmitter = createInstanceEventEmitter;
@@ -6842,8 +7294,12 @@ exports.emptyObject = emptyObject;
 exports.error = error;
 exports.exec = exec;
 exports.execCaptureGroups = execCaptureGroups;
+exports.expressionWithScope = expressionWithScope;
 exports.extend = extend;
-exports.extractExpressionVariables = extractExpressionVariables;
+exports.extractArrayFunctionArgs = extractArrayFunctionArgs;
+exports.findNextCodeBlockClosingPosition = findNextCodeBlockClosingPosition;
+exports.findStringFromArray = findStringFromArray;
+exports.findTemplateStringEnd = findTemplateStringEnd;
 exports.flatRules = flatRules;
 exports.getActiveEffect = getActiveEffect;
 exports.getComponent = getComponent;
@@ -6946,6 +7402,7 @@ exports.normalizeClass = normalizeClass;
 exports.normalizeHandler = normalizeHandler;
 exports.normalizeKeyText = normalizeKeyText;
 exports.normalizeStyle = normalizeStyle;
+exports.objectExpressionWithScope = objectExpressionWithScope;
 exports.objectStringify = objectStringify;
 exports.onBeforeClassMount = onBeforeClassMount;
 exports.onBeforeMount = onBeforeMount;
@@ -7032,6 +7489,7 @@ exports.targetObserverSymbol = targetObserverSymbol;
 exports.ternaryChains = ternaryChains;
 exports.ternaryExp = ternaryExp;
 exports.throttle = throttle;
+exports.throwError = throwError;
 exports.toAbsoluteValue = toAbsoluteValue;
 exports.toArray = toArray;
 exports.toArrowFunction = toArrowFunction;
@@ -7088,4 +7546,3 @@ exports.watchReactive = watchReactive;
 exports.watchRef = watchRef;
 exports.watchTargetKey = watchTargetKey;
 exports.withEventModifiers = withEventModifiers;
-exports.withScope = withScope;
