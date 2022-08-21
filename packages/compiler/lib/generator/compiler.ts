@@ -11,7 +11,8 @@ import {
 import {
     toArrowFunction,
     declare,
-    callFn
+    callFn,
+    toBackQuotes
 } from '../stringify'
 
 import { uVar } from '@crush/common'
@@ -26,14 +27,16 @@ export class CodeGenerator {
     code: string
 
     // 记录使用的方法
-    methods: Record<string, boolean>
+    methods: any = {}
+    components: any = {}
+    directives: any = {}
+
 
     renderScope: any
     scope: any
 
     constructor() {
         this.code = ''
-        this.methods = {}
     }
 
     getCode = () => {
@@ -63,9 +66,43 @@ export class CodeGenerator {
         return callFn(fn, ...args)
     }
 
+    useComponent(name: string, isDynamic: boolean) {
+        if (isDynamic) {
+            return this.callRenderFn('getComponent', name)
+        } else {
+            if (this.components[name]) {
+                return this.components[name]
+            } else {
+                let component = this.hoistExpression(this.callRenderFn('getComponent', toBackQuotes(name)))
+                this.components[name] = component
+                return component
+            }
+        }
+    }
+
+    useDirective(name: string, isDynamic: boolean) {
+        if (isDynamic) {
+            return this.callRenderFn('getDirective', name)
+        } else {
+            if (this.directives[name]) {
+                return this.directives[name]
+            } else {
+                let directive = this.hoistExpression(this.callRenderFn('getDirective', toBackQuotes(name)))
+                this.directives[name] = directive
+                return directive
+            }
+        }
+    }
+
     setRenderScope(exp: string) {
         let expInstance = createExpression(exp)
         expInstance.pushScope(this.scopes)
+        return expInstance.scopedExpression(this.renderScope)
+    }
+
+    setRawScope(exp: string) {
+        // 原生作用域不会受到模板的影响
+        let expInstance = createExpression(exp)
         return expInstance.scopedExpression(this.renderScope)
     }
 
@@ -106,7 +143,6 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     console.log(htmlAst);
 
     const renderCode: any = genNodes(htmlAst, context)
-
 
     const content = `return ${toArrowFunction(renderCode)}`
 

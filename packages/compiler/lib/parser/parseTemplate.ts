@@ -1,5 +1,6 @@
-import { camelize, error, hyphenate, isArray } from "@crush/common";
+import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray } from "@crush/common";
 import { CodeGenerator } from "../generator/compiler";
+import { toArrowFunction } from "../stringify";
 import { extractArrayFunctionArgs } from "../withScope";
 import { parseAttribute } from "./parseAttribute";
 import { parseCSS } from "./parseCSS";
@@ -76,13 +77,16 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
     htmlAst.type = context.compilerOptions.isHTMLTag(tagName) ?
         AstTypes.HTML_ELEMENT : context.compilerOptions.isSVGTag(tagName) ?
             AstTypes.SVG_ELEMENT : tagName === 'style' ?
-                AstTypes.STYLESHEET : AstTypes.UNKNOWN
+                AstTypes.STYLESHEET : AstTypes.COMPONENT
 
     let attributes = htmlAst.attributes
 
     if (attributes) {
         for (let i = 0; i < attributes.length; i++) {
             let attr = attributes[i]
+            if (attr.type) {
+                continue
+            }
             let { attribute, value } = attr
             switch (attribute) {
                 case 'if':
@@ -172,6 +176,21 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             attr.value = context.setRenderScope(attr.value)
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property)
+                            }
+                            if (!attr.isDynamicProperty) {
+                                if (attr.property === 'model') {
+                                    let modelType = htmlAst.tag === 'select' ? (hasOwn(htmlAst.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : htmlAst.rawAttributeMap.type || 'text'
+                                    // transform 
+                                    attr.property = `model${initialUpperCase(modelType)}`
+                                    attributes.push({
+                                        type: AstTypes.ATTRIBUTE,
+                                        property: '_setter',
+                                        attribute: '_setter', // 用于跳过属性解析
+                                        value: toArrowFunction(`${attr.value} = _`, '_'),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    })
+                                }
                             }
                             break
                         case '#':
@@ -327,7 +346,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             }
             break
         case 'component':
-            htmlAst.type = AstTypes.DYNAMIC_SVG_ELEMENT
+            htmlAst.type = AstTypes.DYNAMIC_COMPONENT
             var isAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'is')
             isAttribute.type = AstTypes.SKIP
             if (isAttribute.isDynamicValue) {
@@ -339,7 +358,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             }
             break
         case 'svgElement':
-            htmlAst.type = AstTypes.DYNAMIC_COMPONENT
+            htmlAst.type = AstTypes.DYNAMIC_SVG_ELEMENT
             var isAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'is')
             isAttribute.type = AstTypes.SKIP
             if (isAttribute.isDynamicValue) {

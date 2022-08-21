@@ -123,10 +123,7 @@ function genDirs(code: string, node: any, context: any) {
 function genCustomDirectives(code: any, directives: any, context: any) {
     var dirs = directives.map((directive: any) => {
         var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive
-        var directive = context.callRenderFn('getDirective', isDynamicProperty ? property : toSingleQuotes(property))
-        if (!isDynamicProperty) {
-            directive = context.hoistExpression(directive)
-        }
+        var directive = context.useDirective(property, isDynamicProperty)
         let bindings: any = {
             directive
         }
@@ -240,8 +237,7 @@ function genNode(node: any, context: any): any {
             break
         case AstTypes.DYNAMIC_COMPONENT:
             var { is, isDynamicIs } = node
-            var component: string = context.callRenderFn('getComponent', isDynamicIs ? is : toSingleQuotes(is),)
-            // 动态组件不会提升
+            var component = context.useComponent(is, isDynamicIs)
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
             code = context.callRenderFn('createComponent', component, props, slots, uStringId())
@@ -249,11 +245,10 @@ function genNode(node: any, context: any): any {
             nodeCode = code
             break
         case AstTypes.COMPONENT:
-            var code: string = context.callRenderFn('getComponent', toBackQuotes(node.tagName))
-            var uv = context.hoistExpression(code)
+            var component = context.useComponent(node.tagName, false)
             var props = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn('createComponent', uv, props, slots, uStringId())
+            code = context.callRenderFn('createComponent', component, props, slots, uStringId())
             code = genDirs(code, node, context)
             nodeCode = code
             break

@@ -81,6 +81,9 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     var directives = vnode.directives
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue
+            }
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
             if (hook) {
@@ -108,8 +111,12 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     var directives = vnode.directives
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue
+            }
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
+
             if (hook) {
                 if (pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
@@ -134,6 +141,9 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
     var directives = vnode.directives
     if (directives) {
         for (let [dir, bindings] of directives) {
+            if (!dir) {
+                continue
+            }
             var _dir = normalizeDirective(dir)
             var hook = _dir[type]
             if (hook) {

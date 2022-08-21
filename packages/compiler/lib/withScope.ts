@@ -69,7 +69,7 @@ let isJsVarStart = (str: string) => /^[\$_a-zA-Z]/.test(str)
 const jsVarRE = /[\$_A-Za-z][A-Za-z0-9]*/
 
 export function expressionWithScope(expression: string, expressionContext: Expression) {
-    let processingExpression = expression
+    let processingExpression = expression || ''
     let withScopedExpression = ''
 
     let lastIsVar = false // 记录上一个处理的是不是变量
