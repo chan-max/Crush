@@ -37,6 +37,7 @@ export const createComponentInstance = (options: any, parent: any) => {
         off: null,
         once: null,
         watch: null,
+        useScopedStyleSheet: options.useScopedStyleSheet,
         renderEffect: null,
         render: options.render,
         scopedId: options.scopedId,
@@ -127,6 +128,7 @@ export interface ComponentInstance {
     beforeRouteEnter: any,
     beforeRouteLeave: any
     beforeRouteUpdate: any
-    scopedId: any
+    scopedId: any,
+    useScopedStyleSheet: any
 }
 

@@ -51,7 +51,6 @@ export {
 function baseSetSelectorAttribute(selector: string, attribute: string) {
     let pseduoClassPosition = selector.indexOf(':')
     if (pseduoClassPosition < 0) {
-        // 带有伪类选择器
         return `${selector}[${attribute}]`
     } else {
         return `${selector.slice(0, pseduoClassPosition)}[${attribute}]${selector.slice(pseduoClassPosition)}`

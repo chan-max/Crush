@@ -18,7 +18,7 @@ export const mountStyleSheet = (vnode: any, container: any, anchor: any, parent?
     processHook(LifecycleHooks.BEFORE_MOUNT, vnode)
     insertElement(el, container, anchor)
     var sheet = el.sheet
-    mountSheet(sheet, children, scoped && parent.scopedId)
+    mountSheet(sheet, children, scoped ? (parent.scopedId || `scoped-${parent.uid}`) : '')
     processHook(LifecycleHooks.MOUNTED, vnode)
     return sheet
 }
@@ -63,10 +63,7 @@ export function mountStyleRule(
     insertIndex = sheet.cssRules.length,
     scopedId: any = '' // 默认没有作用域id
 ) {
-    let {
-        selector,
-        children: declaration
-    } = rule
+    let { selector, children: declaration } = rule
 
     if (!declaration) return
 

@@ -23,7 +23,7 @@ const stringify = (target: any): string => {
     if (isString(target)) {
         return target
     } else if (isArray(target)) {
-        return `[${target.map(stringify).join(',')}]`
+        return `[${target.map(stringify).join(',')}]` // 格式化
     } else if (isObject(target)) {
         return '{' +
             Object.entries(target).map(([property, value]: any) => {

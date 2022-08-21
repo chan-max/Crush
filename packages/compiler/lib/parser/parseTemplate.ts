@@ -156,6 +156,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                 case 'scoped':
                     if (htmlAst.tagName == 'style') {
                         htmlAst.scoped = true
+                        context.useScopedStyleSheet = true
                         break
                     }
                 default:

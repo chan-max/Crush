@@ -35,6 +35,9 @@ export class CodeGenerator {
     renderScope: any
     scope: any
 
+    // 记录模板中是否使用了scoped css
+    useScopedStyleSheet = false
+
     constructor() {
         this.code = ''
     }
@@ -152,7 +155,8 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     console.log(renderFunction);
 
     return {
-        createRender: renderFunction
+        createRender: renderFunction,
+        useScopedStyleSheet: context.useScopedStyleSheet
     }
 }
 

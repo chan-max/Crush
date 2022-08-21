@@ -58,10 +58,9 @@ export function resolveOptions(options: any) {
                 break
             case ComponentOptions.TEMPLATE:
                 let render = compile(value as string)
-                let {
-                    createRender
-                } = render
+                let { createRender, useScopedStyleSheet } = render
                 options.createRender = createRender
+                options.useScopedStyleSheet = useScopedStyleSheet
                 break
             case ComponentOptions.RENDER:
                 // todo

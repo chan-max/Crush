@@ -9,13 +9,13 @@ console.log(exp.scopedExpression());
 
 createApp({
     template:/*html*/`
-        <h1 @click="c"> {{x}} </h1>
-        <input --model="x">
+        <style scoped>
+            h1{
+                color:red;
+            }
+        </style>
+        <h1> hello world </h1>
     `,
     create({ $self }: any) {
-        $self.x = ref(666)
-        $self.c = () => {
-            $self.x = ref(10056)
-        }
     }
 }).mount('#app')

@@ -47,14 +47,13 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
     // 2
     const { type, props, children, transition } = vnode
-    const { scopedId } = parent
 
     // create 
     const el: any = vnode.el = docCreateElement(type, isSVG)
     el._vnode = vnode
     // set scoped id
-    if (scopedId) {
-        setAttribute(el, String(scopedId))
+    if (parent.useScopedStyleSheet) {
+        setAttribute(el, parent.scopedId || `scoped-${parent.uid}`)
     }
     mountAttributes(el, props, parent, isSVG)
     processHook(LifecycleHooks.CREATED, vnode)
