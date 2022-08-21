@@ -3,6 +3,7 @@ import { isArray, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
 import { debounce, isNumber, } from '@crush/common'
+import { isRef } from "@crush/reactivity";
 
 
 export const modelText = {
@@ -10,14 +11,18 @@ export const modelText = {
         const { lazy, number, trim, debounce: useDebounce } = modifiers
         const setter = vnode.props._setter
         // 设置input初始值
-        el.value = value;
+        el.value = isRef(value) ? value.value : value;
         let inputHandler = () => {
             let inputValue = el.value
             // number 和 trim 不能同时使用 , 空字符串转数字会变为0
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
             // 标记输入框刚刚输入完毕
             el._inputing = true
-            setter(inputValue)
+            if (isRef(value)) {
+                value.value = inputValue
+            } else {
+                setter(inputValue)
+            }
         }
 
         if (useDebounce) {
@@ -31,11 +36,12 @@ export const modelText = {
         addListener(el, lazy ? 'change' : 'input', inputHandler)
     },
     beforeUpdate(el: any, { value }: any) {
+        debugger
         // 由输入框输入引发的更新，不会重新设置输入框的值
         if (el._inputing) {
             el._inputing = false
         } else {
-            el.value = value;
+            el.value = isRef(value) ? value.value : value;
         }
     }
 }

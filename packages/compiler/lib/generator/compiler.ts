@@ -103,7 +103,7 @@ export class CodeGenerator {
     setRawScope(exp: string) {
         // 原生作用域不会受到模板的影响
         let expInstance = createExpression(exp)
-        return expInstance.scopedExpression(this.renderScope)
+        return expInstance.scopedExpression(this.scope)
     }
 
     scopes: any = []

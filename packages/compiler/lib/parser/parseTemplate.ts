@@ -173,15 +173,13 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         case '--':
                             attr.type = AstTypes.CUSTOM_DIRECTIVE;
                             (htmlAst.customDirectives ||= []).push(attr);
-                            attr.value = context.setRenderScope(attr.value)
-                            if (attr.isDynamicProperty) {
-                                attr.property = context.setRenderScope(attr.property)
-                            }
-                            if (!attr.isDynamicProperty) {
+                            // 内置指令的特殊处理
+                            if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
                                 if (attr.property === 'model') {
                                     let modelType = htmlAst.tag === 'select' ? (hasOwn(htmlAst.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : htmlAst.rawAttributeMap.type || 'text'
                                     // transform 
                                     attr.property = `model${initialUpperCase(modelType)}`
+                                    attr.value = context.setRawScope(attr.value)
                                     attributes.push({
                                         type: AstTypes.ATTRIBUTE,
                                         property: '_setter',
@@ -190,6 +188,12 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                         isDynamicValue: true,
                                         isDynamicProperty: false
                                     })
+                                }
+                            } else {
+                                // 正常的指令
+                                attr.value = context.setRenderScope(attr.value)
+                                if (attr.isDynamicProperty) {
+                                    attr.property = context.setRenderScope(attr.property)
                                 }
                             }
                             break
