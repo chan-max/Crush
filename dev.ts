@@ -10,7 +10,7 @@ let app = createApp({
                 color:red;
             }
         </style>
-        <h1 .x .y .z style="color:blue"> hello world </h1>
+        <h1 if="x+y"> hello world </h1>
     `,
     create({ $self }: any) {
 

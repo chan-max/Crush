@@ -156,18 +156,15 @@ const defaultTemplateScopeValue = ':-)'
 export function createRenderScope(instanceScope: any) {
     return new Proxy(instanceScope, {
         get(target: any, key: any, receiver: any) {
-            if (key === Symbol.unscopables) {
-                return
-            }
 
             if (hasOwn(specialTemplateMethods, key)) {
                 return specialTemplateMethods[key]
             }
-
+            
             // todo magic variables
             var result = Reflect.get(target, key, receiver)
             return isRef(result) ? result.value : result
         }
     })
-}
+} 
 

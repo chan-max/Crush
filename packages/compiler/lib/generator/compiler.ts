@@ -16,7 +16,7 @@ import {
 } from '../stringify'
 
 import { uVar } from '@crush/common'
-import { createExpression } from '../withScope'
+import { createExpression, expressionWithScope } from '../withScope'
 
 export const createFunction = (content: string, ...params: string[]) => new Function(...params, `${content}`)
 
@@ -94,6 +94,27 @@ export class CodeGenerator {
                 this.directives[name] = directive
                 return directive
             }
+        }
+    }
+
+    parseExpressionWithRenderScope(exp: string) {
+        let expInstance = createExpression(exp)
+        expInstance.pushScope(this.scopes)
+        let setScopedExpression = expInstance.scopedExpression(this.renderScope)
+        let variables = expInstance.variables
+        return {
+            expression: setScopedExpression,
+            variables
+        }
+    }
+
+    parseExpressionWithRawScope(exp: string) {
+        let expInstance = createExpression(exp)
+        let setScopedExpression = expInstance.scopedExpression(this.renderScope)
+        let variables = expInstance.variables
+        return {
+            expression: setScopedExpression,
+            variables
         }
     }
 

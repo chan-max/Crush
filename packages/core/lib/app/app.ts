@@ -114,8 +114,8 @@ export function createApp(rootComponent: any) {
             app.rootComponent.template = app.inlineTemplate
         }
 
-        app.rootVnode = createComponent(rootComponent, null, null)
-        mount(app.rootVnode, app.container)
+        app.rootComponentVnode = createComponent(rootComponent, null, null)
+        mount(app.rootComponentVnode, app.container)
         app.isMounted = true
     }
 
@@ -130,7 +130,7 @@ export function createApp(rootComponent: any) {
             }
         });
 
-        unmountComponent(app.rootVnode, app.container)
+        unmountComponent(app.rootComponentVnode, app.container)
         app.isMounted = false
         currentApp = null
     }
