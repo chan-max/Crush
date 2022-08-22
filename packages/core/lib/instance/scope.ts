@@ -8,9 +8,13 @@ import { nextTick } from "@crush/scheduler";
 import { ComponentInstance } from "./componentInstance";
 
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
+import { getCurrentApp } from "../app/app";
 
 export const scopeProperties: any = {
     _currentPropertyAccessInstance: null, // 保存当前属性访问的组件实例，在那个组件实例中访问的属性
+    get $app() {
+        return getCurrentApp()
+    },
     get $uid() {
         return this._currentPropertyAccessInstance.uid
     }, // 组件级别的唯一id

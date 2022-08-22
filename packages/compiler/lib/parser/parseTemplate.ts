@@ -226,9 +226,9 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         case '.':
                             attr.type = AstTypes.ATTRIBUTE_CLASS
                             attr.isDynamicProperty = false
-                            attr.property = 'class'
                             attr.isDynamicValue = attr.isDynamicProperty
                             attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
+                            attr.property = 'class'
                             break
                         case '...':
                             attr.type = AstTypes.ATTRIBUTE

@@ -5,7 +5,7 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 
 import { PluginType } from "../instance/plugin"
-import { mount, unmountComponent } from "@crush/renderer"
+import { createElement, mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 
 import { installAnimation } from '@crush/animate'
@@ -64,6 +64,8 @@ export function createApp(rootComponent: any) {
         name = camelize(name)
         if (!app.components[name]) {
             app.components[name] = component
+        } else {
+            warn(`component ${name} is already registered , use another name instead`)
         }
     }
 
@@ -77,6 +79,8 @@ export function createApp(rootComponent: any) {
         name = camelize(name)
         if (!app.directives[name]) {
             app.directives[name] = directive
+        } else {
+            warn(`directive ${name} is already registered , use another name instead`)
         }
     }
 
@@ -87,8 +91,21 @@ export function createApp(rootComponent: any) {
         app.plugins.add(plugin)
     }
 
-    function mountApp(container: any) {
-        container = isString(container) ? document.querySelector(container as any) : container
+    function mountApp(container: any = app.container) {
+        if (!container) {
+            // 没传入container , 默认使用
+            container = document.querySelector('div[id=app]') || mount(createElement('div', { id: 'app' }), document.body, document.body.children[0])
+        } else if (isString(container)) {
+            let el = document.querySelector(container)
+            if (!el) {
+                return error(`can't find element by selector ${container}`)
+            } else {
+                container = el
+            }
+        } else if (!(container instanceof HTMLElement)) {
+            return error(`container ${container} is not a legal container type`)
+        }
+
         app.container = container
         app.inlineTemplate = container.innerHTML
         container.innerHTML = ''
@@ -120,7 +137,7 @@ export function createApp(rootComponent: any) {
 
     return app
 }
-
+9
 
 export function getCustomScreensMedia(screen: string) {
     return getCurrentApp().customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效

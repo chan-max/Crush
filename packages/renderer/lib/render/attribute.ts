@@ -59,11 +59,11 @@ import { updateDeclaration } from "./declaration";
 import { ComponentInstance, isElementLifecycleHook, normalizeClass, normalizeStyle } from "@crush/core";
 
 
-export function mountAttributes(el: any, props: any, instance: ComponentInstance, isSVG: boolean) {
+export function mountAttributes(el: any, props: any, instance: any = null, isSVG: boolean) {
     updateAttributes(el, emptyObject, props, instance, isSVG,)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any, instance: ComponentInstance, isSVG = false) {
+export function updateAttributes(el: any, pProps: any, nProps: any, instance: any = null, isSVG = false) {
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of unionkeys(pProps, nProps)) {
@@ -78,6 +78,9 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: Co
                 updateClass(el, pValue, nValue)
                 break
             case 'ref':
+                if (!instance) {
+                    continue
+                }
                 let refs = instance.refs ||= {}
                 if (nValue !== pValue) {
                     pValue && (refs[pValue] = null)

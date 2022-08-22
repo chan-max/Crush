@@ -39,9 +39,7 @@ import { mountStyleSheet } from "./mountStyleSheet";
 import { mountRenderComponent } from "./renderComponent";
 
 
-
-
-function mountElement(vnode: any, container: any, anchor: any, parent: any, isSVG: boolean = false) {
+function mountElement(vnode: any, container: any, anchor: any, parent?: any, isSVG: boolean = false) {
     vnode.instance = parent
     // 1
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
@@ -52,7 +50,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     const el: any = vnode.el = docCreateElement(type, isSVG)
     el._vnode = vnode
     // set scoped id
-    if (parent.useScopedStyleSheet) {
+    if (parent?.useScopedStyleSheet) {
         setAttribute(el, parent.scopedId || `scoped-${parent.uid}`)
     }
     mountAttributes(el, props, parent, isSVG)
@@ -71,6 +69,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent: any, isSV
     mountChildren(children, el, anchor, parent)
 
     processHook(LifecycleHooks.CHILDREN_MOUNTED, vnode)
+    return el
 }
 
 function mountText(vnode: any, container: any, anchor: any, parent: any) {
@@ -78,6 +77,7 @@ function mountText(vnode: any, container: any, anchor: any, parent: any) {
     vnode.el = el
     vnode.instance = parent
     insertElement(el, container, anchor)
+    return el
 }
 
 

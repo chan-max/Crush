@@ -478,13 +478,12 @@ function genProps(node: any, context: any) {
 
     // merge class , there could be more than one class , 不应该在render函数中使用normalize
     if (props.class) {
-        props.class = stringify(props.class)
+        props.class = stringify(props.class.length === 1 ? props.class[0] : props.class)
     }
 
     if (props.style) {
-        props.style = stringify(props.style)
+        props.style = stringify(props.style.length === 1 ? props.style[0] : props.style)
     }
-
     return stringify(props) === '{}' ? NULL : stringify(props)
 }
 

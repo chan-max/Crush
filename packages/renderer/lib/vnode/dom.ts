@@ -36,7 +36,7 @@ function createComponent(type: any, props: any, children: any, key: any = uid())
     }
 }
 
-function createElement(type: string, props: any, children: any, key: any = uid()) {
+function createElement(type: string, props?: any, children?: any, key: any = uid()) {
     return {
         nodeType: Nodes.HTML_ELEMENT,
         type,
