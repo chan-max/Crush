@@ -16,6 +16,7 @@ const warn = (...msg) => {
 };
 const error = (...msg) => {
     console.error(...msg);
+    return;
 };
 const log = (...msg) => {
     console.log(...msg);
@@ -800,10 +801,10 @@ function mountClass(el, _class) {
 function unmountClass(el) {
     el.className = '';
 }
-function mountAttributes(el, props, instance, isSVG) {
+function mountAttributes(el, props, instance = null, isSVG) {
     updateAttributes(el, emptyObject, props, instance, isSVG);
 }
-function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
+function updateAttributes(el, pProps, nProps, instance = null, isSVG = false) {
     pProps ||= emptyObject;
     nProps ||= emptyObject;
     for (let propName of unionkeys(pProps, nProps)) {
@@ -818,6 +819,9 @@ function updateAttributes(el, pProps, nProps, instance, isSVG = false) {
                 updateClass(el, pValue, nValue);
                 break;
             case 'ref':
+                if (!instance) {
+                    continue;
+                }
                 let refs = instance.refs ||= {};
                 if (nValue !== pValue) {
                     pValue && (refs[pValue] = null);
@@ -876,7 +880,7 @@ const mountStyleSheet = (vnode, container, anchor, parent) => {
     processHook("beforeMount" /* BEFORE_MOUNT */, vnode);
     insertElement(el, container, anchor);
     var sheet = el.sheet;
-    mountSheet(sheet, children, scoped && parent.scopedId);
+    mountSheet(sheet, children, scoped ? (parent.scopedId || `scoped-${parent.uid}`) : '');
     processHook("mounted" /* MOUNTED */, vnode);
     return sheet;
 };
@@ -1020,13 +1024,12 @@ function mountElement(vnode, container, anchor, parent, isSVG = false) {
     processHook("beforeCreate" /* BEFORE_CREATE */, vnode);
     // 2
     const { type, props, children, transition } = vnode;
-    const { scopedId } = parent;
     // create 
     const el = vnode.el = docCreateElement(type, isSVG);
     el._vnode = vnode;
     // set scoped id
-    if (scopedId) {
-        setAttribute(el, String(scopedId));
+    if (parent?.useScopedStyleSheet) {
+        setAttribute(el, parent.scopedId || `scoped-${parent.uid}`);
     }
     mountAttributes(el, props, parent, isSVG);
     processHook("created" /* CREATED */, vnode);
@@ -1042,12 +1045,14 @@ function mountElement(vnode, container, anchor, parent, isSVG = false) {
     processHook("mounted" /* MOUNTED */, vnode);
     mountChildren(children, el, anchor, parent);
     processHook("childrenMounted" /* CHILDREN_MOUNTED */, vnode);
+    return el;
 }
 function mountText(vnode, container, anchor, parent) {
     var el = docCreateText(vnode.children);
     vnode.el = el;
     vnode.instance = parent;
     insertElement(el, container, anchor);
+    return el;
 }
 
 const unmountComponent = (component, container, anchor = null) => {
@@ -2853,7 +2858,7 @@ class Expression {
             return variable;
         }
     }
-    scopedExpression(scoped) {
+    scopedExpression(scoped = '_') {
         this.scope = scoped;
         return expressionWithScope(this.expression, this);
     }
@@ -3190,7 +3195,7 @@ const stringify = (target) => {
         return target;
     }
     else if (isArray(target)) {
-        return `[${target.map(stringify).join(',')}]`;
+        return `[${target.map(stringify).join(',')}]`; // 格式化
     }
     else if (isObject(target)) {
         return '{' +
@@ -3690,8 +3695,6 @@ function genProps(node, context) {
     }
     var props = {};
     attributes.forEach((attr) => {
-        // 属性简写
-        attr.value ||= attr.property;
         switch (attr.type) {
             case 16 /* EVENT */:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
@@ -3725,10 +3728,10 @@ function genProps(node, context) {
     });
     // merge class , there could be more than one class , 不应该在render函数中使用normalize
     if (props.class) {
-        props.class = stringify(props.class);
+        props.class = stringify(props.class.length === 1 ? props.class[0] : props.class);
     }
     if (props.style) {
-        props.style = stringify(props.style);
+        props.style = stringify(props.style.length === 1 ? props.style[0] : props.style);
     }
     return stringify(props) === '{}' ? NULL : stringify(props);
 }
@@ -3857,6 +3860,10 @@ function parseAttribute(attr) {
     attr.value = value;
     attr.flag = flag;
     attr.endFlag = endFlag;
+    // 属性简写
+    if (!attr.value) {
+        attr.value = attr.property;
+    }
     return attr;
 }
 
@@ -4277,6 +4284,7 @@ function processTemplateAst(htmlAst, context) {
                 case 'scoped':
                     if (htmlAst.tagName == 'style') {
                         htmlAst.scoped = true;
+                        context.useScopedStyleSheet = true;
                         break;
                     }
                 default:
@@ -4349,9 +4357,9 @@ function processTemplateAst(htmlAst, context) {
                         case '.':
                             attr.type = 17 /* ATTRIBUTE_CLASS */;
                             attr.isDynamicProperty = false;
-                            attr.property = 'class';
                             attr.isDynamicValue = attr.isDynamicProperty;
                             attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                            attr.property = 'class';
                             break;
                         case '...':
                             attr.type = 15 /* ATTRIBUTE */;
@@ -4532,6 +4540,8 @@ class CodeGenerator {
     directives = {};
     renderScope;
     scope;
+    // 记录模板中是否使用了scoped css
+    useScopedStyleSheet = false;
     constructor() {
         this.code = '';
     }
@@ -4587,6 +4597,25 @@ class CodeGenerator {
             }
         }
     }
+    parseExpressionWithRenderScope(exp) {
+        let expInstance = createExpression(exp);
+        expInstance.pushScope(this.scopes);
+        let setScopedExpression = expInstance.scopedExpression(this.renderScope);
+        let variables = expInstance.variables;
+        return {
+            expression: setScopedExpression,
+            variables
+        };
+    }
+    parseExpressionWithRawScope(exp) {
+        let expInstance = createExpression(exp);
+        let setScopedExpression = expInstance.scopedExpression(this.renderScope);
+        let variables = expInstance.variables;
+        return {
+            expression: setScopedExpression,
+            variables
+        };
+    }
     setRenderScope(exp) {
         let expInstance = createExpression(exp);
         expInstance.pushScope(this.scopes);
@@ -4618,12 +4647,15 @@ function compile(template, compilerOptions = compilerDefaultOptions) {
     var htmlAst = baseParseHTML(template);
     processTemplateAst(htmlAst, context);
     console.log(htmlAst);
-    const renderCode = genNodes(htmlAst, context);
+    let renderCode = genNodes(htmlAst, context);
     const content = `return ${toArrowFunction(renderCode)}`;
     context.pushNewLine(content);
     var renderFunction = createFunction(context.getCode(), 'renderMethods');
     console.log(renderFunction);
-    return renderFunction;
+    return {
+        createRender: renderFunction,
+        useScopedStyleSheet: context.useScopedStyleSheet
+    };
 }
 
 const inlineStyleDelimiter = /\s*[:;]\s*/;
@@ -4878,7 +4910,6 @@ function mergeSelectors(...selectors) {
 function baseSetSelectorAttribute(selector, attribute) {
     let pseduoClassPosition = selector.indexOf(':');
     if (pseduoClassPosition < 0) {
-        // 带有伪类选择器
         return `${selector}[${attribute}]`;
     }
     else {
@@ -6530,6 +6561,9 @@ function doQuerySelectorAll(selector, type, vnode, results) {
 
 const scopeProperties = {
     _currentPropertyAccessInstance: null,
+    get $app() {
+        return getCurrentApp();
+    },
     get $uid() {
         return this._currentPropertyAccessInstance.uid;
     },
@@ -6660,9 +6694,6 @@ const specialTemplateMethods = {
 function createRenderScope(instanceScope) {
     return new Proxy(instanceScope, {
         get(target, key, receiver) {
-            if (key === Symbol.unscopables) {
-                return;
-            }
             if (hasOwn(specialTemplateMethods, key)) {
                 return specialTemplateMethods[key];
             }
@@ -6715,6 +6746,9 @@ function createApp(rootComponent) {
         if (!app.components[name]) {
             app.components[name] = component;
         }
+        else {
+            warn(`component ${name} is already registered , use another name instead`);
+        }
     }
     function mixin(mixin) {
         app.mixins.push(mixin);
@@ -6724,6 +6758,9 @@ function createApp(rootComponent) {
         if (!app.directives[name]) {
             app.directives[name] = directive;
         }
+        else {
+            warn(`directive ${name} is already registered , use another name instead`);
+        }
     }
     function use(plugin, ...options) {
         if (app.plugins.has(plugin))
@@ -6732,16 +6769,31 @@ function createApp(rootComponent) {
         install.call(plugin, app, ...options);
         app.plugins.add(plugin);
     }
-    function mountApp(container) {
-        container = isString(container) ? document.querySelector(container) : container;
+    function mountApp(container = app.container) {
+        if (!container) {
+            // 没传入container , 默认使用
+            container = document.querySelector('div[id=app]') || mount(createElement('div', { id: 'app' }), document.body, document.body.children[0]);
+        }
+        else if (isString(container)) {
+            let el = document.querySelector(container);
+            if (!el) {
+                return error(`can't find element by selector ${container}`);
+            }
+            else {
+                container = el;
+            }
+        }
+        else if (!(container instanceof HTMLElement)) {
+            return error(`container ${container} is not a legal container type`);
+        }
         app.container = container;
         app.inlineTemplate = container.innerHTML;
         container.innerHTML = '';
         if (!app.rootComponent.template && !app.rootComponent.render) {
             app.rootComponent.template = app.inlineTemplate;
         }
-        app.rootVnode = createComponent(rootComponent, null, null);
-        mount(app.rootVnode, app.container);
+        app.rootComponentVnode = createComponent(rootComponent, null, null);
+        mount(app.rootComponentVnode, app.container);
         app.isMounted = true;
     }
     function unmountApp() {
@@ -6752,7 +6804,7 @@ function createApp(rootComponent) {
                 uninstall(app);
             }
         });
-        unmountComponent(app.rootVnode, app.container);
+        unmountComponent(app.rootComponentVnode, app.container);
         app.isMounted = false;
         currentApp = null;
     }
@@ -6913,6 +6965,7 @@ const createComponentInstance = (options, parent) => {
         off: null,
         once: null,
         watch: null,
+        useScopedStyleSheet: options.useScopedStyleSheet,
         renderEffect: null,
         render: options.render,
         scopedId: options.scopedId,
@@ -7121,7 +7174,10 @@ function resolveOptions(options) {
                 options.emitsOptions = normalizeEmitsOptions(value);
                 break;
             case "template" /* TEMPLATE */:
-                options.createRender = compile(value);
+                let render = compile(value);
+                let { createRender, useScopedStyleSheet } = render;
+                options.createRender = createRender;
+                options.useScopedStyleSheet = useScopedStyleSheet;
                 break;
             case "render" /* RENDER */:
                 // todo

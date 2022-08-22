@@ -429,8 +429,6 @@ function genProps(node: any, context: any) {
     if (!attributes) { return NULL }
     var props: any = {}
     attributes.forEach((attr: any) => {
-        // 属性简写
-        attr.value ||= attr.property
         switch (attr.type) {
             case AstTypes.EVENT:
                 var {

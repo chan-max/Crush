@@ -90,5 +90,10 @@ export function parseAttribute(attr: any) {
     attr.flag = flag
     attr.endFlag = endFlag
 
+    // 属性简写
+    if (!attr.value) {
+        attr.value = attr.property
+    }
+
     return attr
 }

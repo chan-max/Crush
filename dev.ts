@@ -1,5 +1,5 @@
 import {
-    createExpression, createApp, ref
+    createExpression, createApp, ref, useRefState
 } from "./packages/core";
 
 
@@ -8,12 +8,13 @@ let app = createApp({
         <style scoped>
             h1{
                 color:red;
-            }
+            } 
         </style>
-        <h1 if="x+y"> hello world </h1>
+        <button @click="setI(i+1)" >{{i}}</button>
+        <button $disabled="i%2===0">{{i}}</button>
     `,
-    create({ $self }: any) {
-
+    create() {
+        let { i, setI } = useRefState(0)
     }
 })
 

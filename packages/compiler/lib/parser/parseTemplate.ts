@@ -151,6 +151,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         attr.type = AstTypes.ATTRIBUTE
                         attr.property = 'innerHTML'
                         attr.value = htmlAst.children[0].children
+                        htmlAst.native = true // 标记该节点
                         break
                     }
                 case 'scoped':
@@ -250,6 +251,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     break
                                 case 'style':
                                     attr.type = AstTypes.ATTRIBUTE_STYLE
+
                                     if (attr.isDynamicValue) {
                                         attr.value = context.setRenderScope(attr.value)
                                     }
