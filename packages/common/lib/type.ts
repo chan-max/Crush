@@ -35,6 +35,9 @@ function toNumber(value: any) {
     return isNumber(numberValue) ? numberValue : value
 }
 
+export function isEmptyObject(obj: Record<any, any>) {
+    return Object.keys(obj).length === 0
+}
 
 export {
     isNumber,

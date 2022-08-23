@@ -47,7 +47,6 @@ export function parseAttribute(attr: any) {
         }
     }
 
-
     let isDynamicProperty, property, decorators
 
     if (attribute.startsWith('(')) {
@@ -55,7 +54,7 @@ export function parseAttribute(attr: any) {
         let lastIndexOfBorder = attribute.lastIndexOf(')')
         property = attribute.slice(1, lastIndexOfBorder)
         isDynamicProperty = true
-        let argumentsAndModifiers = attribute.slice(lastIndexOfBorder + 1) // 防止内部表达式太复杂解析出错
+        decorators = attribute.slice(lastIndexOfBorder + 1) // 防止内部表达式太复杂解析出错
 
     } else {
         isDynamicProperty = false
@@ -91,7 +90,7 @@ export function parseAttribute(attr: any) {
     attr.endFlag = endFlag
 
     // 属性简写
-    if (!attr.value) {
+    if (isUndefined(attr.value)) {
         attr.value = attr.property
     }
 

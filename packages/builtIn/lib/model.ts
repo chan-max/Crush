@@ -36,7 +36,6 @@ export const modelText = {
         addListener(el, lazy ? 'change' : 'input', inputHandler)
     },
     beforeUpdate(el: any, { value }: any) {
-        debugger
         // 由输入框输入引发的更新，不会重新设置输入框的值
         if (el._inputing) {
             el._inputing = false

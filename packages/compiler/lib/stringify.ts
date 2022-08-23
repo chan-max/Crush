@@ -1,7 +1,8 @@
 import {
     isObject,
     isArray,
-    isString
+    isString,
+    isUndefined
 } from '@crush/common'
 
 const NULL = 'null'
@@ -30,6 +31,8 @@ const stringify = (target: any): string => {
                 return property + ':' + stringify(value)
             }).join(',')
             + '}'
+    } else if (isUndefined(target)) {
+        return ''
     } else {
         return String(target)
     }
@@ -45,7 +48,13 @@ const toArray = (items: any) => `[${items.join(',')}]`
 
 const dynamicMapKey = (key: string) => `[${key}]`
 
-const callFn = (fnName: string, ...params: string[]) => `${fnName}(${params.join(',')})`
+const callFn = (fnName: string, ...params: string[]) => {
+    // 去掉最后的空参数
+    while (params.length !== 0 && !params[params.length-1]) {
+        params.pop()
+    }
+    return `${fnName}(${params.join(',')})`
+}
 
 const ternaryExp = (condition: string, ifTrue: string, ifFalse: string): string => `${condition}?(${ifTrue}):(${ifFalse})`
 

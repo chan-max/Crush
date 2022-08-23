@@ -12,7 +12,7 @@ import {
 } from './vnode/dom'
 
 import { important } from './common/important'
-import { mergeSelectors , getCustomScreensMedia } from '@crush/core'
+import { mergeSelectors, getCustomScreensMedia } from '@crush/core'
 
 import {
     createStyleSheet,
@@ -45,9 +45,7 @@ import {
     normalizeStyle
 } from './common/normalizeStyle'
 
-import {
-    createMap
-} from '@crush/common'
+import { toEventName, toNativeEventName } from './common/event'
 
 import { renderSlot } from './common/renderSlot'
 
@@ -57,6 +55,7 @@ import { createSVGElement } from '@crush/core'
 import { withEventModifiers } from '@crush/core'
 
 export default {
+
     getCurrentRenderScope,
     createComment,
     createSVGElement,
@@ -84,5 +83,6 @@ export default {
     renderSlot,
     mergeSelectors,
     withEventModifiers,
-    getCustomScreensMedia
+    getCustomScreensMedia,
+    toEventName, toNativeEventName
 }

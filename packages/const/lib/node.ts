@@ -76,32 +76,4 @@ export const enum Nodes {
     SKIP
 }
 
-/*
-    input nodeType return nodeKeyword
-    input nodeKeyword return nodeType
-*/
-export enum NodesMap {
-    'if' = Nodes.IF,
-    'elseIf' = Nodes.ELSE_IF,
-    'else' = Nodes.ELSE,
-    'for' = Nodes.FOR,
-    'slot' = Nodes.SLOT,
-    'outlet' = Nodes.OUTLET,
-    '...' = Nodes.MIXIN,
-    '@' = Nodes.AT,
-    '--' = Nodes.DIRECTIVE_FLAG,
-    'media' = Nodes.MEDIA_RULE,
-    'keyframes' = Nodes.KEYFRAMES_RULE,
-    'supports' = Nodes.SUPPORTS_RULE,
-    'style' = Nodes.STYLE,
-    'class' = Nodes.CLASS,
-    'template' = Nodes.TEMPLATE,
-    'element' = Nodes.DYNAMIC_ELEMENT,
-    'component' = Nodes.DYNAMIC_COMPONENT,
-    'model' = Nodes.MODEL
-}
-
-export function keyOf(nodeType: any) :any{
-    return NodesMap[nodeType]
-}
 

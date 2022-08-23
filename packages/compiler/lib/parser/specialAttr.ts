@@ -1,9 +1,6 @@
 import {
     camelize
 } from '@crush/common'
-import {
-    toSingleQuotes
-} from '../stringify'
 
 
 const inlineStyleDelimiter = /\s*[:;]\s*/

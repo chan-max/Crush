@@ -169,12 +169,16 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     const content = `return ${toArrowFunction(renderCode)}`
 
     context.pushNewLine(content)
+    let code = context.getCode()
 
-    var renderFunction = createFunction(context.getCode(), 'renderMethods')
-
-    return {
-        createRender: renderFunction,
+    let render: any = {
+        createRender: null,
         useScopedStyleSheet: context.useScopedStyleSheet
     }
+
+    eval(`render.createRender = function createRender(renderMethods){${code}}`)
+
+    console.log(render.createRender);
+    return render
 }
 

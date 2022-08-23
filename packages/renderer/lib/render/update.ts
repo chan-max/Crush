@@ -1,7 +1,7 @@
 import { Nodes } from "@crush/const"
-import { processHook, LifecycleHooks, ComponentInstance } from "@crush/core"
+import { processHook, LifecycleHooks, ComponentInstance, isArray } from "@crush/core"
 
-import { updateAttributes } from "./attribute"
+import { updateElementAttributes } from "./attribute"
 import { patch } from "./patch"
 import { updateComponent } from './updateComponent'
 
@@ -39,6 +39,9 @@ import { updateRenderComponent } from "./renderComponent"
 
 function updateText(p: any, n: any) {
     var el = n.el = p.el
+    if (!n.isDynamic) {
+        return
+    }
     if (p.children !== n.children) {
         el.textContent = n.children
     }
@@ -48,7 +51,8 @@ function updateText(p: any, n: any) {
 function updateElement(p: any, n: any, container: any, anchor: any, parent: ComponentInstance, isSVG = false) {
     const el = n.el = p.el
     processHook(LifecycleHooks.BEFORE_UPDATE, n, p)
-    updateAttributes(el, p.props, n.props, parent, isSVG)
+
+    updateElementAttributes(el, p.props, n.props, parent, isSVG, n.dynamicProps)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
     updateChildren(p.children, n.children, container, anchor, parent)
@@ -69,28 +73,28 @@ export function updateChildren(pChildren: any, nChildren: any, container: any, a
 function getAnchor(vnodes: any, index: number) {
     for (let i = index; i < vnodes.length; i++) {
         let nextSibiling = vnodes[i]
-
         if (!nextSibiling) {
             // 这里可能出现为空是因为排序时增加的空节点
             continue
         }
-        return getEL(nextSibiling)
+        return getLeftEdgeElement(nextSibiling)
     }
 }
 
 
 
-export function getEL(vnode: any): any {
+export function getLeftEdgeElement(vnode: any): any {
     if (!vnode) {
         return null
     }
     switch (vnode.nodeType) {
         case Nodes.COMPONENT:
-            return getEL(vnode.instance.vnode[0])
+            return getLeftEdgeElement(vnode.instance.vnode[0])
         case Nodes.RENDER_COMPONENT:
-            return getEL(vnode.vnode[0])
+            return getLeftEdgeElement(vnode.vnode[0])
         case Nodes.HTML_ELEMENT:
         case Nodes.SVG_ELEMENT:
+        case Nodes.STYLE:
         case Nodes.TEXT:
         case Nodes.HTML_COMMENT:
             return vnode.el
@@ -98,3 +102,34 @@ export function getEL(vnode: any): any {
     return null
 }
 
+
+export function getEdgeElements(vnode: any): any {
+    if (isArray(vnode)) {
+        return vnode.map(getEdgeElements).reduce((els: any, val) => {
+            if (!val) {
+                return els
+            } else if (isArray(val)) {
+                els = els.concat(val)
+            } else {
+                els.push(val)
+            }
+            return els
+        }, [])
+    } else if (!vnode) {
+        return null
+    } else {
+        switch (vnode.nodeType) {
+            case Nodes.COMPONENT:
+                return getEdgeElements(vnode.instance.vnode)
+            case Nodes.RENDER_COMPONENT:
+                return getEdgeElements(vnode.vnode)
+            case Nodes.HTML_ELEMENT:
+            case Nodes.SVG_ELEMENT:
+            case Nodes.STYLE:
+            case Nodes.TEXT:
+            case Nodes.HTML_COMMENT:
+                return vnode.el
+        }
+        return null
+    }
+}

@@ -13,6 +13,9 @@ export const isEvent = (key: string) => onRE.test(key);
 
 // 只有原生事件支持 opitons
 export function toNativeEventName(eventName: string, _arguments?: string[]): string {
+    if (!eventName) {
+        return ''
+    }
     var name = `on${initialUpperCase(eventName)}`
     if (_arguments && _arguments.length !== 0) {
         name += _arguments.map(initialUpperCase).join('') // join default with ,
@@ -39,7 +42,7 @@ export const parseNativeEventName = (name: string) => {
         onEvent_arg1_arg2$mod1$mod2
 */
 
-export function toEventName(event: string, _arguments?: string[], modifiers?: string[]) {
+export function toEventName(event: string, _arguments?: string[], modifiers?: string[], filters?: string[]) {
     event = `on${initialUpperCase(event)}`
     _arguments && (event += _arguments.map((_) => `_${_}`).join(''))
     modifiers && (event += modifiers.map(($) => `$${$}`).join(''))
@@ -87,9 +90,6 @@ const modifierGuards: any = {
     }
 };
 
-const nativeEventModifiers = {
-    
-}
 
 /*
     使用修饰符后每次都会创建一个新的函数    

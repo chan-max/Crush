@@ -1,6 +1,6 @@
 
 import { emptyObject, hyphenate, isArray } from "@crush/common";
-import { keyOf, Nodes } from "@crush/const";
+
 import { removeClass, addClass, addListener, removeListener, setAttribute, removeAttribute } from "../dom";
 
 import { unionkeys } from "./common";
@@ -60,13 +60,18 @@ import { ComponentInstance, isElementLifecycleHook, normalizeClass, normalizeSty
 
 
 export function mountAttributes(el: any, props: any, instance: any = null, isSVG: boolean) {
-    updateAttributes(el, emptyObject, props, instance, isSVG,)
+    updateElementAttributes(el, null, props, instance, isSVG,)
 }
 
-export function updateAttributes(el: any, pProps: any, nProps: any, instance: any = null, isSVG = false) {
+export function updateElementAttributes(el: any, pProps: any, nProps: any, instance: any = null, isSVG = false, dynamicProps: any = null) {
+    // 如果传了dynamicProps更新即可，没传的话就需要全部更新
+    if (!pProps && !nProps) {
+        return
+    }
     pProps ||= emptyObject
     nProps ||= emptyObject
-    for (let propName of unionkeys(pProps, nProps)) {
+    for (let propName of (dynamicProps || unionkeys(pProps, nProps))) {
+
         var pValue = pProps[propName]
         var nValue = nProps[propName]
         switch (propName) {
@@ -88,7 +93,7 @@ export function updateAttributes(el: any, pProps: any, nProps: any, instance: an
                 }
                 break
             case 'bind':
-                updateAttributes(el, pValue, nValue, instance, isSVG)
+                updateElementAttributes(el, pValue, nValue, instance, isSVG)
                 break
             default:
                 if (propName.startsWith('_')) {

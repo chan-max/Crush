@@ -511,6 +511,9 @@ define(['exports'], (function (exports) { 'use strict';
     */
     // 只有原生事件支持 opitons
     function toNativeEventName(eventName, _arguments) {
+        if (!eventName) {
+            return '';
+        }
         var name = `on${initialUpperCase(eventName)}`;
         if (_arguments && _arguments.length !== 0) {
             name += _arguments.map(initialUpperCase).join(''); // join default with ,
@@ -534,7 +537,7 @@ define(['exports'], (function (exports) { 'use strict';
             tranform to...
             onEvent_arg1_arg2$mod1$mod2
     */
-    function toEventName(event, _arguments, modifiers) {
+    function toEventName(event, _arguments, modifiers, filters) {
         event = `on${initialUpperCase(event)}`;
         _arguments && (event += _arguments.map((_) => `_${_}`).join(''));
         modifiers && (event += modifiers.map(($) => `$${$}`).join(''));
@@ -800,9 +803,9 @@ define(['exports'], (function (exports) { 'use strict';
         el.className = '';
     }
     function mountAttributes(el, props, instance = null, isSVG) {
-        updateAttributes(el, emptyObject, props, instance, isSVG);
+        updateElementAttributes(el, emptyObject, props, instance, isSVG);
     }
-    function updateAttributes(el, pProps, nProps, instance = null, isSVG = false) {
+    function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = false) {
         pProps ||= emptyObject;
         nProps ||= emptyObject;
         for (let propName of unionkeys(pProps, nProps)) {
@@ -827,7 +830,7 @@ define(['exports'], (function (exports) { 'use strict';
                     }
                     break;
                 case 'bind':
-                    updateAttributes(el, pValue, nValue, instance, isSVG);
+                    updateElementAttributes(el, pValue, nValue, instance, isSVG);
                     break;
                 default:
                     if (propName.startsWith('_')) {
@@ -1438,6 +1441,9 @@ define(['exports'], (function (exports) { 'use strict';
     }
     function updateText(p, n) {
         var el = n.el = p.el;
+        if (!n.isDynamic) {
+            return;
+        }
         if (p.children !== n.children) {
             el.textContent = n.children;
         }
@@ -1445,7 +1451,7 @@ define(['exports'], (function (exports) { 'use strict';
     function updateElement(p, n, container, anchor, parent, isSVG = false) {
         const el = n.el = p.el;
         processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
-        updateAttributes(el, p.props, n.props, parent, isSVG);
+        updateElementAttributes(el, p.props, n.props, parent, isSVG);
         processHook("updated" /* UPDATED */, n, p);
         // updated hooks should be called here ? or after children update
         updateChildren(p.children, n.children, container, anchor, parent);
@@ -2689,7 +2695,7 @@ define(['exports'], (function (exports) { 'use strict';
             key
         };
     }
-    function createElement(type, props, children, key = uid()) {
+    function createElement(type, props, children, key = uid(), dynamicProps = null) {
         return {
             nodeType: 13 /* HTML_ELEMENT */,
             type,
@@ -2709,11 +2715,12 @@ define(['exports'], (function (exports) { 'use strict';
     }
     const Text = Symbol('Text');
     // the key is for other node
-    function createText(children, key = uid()) {
+    function createText(children, key = uid(), isDynamic = false) {
         return {
             nodeType: 12 /* TEXT */,
             children,
             key,
+            isDynamic,
             type: Text
         };
     }
@@ -2775,6 +2782,9 @@ define(['exports'], (function (exports) { 'use strict';
         textModifiers[name] = handler;
     }
     function display(data, modifier) {
+        if (data === undefined || data === null) {
+            return '';
+        }
         if (isObject(data) || isArray(data)) {
             data = JSON.stringify(data);
         }
@@ -3202,6 +3212,9 @@ define(['exports'], (function (exports) { 'use strict';
                 }).join(',')
                 + '}';
         }
+        else if (isUndefined(target)) {
+            return '';
+        }
         else {
             return String(target);
         }
@@ -3213,7 +3226,13 @@ define(['exports'], (function (exports) { 'use strict';
     const toTernaryExp = (condition, ifTrue, ifFalse) => `${condition}?${ifTrue}:${ifFalse}`;
     const toArray = (items) => `[${items.join(',')}]`;
     const dynamicMapKey = (key) => `[${key}]`;
-    const callFn = (fnName, ...params) => `${fnName}(${params.join(',')})`;
+    const callFn = (fnName, ...params) => {
+        // 去掉最后的空参数
+        while (params.length !== 0 && !params[params.length - 1]) {
+            params.pop();
+        }
+        return `${fnName}(${params.join(',')})`;
+    };
     const ternaryExp = (condition, ifTrue, ifFalse) => `${condition}?(${ifTrue}):(${ifFalse})`;
     function ternaryChains(conditions, returns, falseDefault = 'undefined', index = 0) {
         return ternaryExp(conditions[index], returns[index], index < conditions.length - 1 ? ternaryChains(conditions, returns, falseDefault, ++index) : (returns[index + 1] || falseDefault));
@@ -3498,39 +3517,42 @@ define(['exports'], (function (exports) { 'use strict';
                 break;
             case 13 /* USE_COMPONENT_SLOT */:
                 const { slotName, isDynamicSlot, children } = node;
-                nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), genProps(node, context), children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
+                var { props } = genProps(node, context);
+                nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), props, children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
                 break;
             case 14 /* DEFINE_COMPONENT_SLOT */:
                 nodeCode = genNodes(node.children, context);
                 break;
             case 20 /* DYNAMIC_HTML_ELEMENT */:
                 var { is, isDynamicIs } = node;
-                var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
-                genChildrenString(node.children, context), uStringId());
+                var { props } = genProps(node, context);
+                var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), props, genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 21 /* DYNAMIC_SVG_ELEMENT */:
                 var { is, isDynamicIs } = node;
-                var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), genProps(node, context), // 正常生成props
-                genChildrenString(node.children, context), uStringId());
+                var { props } = genProps(node, context);
+                var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), props, uStringId());
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 1 /* HTML_ELEMENT */:
-                var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+                var { props } = genProps(node, context);
+                var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), props, genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 3 /* SVG_ELEMENT */:
-                var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId());
+                var { props } = genProps(node, context);
+                var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), props, genChildrenString(node.children, context), uStringId());
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 22 /* DYNAMIC_COMPONENT */:
                 var { is, isDynamicIs } = node;
                 var component = context.useComponent(is, isDynamicIs);
-                var props = genProps(node, context);
+                var { props } = genProps(node, context);
                 var slots = genSlotContent(node, context);
                 code = context.callRenderFn('createComponent', component, props, slots, uStringId());
                 code = genDirs(code, node, context);
@@ -3538,7 +3560,7 @@ define(['exports'], (function (exports) { 'use strict';
                 break;
             case 4 /* COMPONENT */:
                 var component = context.useComponent(node.tagName, false);
-                var props = genProps(node, context);
+                var { props } = genProps(node, context);
                 var slots = genSlotContent(node, context);
                 code = context.callRenderFn('createComponent', component, props, slots, uStringId());
                 code = genDirs(code, node, context);
@@ -3548,7 +3570,7 @@ define(['exports'], (function (exports) { 'use strict';
                 nodeCode = genText(node.children, context);
                 break;
             case 6 /* STYLESHEET */:
-                var props = genProps(node, context);
+                var { props } = genProps(node, context);
                 var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId());
                 code = genDirs(code, node, context);
                 nodeCode = code;
@@ -3586,14 +3608,29 @@ define(['exports'], (function (exports) { 'use strict';
         return nodeCode;
     }
     const genFragment = (code, context) => context.callRenderFn('createFragment', code, uStringId());
-    const genTextContent = (texts, context) => {
-        return texts.map((text) => {
-            const { content, isDynamic, modifier } = text;
-            return isDynamic ? context.callRenderFn('display', content, modifier && toSingleQuotes(modifier)) : toBackQuotes(content);
-        }).join('+');
-    };
     const genText = (texts, context) => {
-        return context.callRenderFn('createText', genTextContent(texts, context));
+        let isDynamicText = false;
+        let textContent = texts.map((text) => {
+            const { content, isDynamic, modifier } = text;
+            if (isDynamic) {
+                isDynamicText = true;
+                let args = [content];
+                if (modifier) {
+                    args.push(toSingleQuotes(modifier));
+                }
+                return context.callRenderFn('display', ...args);
+            }
+            else {
+                return toBackQuotes(content);
+            }
+        }).join('+');
+        let text = context.callRenderFn('createText', textContent, uid(), isDynamicText);
+        if (isDynamicText) {
+            return text;
+        }
+        else {
+            return context.hoistExpression(text);
+        }
     };
     function genSelector(selectors, context) {
         /*
@@ -3695,11 +3732,11 @@ define(['exports'], (function (exports) { 'use strict';
         attributes.forEach((attr) => {
             switch (attr.type) {
                 case 16 /* EVENT */:
-                    var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, modifiers } = attr;
+                    var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, filters, modifiers } = attr;
                     const handlerKey = isDynamicProperty ?
                         (isComponent ?
-                            dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
-                            dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
+                            dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes)))) :
+                            dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments && _arguments.map(toBackQuotes))))) :
                         (isComponent ?
                             toEventName(property, _arguments, modifiers) :
                             toNativeEventName(property, _arguments));
@@ -3731,36 +3768,10 @@ define(['exports'], (function (exports) { 'use strict';
         if (props.style) {
             props.style = stringify(props.style.length === 1 ? props.style[0] : props.style);
         }
-        return stringify(props) === '{}' ? NULL : stringify(props);
-    }
-
-    /*
-        input nodeType return nodeKeyword
-        input nodeKeyword return nodeType
-    */
-    exports.NodesMap = void 0;
-    (function (NodesMap) {
-        NodesMap[NodesMap["if"] = 3] = "if";
-        NodesMap[NodesMap["elseIf"] = 4] = "elseIf";
-        NodesMap[NodesMap["else"] = 5] = "else";
-        NodesMap[NodesMap["for"] = 6] = "for";
-        NodesMap[NodesMap["slot"] = 35] = "slot";
-        NodesMap[NodesMap["outlet"] = 36] = "outlet";
-        NodesMap[NodesMap["..."] = 30] = "...";
-        NodesMap[NodesMap["@"] = 21] = "@";
-        NodesMap[NodesMap["--"] = 32] = "--";
-        NodesMap[NodesMap["media"] = 22] = "media";
-        NodesMap[NodesMap["keyframes"] = 24] = "keyframes";
-        NodesMap[NodesMap["supports"] = 23] = "supports";
-        NodesMap[NodesMap["style"] = 17] = "style";
-        NodesMap[NodesMap["class"] = 18] = "class";
-        NodesMap[NodesMap["template"] = 2] = "template";
-        NodesMap[NodesMap["element"] = 11] = "element";
-        NodesMap[NodesMap["component"] = 16] = "component";
-        NodesMap[NodesMap["model"] = 37] = "model";
-    })(exports.NodesMap || (exports.NodesMap = {}));
-    function keyOf(nodeType) {
-        return exports.NodesMap[nodeType];
+        return {
+            props: stringify(props) === '{}' ? NULL : stringify(props),
+            dynamicProps: []
+        };
     }
 
     const HTML_TAGS = 'html,body,base,head,link,meta,title,address,article,aside,footer,' +
@@ -3825,7 +3836,7 @@ define(['exports'], (function (exports) { 'use strict';
             let lastIndexOfBorder = attribute.lastIndexOf(')');
             property = attribute.slice(1, lastIndexOfBorder);
             isDynamicProperty = true;
-            attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
+            decorators = attribute.slice(lastIndexOfBorder + 1); // 防止内部表达式太复杂解析出错
         }
         else {
             isDynamicProperty = false;
@@ -4277,6 +4288,7 @@ define(['exports'], (function (exports) { 'use strict';
                             attr.type = 15 /* ATTRIBUTE */;
                             attr.property = 'innerHTML';
                             attr.value = htmlAst.children[0].children;
+                            htmlAst.native = true; // 标记该节点
                             break;
                         }
                     case 'scoped':
@@ -4644,16 +4656,17 @@ define(['exports'], (function (exports) { 'use strict';
         context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'));
         var htmlAst = baseParseHTML(template);
         processTemplateAst(htmlAst, context);
-        console.log(htmlAst);
         let renderCode = genNodes(htmlAst, context);
         const content = `return ${toArrowFunction(renderCode)}`;
         context.pushNewLine(content);
-        var renderFunction = createFunction(context.getCode(), 'renderMethods');
-        console.log(renderFunction);
-        return {
-            createRender: renderFunction,
+        let code = context.getCode();
+        let render = {
+            createRender: null,
             useScopedStyleSheet: context.useScopedStyleSheet
         };
+        eval(`render.createRender = function createRender(renderMethods){${code}}`);
+        console.log(render.createRender);
+        return render;
     }
 
     const inlineStyleDelimiter = /\s*[:;]\s*/;
@@ -4759,7 +4772,8 @@ define(['exports'], (function (exports) { 'use strict';
         renderSlot,
         mergeSelectors,
         withEventModifiers,
-        getCustomScreensMedia
+        getCustomScreensMedia,
+        toEventName, toNativeEventName
     };
 
     // if you are using css function with dynamic binding , use camelized function name 
@@ -4924,9 +4938,6 @@ define(['exports'], (function (exports) { 'use strict';
     function keyframe(name, keyframes) {
         return createKeyframe(name, keyframes);
     }
-    /*
-        comment : ! 66666
-    */
     // 手写渲染函数是时 ， 框架内部无法识别新旧dom树中是否为同一节点 ， 所以应该手动传入 唯一id ， 不然都会作为新节点，全部卸载，并全部重新挂载
     function h(type, props, children, key = uid()) {
         if (isObject(type) || isFunction(type)) {
@@ -4976,7 +4987,6 @@ define(['exports'], (function (exports) { 'use strict';
             addListener(el, lazy ? 'change' : 'input', inputHandler);
         },
         beforeUpdate(el, { value }) {
-            debugger;
             // 由输入框输入引发的更新，不会重新设置输入框的值
             if (el._inputing) {
                 el._inputing = false;
@@ -6582,7 +6592,8 @@ define(['exports'], (function (exports) { 'use strict';
             if (!isMounted || !vnode) {
                 return null;
             }
-            let el = vnode.map((_vnode) => getEL(_vnode));
+            // 不会包括style元素
+            let el = vnode.filter((_vnode) => _vnode.type !== 'style').map((_vnode) => getEL(_vnode));
             // 有多个根元素会返回多个元素
             return el.length === 1 ? el[0] : el;
         },
@@ -7427,7 +7438,6 @@ define(['exports'], (function (exports) { 'use strict';
     exports.isString = isString;
     exports.isUndefined = isUndefined;
     exports.joinSelector = joinSelector;
-    exports.keyOf = keyOf;
     exports.keyframe = keyframe;
     exports.keyframes = keyframes;
     exports.linearGradient = linearGradient;
@@ -7579,7 +7589,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.unmountComponent = unmountComponent;
     exports.unmountDeclaration = unmountDeclaration;
     exports.update = update;
-    exports.updateAttributes = updateAttributes;
+    exports.updateElementAttributes = updateElementAttributes;
     exports.updateChildren = updateChildren;
     exports.updateClass = updateClass;
     exports.updateComponent = updateComponent;

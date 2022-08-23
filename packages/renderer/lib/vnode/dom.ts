@@ -5,7 +5,7 @@ import { normalizeProps } from "../render/normalizeProps"
 
 const COMPONENT_TYPE = Symbol('ComponentType')
 
-function createComponent(type: any, props: any, children: any, key: any = uid()) {
+function createComponent(type: any, props: any, children: any, key: any = uid(), dynamicProps: any = null) {
     let componentFlag = type[COMPONENT_TYPE]
     if (!componentFlag) {
         // stateful component
@@ -32,27 +32,32 @@ function createComponent(type: any, props: any, children: any, key: any = uid())
         type,
         props: normalizeProps(props),
         children,
-        key
+        key,
+        dynamicProps
     }
 }
 
-function createElement(type: string, props?: any, children?: any, key: any = uid()) {
+function createElement(type: string, props?: any, children?: any, key: any = uid(), dynamicProps: any = null, shouldUpdateChildren: any = true) {
     return {
         nodeType: Nodes.HTML_ELEMENT,
         type,
         props: normalizeProps(props),
         children,
-        key
+        key,
+        shouldUpdateChildren,
+        dynamicProps
     }
 }
 
-export function createSVGElement(type: string, props: any, children: any, key: any = uid()) {
+export function createSVGElement(type: string, props: any, children: any, key: any = uid(), dynamicProps: any = null, shouldUpdateChildren: any = true) {
     return {
         nodeType: Nodes.SVG_ELEMENT,
         type,
         props: normalizeProps(props),
         children,
-        key
+        key,
+        shouldUpdateChildren,
+        dynamicProps,
     }
 }
 
@@ -61,11 +66,12 @@ export function createSVGElement(type: string, props: any, children: any, key: a
 export const Text = Symbol('Text')
 
 // the key is for other node
-function createText(children: any, key = uid()) {
+function createText(children: any, key = uid(), isDynamic: any = false) {
     return {
         nodeType: Nodes.TEXT,
         children,
         key,
+        isDynamic,
         type: Text
     }
 }

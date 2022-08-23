@@ -10,14 +10,14 @@ export const insertNull = (arr: any[], index: number, length: number = 1) => arr
 
 
 
-export function unionkeys(...maps: Record<string, any>[]): string[] {
-    var _: Record<string, any> = {}
+export function unionkeys(...maps: any[]): string[] {
+    var keyMap: Record<string, any> = {}
     for (let i in maps || emptyObject) {
         for (let key in maps[i]) {
-            _[key] = true
+            keyMap[key] = true
         }
     }
-    return Object.keys(_)
+    return Object.keys(keyMap)
 }
 
 /*

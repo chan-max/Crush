@@ -19,8 +19,10 @@ import {
 
 import {
     camelize,
+    emptyArray,
     emptyObject,
     hasOwn,
+    isEmptyObject,
     uid,
     uStringId
 } from '@crush/common'
@@ -193,62 +195,52 @@ function genNode(node: any, context: any): any {
             break
         case AstTypes.USE_COMPONENT_SLOT:
             const { slotName, isDynamicSlot, children } = node
-            nodeCode = context.callRenderFn(
-                'renderSlot',
-                isDynamicSlot ? slotName : toBackQuotes(slotName),
-                genProps(node, context),
-                children ? toArrowFunction(genNodes(children, context)) : NULL,
-                uid())
+            var { propsCode } = genProps(node, context)
+            nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), propsCode, children ? toArrowFunction(genNodes(children, context)) : NULL, uid())
             break
         case AstTypes.DEFINE_COMPONENT_SLOT:
             nodeCode = genNodes(node.children as any[], context)
             break
         case AstTypes.DYNAMIC_HTML_ELEMENT:
             var { is, isDynamicIs } = node
-            var code: string = context.callRenderFn(
-                'createElement',
-                isDynamicIs ? is : toSingleQuotes(is),
-                genProps(node, context), // 正常生成props
-                genChildrenString(node.children, context),
-                uStringId())
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
+            var code: string = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.DYNAMIC_SVG_ELEMENT:
             var { is, isDynamicIs } = node
-            var code: string = context.callRenderFn(
-                'createSVGElement',
-                isDynamicIs ? is : toSingleQuotes(is),
-                genProps(node, context), // 正常生成props
-                genChildrenString(node.children, context),
-                uStringId())
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
+            var code: string = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.HTML_ELEMENT:
-            var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
+            var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.SVG_ELEMENT:
-            var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), genProps(node, context), genChildrenString(node.children, context), uStringId())
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
+            var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.DYNAMIC_COMPONENT:
             var { is, isDynamicIs } = node
             var component = context.useComponent(is, isDynamicIs)
-            var props = genProps(node, context)
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn('createComponent', component, props, slots, uStringId())
+            code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.COMPONENT:
             var component = context.useComponent(node.tagName, false)
-            var props = genProps(node, context)
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn('createComponent', component, props, slots, uStringId())
+            code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
@@ -256,8 +248,8 @@ function genNode(node: any, context: any): any {
             nodeCode = genText(node.children as Text[], context)
             break
         case AstTypes.STYLESHEET:
-            var props = genProps(node, context)
-            var code: string = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId())
+            var { propsCode, dynamicPropsCode } = genProps(node, context)
+            var code: string = context.callRenderFn('createStyleSheet', propsCode, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
@@ -297,14 +289,32 @@ function genNode(node: any, context: any): any {
 const genFragment = (code: string, context: any) => context.callRenderFn('createFragment', code, uStringId())
 
 const genTextContent = (texts: any, context: any) => {
-    return texts.map((text: any) => {
-        const { content, isDynamic, modifier } = text
-        return isDynamic ? context.callRenderFn('display', content, modifier && toSingleQuotes(modifier)) : toBackQuotes(content)
-    }).join('+')
+    return
 }
 
 const genText = (texts: Text[], context: any) => {
-    return context.callRenderFn('createText', genTextContent(texts, context))
+    let isDynamicText = false
+    let textContent = texts.map((text: any) => {
+        const { content, isDynamic, modifier } = text
+        if (isDynamic) {
+            isDynamicText = true
+            let args = [content]
+            if (modifier) {
+                args.push(toSingleQuotes(modifier))
+            }
+            return context.callRenderFn('display', ...args)
+        } else {
+            return toBackQuotes(content)
+        }
+    }).join('+')
+
+    let text = context.callRenderFn('createText', textContent, uid(), isDynamicText)
+
+    if (isDynamicText) {
+        return text
+    } else {
+        return context.hoistExpression(text)
+    }
 }
 
 
@@ -316,7 +326,8 @@ import {
     splitSelector,
     mergeSplitedSelector,
     joinSelector,
-    toEventName
+    toEventName,
+    processVnodePrerender
 } from '@crush/renderer'
 
 function genSelector(selectors: Array<any>, context: any) {
@@ -423,42 +434,51 @@ import {
     toNativeEventName
 } from '@crush/renderer'
 
-function genProps(node: any, context: any) {
-    const { type, attributes } = node
+
+function genProps(node: any, context: any): any {
+    let { type, attributes }:any = node
+    attributes ||= emptyArray
     const isComponent = type === AstTypes.COMPONENT
-    if (!attributes) { return NULL }
+
     var props: any = {}
+    var dynamicProps: any = []
     attributes.forEach((attr: any) => {
         switch (attr.type) {
             case AstTypes.EVENT:
-                var {
-                    property,
-                    isDynamicProperty,
-                    value,
-                    isHandler, /* if true , just use it , or wrap an arrow function */
-                    _arguments,
-                    modifiers
-                } = attr
-                const handlerKey = isDynamicProperty ?
-                    (isComponent ?
-                        dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments.map(toBackQuotes)), stringify(modifiers.map(toBackQuotes)))) :
-                        dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments.map(toBackQuotes))))) :
-                    (isComponent ?
-                        toEventName(property, _arguments, modifiers) :
-                        toNativeEventName(property, _arguments));
-                var callback = isHandler ? value : toArrowFunction(value, '$') // 包裹函数都需要传入一个 $ 参数
+                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
+                var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$') // 包裹函数都需要传入一个 $ 参数
                 if (modifiers && !isComponent) {
                     callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
                 }
-                props[handlerKey] = callback
+                if (isDynamicProperty) {
+                    let key = isComponent ?
+                        context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes))) :
+                        context.callRenderFn('toNativeEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)))
+                    props[dynamicMapKey(key)] = callback
+                    dynamicProps.push(key)
+                } else {
+                    let key = (isComponent ? toEventName(property, _arguments, modifiers, filters) : toNativeEventName(property, _arguments))
+                    props[key] = callback
+                    dynamicProps.push(toSingleQuotes(key))
+                }
                 break
             case AstTypes.ATTRIBUTE_CLASS:
                 var _class = props.class ||= []
-                _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
+                if (attr.isDynamicValue) {
+                    _class.push(attr.value)
+                    dynamicProps.push(`'class'`)
+                } else {
+                    _class.push(toBackQuotes(attr.value))
+                }
                 break
             case AstTypes.ATTRIBUTE_STYLE:
                 var style = props.style ||= []
-                style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
+                if (attr.isDynamicValue) {
+                    style.push(attr.value)
+                    dynamicProps.push(`'style'`)
+                } else {
+                    style.push(toBackQuotes(attr.value))
+                }
                 break
             case AstTypes.ATTRIBUTE:
                 // normal attributes
@@ -469,7 +489,12 @@ function genProps(node: any, context: any) {
                     isDynamicValue,
                 } = attr
 
-                props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value)
+                let key = isDynamicProperty ? dynamicMapKey(property) : property
+                props[key] = isDynamicValue ? value : toBackQuotes(value)
+
+                if (isDynamicProperty || isDynamicValue) {
+                    dynamicProps.push(toSingleQuotes(property))
+                }
                 break
         }
     });
@@ -482,6 +507,28 @@ function genProps(node: any, context: any) {
     if (props.style) {
         props.style = stringify(props.style.length === 1 ? props.style[0] : props.style)
     }
-    return stringify(props) === '{}' ? NULL : stringify(props)
+
+    let propsCode, dynamicPropsCode, allPropsStatic = false
+
+    if (dynamicProps.length) {
+        // 存在 dynamicProps
+        dynamicPropsCode = stringify(dynamicProps)
+        propsCode = stringify(props)
+    } else {
+        dynamicPropsCode = NULL
+        if (isEmptyObject(props)) {
+            propsCode = NULL
+        } else {
+            // 提升
+            allPropsStatic = true
+            propsCode = context.hoistExpression(stringify(props))
+        }
+    }
+
+    return {
+        allPropsStatic,
+        propsCode,
+        dynamicPropsCode
+    }
 }
 

@@ -1,23 +1,24 @@
 import {
-    createExpression, createApp, ref, useRefState
+    createExpression, createApp, ref, useRefState, onMounted
 } from "./packages/core";
 
 
 let app = createApp({
+    components: {
+    },
     template:/*html*/`
-        <style scoped>
-            h1{
-                color:red;
-            } 
-        </style>
-        <button @click="setI(i+1)" >{{i}}</button>
-        <button $disabled="i%2===0">{{i}}</button>
+        <tom>
+        <tom>
     `,
-    create() {
-        let { i, setI } = useRefState(0)
+    create({ $self }: any) {
+        onMounted(() => {
+            console.log($self.$el);
+        })
     }
 })
 
+console.log(app);
 
 app.mount()
+
 

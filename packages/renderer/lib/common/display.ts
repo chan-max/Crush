@@ -12,6 +12,10 @@ export function defineTextModifier(name: string, handler: any) {
 
 export function display(data: any, modifier: string) {
 
+    if (data === undefined || data === null) {
+        return ''
+    }
+
     if (isObject(data) || isArray(data)) {
         data = JSON.stringify(data)
     } else {

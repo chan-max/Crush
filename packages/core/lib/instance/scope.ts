@@ -1,11 +1,10 @@
 import { doKeyframesAnimation } from "@crush/animate";
 import { hasOwn, isPromise, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
-import { addInstanceListener, clearCurrentInstance, createInstanceEventEmitter, getCurrentInstance, getEL, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener, setCurrentInstance } from "@crush/renderer";
+import { addInstanceListener, clearCurrentInstance, createInstanceEventEmitter, getCurrentInstance, getEdgeElements, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener, setCurrentInstance } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
-import { ComponentInstance } from "./componentInstance";
 
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 import { getCurrentApp } from "../app/app";
@@ -35,9 +34,10 @@ export const scopeProperties: any = {
         if (!isMounted || !vnode) {
             return null
         }
-        let el = vnode.map((_vnode: any) => getEL(_vnode))
+        // 不会包括style元素
+        let els = getEdgeElements(vnode.filter((_vnode: any) => _vnode.type !== 'style'))
         // 有多个根元素会返回多个元素
-        return el.length === 1 ? el[0] : el
+        return els.length === 1 ? els[0] : els
     },
     get $root() {
         return this._currentPropertyAccessInstance.root
@@ -160,11 +160,11 @@ export function createRenderScope(instanceScope: any) {
             if (hasOwn(specialTemplateMethods, key)) {
                 return specialTemplateMethods[key]
             }
-            
+
             // todo magic variables
             var result = Reflect.get(target, key, receiver)
             return isRef(result) ? result.value : result
         }
     })
-} 
+}
 
