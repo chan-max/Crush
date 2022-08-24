@@ -105,6 +105,9 @@ var Crush = (function (exports) {
         let numberValue = Number(value);
         return isNumber(numberValue) ? numberValue : value;
     }
+    function isEmptyObject(obj) {
+        return Object.keys(obj).length === 0;
+    }
 
     const camelizeRE = /-(\w)/g;
     const camelize = cache((str) => {
@@ -472,13 +475,13 @@ var Crush = (function (exports) {
 
     const insertNull = (arr, index, length = 1) => arr.splice(index, 0, ...new Array(length).fill(null));
     function unionkeys(...maps) {
-        var _ = {};
+        var keyMap = {};
         for (let i in maps || emptyObject) {
             for (let key in maps[i]) {
-                _[key] = true;
+                keyMap[key] = true;
             }
         }
-        return Object.keys(_);
+        return Object.keys(keyMap);
     }
     /*
         用于 props 的diff 算法 输入两个map类型，
@@ -804,12 +807,16 @@ var Crush = (function (exports) {
         el.className = '';
     }
     function mountAttributes(el, props, instance = null, isSVG) {
-        updateElementAttributes(el, emptyObject, props, instance, isSVG);
+        updateElementAttributes(el, null, props, instance, isSVG);
     }
-    function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = false) {
+    function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = false, dynamicProps = null) {
+        // 如果传了dynamicProps更新即可，没传的话就需要全部更新
+        if (!pProps && !nProps) {
+            return;
+        }
         pProps ||= emptyObject;
         nProps ||= emptyObject;
-        for (let propName of unionkeys(pProps, nProps)) {
+        for (let propName of (dynamicProps || unionkeys(pProps, nProps))) {
             var pValue = pProps[propName];
             var nValue = nProps[propName];
             switch (propName) {
@@ -1452,7 +1459,7 @@ var Crush = (function (exports) {
     function updateElement(p, n, container, anchor, parent, isSVG = false) {
         const el = n.el = p.el;
         processHook("beforeUpdate" /* BEFORE_UPDATE */, n, p);
-        updateElementAttributes(el, p.props, n.props, parent, isSVG);
+        updateElementAttributes(el, p.props, n.props, parent, isSVG, n.dynamicProps);
         processHook("updated" /* UPDATED */, n, p);
         // updated hooks should be called here ? or after children update
         updateChildren(p.children, n.children, container, anchor, parent);
@@ -1474,25 +1481,60 @@ var Crush = (function (exports) {
                 // 这里可能出现为空是因为排序时增加的空节点
                 continue;
             }
-            return getEL(nextSibiling);
+            return getLeftEdgeElement(nextSibiling);
         }
     }
-    function getEL(vnode) {
+    function getLeftEdgeElement(vnode) {
         if (!vnode) {
             return null;
         }
         switch (vnode.nodeType) {
             case 14 /* COMPONENT */:
-                return getEL(vnode.instance.vnode[0]);
+                return getLeftEdgeElement(vnode.instance.vnode[0]);
             case 15 /* RENDER_COMPONENT */:
-                return getEL(vnode.vnode[0]);
+                return getLeftEdgeElement(vnode.vnode[0]);
             case 13 /* HTML_ELEMENT */:
             case 9 /* SVG_ELEMENT */:
+            case 17 /* STYLE */:
             case 12 /* TEXT */:
             case 10 /* HTML_COMMENT */:
                 return vnode.el;
         }
         return null;
+    }
+    function getEdgeElements(vnode) {
+        if (isArray(vnode)) {
+            return vnode.map(getEdgeElements).reduce((els, val) => {
+                if (!val) {
+                    return els;
+                }
+                else if (isArray(val)) {
+                    els = els.concat(val);
+                }
+                else {
+                    els.push(val);
+                }
+                return els;
+            }, []);
+        }
+        else if (!vnode) {
+            return null;
+        }
+        else {
+            switch (vnode.nodeType) {
+                case 14 /* COMPONENT */:
+                    return getEdgeElements(vnode.instance.vnode);
+                case 15 /* RENDER_COMPONENT */:
+                    return getEdgeElements(vnode.vnode);
+                case 13 /* HTML_ELEMENT */:
+                case 9 /* SVG_ELEMENT */:
+                case 17 /* STYLE */:
+                case 12 /* TEXT */:
+                case 10 /* HTML_COMMENT */:
+                    return vnode.el;
+            }
+            return null;
+        }
     }
 
     const patch = (prev, next, container, anchor, parent) => {
@@ -2666,7 +2708,7 @@ var Crush = (function (exports) {
     }
 
     const COMPONENT_TYPE = Symbol('ComponentType');
-    function createComponent(type, props, children, key = uid()) {
+    function createComponent(type, props, children, key = uid(), dynamicProps = null) {
         let componentFlag = type[COMPONENT_TYPE];
         if (!componentFlag) {
             // stateful component
@@ -2693,25 +2735,30 @@ var Crush = (function (exports) {
             type,
             props: normalizeProps(props),
             children,
-            key
+            key,
+            dynamicProps
         };
     }
-    function createElement(type, props, children, key = uid(), dynamicProps = null) {
+    function createElement(type, props, children, key = uid(), dynamicProps = null, shouldUpdateChildren = true) {
         return {
             nodeType: 13 /* HTML_ELEMENT */,
             type,
             props: normalizeProps(props),
             children,
-            key
+            key,
+            shouldUpdateChildren,
+            dynamicProps
         };
     }
-    function createSVGElement(type, props, children, key = uid()) {
+    function createSVGElement(type, props, children, key = uid(), dynamicProps = null, shouldUpdateChildren = true) {
         return {
             nodeType: 9 /* SVG_ELEMENT */,
             type,
             props: normalizeProps(props),
             children,
-            key
+            key,
+            shouldUpdateChildren,
+            dynamicProps,
         };
     }
     const Text = Symbol('Text');
@@ -3518,52 +3565,52 @@ var Crush = (function (exports) {
                 break;
             case 13 /* USE_COMPONENT_SLOT */:
                 const { slotName, isDynamicSlot, children } = node;
-                var { props } = genProps(node, context);
-                nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), props, children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
+                var { propsCode } = genProps(node, context);
+                nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), propsCode, children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
                 break;
             case 14 /* DEFINE_COMPONENT_SLOT */:
                 nodeCode = genNodes(node.children, context);
                 break;
             case 20 /* DYNAMIC_HTML_ELEMENT */:
                 var { is, isDynamicIs } = node;
-                var { props } = genProps(node, context);
-                var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), props, genChildrenString(node.children, context), uStringId());
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
+                var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 21 /* DYNAMIC_SVG_ELEMENT */:
                 var { is, isDynamicIs } = node;
-                var { props } = genProps(node, context);
-                var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), props, uStringId());
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
+                var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 1 /* HTML_ELEMENT */:
-                var { props } = genProps(node, context);
-                var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), props, genChildrenString(node.children, context), uStringId());
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
+                var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 3 /* SVG_ELEMENT */:
-                var { props } = genProps(node, context);
-                var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), props, genChildrenString(node.children, context), uStringId());
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
+                var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 22 /* DYNAMIC_COMPONENT */:
                 var { is, isDynamicIs } = node;
                 var component = context.useComponent(is, isDynamicIs);
-                var { props } = genProps(node, context);
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
                 var slots = genSlotContent(node, context);
-                code = context.callRenderFn('createComponent', component, props, slots, uStringId());
+                code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
             case 4 /* COMPONENT */:
                 var component = context.useComponent(node.tagName, false);
-                var { props } = genProps(node, context);
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
                 var slots = genSlotContent(node, context);
-                code = context.callRenderFn('createComponent', component, props, slots, uStringId());
+                code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
@@ -3571,8 +3618,8 @@ var Crush = (function (exports) {
                 nodeCode = genText(node.children, context);
                 break;
             case 6 /* STYLESHEET */:
-                var { props } = genProps(node, context);
-                var code = context.callRenderFn('createStyleSheet', props, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId());
+                var { propsCode, dynamicPropsCode } = genProps(node, context);
+                var code = context.callRenderFn('createStyleSheet', propsCode, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId(), dynamicPropsCode);
                 code = genDirs(code, node, context);
                 nodeCode = code;
                 break;
@@ -3724,41 +3771,60 @@ var Crush = (function (exports) {
         }
     }
     function genProps(node, context) {
-        const { type, attributes } = node;
+        let { type, attributes } = node;
+        attributes ||= emptyArray;
         const isComponent = type === 4 /* COMPONENT */;
-        if (!attributes) {
-            return NULL;
-        }
         var props = {};
+        var dynamicProps = [];
         attributes.forEach((attr) => {
             switch (attr.type) {
                 case 16 /* EVENT */:
                     var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, filters, modifiers } = attr;
-                    const handlerKey = isDynamicProperty ?
-                        (isComponent ?
-                            dynamicMapKey(context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes)))) :
-                            dynamicMapKey(context.callRenderFn('toNativeEventName', property, stringify(_arguments && _arguments.map(toBackQuotes))))) :
-                        (isComponent ?
-                            toEventName(property, _arguments, modifiers) :
-                            toNativeEventName(property, _arguments));
-                    var callback = isHandler ? value : toArrowFunction(value, '$'); // 包裹函数都需要传入一个 $ 参数
+                    var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$'); // 包裹函数都需要传入一个 $ 参数
                     if (modifiers && !isComponent) {
                         callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
                     }
-                    props[handlerKey] = callback;
+                    if (isDynamicProperty) {
+                        let key = isComponent ?
+                            context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes))) :
+                            context.callRenderFn('toNativeEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)));
+                        props[dynamicMapKey(key)] = callback;
+                        dynamicProps.push(key);
+                    }
+                    else {
+                        let key = (isComponent ? toEventName(property, _arguments, modifiers) : toNativeEventName(property, _arguments));
+                        props[key] = callback;
+                        dynamicProps.push(toSingleQuotes(key));
+                    }
                     break;
                 case 17 /* ATTRIBUTE_CLASS */:
                     var _class = props.class ||= [];
-                    _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
+                    if (attr.isDynamicValue) {
+                        _class.push(attr.value);
+                        dynamicProps.push(`'class'`);
+                    }
+                    else {
+                        _class.push(toBackQuotes(attr.value));
+                    }
                     break;
                 case 18 /* ATTRIBUTE_STYLE */:
                     var style = props.style ||= [];
-                    style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
+                    if (attr.isDynamicValue) {
+                        style.push(attr.value);
+                        dynamicProps.push(`'style'`);
+                    }
+                    else {
+                        style.push(toBackQuotes(attr.value));
+                    }
                     break;
                 case 15 /* ATTRIBUTE */:
                     // normal attributes
                     var { property, value, isDynamicProperty, isDynamicValue, } = attr;
-                    props[isDynamicProperty ? dynamicMapKey(property) : property] = isDynamicValue ? value : toBackQuotes(value);
+                    let key = isDynamicProperty ? dynamicMapKey(property) : property;
+                    props[key] = isDynamicValue ? value : toBackQuotes(value);
+                    if (isDynamicProperty || isDynamicValue) {
+                        dynamicProps.push(toSingleQuotes(property));
+                    }
                     break;
             }
         });
@@ -3769,9 +3835,27 @@ var Crush = (function (exports) {
         if (props.style) {
             props.style = stringify(props.style.length === 1 ? props.style[0] : props.style);
         }
+        let propsCode, dynamicPropsCode, allPropsStatic = false;
+        if (dynamicProps.length) {
+            // 存在 dynamicProps
+            dynamicPropsCode = stringify(dynamicProps);
+            propsCode = stringify(props);
+        }
+        else {
+            dynamicPropsCode = NULL;
+            if (isEmptyObject(props)) {
+                propsCode = NULL;
+            }
+            else {
+                // 提升
+                allPropsStatic = true;
+                propsCode = context.hoistExpression(stringify(props));
+            }
+        }
         return {
-            props: stringify(props) === '{}' ? NULL : stringify(props),
-            dynamicProps: []
+            allPropsStatic,
+            propsCode,
+            dynamicPropsCode
         };
     }
 
@@ -3871,7 +3955,7 @@ var Crush = (function (exports) {
         attr.flag = flag;
         attr.endFlag = endFlag;
         // 属性简写
-        if (!attr.value) {
+        if (isUndefined(attr.value)) {
             attr.value = attr.property;
         }
         return attr;
@@ -4941,22 +5025,22 @@ var Crush = (function (exports) {
     }
     // 手写渲染函数是时 ， 框架内部无法识别新旧dom树中是否为同一节点 ， 所以应该手动传入 唯一id ， 不然都会作为新节点，全部卸载，并全部重新挂载
     function h(type, props, children, key = uid()) {
+        let vnode = null;
         if (isObject(type) || isFunction(type)) {
             // 同时支持有状态组件和函数式组件
             if (children && !isObject(children)) {
                 children = { default: children };
             }
-            return createComponent(type, props, children, key);
+            vnode = createComponent(type, props, children, key);
         }
         else if (isHTMLTag(type)) {
-            return createElement(type, props, children, key);
+            vnode = createElement(type, props, children, key);
         }
         else if (isSVGTag(type)) {
-            return createSVGElement(type, props, children, key);
+            vnode = createSVGElement(type, props, children, key);
         }
-        else {
-            return null;
-        }
+        vnode.h = true;
+        return vnode;
     }
 
     const modelText = {
@@ -6594,9 +6678,9 @@ var Crush = (function (exports) {
                 return null;
             }
             // 不会包括style元素
-            let el = vnode.filter((_vnode) => _vnode.type !== 'style').map((_vnode) => getEL(_vnode));
+            let els = getEdgeElements(vnode.filter((_vnode) => _vnode.type !== 'style'));
             // 有多个根元素会返回多个元素
-            return el.length === 1 ? el[0] : el;
+            return els.length === 1 ? els[0] : els;
         },
         get $root() {
             return this._currentPropertyAccessInstance.root;
@@ -7377,7 +7461,7 @@ var Crush = (function (exports) {
     exports.getDeps = getDeps;
     exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
-    exports.getEL = getEL;
+    exports.getEdgeElements = getEdgeElements;
     exports.getElementComputedStyle = getElementComputedStyle;
     exports.getElementComputedStyleValue = getElementComputedStyleValue;
     exports.getElementStyle = getElementStyle;
@@ -7392,6 +7476,7 @@ var Crush = (function (exports) {
     exports.getLastSetTarget = getLastSetTarget;
     exports.getLastVisitKey = getLastVisitKey;
     exports.getLastVisitTarget = getLastVisitTarget;
+    exports.getLeftEdgeElement = getLeftEdgeElement;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
     exports.h = h;
@@ -7423,6 +7508,7 @@ var Crush = (function (exports) {
     exports.isDate = isDate;
     exports.isEffect = isEffect;
     exports.isElementLifecycleHook = isElementLifecycleHook;
+    exports.isEmptyObject = isEmptyObject;
     exports.isEvent = isEvent;
     exports.isFunction = isFunction;
     exports.isHTMLTag = isHTMLTag;
@@ -7590,11 +7676,11 @@ var Crush = (function (exports) {
     exports.unmountComponent = unmountComponent;
     exports.unmountDeclaration = unmountDeclaration;
     exports.update = update;
-    exports.updateElementAttributes = updateElementAttributes;
     exports.updateChildren = updateChildren;
     exports.updateClass = updateClass;
     exports.updateComponent = updateComponent;
     exports.updateDeclaration = updateDeclaration;
+    exports.updateElementAttributes = updateElementAttributes;
     exports.updateInstanceListeners = updateInstanceListeners;
     exports.updateStyleSheet = updateStyleSheet;
     exports.useBoolean = useBoolean;

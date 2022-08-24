@@ -55,7 +55,9 @@ function updateElement(p: any, n: any, container: any, anchor: any, parent: Comp
     updateElementAttributes(el, p.props, n.props, parent, isSVG, n.dynamicProps)
     processHook(LifecycleHooks.UPDATED, n, p)
     // updated hooks should be called here ? or after children update
-    updateChildren(p.children, n.children, container, anchor, parent)
+    if (n.shouldUpdateChildren) {
+        updateChildren(p.children, n.children, container, anchor, parent)
+    }
 }
 
 
@@ -105,15 +107,15 @@ export function getLeftEdgeElement(vnode: any): any {
 
 export function getEdgeElements(vnode: any): any {
     if (isArray(vnode)) {
-        return vnode.map(getEdgeElements).reduce((els: any, val) => {
+        return vnode.map(getEdgeElements).reduce((res: any, val) => {
             if (!val) {
-                return els
+                return res
             } else if (isArray(val)) {
-                els = els.concat(val)
+                res = res.concat(val)
             } else {
-                els.push(val)
+                res.push(val)
             }
-            return els
+            return res
         }, [])
     } else if (!vnode) {
         return null

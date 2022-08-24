@@ -90,9 +90,6 @@ export function parseAttribute(attr: any) {
     attr.endFlag = endFlag
 
     // 属性简写
-    if (isUndefined(attr.value)) {
-        attr.value = attr.property
-    }
 
     return attr
 }

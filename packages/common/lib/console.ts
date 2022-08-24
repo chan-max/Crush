@@ -6,7 +6,6 @@ const warn = (...msg: any) => {
 }
 const error = (...msg: any) => {
     console.error(...msg)
-    return
 }
 
 const log = (...msg: any) => {

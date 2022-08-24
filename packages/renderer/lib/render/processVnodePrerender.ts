@@ -60,7 +60,6 @@ export function processVnodePrerender(node: any, parentKey?: any): null | any[] 
                 child.children = processVnodePrerender(child.children)
             }
 
-
             if (child.nodeType === Nodes.STYLE) {
                 child.children = flatRules(child.children, null, child.patchKey)
             }

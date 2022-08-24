@@ -152,6 +152,8 @@ import { processTemplateAst } from '../parser/parseTemplate'
 
 export function compile(template: string, compilerOptions: any = compilerDefaultOptions) {
 
+    let start = Date.now()
+
     var context = new CodeGenerator()
 
     context.compilerOptions = compilerOptions
@@ -171,14 +173,15 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     context.pushNewLine(content)
     let code = context.getCode()
 
+    let end = Date.now()
     let render: any = {
         createRender: null,
-        useScopedStyleSheet: context.useScopedStyleSheet
+        useScopedStyleSheet: context.useScopedStyleSheet,
+        cost: end - start
     }
 
     eval(`render.createRender = function createRender(renderMethods){${code}}`)
-
-    console.log(render.createRender);
+    
     return render
 }
 

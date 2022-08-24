@@ -198,7 +198,7 @@ export function expressionWithScope(expression: string, expressionContext: Expre
 }
 
 export function extractArrayFunctionArgs(argsExpression: any): any {
-    if (!argsExpression.trim()) {
+    if (!argsExpression || !argsExpression.trim()) {
         return []
     }
     let commaList = findFirstLevelComma(argsExpression)

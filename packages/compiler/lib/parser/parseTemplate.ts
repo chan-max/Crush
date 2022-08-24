@@ -167,7 +167,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         case '@':
                             attr.type = AstTypes.EVENT
                             attr.isHandler = isHandler(attr.value)
-                            attr.value = context.setRenderScope(attr.value)
+                            attr.value = context.setRenderScope(attr.value || attr.property)
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property)
                             }
@@ -251,7 +251,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     break
                                 case 'style':
                                     attr.type = AstTypes.ATTRIBUTE_STYLE
-
                                     if (attr.isDynamicValue) {
                                         attr.value = context.setRenderScope(attr.value)
                                     }
@@ -267,6 +266,9 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     attr.type = AstTypes.ATTRIBUTE
                                     if (attr.isDynamicProperty) {
                                         attr.property = context.setRenderScope(attr.property)
+                                    }
+                                    if (!attr.value) {
+                                        attr.value = attr.property
                                     }
                                     if (attr.isDynamicValue) {
                                         attr.value = context.setRenderScope(attr.value)
