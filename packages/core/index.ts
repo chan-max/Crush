@@ -8,7 +8,7 @@ export * from './lib/instance/option'
 export * from './lib/instance/scope'
 export * from './lib/instance/plugin'
 export * from './lib/instance/refState'
-export * from './lib/instance/create'
+export * from './lib/instance/use'
 
 export * from '@crush/animate'
 export * from '@crush/common'

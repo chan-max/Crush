@@ -1,23 +1,34 @@
 import {
-    createExpression, createApp, ref, useRefState, onMounted
+    createExpression, createApp, ref, useRefState, onMounted, useScope, useEmit
 } from "./packages/core";
 
 console.time('crush')
 
+let tom = {
+    props: ['name'],
+    emits: ['submit'],
+    template: `
+        <h1 @click="c"> {{name}} </h1>
+    `,
+    create() {
+    }
+}
+
 let app = createApp({
     components: {
+        tom
     },
     template:/*html*/`
-        <input --model="fw" type="range">
-        <p $style="{fontWeight:fw*20}">11111111</p>
+        <tom $name="6666">
     `,
-    create({ $self }: any) {
-        $self.fw = 200
+    create() {
     }
 })
 
 console.log(app);
 
 app.mount()
+
+
 
 console.timeEnd('crush')
