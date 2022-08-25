@@ -211,7 +211,7 @@ function genNode(node: any, context: any): any {
         case AstTypes.DYNAMIC_SVG_ELEMENT:
             var { is, isDynamicIs } = node
             var { propsCode, dynamicPropsCode } = genProps(node, context)
-            var code: string = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, uStringId(), dynamicPropsCode)
+            var code: string = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
             code = genDirs(code, node, context)
             nodeCode = code
             break
@@ -436,7 +436,7 @@ import {
 
 
 function genProps(node: any, context: any): any {
-    let { type, attributes }:any = node
+    let { type, attributes }: any = node
     attributes ||= emptyArray
     const isComponent = type === AstTypes.COMPONENT
 

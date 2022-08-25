@@ -165,12 +165,16 @@ export const modelColor = {
 
 export const modelRange = {
     created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setter } }: any) {
-        el.value = value
+        el.value = isRef(value) ? value.value : value
         addListener(el, lazy ? 'change' : 'input', () => {
-            _setter(el.value)
+            if (isRef(value)) {
+                value.value = el.value
+            } else {
+                _setter(el.value)
+            }
         })
     },
     beforeUpdate(el: HTMLInputElement, { value }: any) {
-        el.value = value
+        el.value = isRef(value) ? value.value : value
     }
 }

@@ -10,7 +10,7 @@ export function useDate(...dateArgs: []) {
 
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-var quarter = ['spring', 'summer', 'autumn', 'winter']
+const quarter = ['spring', 'summer', 'autumn', 'winter']
 
 class DateRef extends Ref {
     constructor(date: Date) {
@@ -22,10 +22,10 @@ class DateRef extends Ref {
     }
 
     get(key: string) {
-        return Reflect.get(this, key).call(this)
+        return (Reflect.get(this, key) as Function).call(this)
     }
 
-    
+
 
     year(setYear?: number | string) {
         if (isUndefined(setYear)) {
@@ -53,7 +53,7 @@ class DateRef extends Ref {
         }
     }
 
-    
+
 
     // monthday
     date(setDate?: number | string) {
@@ -131,7 +131,7 @@ class DateRef extends Ref {
         }
     }
 
-    format(template: string, customKeywords: any = emptyObject) {
+    format(template: string  = 'YYYY-MM-DD', customKeywords: any = emptyObject) {
         let w = customKeywords.weekdays || weekdays
         let m = customKeywords.months || months
         return template.replace(dateFormatRE, (capture: string) => {

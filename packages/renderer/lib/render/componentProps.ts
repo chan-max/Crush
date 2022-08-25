@@ -63,7 +63,8 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     }
 
                     // do update props value
-                    scope[prop] = nValue
+                    scope[prop] = nValue;
+                    (instance.props ||= {})[prop] = nValue
                 }
         }
     }

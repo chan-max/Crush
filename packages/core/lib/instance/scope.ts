@@ -151,7 +151,7 @@ const specialTemplateMethods: any = {
 }
 
 // 当作用域没有值时显示的默认值
-const defaultTemplateScopeValue = ':-)'
+const defaultTemplateScopeValue = ''
 
 export function createRenderScope(instanceScope: any) {
     return new Proxy(instanceScope, {

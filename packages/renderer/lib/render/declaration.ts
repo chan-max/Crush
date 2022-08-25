@@ -20,6 +20,18 @@ export type StyleValue = {
     important: boolean
 }
 
+// 目前只支持两层
+function joinArrayStyleValue(value: any, firstLevelSeparator = { value: ' ' }) {
+    return value.map((item: any) => {
+        if (isArray(item)) {
+            firstLevelSeparator.value = ','
+            return item.join(' ')
+        } else {
+            return item
+        }
+    }).join(firstLevelSeparator.value)
+}
+
 export function parseStyleValue(rawValue: any): any {
     var value, important = false
     if (rawValue === undefined || rawValue === null) {
@@ -39,7 +51,7 @@ export function parseStyleValue(rawValue: any): any {
 
     // 支持数组
     if (isArray(value)) {
-        value = value.join(' ')
+        value = joinArrayStyleValue(value)
     }
 
     return {

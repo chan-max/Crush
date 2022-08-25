@@ -19,8 +19,10 @@ export function useOptions() {
 }
 
 export function useProps() {
-    return getCurrentInstance().props ||= {}
+    return getCurrentInstance().props
 }
+
+
 
 export function useRefs() {
     return getCurrentInstance().refs ||= {}
@@ -47,6 +49,14 @@ export function useWatch() {
     return getCurrentInstance().watch
 }
 
+export function useRoot() {
+    return getCurrentInstance().root
+}
+
+export function useParent() {
+    return getCurrentInstance().parent
+}
+
 export function useEmit() {
     return getCurrentInstance().emit
 }
@@ -64,14 +74,14 @@ export function useOff() {
 }
 
 
-export function useScope(){
+export function useScope() {
     return getCurrentInstance().scope
 }
 
-export function useInstance(){
+export function useInstance() {
     return getCurrentInstance()
 }
 
-export function useApp(){
+export function useApp() {
     return getCurrentApp()
 }
