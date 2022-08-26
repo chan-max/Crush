@@ -1,31 +1,25 @@
 import {
-    createExpression, createApp, ref, useRefState, onMounted, useScope, useEmit, useProps, useParent, useDate
+    createExpression, createApp, ref, useRefState, onMounted, useScope, useEmit, useProps, useParent, useDate, onUpdated, isRgbColor, parseHslColor, hsl, exposeCurrentScopeToWindow,
 } from "./packages/core";
 
 console.time('crush')
 
 let tom = {
     template: /*html*/`
-        <style> 
-            .box{
-                $width:width+'px';
-                $height:height+'px';
-                background-color:red;
-            }
-        </style>
-        width : <input --model="width" type="range" min="50" max="200">
-        height : <input --model="height" type="range"  min="50" max="200">
-        <div .box></div>
+        <h1>{{text}}</h1>
+        <input  --model="text">
     `,
     create() {
-        let width = ref(20)
-        let height = ref(20)
-        return {
-            width,
-            height
-        }
+ 
+
+
+        let scope = useScope()
+        exposeCurrentScopeToWindow()
+        scope.text = ref('12465')
     }
 }
+
+
 
 let app = createApp({
     components: {

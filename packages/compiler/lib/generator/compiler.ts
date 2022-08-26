@@ -110,6 +110,7 @@ export class CodeGenerator {
 
     parseExpressionWithRawScope(exp: string) {
         let expInstance = createExpression(exp)
+        expInstance.pushScope(this.scopes)
         let setScopedExpression = expInstance.scopedExpression(this.renderScope)
         let variables = expInstance.variables
         return {
@@ -125,8 +126,8 @@ export class CodeGenerator {
     }
 
     setRawScope(exp: string) {
-        // 原生作用域不会受到模板的影响
         let expInstance = createExpression(exp)
+        expInstance.pushScope(this.scopes)
         return expInstance.scopedExpression(this.scope)
     }
 

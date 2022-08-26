@@ -1,25 +1,28 @@
 
-import { isArray, removeFromArray, toNumber } from "@crush/common";
+import { isArray, isUndefined, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
 import { debounce, isNumber, } from '@crush/common'
-import { isRef } from "@crush/reactivity";
+import { hexToHsl, hexToRgb, isRef, normalizeToHexColor } from "@crush/reactivity";
 
 
 export const modelText = {
     created(el: any, { value, modifiers }: any, vnode: any) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers
         const setter = vnode.props._setter
+        el._modelValue = value
         // 设置input初始值
-        el.value = isRef(value) ? value.value : value;
+        let initalValue = isRef(value) ? value.value : value
+        el.value = isUndefined(initalValue) ? '' : initalValue;
+
         let inputHandler = () => {
             let inputValue = el.value
             // number 和 trim 不能同时使用 , 空字符串转数字会变为0
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
             // 标记输入框刚刚输入完毕
             el._inputing = true
-            if (isRef(value)) {
-                value.value = inputValue
+            if (isRef(el.modelValue)) {
+                el.modelValue.value = inputValue
             } else {
                 setter(inputValue)
             }
@@ -29,7 +32,7 @@ export const modelText = {
             let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1]
             let numberValue = toNumber(debounceNextModifier)
             // 如果是合理地数字
-            let wait = isNumber(numberValue) ? numberValue : 500
+            let wait = isNumber(numberValue) ? numberValue : 100
             inputHandler = debounce(inputHandler, wait)
         }
 
@@ -40,7 +43,9 @@ export const modelText = {
         if (el._inputing) {
             el._inputing = false
         } else {
-            el.value = isRef(value) ? value.value : value;
+            el._modelValue = el.value
+            let newValue = isRef(value) ? value.value : value
+            el.value = isUndefined(newValue) ? '' : newValue;
         }
     }
 }
@@ -151,17 +156,28 @@ export const modelSelectMultiple = {
 
 // 目前只支持 16 进制
 export const modelColor = {
-    created(el: any, { value, modifiers: { lazy } }: any, vnode: any) {
+    created(el: any, { value, modifiers: { lazy, rgb, hsl, } }: any, vnode: any) {
+        el._mdelValue = value
         const setter = vnode.props._setter
-        el.value = value;
+        // 设置初始值
+        el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         addListener(el, lazy ? 'change' : 'input', () => {
-            setter(el.value)
+            el._inputing = true
+            let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value
+            isRef(el._mdelValue) ? el._mdelValue.value = colorValue : setter(colorValue)
         })
     },
     beforeUpdate(el: any, { value }: any,) {
-        el.value = value;
-    },
+        if (el._inputing) {
+            el._inputing = false
+        } else {
+            el._mdelValue = value
+            el.value = normalizeToHexColor(isRef(value) ? value.value : value)
+        }
+    }
 }
+
+
 
 export const modelRange = {
     created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setter } }: any) {

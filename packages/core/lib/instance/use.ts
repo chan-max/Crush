@@ -1,4 +1,4 @@
-import { getCurrentInstance } from '@crush/renderer'
+import { getCurrentInstance, getCurrentScope } from '@crush/renderer'
 import { getCurrentApp } from '../app/app'
 
 // create , 优先级比options中的name高 , 用于组件递归
@@ -84,4 +84,11 @@ export function useInstance() {
 
 export function useApp() {
     return getCurrentApp()
+}
+
+// for debgger
+
+
+export function exposeCurrentScopeToWindow(name: string = 'scope') {
+    window[name as any] = getCurrentScope()
 }

@@ -12,7 +12,6 @@ const warn = (...msg) => {
 };
 const error = (...msg) => {
     console.error(...msg);
-    return;
 };
 const log = (...msg) => {
     console.log(...msg);
@@ -630,6 +629,18 @@ const deleteMedium = (mediaRule, medium) => mediaRule.media.deleteMedium(medium)
 const appendMedium = (mediaRule, medium) => mediaRule.media.appendMedium(medium);
 const setStyleProperty = (style, property, value, important = false) => style.setProperty(hyphenate(property), value, important ? IMPORTANT : '');
 
+// 目前只支持两层
+function joinArrayStyleValue(value, firstLevelSeparator = { value: ' ' }) {
+    return value.map((item) => {
+        if (isArray(item)) {
+            firstLevelSeparator.value = ',';
+            return item.join(' ');
+        }
+        else {
+            return item;
+        }
+    }).join(firstLevelSeparator.value);
+}
 function parseStyleValue(rawValue) {
     var value, important = false;
     if (rawValue === undefined || rawValue === null) {
@@ -649,7 +660,7 @@ function parseStyleValue(rawValue) {
     }
     // 支持数组
     if (isArray(value)) {
-        value = value.join(' ');
+        value = joinArrayStyleValue(value);
     }
     return {
         value,
@@ -1122,49 +1133,55 @@ function updateComponentProps(instance, pProps, nProps) {
     for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
         let pValue = pProps[prop];
         let nValue = nProps[prop];
-        if (prop.startsWith('_')) ;
-        else if (prop === 'ref') {
-            // ref component
-            let refs = instance.parent.refs ||= {};
-            if (nValue !== pValue) {
-                pValue && (refs[pValue] = null);
-                nValue && (refs[nValue] = instance);
-            }
-        }
-        else if (prop === 'style') ;
-        else if (prop === 'class') ;
-        else if (!propsOptions[prop] && !emitsOptions[prop]) {
-            let attrs = instance.attrs ||= {};
-            attrs[prop] = nValue;
-        }
-        else if (isEvent(prop)) {
-            // events
-            var { event, _arguments, modifiers } = parseEventName(prop);
-            if (isComponentLifecycleHook(event)) {
-                return;
-            }
-            updateInstanceListeners(instance, event, pValue, nValue);
-        }
-        else {
-            // props
-            const { default: _default, type, validator, required } = propsOptions[prop];
-            if (isUndefined(nValue)) {
-                // nValue 不存在在时应该使用默认值
-                if (required) {
-                    error(`props ${prop} is required`);
+        switch (prop) {
+            case 'ref':
+                // ref component
+                let refs = instance.parent.refs ||= {};
+                if (nValue !== pValue) {
+                    pValue && (refs[pValue] = null);
+                    nValue && (refs[nValue] = instance);
+                }
+                break;
+            case 'class':
+                break;
+            case 'style':
+                break;
+            default:
+                if (prop.startsWith('_')) ;
+                else if (!propsOptions[prop] && !emitsOptions[prop]) {
+                    // attrs
+                    let attrs = instance.attrs ||= {};
+                    attrs[prop] = nValue;
+                }
+                else if (isEvent(prop)) {
+                    // events
+                    var { event, _arguments, modifiers } = parseEventName(prop);
+                    if (!isComponentLifecycleHook(event)) {
+                        updateInstanceListeners(instance, event, pValue, nValue);
+                    }
                 }
                 else {
-                    nValue = _default;
+                    // props
+                    const { default: _default, type, validator, required } = propsOptions[prop];
+                    if (isUndefined(nValue)) {
+                        // nValue 不存在在时应该使用默认值
+                        if (required) {
+                            error(`props ${prop} is required`);
+                        }
+                        else {
+                            nValue = _default;
+                        }
+                    }
+                    if (type && nValue.constructor !== type) {
+                        error(`prop ${nValue} is not the typeOf ${type.name}`);
+                    }
+                    if (validator && !validator(nValue)) {
+                        error(`prop ${nValue} is not legal for custom validator`);
+                    }
+                    // do update props value
+                    scope[prop] = nValue;
+                    (instance.props ||= {})[prop] = nValue;
                 }
-            }
-            if (type && nValue.constructor !== type) {
-                error(`prop ${nValue} is not the typeOf ${type.name}`);
-            }
-            if (validator && !validator(nValue)) {
-                error(`prop ${nValue} is not legal for custom validator`);
-            }
-            // do update props value
-            scope[prop] = nValue;
         }
     }
 }
@@ -1459,7 +1476,9 @@ function updateElement(p, n, container, anchor, parent, isSVG = false) {
     updateElementAttributes(el, p.props, n.props, parent, isSVG, n.dynamicProps);
     processHook("updated" /* UPDATED */, n, p);
     // updated hooks should be called here ? or after children update
-    updateChildren(p.children, n.children, container, anchor, parent);
+    if (n.shouldUpdateChildren) {
+        updateChildren(p.children, n.children, container, anchor, parent);
+    }
 }
 function updateChildren(pChildren, nChildren, container, anchor, parent) {
     var { p, n } = sortChildren(pChildren, nChildren);
@@ -1501,17 +1520,17 @@ function getLeftEdgeElement(vnode) {
 }
 function getEdgeElements(vnode) {
     if (isArray(vnode)) {
-        return vnode.map(getEdgeElements).reduce((els, val) => {
+        return vnode.map(getEdgeElements).reduce((res, val) => {
             if (!val) {
-                return els;
+                return res;
             }
             else if (isArray(val)) {
-                els = els.concat(val);
+                res = res.concat(val);
             }
             else {
-                els.push(val);
+                res.push(val);
             }
-            return els;
+            return res;
         }, []);
     }
     else if (!vnode) {
@@ -2325,23 +2344,321 @@ function useBoolean(value = true) {
     return new ReactiveBoolean(value);
 }
 
-/*
-    rbg
-    hex
-    hsl  // css 中 只能写 %
-*/
-const toHex = (num) => num.toString(16);
-const toDec = (num) => parseInt(String(num), 16);
-function rgbToHex() {
+const hexColorRE = /^#([0-9a-fA-F]{6})$/;
+const shortHexColorRE = /^#([0-9a-fA-F]{3})$/;
+function isHexColor(color) {
+    return hexColorRE.test(color.trim());
 }
-function hexToRgb() {
+function isShortHexColor(color) {
+    return shortHexColorRE.test(color);
 }
-const useColor = (color) => new ColorRef(color);
-class ColorRef extends Ref {
-    constructor(color) {
-        super(color);
+const rgbColorRE = /^rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)$/;
+const hslColorRE = /^hsl\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%\s*\)$/;
+function isHslColor(color) {
+    return hslColorRE.test(color);
+}
+function parseHslColor(color) {
+    let [_, hue, saturation, lightness] = hslColorRE.exec(color);
+    return {
+        hue, saturation, lightness
+    };
+}
+function parseRgbToBaseColor(color) {
+    let [_, red, green, blue] = rgbColorRE.exec(color);
+    return {
+        red,
+        green,
+        blue
+    };
+}
+function shortHexToHex(color) {
+    return `#${color[1].repeat(2) + color[2].repeat(2) + color[3].repeat(2)}`;
+}
+function isRgbColor(color) {
+    return rgbColorRE.test(color);
+}
+function parseHexToBaseColor(hexColor) {
+    hexColor = hexColor.trim();
+    let isShort = hexColor.length === 4;
+    return {
+        red: toDec(isShort ? hexColor[1] : hexColor.slice(1, 3)),
+        blue: toDec(isShort ? hexColor[2] : hexColor.slice(3, 5)),
+        green: toDec(isShort ? hexColor[3] : hexColor.slice(5, 7)),
+    };
+}
+function normalizeToHexColor(color) {
+    if (colors[color]) {
+        return colors[color];
+    }
+    else if (isHexColor(color)) {
+        return color;
+    }
+    else if (isShortHexColor(color)) {
+        return shortHexToHex(color);
+    }
+    else if (isRgbColor(color)) {
+        return rgbToHex(color);
+    }
+    else if (isHslColor(color)) {
+        return hslToHex(color);
+    }
+    else {
+        // 默认
+        return '#000000';
     }
 }
+function rgbToHex(color) {
+    let rgb = parseRgbToBaseColor(color);
+    return baseRgbToHex(rgb);
+}
+function baseRgbToHex({ red, green, blue }) {
+    return '#' + toHex(red) + toHex(green) + toHex(blue);
+}
+function hslToHex(color) {
+    let hsl = parseHslColor(color);
+    let rgb = parseHslToRgb(hsl);
+    return baseRgbToHex(rgb);
+}
+function hexToRgb(color) {
+    let { red, green, blue } = parseHexToBaseColor(color);
+    return `rgb(${red},${green},${blue})`;
+}
+function hexToHsl(color) {
+    let rgb = parseHexToBaseColor(color);
+    let { hue, saturation, lightness } = parseRgbToHsl(rgb);
+    return `hsl(${hue},${saturation}%,${lightness}%)`;
+}
+const toHex = (num) => {
+    let hex = Number(num).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+};
+const toDec = (num) => parseInt(String(num), 16);
+function parseHslToRgb(hslColor) {
+    let { hue, saturation, lightness } = hslColor;
+    hue = hue / 360;
+    saturation = saturation / 100;
+    lightness = lightness / 100;
+    var red, green, blue;
+    if (saturation == 0) {
+        red = green = blue = lightness;
+    }
+    else {
+        function t(p, q, t) {
+            if (t < 0)
+                t += 1;
+            if (t > 1)
+                t -= 1;
+            if (t < 1 / 6)
+                return p + (q - p) * 6 * t;
+            if (t < 1 / 2)
+                return q;
+            if (t < 2 / 3)
+                return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        }
+        var q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+        var p = 2 * lightness - q;
+        red = t(p, q, hue + 1 / 3);
+        green = t(p, q, hue);
+        blue = t(p, q, hue - 1 / 3);
+    }
+    return {
+        red: Math.round(red * 255),
+        green: Math.round(green * 255),
+        blue: Math.round(blue * 255)
+    };
+}
+function parseRgbToHsl(rgbColor) {
+    let { red, green, blue } = rgbColor;
+    red = red / 255;
+    green = green / 255;
+    blue = blue / 255;
+    let max = Math.max(red, green, blue);
+    let min = Math.min(red, green, blue);
+    let hue, saturation, lightness = 0.5 * (max + min);
+    if (max === min) {
+        hue = 0;
+    }
+    if (max === red) {
+        if (green >= blue) {
+            hue = 60 * ((green - blue) / (max - min)) + 0;
+        }
+        else {
+            hue = 60 * ((green - blue) / (max - min)) + 360;
+        }
+    }
+    if (max === green) {
+        hue = 60 * ((blue - red) / (max - min)) + 120;
+    }
+    if (max === blue) {
+        hue = 60 * ((red - green) / (max - min)) + 240;
+    }
+    if (lightness === 0 || max === min) {
+        saturation = 0;
+    }
+    else if (lightness > 0 && lightness <= 0.5) {
+        saturation = (max - min) / (2 * lightness);
+    }
+    else {
+        saturation = (max - min) / (2 - 2 * lightness);
+    }
+    return {
+        hue: Math.floor(hue),
+        saturation: Math.round(saturation * 100),
+        lightness: Math.round(lightness * 100),
+    };
+}
+// name to hex
+const colors = {
+    'aliceblue': '#f0f8ff',
+    'antiquewhite': '#faebd7',
+    'aqua': '#00ffff',
+    'aquamarine': '#7fffd4',
+    'azure': '#f0ffff',
+    'beige': '#f5f5dc',
+    'bisque': '#ffe4c4',
+    'black': '#000000',
+    'blanchedalmond': '#ffebcd',
+    'blue': '#0000ff',
+    'blueviolet': '#8a2be2',
+    'brown': '#a52a2a',
+    'burlywood': '#deb887',
+    'cadetblue': '#5f9ea0',
+    'chartreuse': '#7fff00',
+    'chocolate': '#d2691e',
+    'coral': '#ff7f50',
+    'cornflowerblue': '#6495ed',
+    'cornsilk': '#fff8dc',
+    'crimson': '#dc143c',
+    'cyan': '#00ffff',
+    'darkblue': '#00008b',
+    'darkcyan': '#008b8b',
+    'darkgoldenrod': '#b8860b',
+    'darkgray': '#a9a9a9',
+    'darkgrey': '#a9a9a9',
+    'darkgreen': '#006400',
+    'darkkhaki': '#bdb76b',
+    'darkmagenta': '#8b008b',
+    'darkolivegreen': '#556b2f',
+    'darkorange': '#ff8c00',
+    'darkorchid': '#9932cc',
+    'darkred': '#8b0000',
+    'darksalmon': '#e9967a',
+    'darkseagreen': '#8fbc8f',
+    'darkslateblue': '#483d8b',
+    'darkslategray': '#2f4f4f',
+    'darkslategrey': '#2f4f4f',
+    'darkturquoise': '#00ced1',
+    'darkviolet': '#9400d3',
+    'deeppink': '#ff1493',
+    'deepskyblue': '#00bfff',
+    'dimgray': '#696969',
+    'dimgrey': '#696969',
+    'dodgerblue': '#1e90ff',
+    'firebrick': '#b22222',
+    'floralwhite': '#fffaf0',
+    'forestgreen': '#228b22',
+    'fuchsia': '#ff00ff',
+    'gainsboro': '#dcdcdc',
+    'ghostwhite': '#f8f8ff',
+    'gold': '#ffd700',
+    'goldenrod': '#daa520',
+    'gray': '#808080',
+    'grey': '#808080',
+    'green': '#008000',
+    'greenyellow': '#adff2f',
+    'honeydew': '#f0fff0',
+    'hotpink': '#ff69b4',
+    'indianred': '#cd5c5c',
+    'indigo': '#4b0082',
+    'ivory': '#fffff0',
+    'khaki': '#f0e68c',
+    'lavender': '#e6e6fa',
+    'lavenderblush': '#fff0f5',
+    'lawngreen': '#7cfc00',
+    'lemonchiffon': '#fffacd',
+    'lightblue': '#add8e6',
+    'lightcoral': '#f08080',
+    'lightcyan': '#e0ffff',
+    'lightgoldenrodyellow': '#fafad2',
+    'lightgray': '#d3d3d3',
+    'lightgrey': '#d3d3d3',
+    'lightgreen': '#90ee90',
+    'lightpink': '#ffb6c1',
+    'lightsalmon': '#ffa07a',
+    'lightseagreen': '#20b2aa',
+    'lightskyblue': '#87cefa',
+    'lightslategray': '#778899',
+    'lightslategrey': '#778899',
+    'lightsteelblue': '#b0c4de',
+    'lightyellow': '#ffffe0',
+    'lime': '#00ff00',
+    'limegreen': '#32cd32',
+    'linen': '#faf0e6',
+    'magenta': '#ff00ff',
+    'maroon': '#800000',
+    'mediumaquamarine': '#66cdaa',
+    'mediumblue': '#0000cd',
+    'mediumorchid': '#ba55d3',
+    'mediumpurple': '#9370d8',
+    'mediumseagreen': '#3cb371',
+    'mediumslateblue': '#7b68ee',
+    'mediumspringgreen': '#00fa9a',
+    'mediumturquoise': '#48d1cc',
+    'mediumvioletred': '#c71585',
+    'midnightblue': '#191970',
+    'mintcream': '#f5fffa',
+    'mistyrose': '#ffe4e1',
+    'moccasin': '#ffe4b5',
+    'navajowhite': '#ffdead',
+    'navy': '#000080',
+    'oldlace': '#fdf5e6',
+    'olive': '#808000',
+    'olivedrab': '#6b8e23',
+    'orange': '#ffa500',
+    'orangered': '#ff4500',
+    'orchid': '#da70d6',
+    'palegoldenrod': '#eee8aa',
+    'palegreen': '#98fb98',
+    'paleturquoise': '#afeeee',
+    'palevioletred': '#d87093',
+    'papayawhip': '#ffefd5',
+    'peachpuff': '#ffdab9',
+    'peru': '#cd853f',
+    'pink': '#ffc0cb',
+    'plum': '#dda0dd',
+    'powderblue': '#b0e0e6',
+    'purple': '#800080',
+    'rebeccapurple': '#663399',
+    'red': '#ff0000',
+    'rosybrown': '#bc8f8f',
+    'royalblue': '#4169e1',
+    'saddlebrown': '#8b4513',
+    'salmon': '#fa8072',
+    'sandybrown': '#f4a460',
+    'seagreen': '#2e8b57',
+    'seashell': '#fff5ee',
+    'sienna': '#a0522d',
+    'silver': '#c0c0c0',
+    'skyblue': '#87ceeb',
+    'slateblue': '#6a5acd',
+    'slategray': '#708090',
+    'slategrey': '#708090',
+    'snow': '#fffafa',
+    'springgreen': '#00ff7f',
+    'steelblue': '#4682b4',
+    'tan': '#d2b48c',
+    'teal': '#008080',
+    'thistle': '#d8bfd8',
+    'tomato': '#ff6347',
+    'turquoise': '#40e0d0',
+    'violet': '#ee82ee',
+    'wheat': '#f5deb3',
+    'white': '#ffffff',
+    'whitesmoke': '#f5f5f5',
+    'yellow': '#ffff00',
+    'yellowgreen': '#9acd32'
+};
 
 function useDate(...dateArgs) {
     return new DateRef(new Date(...dateArgs));
@@ -2460,7 +2777,7 @@ class DateRef extends Ref {
             return this;
         }
     }
-    format(template, customKeywords = emptyObject) {
+    format(template = 'YYYY-MM-DD', customKeywords = emptyObject) {
         let w = customKeywords.weekdays || weekdays;
         let m = customKeywords.months || months;
         return template.replace(dateFormatRE, (capture) => {
@@ -3050,7 +3367,7 @@ function expressionWithScope(expression, expressionContext) {
     return withScopedExpression;
 }
 function extractArrayFunctionArgs(argsExpression) {
-    if (!argsExpression.trim()) {
+    if (!argsExpression || !argsExpression.trim()) {
         return [];
     }
     let commaList = findFirstLevelComma(argsExpression);
@@ -3578,7 +3895,7 @@ function genNode(node, context) {
         case 21 /* DYNAMIC_SVG_ELEMENT */:
             var { is, isDynamicIs } = node;
             var { propsCode, dynamicPropsCode } = genProps(node, context);
-            var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, uStringId(), dynamicPropsCode);
+            var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
             code = genDirs(code, node, context);
             nodeCode = code;
             break;
@@ -3952,9 +4269,6 @@ function parseAttribute(attr) {
     attr.flag = flag;
     attr.endFlag = endFlag;
     // 属性简写
-    if (isUndefined(attr.value)) {
-        attr.value = attr.property;
-    }
     return attr;
 }
 
@@ -4386,7 +4700,7 @@ function processTemplateAst(htmlAst, context) {
                         case '@':
                             attr.type = 16 /* EVENT */;
                             attr.isHandler = isHandler(attr.value);
-                            attr.value = context.setRenderScope(attr.value);
+                            attr.value = context.setRenderScope(attr.value || attr.property);
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property);
                             }
@@ -4488,6 +4802,9 @@ function processTemplateAst(htmlAst, context) {
                                     attr.type = 15 /* ATTRIBUTE */;
                                     if (attr.isDynamicProperty) {
                                         attr.property = context.setRenderScope(attr.property);
+                                    }
+                                    if (!attr.value) {
+                                        attr.value = attr.property;
                                     }
                                     if (attr.isDynamicValue) {
                                         attr.value = context.setRenderScope(attr.value);
@@ -4701,6 +5018,7 @@ class CodeGenerator {
     }
     parseExpressionWithRawScope(exp) {
         let expInstance = createExpression(exp);
+        expInstance.pushScope(this.scopes);
         let setScopedExpression = expInstance.scopedExpression(this.renderScope);
         let variables = expInstance.variables;
         return {
@@ -4714,8 +5032,8 @@ class CodeGenerator {
         return expInstance.scopedExpression(this.renderScope);
     }
     setRawScope(exp) {
-        // 原生作用域不会受到模板的影响
         let expInstance = createExpression(exp);
+        expInstance.pushScope(this.scopes);
         return expInstance.scopedExpression(this.scope);
     }
     scopes = [];
@@ -4731,6 +5049,7 @@ const compilerDefaultOptions = {
     isSVGTag
 };
 function compile(template, compilerOptions = compilerDefaultOptions) {
+    let start = Date.now();
     var context = new CodeGenerator();
     context.compilerOptions = compilerOptions;
     // 初始化渲染作用域
@@ -4742,12 +5061,13 @@ function compile(template, compilerOptions = compilerDefaultOptions) {
     const content = `return ${toArrowFunction(renderCode)}`;
     context.pushNewLine(content);
     let code = context.getCode();
+    let end = Date.now();
     let render = {
         createRender: null,
-        useScopedStyleSheet: context.useScopedStyleSheet
+        useScopedStyleSheet: context.useScopedStyleSheet,
+        cost: end - start
     };
     eval(`render.createRender = function createRender(renderMethods){${code}}`);
-    console.log(render.createRender);
     return render;
 }
 
@@ -5045,7 +5365,8 @@ const modelText = {
         const { lazy, number, trim, debounce: useDebounce } = modifiers;
         const setter = vnode.props._setter;
         // 设置input初始值
-        el.value = isRef(value) ? value.value : value;
+        let initalValue = isRef(value) ? value.value : value;
+        el.value = isUndefined(initalValue) ? '' : initalValue;
         let inputHandler = () => {
             let inputValue = el.value;
             // number 和 trim 不能同时使用 , 空字符串转数字会变为0
@@ -5074,7 +5395,8 @@ const modelText = {
             el._inputing = false;
         }
         else {
-            el.value = isRef(value) ? value.value : value;
+            let newValue = isRef(value) ? value.value : value;
+            el.value = isUndefined(newValue) ? '' : newValue;
         }
     }
 };
@@ -5173,26 +5495,38 @@ const modelSelectMultiple = {
 };
 // 目前只支持 16 进制
 const modelColor = {
-    created(el, { value, modifiers: { lazy } }, vnode) {
+    created(el, { value, modifiers: { lazy, rgb, hsl, } }, vnode) {
         const setter = vnode.props._setter;
-        el.value = value;
+        el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         addListener(el, lazy ? 'change' : 'input', () => {
-            setter(el.value);
+            el._inputing = true;
+            let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value;
+            isRef(value) ? value.value = colorValue : setter(colorValue);
         });
     },
     beforeUpdate(el, { value }) {
-        el.value = value;
+        if (el._inputing) {
+            el._inputing = false;
+        }
+        else {
+            el.value = normalizeToHexColor(isRef(value) ? value.value : value);
+        }
     },
 };
 const modelRange = {
     created(el, { value, modifiers: { lazy } }, { props: { _setter } }) {
-        el.value = value;
+        el.value = isRef(value) ? value.value : value;
         addListener(el, lazy ? 'change' : 'input', () => {
-            _setter(el.value);
+            if (isRef(value)) {
+                value.value = el.value;
+            }
+            else {
+                _setter(el.value);
+            }
         });
     },
     beforeUpdate(el, { value }) {
-        el.value = value;
+        el.value = isRef(value) ? value.value : value;
     }
 };
 
@@ -7345,5 +7679,58 @@ function useUid() {
 function useOptions() {
     return getCurrentInstance().customOptions;
 }
+function useProps() {
+    return getCurrentInstance().props;
+}
+function useRefs() {
+    return getCurrentInstance().refs ||= {};
+}
+function useRef(name) {
+    let refs = useRefs();
+    return refs[name];
+}
+function useAttrs() {
+    return getCurrentInstance().attrs ||= {};
+}
+function useSlots() {
+    return getCurrentInstance().slots ||= {};
+}
+function useSlot(name = 'default') {
+    return useSlots()[name];
+}
+function useWatch() {
+    return getCurrentInstance().watch;
+}
+function useRoot() {
+    return getCurrentInstance().root;
+}
+function useParent() {
+    return getCurrentInstance().parent;
+}
+function useEmit() {
+    return getCurrentInstance().emit;
+}
+function useOn() {
+    return getCurrentInstance().on;
+}
+function useOnce() {
+    return getCurrentInstance().once;
+}
+function useOff() {
+    return getCurrentInstance().off;
+}
+function useScope() {
+    return getCurrentInstance().scope;
+}
+function useInstance() {
+    return getCurrentInstance();
+}
+function useApp() {
+    return getCurrentApp();
+}
+// for debgger
+function exposeCurrentScopeToWindow(name = 'scope') {
+    window[name] = getCurrentScope();
+}
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, expressionWithScope, extend, extractArrayFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToRgb, hsl, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isSVGTag, isShallow, isString, isUndefined, joinSelector, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseInlineClass, parseInlineStyle, parseNativeEventName, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useBoolean, useColor, useDate, useNumber, useOptions, usePromise, useRefState, useString, useUid, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractArrayFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseHexToBaseColor, parseHslColor, parseHslToRgb, parseInlineClass, parseInlineStyle, parseNativeEventName, parseRgbToBaseColor, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers };
