@@ -1,21 +1,18 @@
 import {
-    createExpression, createApp, ref, useRefState, onMounted, useScope, useEmit, useProps, useParent, useDate, onUpdated, isRgbColor, parseHslColor, hsl, exposeCurrentScopeToWindow,
+    createExpression, createApp, ref, useRefState, onMounted, useScope, onPropChange, useInstance
 } from "./packages/core";
 
 console.time('crush')
 
 let tom = {
+    props: ['x'],
     template: /*html*/`
-        <h1>{{text}}</h1>
-        <input  --model="text">
+        <h1> {{x}} </h1>
     `,
     create() {
- 
-
-
-        let scope = useScope()
-        exposeCurrentScopeToWindow()
-        scope.text = ref('12465')
+        onPropChange('x', () => {
+            console.log('x change');
+        })
     }
 }
 
@@ -26,8 +23,13 @@ let app = createApp({
         tom
     },
     template:/*html*/`
-        <tom>
+        <button @click="x++">{{x}}</button>
+        <tom $x>
     `,
+    create() {
+        let scope = useScope()
+        scope.x = 0
+    }
 })
 
 console.log(app);

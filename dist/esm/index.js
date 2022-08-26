@@ -2968,7 +2968,7 @@ function mountComponent(vnode, container, anchor, parent) {
     // 先挂载props ，这样 create hook中才能访问
     mountComponentProps(instance, vnode.props);
     instance.slots = vnode.children;
-    instance.props = vnode.props;
+    instance.props = reactive(vnode.props);
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
     const createResults = callHook("create" /* CREATE */, instance, { binding: scope }, scope);
     // 注入 mixins 状态
@@ -5364,6 +5364,7 @@ const modelText = {
     created(el, { value, modifiers }, vnode) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers;
         const setter = vnode.props._setter;
+        el._modelValue = value;
         // 设置input初始值
         let initalValue = isRef(value) ? value.value : value;
         el.value = isUndefined(initalValue) ? '' : initalValue;
@@ -5373,8 +5374,8 @@ const modelText = {
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue;
             // 标记输入框刚刚输入完毕
             el._inputing = true;
-            if (isRef(value)) {
-                value.value = inputValue;
+            if (isRef(el.modelValue)) {
+                el.modelValue.value = inputValue;
             }
             else {
                 setter(inputValue);
@@ -5384,7 +5385,7 @@ const modelText = {
             let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1];
             let numberValue = toNumber(debounceNextModifier);
             // 如果是合理地数字
-            let wait = isNumber(numberValue) ? numberValue : 500;
+            let wait = isNumber(numberValue) ? numberValue : 100;
             inputHandler = debounce(inputHandler, wait);
         }
         addListener(el, lazy ? 'change' : 'input', inputHandler);
@@ -5395,6 +5396,7 @@ const modelText = {
             el._inputing = false;
         }
         else {
+            el._modelValue = el.value;
             let newValue = isRef(value) ? value.value : value;
             el.value = isUndefined(newValue) ? '' : newValue;
         }
@@ -5496,12 +5498,14 @@ const modelSelectMultiple = {
 // 目前只支持 16 进制
 const modelColor = {
     created(el, { value, modifiers: { lazy, rgb, hsl, } }, vnode) {
+        el._mdelValue = value;
         const setter = vnode.props._setter;
+        // 设置初始值
         el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         addListener(el, lazy ? 'change' : 'input', () => {
             el._inputing = true;
             let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value;
-            isRef(value) ? value.value = colorValue : setter(colorValue);
+            isRef(el._mdelValue) ? el._mdelValue.value = colorValue : setter(colorValue);
         });
     },
     beforeUpdate(el, { value }) {
@@ -5509,9 +5513,10 @@ const modelColor = {
             el._inputing = false;
         }
         else {
+            el._mdelValue = value;
             el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         }
-    },
+    }
 };
 const modelRange = {
     created(el, { value, modifiers: { lazy } }, { props: { _setter } }) {
@@ -7362,6 +7367,20 @@ function createInstanceWatch(instance) {
         }
     };
 }
+// create hook watch , 只能在create钩子中使用
+function watch(source, cb) {
+    return getCurrentInstance().watch(source, cb);
+}
+// 更加语义化的
+function onPropsChange(cb) {
+    return watchReactive(getCurrentInstance().props, cb);
+}
+function onPropChange(prop, cb) {
+    if (!getCurrentInstance().propsOptions[prop]) {
+        return;
+    }
+    return watchTargetKey(getCurrentInstance().props, prop, cb);
+}
 
 const createComponentInstance = (options, parent) => {
     let app = getCurrentApp();
@@ -7733,4 +7752,4 @@ function exposeCurrentScopeToWindow(name = 'scope') {
     window[name] = getCurrentScope();
 }
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractArrayFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseHexToBaseColor, parseHslColor, parseHslToRgb, parseInlineClass, parseInlineStyle, parseNativeEventName, parseRgbToBaseColor, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractArrayFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseHexToBaseColor, parseHslColor, parseHslToRgb, parseInlineClass, parseInlineStyle, parseNativeEventName, parseRgbToBaseColor, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNativeEventName, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };

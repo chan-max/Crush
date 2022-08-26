@@ -11,7 +11,7 @@ import {
     patch
 } from './patch'
 import {
-    createReactiveEffect,
+    createReactiveEffect, reactive,
 } from '@crush/reactivity'
 
 import {
@@ -89,9 +89,9 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     // 先挂载props ，这样 create hook中才能访问
     mountComponentProps(instance, vnode.props)
     instance.slots = vnode.children
-    instance.props = vnode.props
+    instance.props = reactive(vnode.props)
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
-
+    
     const createResults = callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)
 
     // 注入 mixins 状态

@@ -21,3 +21,16 @@ export function createInstanceWatch(instance: any) {
 export function watch(source: any, cb: any) {
     return getCurrentInstance().watch(source, cb)
 }
+
+// 更加语义化的
+
+export function onPropsChange(cb: any) {
+    return watchReactive(getCurrentInstance().props, cb)
+}
+
+export function onPropChange(prop: string, cb: any) {
+    if (!getCurrentInstance().propsOptions[prop]) {
+        return
+    }
+    return watchTargetKey(getCurrentInstance().props, prop, cb)
+}

@@ -2970,7 +2970,7 @@ define(['exports'], (function (exports) { 'use strict';
         // 先挂载props ，这样 create hook中才能访问
         mountComponentProps(instance, vnode.props);
         instance.slots = vnode.children;
-        instance.props = vnode.props;
+        instance.props = reactive(vnode.props);
         // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
         const createResults = callHook("create" /* CREATE */, instance, { binding: scope }, scope);
         // 注入 mixins 状态
@@ -5366,6 +5366,7 @@ define(['exports'], (function (exports) { 'use strict';
         created(el, { value, modifiers }, vnode) {
             const { lazy, number, trim, debounce: useDebounce } = modifiers;
             const setter = vnode.props._setter;
+            el._modelValue = value;
             // 设置input初始值
             let initalValue = isRef(value) ? value.value : value;
             el.value = isUndefined(initalValue) ? '' : initalValue;
@@ -5375,8 +5376,8 @@ define(['exports'], (function (exports) { 'use strict';
                 inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue;
                 // 标记输入框刚刚输入完毕
                 el._inputing = true;
-                if (isRef(value)) {
-                    value.value = inputValue;
+                if (isRef(el.modelValue)) {
+                    el.modelValue.value = inputValue;
                 }
                 else {
                     setter(inputValue);
@@ -5386,7 +5387,7 @@ define(['exports'], (function (exports) { 'use strict';
                 let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1];
                 let numberValue = toNumber(debounceNextModifier);
                 // 如果是合理地数字
-                let wait = isNumber(numberValue) ? numberValue : 500;
+                let wait = isNumber(numberValue) ? numberValue : 100;
                 inputHandler = debounce(inputHandler, wait);
             }
             addListener(el, lazy ? 'change' : 'input', inputHandler);
@@ -5397,6 +5398,7 @@ define(['exports'], (function (exports) { 'use strict';
                 el._inputing = false;
             }
             else {
+                el._modelValue = el.value;
                 let newValue = isRef(value) ? value.value : value;
                 el.value = isUndefined(newValue) ? '' : newValue;
             }
@@ -5498,12 +5500,14 @@ define(['exports'], (function (exports) { 'use strict';
     // 目前只支持 16 进制
     const modelColor = {
         created(el, { value, modifiers: { lazy, rgb, hsl, } }, vnode) {
+            el._mdelValue = value;
             const setter = vnode.props._setter;
+            // 设置初始值
             el.value = normalizeToHexColor(isRef(value) ? value.value : value);
             addListener(el, lazy ? 'change' : 'input', () => {
                 el._inputing = true;
                 let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value;
-                isRef(value) ? value.value = colorValue : setter(colorValue);
+                isRef(el._mdelValue) ? el._mdelValue.value = colorValue : setter(colorValue);
             });
         },
         beforeUpdate(el, { value }) {
@@ -5511,9 +5515,10 @@ define(['exports'], (function (exports) { 'use strict';
                 el._inputing = false;
             }
             else {
+                el._mdelValue = value;
                 el.value = normalizeToHexColor(isRef(value) ? value.value : value);
             }
-        },
+        }
     };
     const modelRange = {
         created(el, { value, modifiers: { lazy } }, { props: { _setter } }) {
@@ -7364,6 +7369,20 @@ define(['exports'], (function (exports) { 'use strict';
             }
         };
     }
+    // create hook watch , 只能在create钩子中使用
+    function watch(source, cb) {
+        return getCurrentInstance().watch(source, cb);
+    }
+    // 更加语义化的
+    function onPropsChange(cb) {
+        return watchReactive(getCurrentInstance().props, cb);
+    }
+    function onPropChange(prop, cb) {
+        if (!getCurrentInstance().propsOptions[prop]) {
+            return;
+        }
+        return watchTargetKey(getCurrentInstance().props, prop, cb);
+    }
 
     const createComponentInstance = (options, parent) => {
         let app = getCurrentApp();
@@ -7781,6 +7800,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
     exports.createInstanceEventEmitter = createInstanceEventEmitter;
+    exports.createInstanceWatch = createInstanceWatch;
     exports.createKeyframe = createKeyframe;
     exports.createKeyframes = createKeyframes;
     exports.createMap = createMap;
@@ -7956,6 +7976,8 @@ define(['exports'], (function (exports) { 'use strict';
     exports.onBeforeUpdate = onBeforeUpdate;
     exports.onCreated = onCreated;
     exports.onMounted = onMounted;
+    exports.onPropChange = onPropChange;
+    exports.onPropsChange = onPropsChange;
     exports.onSet = onSet;
     exports.onSetCallbacks = onSetCallbacks;
     exports.onUnmounted = onUnmounted;
@@ -8109,6 +8131,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.useUid = useUid;
     exports.useWatch = useWatch;
     exports.warn = warn;
+    exports.watch = watch;
     exports.watchReactive = watchReactive;
     exports.watchRef = watchRef;
     exports.watchTargetKey = watchTargetKey;
