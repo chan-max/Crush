@@ -7,29 +7,45 @@ export const ref = (value: any, options?: any) => new Ref(value, options)
 
 export const createRefValueSetter = (ref: Ref) => (newValue: any) => ref.value = newValue
 
+let defaultRefOptions = {
+    sensitive: false,
+    shallow: false,
+    onSet: null,
+    onGet: null
+}
 
 export class Ref {
-    [ReactiveTypeSymbol] = true;
-    [ReactiveFlags.IS_REF] = true
+    [ReactiveTypeSymbol] = true; // 标记为响应式数据
+    [ReactiveFlags.IS_REF] = true // 标记为ref
+
+    // 注册set和get的回调函数
+    onSet: any
+    onGet: any
 
     oldValue: any // 保存旧值
 
-    _value: any
+    _value: any // 保存当前值
 
-    sensitive: any
+    sensitive: any // 该属性为true时 , 当值设置为当前值时也会触发响应
 
-    shallow: any
+    shallow: any  // 深层数据是否为响应式
 
-    constructor(value: any, options: any = emptyObject) {
+    constructor(value: any, options: any = defaultRefOptions) {
         this.sensitive = options.sensitive
         this.shallow = options.shallow
+        this.onSet = options.onSet
         this._value = value
     }
 
     get value() {
         // track
+        if (this.onGet) {
+            this.onGet()
+        }
+
         track(this)
         let value = this._value
+
         return (!this.shallow && isProxyType(value)) ? reactive(value) : value
     }
 
@@ -38,8 +54,12 @@ export class Ref {
         if (this._value === newValue && !this.sensitive) {
             return
         }
+
         this.oldValue = this._value
         this._value = newValue
+        if (this.onSet) {
+            this.onSet()
+        }
         // trigger
         trigger(this)
     }

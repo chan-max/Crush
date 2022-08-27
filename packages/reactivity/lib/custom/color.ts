@@ -1,3 +1,4 @@
+import { error } from "@crush/common"
 
 const hexColorRE = /^#([0-9a-fA-F]{6})$/
 const shortHexColorRE = /^#([0-9a-fA-F]{3})$/
@@ -185,6 +186,56 @@ export function parseRgbToHsl(rgbColor: any) {
     }
 }
 
+class ColorRef {
+    
+}
+
+export function createColor(color: any) {
+    return new Color(color)
+}
+
+class Color {
+
+    constructor(color: any) {
+        let hex = normalizeToHexColor(color)
+        let rgb = parseHexToBaseColor(hex)
+        let hsl = parseRgbToHsl(rgb)
+        let { red, green, blue } = rgb
+        let { hue, saturation, lightness } = hsl
+        this.red = red
+        this.green = green
+        this.blue = blue
+        this.hue = hue
+        this.saturation = saturation
+        this.ligntness = lightness
+    }
+
+    red: any = null
+    green: any = null
+    blue: any = null
+    hue: any = null
+    saturation: any = null
+    ligntness: any = null
+
+
+    lighten() {
+
+    }
+
+    darken() {
+
+    }
+
+    saturate() {
+
+    }
+
+    desaturate() {
+
+    }
+
+
+}
 
 
 

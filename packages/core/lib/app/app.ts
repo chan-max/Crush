@@ -7,7 +7,7 @@ import { DirectiveType } from "../instance/directive"
 import { PluginType } from "../instance/plugin"
 import { createElement, mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
-
+import { colors } from "@crush/reactivity"
 import { installAnimation } from '@crush/animate'
 import { responsiveLayoutMedia } from "@crush/css"
 import { scopeProperties } from "../instance/scope"
@@ -46,6 +46,9 @@ export function createApp(rootComponent: any) {
 
         errorHandler: null,
         warnHandler: null,
+
+        // 全局颜色
+        colors,
 
         // config
         // @screens

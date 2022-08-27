@@ -6,7 +6,7 @@ import { terser } from "rollup-plugin-terser";
 //console.log(replace(replacements));
 const entry = './packages/core/index.ts'
 
-const bannerContent = `crush.js <%= pkg.version%><%= pkg.author%>`
+const bannerContent = `crush.js <%= pkg.version%> created by <%= pkg.author%> `
 
 export default {
     input: entry,
@@ -39,7 +39,7 @@ export default {
     plugins: [
         banner(bannerContent),
         typescript(),
-        // terser(),
+        terser(),
     ]
 
 };

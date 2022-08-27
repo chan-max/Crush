@@ -29,6 +29,9 @@ export const scopeProperties: any = {
     get $refs() {
         return this._currentPropertyAccessInstance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
     },
+    get $colors() {
+        return getCurrentApp().colors
+    },
     get $el() {
         let { vnode, isMounted } = this._currentPropertyAccessInstance
         if (!isMounted || !vnode) {

@@ -1,34 +1,42 @@
 import {
-    createExpression, createApp, ref, useRefState, onMounted, useScope, onPropChange, useInstance
+    createExpression, createApp, ref, useRefState, onMounted, useScope, onPropChange, useInstance, createColor, onUnmounted, computed
 } from "./packages/core";
 
 console.time('crush')
 
-let tom = {
-    props: ['x'],
-    template: /*html*/`
-        <h1> {{x}} </h1>
-    `,
-    create() {
-        onPropChange('x', () => {
-            console.log('x change');
-        })
-    }
-}
+
+let color = createColor('red')
+
+console.log(color);
 
 
 
 let app = createApp({
-    components: {
-        tom
-    },
     template:/*html*/`
-        <button @click="x++">{{x}}</button>
-        <tom $x>
+        <style> 
+            body{
+                $background-color:hsl(x*y*360,x*100,y*100);
+            }
+        </style>
+        <h1>x:{{x}}</h1>
+        <h1>y:{{y}}</h1>
     `,
     create() {
-        let scope = useScope()
-        scope.x = 0
+        let x = ref(0)
+        let y = ref(0)
+        onMounted(() => {
+            window.onmousemove = (e) => {
+                x.value = e.x / window.innerWidth
+                y.value = e.y / window.innerHeight
+            }
+        })
+        onUnmounted(() => window.onmousemove = null)
+
+
+
+        return {
+            x, y
+        }
     }
 })
 
