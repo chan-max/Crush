@@ -5,12 +5,15 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 
 import { PluginType } from "../instance/plugin"
-import { createElement, mount, unmountComponent } from "@crush/renderer"
+import { createElement, createReverseKeyCodes, mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 import { colors } from "@crush/reactivity"
 import { installAnimation } from '@crush/animate'
 import { responsiveLayoutMedia } from "@crush/css"
 import { scopeProperties } from "../instance/scope"
+import { keyCodes } from '@crush/renderer'
+
+import { modifierGuards } from '@crush/renderer'
 
 // forward
 log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`)
@@ -22,6 +25,8 @@ export function getCurrentApp(): any {
 }
 
 
+
+
 export function createApp(rootComponent: any) {
 
     if (currentApp) {
@@ -29,6 +34,7 @@ export function createApp(rootComponent: any) {
         warn('APP', currentApp, 'is runing and there can only be one application in your webpage')
         return
     }
+
 
     const app: any = {
         isMounted: false,
@@ -43,13 +49,18 @@ export function createApp(rootComponent: any) {
         use,
         mount: mountApp,
         unmount: unmountApp,
-
+        beforeAppMount,
         errorHandler: null,
         warnHandler: null,
 
-        // 全局颜色
+        // 全局颜色 $colors
         colors,
 
+        // 按键修饰符
+        keyCodes,
+
+        // 事件修饰符
+        modifierGuards,
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
@@ -94,6 +105,8 @@ export function createApp(rootComponent: any) {
         app.plugins.add(plugin)
     }
 
+
+
     function mountApp(container: any = app.container) {
         if (!container) {
             // 没传入container , 默认使用
@@ -116,6 +129,9 @@ export function createApp(rootComponent: any) {
         if (!app.rootComponent.template && !app.rootComponent.render) {
             app.rootComponent.template = app.inlineTemplate
         }
+
+        // 执行应用挂载前钩子，可以拿到用户定义的配置信息
+        app.beforeAppMount(app)
 
         app.rootComponentVnode = createComponent(rootComponent, null, null)
         mount(app.rootComponentVnode, app.container)
@@ -140,8 +156,15 @@ export function createApp(rootComponent: any) {
 
     return app
 }
-9
+
+
+
 
 export function getCustomScreensMedia(screen: string) {
     return getCurrentApp().customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
+}
+
+
+function beforeAppMount(app: any) {
+
 }

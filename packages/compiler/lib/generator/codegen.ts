@@ -450,6 +450,12 @@ function genProps(node: any, context: any): any {
                 if (modifiers && !isComponent) {
                     callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
                 }
+
+                // 处理按键修饰符
+                if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
+                    property = 'mouseup'
+                }
+
                 if (isDynamicProperty) {
                     let key = isComponent ?
                         context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes))) :

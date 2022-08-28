@@ -63,7 +63,7 @@ export function parseAttribute(attr: any) {
         decorators = attribute.slice(property?.length)
     }
 
-    let _arguments, filters, modifiers
+    let _arguments:any, filters:any, modifiers:any
 
     if (decorators) {
         let tokens: any = decorators.split(/(?=[\.|:])/)
@@ -77,6 +77,11 @@ export function parseAttribute(attr: any) {
             }
         });
     }
+
+    modifiers &&= modifiers.map(camelize)
+    _arguments &&= _arguments.map(camelize)
+    filters &&= filters.map(camelize)
+
 
     attr.isBooleanProperty = isUndefined(value)
     attr.isDynamicProperty = isDynamicProperty

@@ -50,7 +50,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent?: any, isS
     const el: any = vnode.el = docCreateElement(type, isSVG)
     el._vnode = vnode
     // set scoped id
-    if (parent?.useScopedStyleSheet) {
+    if (parent?.useScopedStyleSheet || parent?.scopedId) {
         setAttribute(el, parent.scopedId || `scoped-${parent.uid}`)
     }
     mountAttributes(el, props, parent, isSVG)
@@ -62,7 +62,7 @@ function mountElement(vnode: any, container: any, anchor: any, parent?: any, isS
     } else {
         insertElement(el, container, anchor)
     }
-
+    
     // mounted 后需不需要拿到子节点元素
     processHook(LifecycleHooks.MOUNTED, vnode)
 

@@ -182,6 +182,7 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     }
 
     eval(`render.createRender = function createRender(renderMethods){${code}}`)
+    console.log(render.createRender);
     
     return render
 }
