@@ -5,44 +5,26 @@ import {
 console.time('crush')
 
 
-let color = createColor('red')
-
-console.log(color);
-
-
 
 let app = createApp({
     template:/*html*/`
-        <style> 
-            body{
-                $background-color:hsl(x*y*360,x*100,y*100);
-            }
-        </style>
-        <h1>x:{{x}}</h1>
-        <h1>y:{{y}}</h1>
+        <button @click:once="log"> click </button>
+        <input --model="text" @keydown.delete="log">
     `,
     create() {
-        let x = ref(0)
-        let y = ref(0)
-        onMounted(() => {
-            window.onmousemove = (e) => {
-                x.value = e.x / window.innerWidth
-                y.value = e.y / window.innerHeight
-            }
-        })
-        onUnmounted(() => window.onmousemove = null)
-
-
-
-        return {
-            x, y
+        let scope = useScope()
+        let text = ref(666)
+        scope.text = text
+        scope.log = (e) => {
+            console.log(e);
         }
     }
 })
 
+app.keyCodes.Space = 's'
+
 console.log(app);
 
 app.mount()
-
 
 console.timeEnd('crush')
