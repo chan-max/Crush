@@ -169,7 +169,7 @@ function genSlotContent(node: any, context: any) {
     });
 
     if (_default) {
-        // ! 默认插槽不存在作用域插槽
+        // 默认插槽不存在作用域插槽
         slots.default = toArrowFunction(genNodes(_default, context))
     }
     return stringify(slots)
@@ -430,9 +430,7 @@ function genDeclartion(declarationGroup: any[], context: any) {
     }
 }
 
-import {
-    toNativeEventName
-} from '@crush/renderer'
+
 
 
 function genProps(node: any, context: any): any {
@@ -447,23 +445,17 @@ function genProps(node: any, context: any): any {
             case AstTypes.EVENT:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
                 var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$') // 包裹函数都需要传入一个 $ 参数
-                if (modifiers && !isComponent) {
-                    callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)))
-                }
 
                 // 处理按键修饰符
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup'
                 }
-
                 if (isDynamicProperty) {
-                    let key = isComponent ?
-                        context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes))) :
-                        context.callRenderFn('toNativeEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)))
+                    let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL)
                     props[dynamicMapKey(key)] = callback
                     dynamicProps.push(key)
                 } else {
-                    let key = (isComponent ? toEventName(property, _arguments, modifiers, filters) : toNativeEventName(property, _arguments))
+                    let key = toEventName(property, _arguments, modifiers, filters)
                     props[key] = callback
                     dynamicProps.push(toSingleQuotes(key))
                 }

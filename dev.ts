@@ -8,20 +8,19 @@ console.time('crush')
 
 let app = createApp({
     template:/*html*/`
-        <button @click:once="log"> click </button>
-        <input --model="text" @keydown.delete="log">
+        <div @click="i++">132456</div>
+        <div  if="i%2===0" $style="{width:i+'px',height:i+'px',backgroundColor:'red'}" @resize.window="log">{{i}}</div>
     `,
     create() {
         let scope = useScope()
-        let text = ref(666)
-        scope.text = text
-        scope.log = (e) => {
-            console.log(e);
-        }
+        scope.i = 100
+        scope.log = [() => console.log(11),
+        () => console.log(222),
+        ]
     }
 })
 
-app.keyCodes.Space = 's'
+
 
 console.log(app);
 

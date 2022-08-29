@@ -61,7 +61,7 @@ export function watchReactive(reactiveData: any, callback: any) {
     }
     // 问题需要记录子数据脱离绑定的情况
     // 保存当前 watch 的data中存在的所有 target 
-    // ! 当侦测一个reactive data时，回调中不应该再设置该属性的值否则会死循环
+    // 当侦测一个reactive data时，回调中不应该再设置该属性的值否则会死循环
 
 
     const targets = new Set()

@@ -27,7 +27,7 @@ export const scopeProperties: any = {
         return this._currentPropertyAccessInstance
     },
     get $refs() {
-        return this._currentPropertyAccessInstance.refs ||= {} // ! 确保组件没挂载时可以拿到 refs
+        return this._currentPropertyAccessInstance.refs ||= {} // 确保组件没挂载时可以拿到 refs
     },
     get $colors() {
         return getCurrentApp().colors

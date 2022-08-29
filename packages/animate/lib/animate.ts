@@ -16,7 +16,7 @@ export function doKeyframesAnimation(el: HTMLElement, options: any, endCb?: any,
     let _name = getElementComputedStyleValue(el, 'animationName')
 
     if (_name && _name !== 'none') {
-        // ! 元素本身不应该存在动画名称属性
+        // 元素本身不应该存在动画名称属性
         return
     }
 

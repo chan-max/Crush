@@ -1,5 +1,5 @@
 import {
-    arrayToMap, initialLowerCase, initialUpperCase, isArray, isString
+    arrayToMap, camelize, initialLowerCase, initialUpperCase, isArray, isFunction, isString
 } from '@crush/common'
 import { getCurrentApp } from '@crush/core';
 
@@ -8,45 +8,16 @@ import { getCurrentApp } from '@crush/core';
 const onRE = /^on[A-Z]/;
 export const isEvent = (key: string) => onRE.test(key);
 
-/*
-    dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
-*/
-
-// 只有原生事件支持 opitons
-export function toNativeEventName(eventName: string, _arguments?: string[]): string {
-    if (!eventName) {
-        return ''
-    }
-    var name = `on${initialUpperCase(eventName)}`
-    if (_arguments && _arguments.length !== 0) {
-        name += _arguments.map(initialUpperCase).join('') // join default with ,
-    }
-    return name
-}
-
-export const parseNativeEventName = (name: string) => {
-    var keys = name.split(/(?=[A-Z])/).map((key: string) => key.toLowerCase())
-    // remove on
-    keys.shift()
-    var event = keys[0]
-    // remove eventName
-    keys.shift()
-    return {
-        event,
-        options: arrayToMap(keys)
-    }
-}
-
-/* 
-    @event:arg1:arg2.mod1.mod2
-        tranform to...
-        onEvent_arg1_arg2$mod1$mod2
-*/
-
 export function toEventName(event: string, _arguments?: string[], modifiers?: string[], filters?: string[]) {
-    event = `on${initialUpperCase(event)}`
-    _arguments && (event += _arguments.map((_) => `_${_}`).join(''))
-    modifiers && (event += modifiers.map(($) => `$${$}`).join(''))
+    /*
+        argument $
+        modifier _
+        filter $_
+    */
+    event = `on${initialUpperCase(camelize(event))}`
+    _arguments && (event += _arguments.map(($) => `$${$}`).join(''))
+    modifiers && (event += modifiers.map((_) => `_${_}`).join(''))
+    filters && (event += filters.map(($_) => `$_${$_}`).join(''))
     return event
 }
 
@@ -56,13 +27,14 @@ export function getEventName(name: string): string {
 }
 
 
-const extrctEventNameRE = /on([a-zA-Z]+)([_a-zA-Z]*)([\$a-zA-Z]*)/
-export function parseEventName(name: string) {
-    const [_, event, _argumentsStr, modifiersStr]: any = extrctEventNameRE.exec(name)
+const extrctEventNameRE = /on([a-zA-Z]+)([\$a-zA-Z]*)([_a-zA-Z]*)([\$_a-zA-Z]*)/
+export function parseEventName(name: string): any {
+    const [_, event, _argumentsStr, modifiersStr, filterStr]: any = extrctEventNameRE.exec(name)
     return {
         event: initialLowerCase(event),
-        _arguments: _argumentsStr && arrayToMap(_argumentsStr.split('_').filter(Boolean)),
-        modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
+        _arguments: _argumentsStr && _argumentsStr.split('$').filter(Boolean),
+        modifiers: modifiersStr && modifiersStr.split('_').filter(Boolean),
+        filters: filterStr && filterStr.split('_').filter(Boolean),
     }
 }
 
@@ -107,6 +79,10 @@ export function createReverseKeyCodes() {
 }
 
 export function withEventModifiers(fn: any, modifiers: any) {
+    if (!isFunction(fn)) {
+        return null
+    }
+
     reverseKeyCodes ||= createReverseKeyCodes()
 
     // key 按键守卫
@@ -119,13 +95,13 @@ export function withEventModifiers(fn: any, modifiers: any) {
 
     // 增加按键守卫
 
-    let withKeyGuardFn = guardKeyCodes ? (event: any, ...args: any) => {
+    let withKeyGuardFn = guardKeyCodes.length ? (event: any, ...args: any) => {
         if (guardKeyCodes.includes(event.code)) {
             fn(event, ...args)
         }
     } : fn
 
-    return (event: any, ...args: any) => {
+    let withGuardsFn: any = (event: any, ...args: any) => {
         for (let i = 0; i < modifiers.length; i++) {
             const guard = modifierGuards[modifiers[i]];
             if (guard && guard(event, modifiers)) {
@@ -135,6 +111,11 @@ export function withEventModifiers(fn: any, modifiers: any) {
         }
         return withKeyGuardFn(event, ...args);
     };
+
+    // 保存原函数
+    withGuardsFn._raw = fn
+
+    return withGuardsFn
 };
 
 
@@ -151,7 +132,7 @@ export const keyCodes = {
     Digit0: '0',
     // 当一个keycode有多个修饰符时，代表多个修饰符指向kecode
     Delete: ['delete', 'del'],
-    Digit1: null,
+    Digit1: '1',
     Digit2: null,
     Digit3: null,
     Digit4: null,
@@ -179,7 +160,7 @@ export const keyCodes = {
     Enter: null,
     ControlLeft: null,
     KeyA: null,
-    KeyS: null,
+    KeyS: 's',
     KeyD: null,
     KeyF: null,
     KeyG: null,

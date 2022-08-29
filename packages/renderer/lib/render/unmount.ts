@@ -37,12 +37,17 @@ export function unmountChildren(children: any) {
     children.forEach(unmount);
 }
 
+import { updateElementAttributes } from './attribute'
+
 function unmountElement(vnode: any) {
-    const { el, transition } = vnode
+    const { el, props, transition, instance } = vnode
     processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
     if (vnode.children && vnode.nodeType !== Nodes.STYLE) {
         unmountChildren(vnode.children)
     }
+
+    // unmount attribute
+    updateElementAttributes(el, props, null, instance)
 
     if (transition) {
         transition.processUnmount(el)

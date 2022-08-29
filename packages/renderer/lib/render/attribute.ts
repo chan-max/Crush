@@ -51,7 +51,7 @@ export function unmountClass(el: Element) {
 
 
 import {
-    parseNativeEventName,
+    parseEventName,
     isEvent
 } from '../common/event'
 
@@ -60,10 +60,18 @@ import { ComponentInstance, isElementLifecycleHook, normalizeClass, normalizeSty
 
 
 export function mountAttributes(el: any, props: any, instance: any = null, isSVG: boolean) {
-    updateElementAttributes(el, null, props, instance, isSVG,)
+    updateElementAttributes(el, null, props, instance, isSVG)
 }
 
-export function updateElementAttributes(el: any, pProps: any, nProps: any, instance: any = null, isSVG = false, dynamicProps: any = null) {
+import { withEventModifiers } from "../common/event";
+
+export function updateElementAttributes(el: any,
+     pProps: any, 
+     nProps: any, 
+     instance: any = null, 
+     isSVG = false, 
+     dynamicProps: any = null, // 标记动态的props，如果传入，只更新 dynamicProps
+     ) {
     // 如果传了dynamicProps更新即可，没传的话就需要全部更新
     if (!pProps && !nProps) {
         return
@@ -71,7 +79,6 @@ export function updateElementAttributes(el: any, pProps: any, nProps: any, insta
     pProps ||= emptyObject
     nProps ||= emptyObject
     for (let propName of (dynamicProps || unionkeys(pProps, nProps))) {
-
         var pValue = pProps[propName]
         var nValue = nProps[propName]
         switch (propName) {
@@ -102,12 +109,36 @@ export function updateElementAttributes(el: any, pProps: any, nProps: any, insta
                 }
 
                 if (isEvent(propName)) {
-                    var { event, options } = parseNativeEventName(propName)
+                    if (pValue === nValue) {
+                        continue
+                    }
+                    var { event, _arguments, modifiers, filters } = parseEventName(propName)
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue
                     }
-                    updateNativeEvents(el, event, pValue, nValue, options)
+                    // window 修饰符
+                    el = modifiers.includes('window') ? window : el
+
+                    let options = { once: _arguments && _arguments.includes('once'), capture: _arguments && _arguments.includes('capture'), passive: _arguments && _arguments.includes('passive') }
+                    let pHandler = normalizeHandler(pValue)
+                    let nHandler = normalizeHandler(nValue)
+                    // 保留原始事件和
+                    let handlerMap = el._handlerMap ||= new Map()
+                    pHandler.forEach((handler: any) => {
+                        if (!nHandler.includes(handler)) {
+                            // remove
+                            removeListener(el, event, el._handlerMap.get(handler), options)
+                        }
+                    });
+                    nHandler.forEach((handler: any) => {
+                        if (!pHandler.includes(handler)) {
+                            // add
+                            let ensureAddHandler = modifiers ? withEventModifiers(handler, modifiers) : handler
+                            handlerMap.set(handler, ensureAddHandler)
+                            addListener(el, event, ensureAddHandler, options)
+                        }
+                    });
                 } else if (propName in el && !isSVG) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue)
                 } else {
@@ -123,14 +154,3 @@ export function updateElementAttributes(el: any, pProps: any, nProps: any, insta
 // unmountAttribute
 import { normalizeHandler } from './componentListener'
 
-/*
-    原生侦听器支持一维数组格式，[a,b,c]
-*/
-function updateNativeEvents(el: HTMLElement, event: string, pHandler: any, nHandler: any, options: any) {
-    normalizeHandler(pHandler).forEach((ph: any) => {
-        removeListener(el, event, ph, options)
-    });
-    normalizeHandler(nHandler).forEach((nh: any) => {
-        addListener(el, event, nh, options)
-    });
-}

@@ -45,7 +45,7 @@ import {
     normalizeStyle
 } from './common/normalizeStyle'
 
-import { toEventName, toNativeEventName } from './common/event'
+import { toEventName, toEventName } from './common/event'
 
 import { renderSlot } from './common/renderSlot'
 
@@ -84,5 +84,5 @@ export default {
     mergeSelectors,
     withEventModifiers,
     getCustomScreensMedia,
-    toEventName, toNativeEventName
+    toEventName, toEventName
 }

@@ -182,7 +182,7 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
                 return collectionHandlers[key]
             }
         } else if (isProxyKey(target, key)) {
-            // !  可收集属性， 是自身属性时才会收集 , readonly 不会收集
+            //  可收集属性， 是自身属性时才会收集 , readonly 不会收集
             if (!isReadonly) {
                 track(target, key)
             }

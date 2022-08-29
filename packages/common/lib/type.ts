@@ -17,7 +17,7 @@ const isFunction = (value: any) => typeof value === 'function'
 const objectToString = Object.prototype.toString
 
 function typeOf(value: any) {
-    // ! do not toLowerCase
+    // do not toLowerCase
     return objectToString.call(value).slice(8, -1)
 }
 
