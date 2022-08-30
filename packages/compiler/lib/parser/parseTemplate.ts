@@ -184,8 +184,8 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     attr.value = context.setRawScope(attr.value)
                                     attributes.push({
                                         type: AstTypes.ATTRIBUTE,
-                                        property: '_setter',
-                                        attribute: '_setter', // 用于跳过属性解析
+                                        property: '_setModelValue',
+                                        attribute: '_setModelValue', // 用于跳过属性解析
                                         value: toArrowFunction(`${attr.value} = _`, '_'),
                                         isDynamicValue: true,
                                         isDynamicProperty: false

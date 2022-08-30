@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "template.md",
+            "file": "formModel.md",
             "mode": "source",
             "source": false
           }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "template.md",
+                "file": "formModel.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "961ba6a88882cc73",
   "lastOpenFiles": [
-    "component.md",
-    "introduction.md",
-    "detail.md",
-    "readme.md",
-    "builtIn.md",
     "reactivity.md",
+    "introduction.md",
+    "formModel.md",
+    "component.md",
     "template.md",
+    "readme.md",
+    "detail.md",
+    "builtIn.md",
     "router.md",
-    "application.md",
-    "api.md"
+    "application.md"
   ]
 }

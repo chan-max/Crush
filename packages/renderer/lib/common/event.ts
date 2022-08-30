@@ -40,7 +40,7 @@ export function parseEventName(name: string): any {
 
 
 
-export const modifierGuards: any = {
+export const eventModifiers: any = {
     stop: (e: any) => e.stopPropagation(),
     prevent: (e: any) => e.preventDefault(),
     self: (e: any) => e.target !== e.currentTarget,
@@ -84,7 +84,7 @@ export function withEventModifiers(fn: any, modifiers: any) {
     }
 
     reverseKeyCodes ||= createReverseKeyCodes()
-
+    
     // key 按键守卫
     let guardKeyCodes = modifiers && modifiers.reduce((res: string[], modifier: string) => {
         if (reverseKeyCodes[modifier]) {
@@ -103,7 +103,7 @@ export function withEventModifiers(fn: any, modifiers: any) {
 
     let withGuardsFn: any = (event: any, ...args: any) => {
         for (let i = 0; i < modifiers.length; i++) {
-            const guard = modifierGuards[modifiers[i]];
+            const guard = eventModifiers[modifiers[i]];
             if (guard && guard(event, modifiers)) {
                 // 
                 return

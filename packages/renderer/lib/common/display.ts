@@ -1,7 +1,7 @@
 import { isArray, isObject } from "@crush/common";
 
 
-let textModifiers: any = {
+export let textModifiers: any = {
     lowerCase: (str: string) => str.toLowerCase(),
     upperCase: (str: string) => str.toUpperCase(),
 }

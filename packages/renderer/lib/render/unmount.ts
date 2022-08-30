@@ -1,5 +1,5 @@
 import { Nodes } from "@crush/const"
-import { processHook, LifecycleHooks } from "@crush/core"
+import { processHook, LifecycleHooks, isEvent } from "@crush/core"
 
 import { removeElement } from '../dom'
 import { unmountRenderComponent } from "./renderComponent"
@@ -46,8 +46,12 @@ function unmountElement(vnode: any) {
         unmountChildren(vnode.children)
     }
 
-    // unmount attribute
-    updateElementAttributes(el, props, null, instance)
+    //为了移除事件侦听器 , 其他属性直接忽略
+    updateElementAttributes(el, props, null, instance, false, Object.keys(props).filter(isEvent))
+    // 移除 ref
+    if (props.ref) {
+        instance.refs[props.ref] = null
+    }
 
     if (transition) {
         transition.processUnmount(el)

@@ -12,8 +12,8 @@ import { installAnimation } from '@crush/animate'
 import { responsiveLayoutMedia } from "@crush/css"
 import { scopeProperties } from "../instance/scope"
 import { keyCodes } from '@crush/renderer'
-
-import { modifierGuards } from '@crush/renderer'
+import { textModifiers } from "@crush/renderer"
+import { eventModifiers } from '@crush/renderer'
 
 // forward
 log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`)
@@ -60,14 +60,17 @@ export function createApp(rootComponent: any) {
         keyCodes,
 
         // 事件修饰符
-        modifierGuards,
+        eventModifiers,
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
         // scope property
         globalProperties: scopeProperties,
 
-        compilerOptions: null
+        compilerOptions: null,
+
+        // 文本修饰符
+        textModifiers,
     }
 
     currentApp = app

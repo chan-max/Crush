@@ -9,7 +9,7 @@ import { hexToHsl, hexToRgb, isRef, normalizeToHexColor } from "@crush/reactivit
 export const modelText = {
     created(el: any, { value, modifiers }: any, vnode: any) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers
-        const setter = vnode.props._setter
+        const setter = vnode.props._setModelValue
         el._modelValue = value
         // 设置input初始值
         let initalValue = isRef(value) ? value.value : value
@@ -54,12 +54,12 @@ export const modelText = {
 
 // 多个相同name的input同时出现
 export const modelRadio = {
-    created(el: any, { value }: any, { props: { _setter } }: any) {
+    created(el: any, { value }: any, { props: { _setModelValue } }: any) {
         if (el.value === value) {
             el.checked = true
         }
         addListener(el, 'change', () => {
-            _setter(el.value)
+            _setModelValue(el.value)
         })
     },
     // data to input
@@ -85,7 +85,6 @@ export const modelCheckbox = {
             el.checked = true
         }
         addListener(el, 'change', () => {
-
             if (el.checked) {
                 checked.push(el.value)
             } else {
@@ -98,6 +97,8 @@ export const modelCheckbox = {
         el.checked = value.includes(el.value)
     }
 }
+
+
 
 function getSelectedValue(selectEl: any) {
     let selected = []
@@ -117,14 +118,14 @@ function setSelectState(selectEl: any, selected: any) {
 
 
 export const modelSelectOne = {
-    childrenMounted(el: any, { value }: any, { props: { _setter } }: any) {
+    childrenMounted(el: any, { value }: any, { props: { _setModelValue } }: any) {
         let options = el.options
         for (let option of options) {
             // options 默认第一个为选中的
             option.selected = option.value === value
         }
         addListener(el, 'change', () => {
-            _setter(el.value)
+            _setModelValue(el.value)
         })
     },
     beforeUpdate(el: any, { value }: any) {
@@ -135,7 +136,7 @@ export const modelSelectOne = {
 }
 
 export const modelSelectMultiple = {
-    childrenMounted(el: any, { value }: any, { props: { _setter } }: any) {
+    childrenMounted(el: any, { value }: any, { props: { _setModelValue } }: any) {
         if (!isArray(value)) {
             return
         }
@@ -145,7 +146,7 @@ export const modelSelectMultiple = {
             option.selected = value.includes(option.value)
         }
         addListener(el, 'change', () => {
-            _setter(getSelectedValue(el))
+            _setModelValue(getSelectedValue(el))
         })
     },
     beforeUpdate(el: any, { value }: any) {
@@ -158,7 +159,7 @@ export const modelSelectMultiple = {
 export const modelColor = {
     created(el: any, { value, modifiers: { lazy, rgb, hsl, } }: any, vnode: any) {
         el._mdelValue = value
-        const setter = vnode.props._setter
+        const setter = vnode.props._setModelValue
         // 设置初始值
         el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         addListener(el, lazy ? 'change' : 'input', () => {
@@ -180,13 +181,13 @@ export const modelColor = {
 
 
 export const modelRange = {
-    created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setter } }: any) {
+    created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setModelValue } }: any) {
         el.value = isRef(value) ? value.value : value
         addListener(el, lazy ? 'change' : 'input', () => {
             if (isRef(value)) {
                 value.value = el.value
             } else {
-                _setter(el.value)
+                _setModelValue(el.value)
             }
         })
     },

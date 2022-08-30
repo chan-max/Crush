@@ -65,13 +65,15 @@ export function mountAttributes(el: any, props: any, instance: any = null, isSVG
 
 import { withEventModifiers } from "../common/event";
 
-export function updateElementAttributes(el: any,
-     pProps: any, 
-     nProps: any, 
-     instance: any = null, 
-     isSVG = false, 
-     dynamicProps: any = null, // 标记动态的props，如果传入，只更新 dynamicProps
-     ) {
+
+export function updateElementAttributes(
+    el: any,
+    pProps: any,
+    nProps: any,
+    instance: any = null,
+    isSVG = false,
+    dynamicProps: any = null, // 标记动态的props，如果传入，只更新 dynamicProps
+) {
     // 如果传了dynamicProps更新即可，没传的话就需要全部更新
     if (!pProps && !nProps) {
         return
@@ -112,11 +114,12 @@ export function updateElementAttributes(el: any,
                     if (pValue === nValue) {
                         continue
                     }
-                    var { event, _arguments, modifiers, filters } = parseEventName(propName)
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue
                     }
+                    var { event, _arguments, modifiers, filters } = parseEventName(propName)
+   
                     // window 修饰符
                     el = modifiers.includes('window') ? window : el
 

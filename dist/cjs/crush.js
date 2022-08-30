@@ -510,57 +510,33 @@ function createMapEntries(...maps) {
 // for renderer
 const onRE = /^on[A-Z]/;
 const isEvent = (key) => onRE.test(key);
-/*
-    dom 事件名称无大写，所以name上第一个参数为事件名称，其它为arguments
-*/
-// 只有原生事件支持 opitons
-function toEventName(eventName, _arguments) {
-    if (!eventName) {
-        return '';
-    }
-    var name = `on${initialUpperCase(eventName)}`;
-    if (_arguments && _arguments.length !== 0) {
-        name += _arguments.map(initialUpperCase).join(''); // join default with ,
-    }
-    return name;
-}
-const parseEventName = (name) => {
-    var keys = name.split(/(?=[A-Z])/).map((key) => key.toLowerCase());
-    // remove on
-    keys.shift();
-    var event = keys[0];
-    // remove eventName
-    keys.shift();
-    return {
-        event,
-        options: arrayToMap(keys)
-    };
-};
-/*
-    @event:arg1:arg2.mod1.mod2
-        tranform to...
-        onEvent_arg1_arg2$mod1$mod2
-*/
 function toEventName(event, _arguments, modifiers, filters) {
-    event = `on${initialUpperCase(event)}`;
-    _arguments && (event += _arguments.map((_) => `_${_}`).join(''));
-    modifiers && (event += modifiers.map(($) => `$${$}`).join(''));
+    /*
+        argument $
+        modifier _
+        filter $_
+    */
+    event = `on${initialUpperCase(camelize(event))}`;
+    _arguments && (event += _arguments.map(($) => `$${$}`).join(''));
+    modifiers && (event += modifiers.map((_) => `_${_}`).join(''));
+    filters && (event += filters.map(($_) => `$_${$_}`).join(''));
     return event;
 }
 // quickly get the handler key event
 function getEventName(name) {
     return initialLowerCase(name.slice(2).split(/_|\$/)[0]);
 }
-const extrctEventNameRE = /on([a-zA-Z]+)([_a-zA-Z]*)([\$a-zA-Z]*)/;
+const extrctEventNameRE = /on([a-zA-Z]+)([\$a-zA-Z]*)([_a-zA-Z]*)([\$_a-zA-Z]*)/;
 function parseEventName(name) {
-    const [_, event, _argumentsStr, modifiersStr] = extrctEventNameRE.exec(name);
+    const [_, event, _argumentsStr, modifiersStr, filterStr] = extrctEventNameRE.exec(name);
     return {
         event: initialLowerCase(event),
-        _arguments: _argumentsStr && arrayToMap(_argumentsStr.split('_').filter(Boolean)),
-        modifiers: modifiersStr && arrayToMap(modifiersStr.split('$').filter(Boolean))
+        _arguments: _argumentsStr && _argumentsStr.split('$').filter(Boolean),
+        modifiers: modifiersStr && modifiersStr.split('_').filter(Boolean),
+        filters: filterStr && filterStr.split('_').filter(Boolean),
     };
 }
-const modifierGuards = {
+const eventModifiers = {
     stop: (e) => e.stopPropagation(),
     prevent: (e) => e.preventDefault(),
     self: (e) => e.target !== e.currentTarget,
@@ -606,14 +582,14 @@ function withEventModifiers(fn, modifiers) {
         return res;
     }, []);
     // 增加按键守卫
-    let withKeyGuardFn = guardKeyCodes ? (event, ...args) => {
+    let withKeyGuardFn = guardKeyCodes.length ? (event, ...args) => {
         if (guardKeyCodes.includes(event.code)) {
             fn(event, ...args);
         }
     } : fn;
-    return (event, ...args) => {
+    let withGuardsFn = (event, ...args) => {
         for (let i = 0; i < modifiers.length; i++) {
-            const guard = modifierGuards[modifiers[i]];
+            const guard = eventModifiers[modifiers[i]];
             if (guard && guard(event, modifiers)) {
                 // 
                 return;
@@ -621,6 +597,9 @@ function withEventModifiers(fn, modifiers) {
         }
         return withKeyGuardFn(event, ...args);
     };
+    // 保存原函数
+    withGuardsFn._raw = fn;
+    return withGuardsFn;
 }
 const keyCodes = {
     // 普通写法
@@ -1047,12 +1026,35 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     continue;
                 }
                 if (isEvent(propName)) {
-                    var { event, options } = parseEventName(propName);
+                    if (pValue === nValue) {
+                        continue;
+                    }
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue;
                     }
-                    updateNativeEvents(el, event, pValue, nValue, options);
+                    var { event, _arguments, modifiers, filters } = parseEventName(propName);
+                    // window 修饰符
+                    el = modifiers.includes('window') ? window : el;
+                    let options = { once: _arguments && _arguments.includes('once'), capture: _arguments && _arguments.includes('capture'), passive: _arguments && _arguments.includes('passive') };
+                    let pHandler = normalizeHandler(pValue);
+                    let nHandler = normalizeHandler(nValue);
+                    // 保留原始事件和
+                    let handlerMap = el._handlerMap ||= new Map();
+                    pHandler.forEach((handler) => {
+                        if (!nHandler.includes(handler)) {
+                            // remove
+                            removeListener(el, event, el._handlerMap.get(handler), options);
+                        }
+                    });
+                    nHandler.forEach((handler) => {
+                        if (!pHandler.includes(handler)) {
+                            // add
+                            let ensureAddHandler = modifiers ? withEventModifiers(handler, modifiers) : handler;
+                            handlerMap.set(handler, ensureAddHandler);
+                            addListener(el, event, ensureAddHandler, options);
+                        }
+                    });
                 }
                 else if (propName in el && !isSVG) { // dom props
                     (pValue !== nValue) && (el[propName] = nValue);
@@ -1064,17 +1066,6 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                 }
         }
     }
-}
-/*
-    原生侦听器支持一维数组格式，[a,b,c]
-*/
-function updateNativeEvents(el, event, pHandler, nHandler, options) {
-    normalizeHandler(pHandler).forEach((ph) => {
-        removeListener(el, event, ph, options);
-    });
-    normalizeHandler(nHandler).forEach((nh) => {
-        addListener(el, event, nh, options);
-    });
 }
 
 /*
@@ -1266,9 +1257,13 @@ function mountText(vnode, container, anchor, parent) {
 }
 
 const unmountComponent = (component, container, anchor = null) => {
-    const { instance } = component;
+    const { instance, props } = component;
     const { vnode } = instance;
     processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
+    // 卸载组件ref
+    if (props.ref) {
+        instance.parent.refs[props.ref] = null;
+    }
     patch(vnode, null, container, anchor, parent);
     processHook("unmounted" /* UNMOUNTED */, component);
 };
@@ -1303,10 +1298,16 @@ function unmountChildren(children) {
     children.forEach(unmount);
 }
 function unmountElement(vnode) {
-    const { el, transition } = vnode;
+    const { el, props, transition, instance } = vnode;
     processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
     if (vnode.children && vnode.nodeType !== 17 /* STYLE */) {
         unmountChildren(vnode.children);
+    }
+    //为了移除事件侦听器 , 其他属性直接忽略
+    updateElementAttributes(el, props, null, instance, false, Object.keys(props).filter(isEvent));
+    // 移除 ref
+    if (props.ref) {
+        instance.refs[props.ref] = null;
     }
     if (transition) {
         transition.processUnmount(el);
@@ -4328,7 +4329,6 @@ function genDeclartion(declarationGroup, context) {
 function genProps(node, context) {
     let { type, attributes } = node;
     attributes ||= emptyArray;
-    const isComponent = type === 4 /* COMPONENT */;
     var props = {};
     var dynamicProps = [];
     attributes.forEach((attr) => {
@@ -4336,22 +4336,17 @@ function genProps(node, context) {
             case 16 /* EVENT */:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, filters, modifiers } = attr;
                 var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$'); // 包裹函数都需要传入一个 $ 参数
-                if (modifiers && !isComponent) {
-                    callback = context.callRenderFn('withEventModifiers', callback, stringify(modifiers.map(toBackQuotes)));
-                }
                 // 处理按键修饰符
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup';
                 }
                 if (isDynamicProperty) {
-                    let key = isComponent ?
-                        context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)), stringify(modifiers && modifiers.map(toBackQuotes)), stringify(filters && filters.map(toBackQuotes))) :
-                        context.callRenderFn('toEventName', property, stringify(_arguments && _arguments.map(toBackQuotes)));
+                    let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL);
                     props[dynamicMapKey(key)] = callback;
                     dynamicProps.push(key);
                 }
                 else {
-                    let key = (isComponent ? toEventName(property, _arguments, modifiers) : toEventName(property, _arguments));
+                    let key = toEventName(property, _arguments, modifiers, filters);
                     props[key] = callback;
                     dynamicProps.push(toSingleQuotes(key));
                 }
@@ -4965,8 +4960,8 @@ function processTemplateAst(htmlAst, context) {
                                     attr.value = context.setRawScope(attr.value);
                                     attributes.push({
                                         type: 15 /* ATTRIBUTE */,
-                                        property: '_setter',
-                                        attribute: '_setter',
+                                        property: '_setModelValue',
+                                        attribute: '_setModelValue',
                                         value: toArrowFunction(`${attr.value} = _`, '_'),
                                         isDynamicValue: true,
                                         isDynamicProperty: false
@@ -5424,7 +5419,7 @@ var renderMethods = {
     mergeSelectors,
     withEventModifiers,
     getCustomScreensMedia,
-    toEventName, toEventName
+    toEventName,
 };
 
 // if you are using css function with dynamic binding , use camelized function name 
@@ -5612,7 +5607,7 @@ function h(type, props, children, key = uid()) {
 const modelText = {
     created(el, { value, modifiers }, vnode) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers;
-        const setter = vnode.props._setter;
+        const setter = vnode.props._setModelValue;
         el._modelValue = value;
         // 设置input初始值
         let initalValue = isRef(value) ? value.value : value;
@@ -5653,12 +5648,12 @@ const modelText = {
 };
 // 多个相同name的input同时出现
 const modelRadio = {
-    created(el, { value }, { props: { _setter } }) {
+    created(el, { value }, { props: { _setModelValue } }) {
         if (el.value === value) {
             el.checked = true;
         }
         addListener(el, 'change', () => {
-            _setter(el.value);
+            _setModelValue(el.value);
         });
     },
     // data to input
@@ -5710,14 +5705,14 @@ function setSelectState(selectEl, selected) {
     }
 }
 const modelSelectOne = {
-    childrenMounted(el, { value }, { props: { _setter } }) {
+    childrenMounted(el, { value }, { props: { _setModelValue } }) {
         let options = el.options;
         for (let option of options) {
             // options 默认第一个为选中的
             option.selected = option.value === value;
         }
         addListener(el, 'change', () => {
-            _setter(el.value);
+            _setModelValue(el.value);
         });
     },
     beforeUpdate(el, { value }) {
@@ -5727,7 +5722,7 @@ const modelSelectOne = {
     }
 };
 const modelSelectMultiple = {
-    childrenMounted(el, { value }, { props: { _setter } }) {
+    childrenMounted(el, { value }, { props: { _setModelValue } }) {
         if (!isArray(value)) {
             return;
         }
@@ -5737,7 +5732,7 @@ const modelSelectMultiple = {
             option.selected = value.includes(option.value);
         }
         addListener(el, 'change', () => {
-            _setter(getSelectedValue(el));
+            _setModelValue(getSelectedValue(el));
         });
     },
     beforeUpdate(el, { value }) {
@@ -5748,7 +5743,7 @@ const modelSelectMultiple = {
 const modelColor = {
     created(el, { value, modifiers: { lazy, rgb, hsl, } }, vnode) {
         el._mdelValue = value;
-        const setter = vnode.props._setter;
+        const setter = vnode.props._setModelValue;
         // 设置初始值
         el.value = normalizeToHexColor(isRef(value) ? value.value : value);
         addListener(el, lazy ? 'change' : 'input', () => {
@@ -5768,14 +5763,14 @@ const modelColor = {
     }
 };
 const modelRange = {
-    created(el, { value, modifiers: { lazy } }, { props: { _setter } }) {
+    created(el, { value, modifiers: { lazy } }, { props: { _setModelValue } }) {
         el.value = isRef(value) ? value.value : value;
         addListener(el, lazy ? 'change' : 'input', () => {
             if (isRef(value)) {
                 value.value = el.value;
             }
             else {
-                _setter(el.value);
+                _setModelValue(el.value);
             }
         });
     },
@@ -7419,7 +7414,7 @@ function createApp(rootComponent) {
         // 按键修饰符
         keyCodes,
         // 事件修饰符
-        modifierGuards,
+        eventModifiers,
         // config
         // @screens
         customScreens: responsiveLayoutMedia,
@@ -8216,7 +8211,7 @@ exports.mergeSplitedSelector = mergeSplitedSelector;
 exports.mergeSplitedSelectorsAndJoin = mergeSplitedSelectorsAndJoin;
 exports.min = min;
 exports.mixin = mixin;
-exports.modifierGuards = modifierGuards;
+exports.eventModifiers = eventModifiers;
 exports.mount = mount;
 exports.mountAttributes = mountAttributes;
 exports.mountChildren = mountChildren;
@@ -8256,7 +8251,6 @@ exports.parseHslColor = parseHslColor;
 exports.parseHslToRgb = parseHslToRgb;
 exports.parseInlineClass = parseInlineClass;
 exports.parseInlineStyle = parseInlineStyle;
-exports.parseEventName = parseEventName;
 exports.parseRgbToBaseColor = parseRgbToBaseColor;
 exports.parseRgbToHsl = parseRgbToHsl;
 exports.parseStyleValue = parseStyleValue;
@@ -8336,7 +8330,6 @@ exports.toBackQuotes = toBackQuotes;
 exports.toDec = toDec;
 exports.toEventName = toEventName;
 exports.toHex = toHex;
-exports.toEventName = toEventName;
 exports.toNegativeValue = toNegativeValue;
 exports.toNumber = toNumber;
 exports.toPositiveValue = toPositiveValue;
