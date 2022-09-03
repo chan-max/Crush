@@ -16,5 +16,5 @@ export const emptyFunction = () => null
 export const createMap = (entries: any) => new Map(entries)
 
 
-export const extend = (...args: any) => Object.assign({}, ...args)
+export const extend = Object.assign
 

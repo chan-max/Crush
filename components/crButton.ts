@@ -24,7 +24,7 @@ export const crButton = {
         type: {
             default: 'primary',
             validator(type: string) {
-                return ['primary', 'cicle', 'round', 'line'].includes(type)
+                return ['primary', 'cicle', 'round', 'plain'].includes(type)
             }
         },
         disabled: {
@@ -61,8 +61,23 @@ export const crButton = {
                 border-top-left-radius:0;
                 border-bottom-left-radius: 0;
             }
+
+            .cr-button-primary{
+                
+            }
+
+            .cr-button-plain{
+                background-color:transparent;
+                $color:color;
+                $border:['1px','solid',color];
+                box-shadow:none;
+                &:hover{
+                    $background-color:color;
+                    color:white;
+                }
+            }
         </style>
-        <button  .(buttonGroupClass)>
+        <button   $class="['cr-button-' + type,buttonGroupClass]">
             <slot>
         </button>
     `,

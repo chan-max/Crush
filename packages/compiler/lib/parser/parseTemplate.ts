@@ -87,208 +87,219 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             if (attr.type) {
                 continue
             }
+            parseAttribute(attr)
             let { attribute, value } = attr
-            switch (attribute) {
-                case 'if':
-                    if (htmlAst.directives) {
-                        htmlAst.directives.push({
-                            type: AstTypes.CONDITION_RENDER_IF,
-                            condition: context.setRenderScope(value)
-                        })
-                    } else {
-                        htmlAst.isBranchStart = true
-                        htmlAst.condition = context.setRenderScope(value)
-                    }
-                    break
-                case 'elseIf':
-                case 'else-if':
-                    htmlAst.isBranch = true
-                    htmlAst.condition = context.setRenderScope(value)
-                    if (htmlAst.directives) {
-                        error('else-if指令必须第一个出现')
-                    }
-                    break
-                case 'else':
-                    htmlAst.isBranch = true
-                    if (htmlAst.iterator) {
-                        error('else指令必须第一个出现')
-                    }
-                    break
-                case 'for':
-                    // for 指令会最最先进行处理 ， 因为要进行变量提升
-                    let iterator = parseIterator(attr.value)
-                    iterator.iterable = context.setRenderScope(iterator.iterable)
-                    context.pushScope(iterator.items)
-                    scopeStack++
-                    let directives = htmlAst.directives ||= []
-                    directives.push({
-                        type: AstTypes.LIST_RENDER,
-                        iterator
-                    })
-                    break
-                case 'text':
-                    attr.type = AstTypes.ATTRIBUTE
-                    attr.property = 'innerText'
-                    attr.isDynamicValue = true
-                    attr.value = context.setRenderScope(attr.value)
-                    htmlAst.children = null // 直接忽略
-                    break
-                case 'html':
-                    attr.type = AstTypes.ATTRIBUTE
-                    attr.property = 'innerText'
-                    attr.isDynamicValue = true
-                    attr.value = context.setRenderScope(attr.value)
-                    htmlAst.children = null // 直接忽略
-                    break
-                case 'bind':
-                    attr.type = AstTypes.ATTRIBUTE
-                    attr.property = attr.attribute
-                    attr.value = context.setRenderScope(attr.value)
-                    attr.isDynamicValue = true
-                    break
-                case 'native':
-                    if (htmlAst.tagName == 'style') {
-                        attr.type = AstTypes.ATTRIBUTE
-                        attr.property = 'innerHTML'
-                        attr.value = htmlAst.children[0].children
-                        htmlAst.native = true // 标记该节点
-                        break
-                    }
-                case 'scoped':
-                    if (htmlAst.tagName == 'style') {
-                        htmlAst.scoped = true
-                        context.useScopedStyleSheet = true
-                        break
-                    }
-                case 'slot-scope':
-                case 'slotScope':
-                    htmlAst.slotScope = attr.value
-                    let args = extractFunctionArgs(attr.value)
-                    if (args.length) {
-                        context.pushScope(args)
-                        scopeStack++
-                    }
-                    break
-                default:
-                    // 深度解析
-                    parseAttribute(attr)
-                    switch (attr.flag) {
-                        case '@':
+            switch (attr.flag) {
+                case 's-':
+                    switch (attr.property) {
+                        case 'if':
+                            if (htmlAst.directives) {
+                                htmlAst.directives.push({
+                                    type: AstTypes.CONDITION_RENDER_IF,
+                                    condition: context.setRenderScope(value)
+                                })
+                            } else {
+                                htmlAst.isBranchStart = true
+                                htmlAst.condition = context.setRenderScope(value)
+                            }
+                            break
+                        case 'else-if':
+                            htmlAst.isBranch = true
+                            htmlAst.condition = context.setRenderScope(value)
+                            if (htmlAst.directives) {
+                                error('else-if指令必须第一个出现')
+                            }
+                            break
+                        case 'else':
+                            htmlAst.isBranch = true
+                            if (htmlAst.iterator) {
+                                error('else指令必须第一个出现')
+                            }
+                            break
+                        case 'for':
+                            // for 指令会最最先进行处理 ， 因为要进行变量提升
+                            let iterator = parseIterator(attr.value)
+                            iterator.iterable = context.setRenderScope(iterator.iterable)
+                            context.pushScope(iterator.items)
+                            scopeStack++
+                            let directives = htmlAst.directives ||= []
+                            directives.push({
+                                type: AstTypes.LIST_RENDER,
+                                iterator
+                            })
+                            break
+                        case 'text':
+                            attr.type = AstTypes.ATTRIBUTE
+                            attr.property = 'innerText'
+                            attr.isDynamicValue = true
+                            attr.value = context.setRenderScope(attr.value)
+                            htmlAst.children = null // 直接忽略
+                            break
+                        case 'html':
+                            attr.type = AstTypes.ATTRIBUTE
+                            attr.property = 'innerText'
+                            attr.isDynamicValue = true
+                            attr.value = context.setRenderScope(attr.value)
+                            htmlAst.children = null // 直接忽略
+                            break
+                        case 'bind':
+                            attr.type = AstTypes.ATTRIBUTE
+                            if (attr._arguments) {
+                                // 单属性的bind, 等同于 $
+                                attr.property = attr._arguments[0]
+                                attr._arguments.shift()
+                            } 
+                            attr.value = context.setRenderScope(attr.value)
+                            attr.isDynamicValue = true
+                            break
+                        case 'on':
                             attr.type = AstTypes.EVENT
-                            attr.isHandler = isHandler(attr.value)
-                            attr.value = context.setRenderScope(attr.value || attr.property)
+                            attr.property = attr._arguments[0]
+                            attr._arguments.shift()
+                            attr.isDynamicValue = true
+                            attr.value = context.setRenderScope(attr.value)
+                            break
+                        case 'native':
+                            if (htmlAst.tagName == 'style') {
+                                attr.type = AstTypes.ATTRIBUTE
+                                attr.property = 'innerHTML'
+                                attr.value = htmlAst.children[0].children
+                                htmlAst.native = true // 标记该节点
+                                break
+                            }
+                        case 'scoped':
+                            if (htmlAst.tagName == 'style') {
+                                htmlAst.scoped = true
+                                context.useScopedStyleSheet = true
+                                break
+                            }
+                        case 'slot-scope':
+                            htmlAst.slotScope = attr.value
+                            let args = extractFunctionArgs(attr.value)
+                            if (args.length) {
+                                context.pushScope(args)
+                                scopeStack++
+                            }
+                            break
+                        case 'slot':
+                            // 第一个修饰符dynamic代表定义动态插槽
+                            htmlAst.isDynamicDefineSlotName = attr?._arguments?.includes('dynamic')
+                            htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value
+                            break
+                        case 'slot-name':
+                            // 使用插槽时的名称
+                            htmlAst.isDynamicSlot = attr?._arguments?.includes('dynamic')
+                            htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default')
+                            break
+                        case 'style':
+                            attr.type = AstTypes.ATTRIBUTE_STYLE
+                            attr.isDynamicValue = true
+                            attr.value = context.setRenderScope(attr.value)
+                            break
+                        case 'class':
+                            attr.type = AstTypes.ATTRIBUTE_CLASS
+                            attr.isDynamicValue = true
+                            attr.value = context.setRenderScope(attr.value)
+                            break
+                        case 'model':
+                            (htmlAst.customDirectives ||= []).push(attr);
+                            let modelType = htmlAst.tag === 'select' ?
+                                (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                    'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component'
+                            // transform 
+                            attr.property = `model${initialUpperCase(modelType)}`
+                            attr.value = context.setRawScope(attr.value)
+                            attributes.push({
+                                type: AstTypes.ATTRIBUTE,
+                                property: '_setModelValue',
+                                value: toArrowFunction(`${attr.value} = _`, '_'),
+                                isDynamicValue: true,
+                                isDynamicProperty: false
+                            })
+                            attributes.push({
+                                type: AstTypes.ATTRIBUTE,
+                                property: '_getModelValue',
+                                value: toArrowFunction(`${attr.value}`),
+                                isDynamicValue: true,
+                                isDynamicProperty: false
+                            })
+                            break
+                        default:
+                            attr.type = AstTypes.CUSTOM_DIRECTIVE;
+                            (htmlAst.customDirectives ||= []).push(attr);
+                            attr.value = context.setRenderScope(attr.value)
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property)
                             }
                             break
-                        case '--':
-                            attr.type = AstTypes.CUSTOM_DIRECTIVE;
-                            (htmlAst.customDirectives ||= []).push(attr);
-                            // 内置指令的特殊处理
-                            if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
-                                if (attr.property === 'model') {
-                                    let modelType = htmlAst.tag === 'select' ?
-                                        (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                            'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component'
-
-                                    // transform 
-                                    attr.property = `model${initialUpperCase(modelType)}`
-                                    attr.value = context.setRawScope(attr.value)
-                                    attributes.push({
-                                        type: AstTypes.ATTRIBUTE,
-                                        property: '_setModelValue',
-                                        value: toArrowFunction(`${attr.value} = _`, '_'),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    })
-                                    attributes.push({
-                                        type: AstTypes.ATTRIBUTE,
-                                        property: '_getModelValue',
-                                        value: toArrowFunction(`${attr.value}`),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    })
-                                }
-                            } else {
-                                // 正常的指令
-                                attr.value = context.setRenderScope(attr.value)
-                                if (attr.isDynamicProperty) {
-                                    attr.property = context.setRenderScope(attr.property)
-                                }
-                            }
-                            break
-                        case '#':
-                            if (htmlAst.tagName === 'template' || htmlAst.tagName === 'fragment') {
-                                // 模板上的# 会转换为插槽的定义
-                                if (attr.isDynamicProperty) {
-                                    htmlAst.isDynamicDefineSlotName = true
-                                    htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName)
-                                } else {
-                                    htmlAst.isDynamicDefineSlotName = false
-                                    htmlAst.defineSlotName = attr.property
-                                }
-                                htmlAst.slotScope = attr.value
-                                let args = extractFunctionArgs(attr.value)
-                                if (args.length) {
-                                    context.pushScope(args)
-                                    scopeStack++
-                                }
-                            } else {
-                                attr.type = AstTypes.ATTRIBUTE
-                                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                                attr.property = 'id'
-                                attr.isDynamicValue = attr.isDynamicProperty
-                                attr.isDynamicProperty = false
-                                attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
-                            }
-                            break
-                        case '.':
-                            attr.type = AstTypes.ATTRIBUTE_CLASS
-                            attr.isDynamicValue = attr.isDynamicProperty
-                            attr.isDynamicProperty = false
-                            attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
-                            attr.property = 'class'
-                            break
-                        case '...':
-                            attr.type = AstTypes.ATTRIBUTE
-                            attribute.property = 'bind'
-                            attribute.isDynamicValue = true
-                            attr.value = context.setRenderScope(attr.property)
-                            break
-                        default:
-                            switch (attr.property) {
-                                case 'slot':
-                                    debugger
-                                    htmlAst.defineSlotName = attr?.value
-                                    htmlAst.isDynamicDefineSlotName = attr.isDynamicValue
-                                    break
-                                case 'style':
-                                    attr.type = AstTypes.ATTRIBUTE_STYLE
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value)
-                                    }
-                                    break
-                                case 'class':
-                                    attr.type = AstTypes.ATTRIBUTE_CLASS
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value)
-                                    }
-                                    break
-                                default:
-                                    // 普通属性
-                                    attr.type = AstTypes.ATTRIBUTE
-                                    if (attr.isDynamicProperty) {
-                                        attr.property = context.setRenderScope(attr.property)
-                                    }
-                                    if (!attr.value) {
-                                        attr.value = attr.property
-                                    }
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value)
-                                    }
-                            }
                     }
                     break
+                case '@':
+                    attr.type = AstTypes.EVENT
+                    attr.isHandler = isHandler(attr.value)
+                    attr.value = context.setRenderScope(attr.value || attr.property)
+                    if (attr.isDynamicProperty) {
+                        attr.property = context.setRenderScope(attr.property)
+                    }
+                    break
+                case '#':
+                    if (htmlAst.tagName === 'template' || htmlAst.tagName === 'fragment') {
+                        // 模板上的# 会转换为插槽的定义
+                        if (attr.isDynamicProperty) {
+                            htmlAst.isDynamicDefineSlotName = true
+                            htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName)
+                        } else {
+                            htmlAst.isDynamicDefineSlotName = false
+                            htmlAst.defineSlotName = attr.property
+                        }
+                        htmlAst.slotScope = attr.value
+                        let args = extractFunctionArgs(attr.value)
+                        if (args.length) {
+                            context.pushScope(args)
+                            scopeStack++
+                        }
+                    } else {
+                        attr.type = AstTypes.ATTRIBUTE
+                        // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                        attr.property = 'id'
+                        attr.isDynamicValue = attr.isDynamicProperty
+                        attr.isDynamicProperty = false
+                        attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
+                    }
+                    break
+                case '.':
+                    attr.type = AstTypes.ATTRIBUTE_CLASS
+                    attr.isDynamicValue = attr.isDynamicProperty
+                    attr.isDynamicProperty = false
+                    attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
+                    attr.property = 'class'
+                    break
+                case '...':
+                    attr.type = AstTypes.ATTRIBUTE
+                    attribute.property = 'bind'
+                    attribute.isDynamicValue = true
+                    attr.value = context.setRenderScope(attr.property)
+                    break
+                default:
+                    attr.type = AstTypes.ATTRIBUTE
+                    if (attr.isDynamicProperty) {
+                        attr.property = context.setRenderScope(attr.property)
+                    }
+                    if (!attr.value) {
+                        attr.value = attr.property
+                    }
+                    if (attr.isDynamicValue) {
+                        attr.value = context.setRenderScope(attr.value)
+                    }
+                    switch (attr.property) {
+                        case 'class':
+                            attr.type = AstTypes.ATTRIBUTE_CLASS
+                            break
+                        case 'style':
+                            attr.type = AstTypes.ATTRIBUTE_STYLE
+                            break
+                    }
+
             }
         }
     }
@@ -340,20 +351,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             break
         case 'slot':
             htmlAst.type = AstTypes.USE_COMPONENT_SLOT
-            let nameAttribute = htmlAst?.attributes?.find((attr: any) => attr.property === 'name')
-            if (nameAttribute) {
-                nameAttribute.type = AstTypes.SKIP
-                if (nameAttribute.isDynamicValue) {
-                    htmlAst.slotName = context.setRenderScope(nameAttribute.value)
-                    htmlAst.isDynamicSlot = true
-                } else {
-                    htmlAst.slotName = nameAttribute.value
-                    htmlAst.isDynamicSlot = false
-                }
-            } else {
-                htmlAst.slotName = 'default'
-                htmlAst.isDynamicSlot = false
-            }
             break
         case 'element':
             htmlAst.type = AstTypes.DYNAMIC_HTML_ELEMENT

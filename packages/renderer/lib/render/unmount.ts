@@ -47,9 +47,9 @@ function unmountElement(vnode: any) {
     }
 
     //为了移除事件侦听器 , 其他属性直接忽略
-    updateElementAttributes(el, props, null, instance, false, Object.keys(props).filter(isEvent))
+    updateElementAttributes(el, props, null, instance, false, props && Object.keys(props).filter(isEvent))
     // 移除 ref
-    if (props.ref) {
+    if (props?.ref) {
         instance.refs[props.ref] = null
     }
 

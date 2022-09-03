@@ -1,13 +1,10 @@
 
 import { camelize, isUndefined } from "@crush/common"
 
-// arguments , filters , modifiers
-const attributeModifierRE = /(?::([\w:]+))?(?:\|([\w\|]+))?(?:\.([\w\.]+))?/
-
 
 const AttributeFlags = [
     '$--', // dynamic css variable
-    '--', // custo directive
+    's-', // crush flag
     '...', // attribute bind shorthand
     '$', // dynamic property
     '@', // event

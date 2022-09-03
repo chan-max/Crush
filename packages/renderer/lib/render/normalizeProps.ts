@@ -8,7 +8,7 @@ export function normalizeProps(props: any) {
     if (!props) {
         return
     }
-
+    
     if (props.bind) { // use bind
         extend(props, props.bind)
         delete props.bind

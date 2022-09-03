@@ -18,7 +18,7 @@ export function normalizeClass(rawClass: any): Record<string, any> {
     } else if (isObject(rawClass)) {
         return rawClass
     } else if (isArray(rawClass)) {
-        return extend(...rawClass.map(normalizeClass))
+        return extend({}, ...rawClass.map(normalizeClass))
     } else if (isFunction(rawClass)) {
         return normalizeClass(rawClass())
     } else {

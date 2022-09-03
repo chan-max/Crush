@@ -13,7 +13,7 @@ export function normalizeStyle(style: any): any {
         return parseInlineStyle(style)
     } else if (isArray(style)) {
         style = style.map(normalizeStyle)
-        return extend(...style as any[])
+        return extend({}, ...style)
     } else if (isFunction(style)) {
         return normalizeStyle(style())
     } else {

@@ -1,4 +1,4 @@
-// crush.js 1.1.8 created by chan 
+// crush.js 1.1.9 created by chan 
 const cache = (fn) => {
     const cache = Object.create(null);
     return ((key) => {
@@ -31,7 +31,7 @@ const emptyObject = Object.freeze({});
 const emptyArray = Object.freeze([]);
 const emptyFunction = () => null;
 const createMap = (entries) => new Map(entries);
-const extend = (...args) => Object.assign({}, ...args);
+const extend = Object.assign;
 
 const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     res[item] = mapValue;
@@ -1304,9 +1304,9 @@ function unmountElement(vnode) {
         unmountChildren(vnode.children);
     }
     //为了移除事件侦听器 , 其他属性直接忽略
-    updateElementAttributes(el, props, null, instance, false, Object.keys(props).filter(isEvent));
+    updateElementAttributes(el, props, null, instance, false, props && Object.keys(props).filter(isEvent));
     // 移除 ref
-    if (props.ref) {
+    if (props?.ref) {
         instance.refs[props.ref] = null;
     }
     if (transition) {
@@ -3261,7 +3261,7 @@ function mountComponent(vnode, container, anchor, parent) {
     // component update
     // component update fn
     function update() {
-        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance;
+        const { isMounted, vnode: pVnode, componentVnode, updatingComponentVnode, render } = instance;
         // 每次 更新生成新树
         setCurrentInstance(instance);
         let nVnode = render(scope);
@@ -3282,7 +3282,7 @@ function mountComponent(vnode, container, anchor, parent) {
         nVnode = processVnodePrerender(nVnode);
         instance.renderingVnode = nVnode;
         processHook(isMounted ? "beforeUpdate" /* BEFORE_UPDATE */ : "beforeMount" /* BEFORE_MOUNT */, nComponentVnode, pComponentVnode);
-        beforePatch && beforePatch(pVnode, nVnode);
+        callHook("beforePatch" /* BEFORE_PATCH */, instance, null, nVnode, pVnode);
         patch(pVnode, nVnode, container, anchor, instance);
         instance.vnode = nVnode;
         instance.isMounted = true;
@@ -4164,7 +4164,8 @@ function genNode(node, context) {
             nodeCode = genNodes(node.children, context);
             break;
         case 13 /* USE_COMPONENT_SLOT */:
-            const { slotName, isDynamicSlot, children } = node;
+            let { slotName, isDynamicSlot, children } = node;
+            slotName ||= 'default';
             var { propsCode } = genProps(node, context);
             nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), propsCode, children ? toArrowFunction(genNodes(children, context)) : NULL, uid());
             break;
@@ -4481,7 +4482,7 @@ const isSVGTag = makeMap(SVG_TAGS);
 
 const AttributeFlags = [
     '$--',
-    '--',
+    's-',
     '...',
     '$',
     '@',
@@ -4509,7 +4510,7 @@ function parseAttribute(attr) {
     for (let _flag of AttributeEndFlags) {
         if (attribute.endsWith(_flag)) {
             endFlag = _flag;
-            attribute = attribute.slice(0, attribute.length - _flag.length - 1);
+            attribute = attribute.slice(0, attribute.length - _flag.length);
             break;
         }
     }
@@ -4911,211 +4912,221 @@ function processTemplateAst(htmlAst, context) {
             if (attr.type) {
                 continue;
             }
+            parseAttribute(attr);
             let { attribute, value } = attr;
-            switch (attribute) {
-                case 'if':
-                    if (htmlAst.directives) {
-                        htmlAst.directives.push({
-                            type: 7 /* CONDITION_RENDER_IF */,
-                            condition: context.setRenderScope(value)
-                        });
-                    }
-                    else {
-                        htmlAst.isBranchStart = true;
-                        htmlAst.condition = context.setRenderScope(value);
-                    }
-                    break;
-                case 'elseIf':
-                case 'else-if':
-                    htmlAst.isBranch = true;
-                    htmlAst.condition = context.setRenderScope(value);
-                    if (htmlAst.directives) {
-                        error('else-if指令必须第一个出现');
-                    }
-                    break;
-                case 'else':
-                    htmlAst.isBranch = true;
-                    if (htmlAst.iterator) {
-                        error('else指令必须第一个出现');
-                    }
-                    break;
-                case 'for':
-                    // for 指令会最最先进行处理 ， 因为要进行变量提升
-                    let iterator = parseIterator(attr.value);
-                    iterator.iterable = context.setRenderScope(iterator.iterable);
-                    context.pushScope(iterator.items);
-                    scopeStack++;
-                    let directives = htmlAst.directives ||= [];
-                    directives.push({
-                        type: 10 /* LIST_RENDER */,
-                        iterator
-                    });
-                    break;
-                case 'text':
-                    attr.type = 15 /* ATTRIBUTE */;
-                    attr.property = 'innerText';
-                    attr.isDynamicValue = true;
-                    attr.value = context.setRenderScope(attr.value);
-                    htmlAst.children = null; // 直接忽略
-                    break;
-                case 'html':
-                    attr.type = 15 /* ATTRIBUTE */;
-                    attr.property = 'innerText';
-                    attr.isDynamicValue = true;
-                    attr.value = context.setRenderScope(attr.value);
-                    htmlAst.children = null; // 直接忽略
-                    break;
-                case 'bind':
-                    attr.type = 15 /* ATTRIBUTE */;
-                    attr.property = attr.attribute;
-                    attr.value = context.setRenderScope(attr.value);
-                    attr.isDynamicValue = true;
-                    break;
-                case 'native':
-                    if (htmlAst.tagName == 'style') {
-                        attr.type = 15 /* ATTRIBUTE */;
-                        attr.property = 'innerHTML';
-                        attr.value = htmlAst.children[0].children;
-                        htmlAst.native = true; // 标记该节点
-                        break;
-                    }
-                case 'scoped':
-                    if (htmlAst.tagName == 'style') {
-                        htmlAst.scoped = true;
-                        context.useScopedStyleSheet = true;
-                        break;
-                    }
-                case 'slot-scope':
-                case 'slotScope':
-                    htmlAst.slotScope = attr.value;
-                    let args = extractFunctionArgs(attr.value);
-                    if (args.length) {
-                        context.pushScope(args);
-                        scopeStack++;
-                    }
-                    break;
-                default:
-                    // 深度解析
-                    parseAttribute(attr);
-                    switch (attr.flag) {
-                        case '@':
+            switch (attr.flag) {
+                case 's-':
+                    switch (attr.property) {
+                        case 'if':
+                            if (htmlAst.directives) {
+                                htmlAst.directives.push({
+                                    type: 7 /* CONDITION_RENDER_IF */,
+                                    condition: context.setRenderScope(value)
+                                });
+                            }
+                            else {
+                                htmlAst.isBranchStart = true;
+                                htmlAst.condition = context.setRenderScope(value);
+                            }
+                            break;
+                        case 'else-if':
+                            htmlAst.isBranch = true;
+                            htmlAst.condition = context.setRenderScope(value);
+                            if (htmlAst.directives) {
+                                error('else-if指令必须第一个出现');
+                            }
+                            break;
+                        case 'else':
+                            htmlAst.isBranch = true;
+                            if (htmlAst.iterator) {
+                                error('else指令必须第一个出现');
+                            }
+                            break;
+                        case 'for':
+                            // for 指令会最最先进行处理 ， 因为要进行变量提升
+                            let iterator = parseIterator(attr.value);
+                            iterator.iterable = context.setRenderScope(iterator.iterable);
+                            context.pushScope(iterator.items);
+                            scopeStack++;
+                            let directives = htmlAst.directives ||= [];
+                            directives.push({
+                                type: 10 /* LIST_RENDER */,
+                                iterator
+                            });
+                            break;
+                        case 'text':
+                            attr.type = 15 /* ATTRIBUTE */;
+                            attr.property = 'innerText';
+                            attr.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.value);
+                            htmlAst.children = null; // 直接忽略
+                            break;
+                        case 'html':
+                            attr.type = 15 /* ATTRIBUTE */;
+                            attr.property = 'innerText';
+                            attr.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.value);
+                            htmlAst.children = null; // 直接忽略
+                            break;
+                        case 'bind':
+                            attr.type = 15 /* ATTRIBUTE */;
+                            if (attr._arguments) {
+                                // 单属性的bind, 等同于 $
+                                attr.property = attr._arguments[0];
+                                attr._arguments.shift();
+                            }
+                            attr.value = context.setRenderScope(attr.value);
+                            attr.isDynamicValue = true;
+                            break;
+                        case 'on':
                             attr.type = 16 /* EVENT */;
-                            attr.isHandler = isHandler(attr.value);
-                            attr.value = context.setRenderScope(attr.value || attr.property);
+                            attr.property = attr._arguments[0];
+                            attr._arguments.shift();
+                            attr.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.value);
+                            break;
+                        case 'native':
+                            if (htmlAst.tagName == 'style') {
+                                attr.type = 15 /* ATTRIBUTE */;
+                                attr.property = 'innerHTML';
+                                attr.value = htmlAst.children[0].children;
+                                htmlAst.native = true; // 标记该节点
+                                break;
+                            }
+                        case 'scoped':
+                            if (htmlAst.tagName == 'style') {
+                                htmlAst.scoped = true;
+                                context.useScopedStyleSheet = true;
+                                break;
+                            }
+                        case 'slot-scope':
+                            htmlAst.slotScope = attr.value;
+                            let args = extractFunctionArgs(attr.value);
+                            if (args.length) {
+                                context.pushScope(args);
+                                scopeStack++;
+                            }
+                            break;
+                        case 'slot':
+                            // 第一个修饰符dynamic代表定义动态插槽
+                            htmlAst.isDynamicDefineSlotName = attr?._arguments?.includes('dynamic');
+                            htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value;
+                            break;
+                        case 'slot-name':
+                            // 使用插槽时的名称
+                            htmlAst.isDynamicSlot = attr?._arguments?.includes('dynamic');
+                            htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default');
+                            break;
+                        case 'style':
+                            attr.type = 18 /* ATTRIBUTE_STYLE */;
+                            attr.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.value);
+                            break;
+                        case 'class':
+                            attr.type = 17 /* ATTRIBUTE_CLASS */;
+                            attr.isDynamicValue = true;
+                            attr.value = context.setRenderScope(attr.value);
+                            break;
+                        case 'model':
+                            (htmlAst.customDirectives ||= []).push(attr);
+                            let modelType = htmlAst.tag === 'select' ?
+                                (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                    'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component';
+                            // transform 
+                            attr.property = `model${initialUpperCase(modelType)}`;
+                            attr.value = context.setRawScope(attr.value);
+                            attributes.push({
+                                type: 15 /* ATTRIBUTE */,
+                                property: '_setModelValue',
+                                value: toArrowFunction(`${attr.value} = _`, '_'),
+                                isDynamicValue: true,
+                                isDynamicProperty: false
+                            });
+                            attributes.push({
+                                type: 15 /* ATTRIBUTE */,
+                                property: '_getModelValue',
+                                value: toArrowFunction(`${attr.value}`),
+                                isDynamicValue: true,
+                                isDynamicProperty: false
+                            });
+                            break;
+                        default:
+                            attr.type = 19 /* CUSTOM_DIRECTIVE */;
+                            (htmlAst.customDirectives ||= []).push(attr);
+                            attr.value = context.setRenderScope(attr.value);
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property);
                             }
                             break;
-                        case '--':
-                            attr.type = 19 /* CUSTOM_DIRECTIVE */;
-                            (htmlAst.customDirectives ||= []).push(attr);
-                            // 内置指令的特殊处理
-                            if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
-                                if (attr.property === 'model') {
-                                    let modelType = htmlAst.tag === 'select' ?
-                                        (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                            'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component';
-                                    // transform 
-                                    attr.property = `model${initialUpperCase(modelType)}`;
-                                    attr.value = context.setRawScope(attr.value);
-                                    attributes.push({
-                                        type: 15 /* ATTRIBUTE */,
-                                        property: '_setModelValue',
-                                        value: toArrowFunction(`${attr.value} = _`, '_'),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    });
-                                    attributes.push({
-                                        type: 15 /* ATTRIBUTE */,
-                                        property: '_getModelValue',
-                                        value: toArrowFunction(`${attr.value}`),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    });
-                                }
-                            }
-                            else {
-                                // 正常的指令
-                                attr.value = context.setRenderScope(attr.value);
-                                if (attr.isDynamicProperty) {
-                                    attr.property = context.setRenderScope(attr.property);
-                                }
-                            }
-                            break;
-                        case '#':
-                            if (htmlAst.tagName === 'template' || htmlAst.tagName === 'fragment') {
-                                // 模板上的# 会转换为插槽的定义
-                                if (attr.isDynamicProperty) {
-                                    htmlAst.isDynamicDefineSlotName = true;
-                                    htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName);
-                                }
-                                else {
-                                    htmlAst.isDynamicDefineSlotName = false;
-                                    htmlAst.defineSlotName = attr.property;
-                                }
-                                htmlAst.slotScope = attr.value;
-                                let args = extractFunctionArgs(attr.value);
-                                if (args.length) {
-                                    context.pushScope(args);
-                                    scopeStack++;
-                                }
-                            }
-                            else {
-                                attr.type = 15 /* ATTRIBUTE */;
-                                // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
-                                attr.property = 'id';
-                                attr.isDynamicProperty = false;
-                                attr.isDynamicValue = attr.isDynamicProperty;
-                                attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
-                            }
-                            break;
-                        case '.':
-                            attr.type = 17 /* ATTRIBUTE_CLASS */;
-                            attr.isDynamicProperty = false;
-                            attr.isDynamicValue = attr.isDynamicProperty;
-                            attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
-                            attr.property = 'class';
-                            break;
-                        case '...':
-                            attr.type = 15 /* ATTRIBUTE */;
-                            attribute.property = 'bind';
-                            attribute.isDynamicValue = true;
-                            attr.value = context.setRenderScope(attr.property);
-                            break;
-                        default:
-                            switch (attr.property) {
-                                case 'slot':
-                                    debugger;
-                                    htmlAst.defineSlotName = attr?.value;
-                                    htmlAst.isDynamicDefineSlotName = attr.isDynamicValue;
-                                    break;
-                                case 'style':
-                                    attr.type = 18 /* ATTRIBUTE_STYLE */;
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value);
-                                    }
-                                    break;
-                                case 'class':
-                                    attr.type = 17 /* ATTRIBUTE_CLASS */;
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value);
-                                    }
-                                    break;
-                                default:
-                                    // 普通属性
-                                    attr.type = 15 /* ATTRIBUTE */;
-                                    if (attr.isDynamicProperty) {
-                                        attr.property = context.setRenderScope(attr.property);
-                                    }
-                                    if (!attr.value) {
-                                        attr.value = attr.property;
-                                    }
-                                    if (attr.isDynamicValue) {
-                                        attr.value = context.setRenderScope(attr.value);
-                                    }
-                            }
                     }
                     break;
+                case '@':
+                    attr.type = 16 /* EVENT */;
+                    attr.isHandler = isHandler(attr.value);
+                    attr.value = context.setRenderScope(attr.value || attr.property);
+                    if (attr.isDynamicProperty) {
+                        attr.property = context.setRenderScope(attr.property);
+                    }
+                    break;
+                case '#':
+                    if (htmlAst.tagName === 'template' || htmlAst.tagName === 'fragment') {
+                        // 模板上的# 会转换为插槽的定义
+                        if (attr.isDynamicProperty) {
+                            htmlAst.isDynamicDefineSlotName = true;
+                            htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName);
+                        }
+                        else {
+                            htmlAst.isDynamicDefineSlotName = false;
+                            htmlAst.defineSlotName = attr.property;
+                        }
+                        htmlAst.slotScope = attr.value;
+                        let args = extractFunctionArgs(attr.value);
+                        if (args.length) {
+                            context.pushScope(args);
+                            scopeStack++;
+                        }
+                    }
+                    else {
+                        attr.type = 15 /* ATTRIBUTE */;
+                        // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                        attr.property = 'id';
+                        attr.isDynamicValue = attr.isDynamicProperty;
+                        attr.isDynamicProperty = false;
+                        attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                    }
+                    break;
+                case '.':
+                    attr.type = 17 /* ATTRIBUTE_CLASS */;
+                    attr.isDynamicValue = attr.isDynamicProperty;
+                    attr.isDynamicProperty = false;
+                    attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                    attr.property = 'class';
+                    break;
+                case '...':
+                    attr.type = 15 /* ATTRIBUTE */;
+                    attribute.property = 'bind';
+                    attribute.isDynamicValue = true;
+                    attr.value = context.setRenderScope(attr.property);
+                    break;
+                default:
+                    attr.type = 15 /* ATTRIBUTE */;
+                    if (attr.isDynamicProperty) {
+                        attr.property = context.setRenderScope(attr.property);
+                    }
+                    if (!attr.value) {
+                        attr.value = attr.property;
+                    }
+                    if (attr.isDynamicValue) {
+                        attr.value = context.setRenderScope(attr.value);
+                    }
+                    switch (attr.property) {
+                        case 'class':
+                            attr.type = 17 /* ATTRIBUTE_CLASS */;
+                            break;
+                        case 'style':
+                            attr.type = 18 /* ATTRIBUTE_STYLE */;
+                            break;
+                    }
             }
         }
     }
@@ -5166,22 +5177,6 @@ function processTemplateAst(htmlAst, context) {
             break;
         case 'slot':
             htmlAst.type = 13 /* USE_COMPONENT_SLOT */;
-            let nameAttribute = htmlAst?.attributes?.find((attr) => attr.property === 'name');
-            if (nameAttribute) {
-                nameAttribute.type = 12 /* SKIP */;
-                if (nameAttribute.isDynamicValue) {
-                    htmlAst.slotName = context.setRenderScope(nameAttribute.value);
-                    htmlAst.isDynamicSlot = true;
-                }
-                else {
-                    htmlAst.slotName = nameAttribute.value;
-                    htmlAst.isDynamicSlot = false;
-                }
-            }
-            else {
-                htmlAst.slotName = 'default';
-                htmlAst.isDynamicSlot = false;
-            }
             break;
         case 'element':
             htmlAst.type = 20 /* DYNAMIC_HTML_ELEMENT */;
@@ -5405,7 +5400,7 @@ function normalizeClass(rawClass) {
         return rawClass;
     }
     else if (isArray(rawClass)) {
-        return extend(...rawClass.map(normalizeClass));
+        return extend({}, ...rawClass.map(normalizeClass));
     }
     else if (isFunction(rawClass)) {
         return normalizeClass(rawClass());
@@ -5427,7 +5422,7 @@ function normalizeStyle(style) {
     }
     else if (isArray(style)) {
         style = style.map(normalizeStyle);
-        return extend(...style);
+        return extend({}, ...style);
     }
     else if (isFunction(style)) {
         return normalizeStyle(style());
@@ -7654,6 +7649,7 @@ const onBeforeUpdate = createHook("beforeUpdate" /* BEFORE_UPDATE */);
 const onUpdated = createHook("updated" /* UPDATED */);
 const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
 const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
+const onBeforePatch = createHook("beforePatch" /* BEFORE_PATCH */);
 
 function injectMixin(options, mixin) {
     for (let key in mixin) {
@@ -8088,4 +8084,4 @@ function exposeCurrentScopeToWindow(name = 'scope') {
     window[name] = getCurrentScope();
 }
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforePatch, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };

@@ -9,14 +9,13 @@ console.time('crush')
 
 let app = createApp({
     components: {
-        crButton, crButtonGroup
+        tom: {
+            template:/*html*/`
+            `
+        }
     },
     template:/*html*/`
-        <cr-button-group>
-            <cr-button> login </cr-button>
-            <cr-button> signin  </cr-button>
-            <cr-button> logout </cr-button>
-        </cr-button-group>
+        <h1 s-bind="{id:666}">666</h1>
     `,
     create({ $self }: any) {
         $self.i = 0

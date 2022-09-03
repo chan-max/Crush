@@ -201,7 +201,8 @@ function genNode(node: any, context: any): any {
             nodeCode = genNodes(node.children as any[], context)
             break
         case AstTypes.USE_COMPONENT_SLOT:
-            const { slotName, isDynamicSlot, children } = node
+            let { slotName, isDynamicSlot, children } = node
+            slotName ||= 'default'
             var { propsCode } = genProps(node, context)
             nodeCode = context.callRenderFn('renderSlot', isDynamicSlot ? slotName : toBackQuotes(slotName), propsCode, children ? toArrowFunction(genNodes(children, context)) : NULL, uid())
             break
@@ -443,7 +444,6 @@ function genDeclartion(declarationGroup: any[], context: any) {
 function genProps(node: any, context: any): any {
     let { type, attributes }: any = node
     attributes ||= emptyArray
-    const isComponent = type === AstTypes.COMPONENT
     var props: any = {}
     var dynamicProps: any = []
     attributes.forEach((attr: any) => {
