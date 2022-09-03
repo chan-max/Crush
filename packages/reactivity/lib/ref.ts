@@ -3,7 +3,7 @@ import { isProxyType, ReactiveFlags, ReactiveTypeSymbol } from "./common"
 import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect, getDeps } from "./effect"
 import { reactive } from "./reactive";
 
-export const ref = (value: any, options?: any) => new Ref(value, options)
+export const ref = (value: any = null, options?: any) => new Ref(value, options)
 
 export const createRefValueSetter = (ref: Ref) => (newValue: any) => ref.value = newValue
 

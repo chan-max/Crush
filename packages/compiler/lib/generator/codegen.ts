@@ -153,24 +153,31 @@ function genSlotContent(node: any, context: any) {
         插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
         如 <template slot="header" slot-scope="x"> ,
         暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
+        
+         下面这种情况是不被允许的
+        <com>
+            <div slot-scope="x">  </div>
+            <div><div>
+        </com>
     */
     if (!children) return NULL
     var _default: any
     var slots: Record<string, string> = {}
 
+
     children.forEach((child: any) => {
-        var { defineSlotName, slotScope } = child
         // 作用域插槽只能在具名插槽上
-        if (defineSlotName) {
-            slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope)
+        if (child.defineSlotName) {
+            slots[child.defineSlotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope)
         } else {
             (_default ||= []).push(child)
         }
     });
 
     if (_default) {
-        // 默认插槽不存在作用域插槽
-        slots.default = toArrowFunction(genNodes(_default, context))
+        // 会优先使用子节点本身的作用于插槽，当子默认节点只有一个时才可以拥有作用域插槽 ,优先使用
+        let defaultSlotScope: any = (_default.length === 1 && _default[0].slotScope) || node.slotScope
+        slots.default = toArrowFunction(genNodes(_default, context), defaultSlotScope)
     }
     return stringify(slots)
 }
@@ -437,7 +444,6 @@ function genProps(node: any, context: any): any {
     let { type, attributes }: any = node
     attributes ||= emptyArray
     const isComponent = type === AstTypes.COMPONENT
-
     var props: any = {}
     var dynamicProps: any = []
     attributes.forEach((attr: any) => {
@@ -450,6 +456,7 @@ function genProps(node: any, context: any): any {
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup'
                 }
+
                 if (isDynamicProperty) {
                     let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL)
                     props[dynamicMapKey(key)] = callback

@@ -1,7 +1,7 @@
 import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray } from "@crush/common";
 import { CodeGenerator } from "../generator/compiler";
 import { toArrowFunction } from "../stringify";
-import { extractArrayFunctionArgs } from "../withScope";
+import { extractFunctionArgs } from "../withScope";
 import { parseAttribute } from "./parseAttribute";
 import { parseCSS } from "./parseCSS";
 import { parseIterator } from "./parseIterator";
@@ -160,6 +160,15 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         context.useScopedStyleSheet = true
                         break
                     }
+                case 'slot-scope':
+                case 'slotScope':
+                    htmlAst.slotScope = attr.value
+                    let args = extractFunctionArgs(attr.value)
+                    if (args.length) {
+                        context.pushScope(args)
+                        scopeStack++
+                    }
+                    break
                 default:
                     // 深度解析
                     parseAttribute(attr)
@@ -178,15 +187,24 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             // 内置指令的特殊处理
                             if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
                                 if (attr.property === 'model') {
-                                    let modelType = htmlAst.tag === 'select' ? (hasOwn(htmlAst.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : htmlAst.rawAttributeMap.type || 'text'
+                                    let modelType = htmlAst.tag === 'select' ?
+                                        (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                            'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component'
+
                                     // transform 
                                     attr.property = `model${initialUpperCase(modelType)}`
                                     attr.value = context.setRawScope(attr.value)
                                     attributes.push({
                                         type: AstTypes.ATTRIBUTE,
                                         property: '_setModelValue',
-                                        attribute: '_setModelValue', // 用于跳过属性解析
                                         value: toArrowFunction(`${attr.value} = _`, '_'),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    })
+                                    attributes.push({
+                                        type: AstTypes.ATTRIBUTE,
+                                        property: '_getModelValue',
+                                        value: toArrowFunction(`${attr.value}`),
                                         isDynamicValue: true,
                                         isDynamicProperty: false
                                     })
@@ -210,7 +228,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     htmlAst.defineSlotName = attr.property
                                 }
                                 htmlAst.slotScope = attr.value
-                                let args = extractArrayFunctionArgs(attr.value)
+                                let args = extractFunctionArgs(attr.value)
                                 if (args.length) {
                                     context.pushScope(args)
                                     scopeStack++
@@ -219,15 +237,15 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                 attr.type = AstTypes.ATTRIBUTE
                                 // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
                                 attr.property = 'id'
-                                attr.isDynamicProperty = false
                                 attr.isDynamicValue = attr.isDynamicProperty
+                                attr.isDynamicProperty = false
                                 attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
                             }
                             break
                         case '.':
                             attr.type = AstTypes.ATTRIBUTE_CLASS
-                            attr.isDynamicProperty = false
                             attr.isDynamicValue = attr.isDynamicProperty
+                            attr.isDynamicProperty = false
                             attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
                             attr.property = 'class'
                             break
@@ -240,14 +258,9 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         default:
                             switch (attr.property) {
                                 case 'slot':
-                                    htmlAst.defineSlotName = attr?._arguments?.[0] || 'default'
-                                    htmlAst.isDynamicDefineSlotName = false // todo 暂时不支持动态定义插槽
-                                    htmlAst.slotScope = attr.value
-                                    let args = extractArrayFunctionArgs(attr.value)
-                                    if (args.length) {
-                                        context.pushScope(args)
-                                        scopeStack++
-                                    }
+                                    debugger
+                                    htmlAst.defineSlotName = attr?.value
+                                    htmlAst.isDynamicDefineSlotName = attr.isDynamicValue
                                     break
                                 case 'style':
                                     attr.type = AstTypes.ATTRIBUTE_STYLE
@@ -327,7 +340,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             break
         case 'slot':
             htmlAst.type = AstTypes.USE_COMPONENT_SLOT
-            let nameAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'name')
+            let nameAttribute = htmlAst?.attributes?.find((attr: any) => attr.property === 'name')
             if (nameAttribute) {
                 nameAttribute.type = AstTypes.SKIP
                 if (nameAttribute.isDynamicValue) {

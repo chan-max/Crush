@@ -94,6 +94,8 @@ export const parseCSS = (source: string, context: any): any => {
             }
         } else if (scanner.expect('/*')) {
             /* comment */
+            scanner.exec(CSSCommentRE)
+            continue
         } else if (scanner.startsWith('...')) {
             var [mixin]: any = scanner.exec(mixinRE);
             var m = {

@@ -1,4 +1,4 @@
-// crush.js 1.1.3 created by chan 
+// crush.js 1.1.8 created by chan 
 const cache = (fn) => {
     const cache = Object.create(null);
     return ((key) => {
@@ -1021,7 +1021,7 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     // 保留属性
                     continue;
                 }
-                if (isEvent(propName)) {
+                else if (isEvent(propName)) {
                     if (pValue === nValue) {
                         continue;
                     }
@@ -1032,7 +1032,11 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     var { event, _arguments, modifiers, filters } = parseEventName(propName);
                     // window 修饰符
                     el = modifiers.includes('window') ? window : el;
-                    let options = { once: _arguments && _arguments.includes('once'), capture: _arguments && _arguments.includes('capture'), passive: _arguments && _arguments.includes('passive') };
+                    let options = {
+                        once: _arguments && _arguments.includes('once'),
+                        capture: _arguments && _arguments.includes('capture'),
+                        passive: _arguments && _arguments.includes('passive')
+                    };
                     let pHandler = normalizeHandler(pValue);
                     let nHandler = normalizeHandler(nValue);
                     // 保留原始事件和
@@ -1046,9 +1050,9 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     nHandler.forEach((handler) => {
                         if (!pHandler.includes(handler)) {
                             // add
-                            let ensureAddHandler = modifiers ? withEventModifiers(handler, modifiers) : handler;
-                            handlerMap.set(handler, ensureAddHandler);
-                            addListener(el, event, ensureAddHandler, options);
+                            let modifiedHandler = modifiers ? withEventModifiers(handler, modifiers) : handler;
+                            handlerMap.set(handler, modifiedHandler);
+                            addListener(el, event, modifiedHandler, options);
                         }
                     });
                 }
@@ -1345,14 +1349,14 @@ function updateComponentProps(instance, pProps, nProps) {
                 }
                 else if (isEvent(prop)) {
                     // events
-                    var { event, _arguments, modifiers } = parseEventName(prop);
+                    var { event, _arguments, modifiers, filters } = parseEventName(prop);
                     if (!isComponentLifecycleHook(event)) {
                         updateInstanceListeners(instance, event, pValue, nValue);
                     }
                 }
                 else {
                     // props
-                    const { default: _default, type, validator, required } = propsOptions[prop];
+                    const { default: _default, type, validator, required, rename } = propsOptions[prop];
                     if (isUndefined(nValue)) {
                         // nValue 不存在在时应该使用默认值
                         if (required) {
@@ -1369,7 +1373,7 @@ function updateComponentProps(instance, pProps, nProps) {
                         error(`prop ${nValue} is not legal for custom validator`);
                     }
                     // do update props value
-                    scope[prop] = nValue;
+                    scope[rename || prop] = nValue;
                     (instance.props ||= {})[prop] = nValue;
                 }
         }
@@ -2297,7 +2301,7 @@ function shallowReadonly(value) {
     return createProxy(value, true, true);
 }
 
-const ref = (value, options) => new Ref(value, options);
+const ref = (value = null, options) => new Ref(value, options);
 const createRefValueSetter = (ref) => (newValue) => ref.value = newValue;
 let defaultRefOptions = {
     sensitive: false,
@@ -2559,17 +2563,17 @@ function isShortHexColor(color) {
     return shortHexColorRE.test(color);
 }
 const rgbColorRE = /^rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)$/;
-const hslColorRE = /^hsl\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%\s*\)$/;
+const hslColorRE = /hsl\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%\s*\)/;
 function isHslColor(color) {
     return hslColorRE.test(color);
 }
-function parseHslColor(color) {
+function parseHsl(color) {
     let [_, hue, saturation, lightness] = hslColorRE.exec(color);
     return {
         hue, saturation, lightness
     };
 }
-function parseRgbToBaseColor(color) {
+function parseRgb(color) {
     let [_, red, green, blue] = rgbColorRE.exec(color);
     return {
         red,
@@ -2583,13 +2587,13 @@ function shortHexToHex(color) {
 function isRgbColor(color) {
     return rgbColorRE.test(color);
 }
-function parseHexToBaseColor(hexColor) {
+function parseHex(hexColor) {
     hexColor = hexColor.trim();
     let isShort = hexColor.length === 4;
     return {
         red: toDec(isShort ? hexColor[1] : hexColor.slice(1, 3)),
-        blue: toDec(isShort ? hexColor[2] : hexColor.slice(3, 5)),
-        green: toDec(isShort ? hexColor[3] : hexColor.slice(5, 7)),
+        green: toDec(isShort ? hexColor[2] : hexColor.slice(3, 5)),
+        blue: toDec(isShort ? hexColor[3] : hexColor.slice(5, 7)),
     };
 }
 function normalizeToHexColor(color) {
@@ -2614,23 +2618,23 @@ function normalizeToHexColor(color) {
     }
 }
 function rgbToHex(color) {
-    let rgb = parseRgbToBaseColor(color);
+    let rgb = parseRgb(color);
     return baseRgbToHex(rgb);
 }
 function baseRgbToHex({ red, green, blue }) {
     return '#' + toHex(red) + toHex(green) + toHex(blue);
 }
 function hslToHex(color) {
-    let hsl = parseHslColor(color);
+    let hsl = parseHsl(color);
     let rgb = parseHslToRgb(hsl);
     return baseRgbToHex(rgb);
 }
 function hexToRgb(color) {
-    let { red, green, blue } = parseHexToBaseColor(color);
+    let { red, green, blue } = parseHex(color);
     return `rgb(${red},${green},${blue})`;
 }
 function hexToHsl(color) {
-    let rgb = parseHexToBaseColor(color);
+    let rgb = parseHex(color);
     let { hue, saturation, lightness } = parseRgbToHsl(rgb);
     return `hsl(${hue},${saturation}%,${lightness}%)`;
 }
@@ -2714,37 +2718,71 @@ function parseRgbToHsl(rgbColor) {
         lightness: Math.round(lightness * 100),
     };
 }
-function createColor(color) {
-    return new Color(color);
+function parseColor(color) {
+    let rgb, hsl;
+    if (colors[color]) {
+        rgb = parseHex(colors[color]);
+        hsl = parseRgbToHsl(rgb);
+    }
+    else if (isHexColor(color)) {
+        rgb = parseHex(color);
+        hsl = parseRgbToHsl(rgb);
+    }
+    else if (isShortHexColor(color)) {
+        rgb = parseHex(color);
+        hsl = parseRgbToHsl(rgb);
+    }
+    else if (isRgbColor(color)) {
+        rgb = parseRgb(color);
+        hsl = parseRgbToHsl(rgb);
+    }
+    else if (isHslColor(color)) {
+        hsl = parseHsl(color);
+        rgb = parseHslToRgb(hsl);
+    }
+    else {
+        return null;
+    }
+    let { red, blue, green } = rgb;
+    let { hue, saturation, lightness } = hsl;
+    return {
+        red,
+        blue,
+        green,
+        hue,
+        saturation,
+        lightness
+    };
 }
-class Color {
-    constructor(color) {
-        let hex = normalizeToHexColor(color);
-        let rgb = parseHexToBaseColor(hex);
-        let hsl = parseRgbToHsl(rgb);
-        let { red, green, blue } = rgb;
-        let { hue, saturation, lightness } = hsl;
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-        this.hue = hue;
-        this.saturation = saturation;
-        this.ligntness = lightness;
-    }
-    red = null;
-    green = null;
-    blue = null;
-    hue = null;
-    saturation = null;
-    ligntness = null;
-    lighten() {
-    }
-    darken() {
-    }
-    saturate() {
-    }
-    desaturate() {
-    }
+// always return hex
+function lighten(color, value = 10) {
+    let { hue, saturation, lightness } = parseColor(color);
+    lightness += value;
+    let rgb = parseHslToRgb({ hue, saturation, lightness });
+    return baseRgbToHex(rgb);
+}
+function darken(color, value = 10) {
+    let { hue, saturation, lightness } = parseColor(color);
+    lightness -= value;
+    let rgb = parseHslToRgb({ hue, saturation, lightness });
+    return baseRgbToHex(rgb);
+}
+function saturate(color, value = 10) {
+    let { hue, saturation, lightness } = parseColor(color);
+    saturation += value;
+    let rgb = parseHslToRgb({ hue, saturation, lightness });
+    return baseRgbToHex(rgb);
+}
+function desaturate(color, value = 10) {
+    let { hue, saturation, lightness } = parseColor(color);
+    saturation -= value;
+    let rgb = parseHslToRgb({ hue, saturation, lightness });
+    return baseRgbToHex(rgb);
+}
+function opacity(color, opacity) {
+    // always return rgba
+    let { red, green, blue } = parseColor(color);
+    return `rgba(${red},${green},${blue},${opacity})`;
 }
 // name to hex
 const colors = {
@@ -3439,6 +3477,10 @@ function findStringFromArray(str, arr) {
     }
     return find;
 }
+let jsKeyWords = [
+    'true',
+    'false'
+];
 class Expression {
     // 记录表达式中用到的变量
     variables = [];
@@ -3455,7 +3497,7 @@ class Expression {
         this.scopeStack.pop();
     }
     isVariable(variable) {
-        return !findStringFromArray(variable, this.scopeStack);
+        return !findStringFromArray(variable, this.scopeStack) && !jsKeyWords.includes(variable);
     }
     setScope(variable, scope = this.scope) {
         if (this.isVariable(variable)) {
@@ -3541,7 +3583,7 @@ function expressionWithScope(expression, expressionContext) {
                 }
                 else if (restContent.trim().startsWith('=>')) {
                     // 箭头函数
-                    let args = extractArrayFunctionArgs(blockContent); // 箭头函数的形参
+                    let args = extractFunctionArgs(blockContent); // 箭头函数的形参
                     let fnContent = restContent.trim().slice(2).trim();
                     expressionContext.pushScope(args);
                     let withScopedFnContent = expressionWithScope(fnContent, expressionContext);
@@ -3604,7 +3646,7 @@ function expressionWithScope(expression, expressionContext) {
     }
     return withScopedExpression;
 }
-function extractArrayFunctionArgs(argsExpression) {
+function extractFunctionArgs(argsExpression) {
     if (!argsExpression || !argsExpression.trim()) {
         return [];
     }
@@ -4076,24 +4118,30 @@ function genSlotContent(node, context) {
         插槽指令只能 存在子节点的最外一层，并在处理指令时 提升到最外层节点上
         如 <template slot="header" slot-scope="x"> ,
         暂时插槽数量还是固定的，无法通过循环定义多个具名插槽
+        
+         下面这种情况是不被允许的
+        <com>
+            <div slot-scope="x">  </div>
+            <div><div>
+        </com>
     */
     if (!children)
         return NULL;
     var _default;
     var slots = {};
     children.forEach((child) => {
-        var { defineSlotName, slotScope } = child;
         // 作用域插槽只能在具名插槽上
-        if (defineSlotName) {
-            slots[defineSlotName] = toArrowFunction(genNode(child, context), slotScope);
+        if (child.defineSlotName) {
+            slots[child.defineSlotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope);
         }
         else {
             (_default ||= []).push(child);
         }
     });
     if (_default) {
-        // 默认插槽不存在作用域插槽
-        slots.default = toArrowFunction(genNodes(_default, context));
+        // 会优先使用子节点本身的作用于插槽，当子默认节点只有一个时才可以拥有作用域插槽 ,优先使用
+        let defaultSlotScope = (_default.length === 1 && _default[0].slotScope) || node.slotScope;
+        slots.default = toArrowFunction(genNodes(_default, context), defaultSlotScope);
     }
     return stringify(slots);
 }
@@ -4536,6 +4584,7 @@ function parseIterator(expression) {
 
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
 const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
+const CSSCommentRE = /\/\*([\s\S]*?)\*\//;
 const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/;
 const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/;
 const mixinRE = /\.\.\.([^;]+);/;
@@ -4601,7 +4650,11 @@ const parseCSS = (source, context) => {
                 }
             }
         }
-        else if (scanner.expect('/*')) ;
+        else if (scanner.expect('/*')) {
+            /* comment */
+            scanner.exec(CSSCommentRE);
+            continue;
+        }
         else if (scanner.startsWith('...')) {
             var [mixin] = scanner.exec(mixinRE);
             var m = {
@@ -4932,6 +4985,15 @@ function processTemplateAst(htmlAst, context) {
                         context.useScopedStyleSheet = true;
                         break;
                     }
+                case 'slot-scope':
+                case 'slotScope':
+                    htmlAst.slotScope = attr.value;
+                    let args = extractFunctionArgs(attr.value);
+                    if (args.length) {
+                        context.pushScope(args);
+                        scopeStack++;
+                    }
+                    break;
                 default:
                     // 深度解析
                     parseAttribute(attr);
@@ -4950,15 +5012,23 @@ function processTemplateAst(htmlAst, context) {
                             // 内置指令的特殊处理
                             if (!attr.isDynamicProperty && ['model'].includes(attr.property)) {
                                 if (attr.property === 'model') {
-                                    let modelType = htmlAst.tag === 'select' ? (hasOwn(htmlAst.rawAttributeMap, 'multiple') ? 'selectMultiple' : 'selectOne') : htmlAst.rawAttributeMap.type || 'text';
+                                    let modelType = htmlAst.tag === 'select' ?
+                                        (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                            'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component';
                                     // transform 
                                     attr.property = `model${initialUpperCase(modelType)}`;
                                     attr.value = context.setRawScope(attr.value);
                                     attributes.push({
                                         type: 15 /* ATTRIBUTE */,
                                         property: '_setModelValue',
-                                        attribute: '_setModelValue',
                                         value: toArrowFunction(`${attr.value} = _`, '_'),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    });
+                                    attributes.push({
+                                        type: 15 /* ATTRIBUTE */,
+                                        property: '_getModelValue',
+                                        value: toArrowFunction(`${attr.value}`),
                                         isDynamicValue: true,
                                         isDynamicProperty: false
                                     });
@@ -4984,7 +5054,7 @@ function processTemplateAst(htmlAst, context) {
                                     htmlAst.defineSlotName = attr.property;
                                 }
                                 htmlAst.slotScope = attr.value;
-                                let args = extractArrayFunctionArgs(attr.value);
+                                let args = extractFunctionArgs(attr.value);
                                 if (args.length) {
                                     context.pushScope(args);
                                     scopeStack++;
@@ -5015,14 +5085,9 @@ function processTemplateAst(htmlAst, context) {
                         default:
                             switch (attr.property) {
                                 case 'slot':
-                                    htmlAst.defineSlotName = attr?._arguments?.[0] || 'default';
-                                    htmlAst.isDynamicDefineSlotName = false; // todo 暂时不支持动态定义插槽
-                                    htmlAst.slotScope = attr.value;
-                                    let args = extractArrayFunctionArgs(attr.value);
-                                    if (args.length) {
-                                        context.pushScope(args);
-                                        scopeStack++;
-                                    }
+                                    debugger;
+                                    htmlAst.defineSlotName = attr?.value;
+                                    htmlAst.isDynamicDefineSlotName = attr.isDynamicValue;
                                     break;
                                 case 'style':
                                     attr.type = 18 /* ATTRIBUTE_STYLE */;
@@ -5101,7 +5166,7 @@ function processTemplateAst(htmlAst, context) {
             break;
         case 'slot':
             htmlAst.type = 13 /* USE_COMPONENT_SLOT */;
-            let nameAttribute = htmlAst.attributes.find((attr) => attr.property === 'name');
+            let nameAttribute = htmlAst?.attributes?.find((attr) => attr.property === 'name');
             if (nameAttribute) {
                 nameAttribute.type = 12 /* SKIP */;
                 if (nameAttribute.isDynamicValue) {
@@ -5379,7 +5444,7 @@ function renderSlot(name, scope, fallback, key) {
         return null;
     }
     else {
-        slot = slot(scope);
+        slot = slot(scope || emptyObject);
     }
     // 这里返回的一定是单一节点（fragment），不会是数组形式
     slot.key = key; // 唯一插槽节点的key
@@ -5449,19 +5514,18 @@ function addUnit(value, unit) {
 function rgba(...rgba) {
     return `rgba(${rgba.join(',')})`;
 }
-const rgb = rgba;
+function rgb(...rgb) {
+    return `rgb(${rgb.join(',')})`;
+}
 /*
     in normal css , the saturation and lightness need to endwith % , but we support to use number , and auto fill %
 */
 function hsla(h, s, l, a = 1) {
-    return `hsla(
-        ${h},
-        ${addUnit(s, '%')},
-        ${addUnit(l, '%')},
-        ${a}
-        )`;
+    return `hsla(${h},${addUnit(s, '%')},${addUnit(l, '%')},${a})`;
 }
-const hsl = hsla;
+function hsl(h, s, l) {
+    return `hsl(${h},${addUnit(s, '%')},${addUnit(l, '%')})`;
+}
 /*
     var is a keyword in js , use $var instead
     :root{
@@ -5606,16 +5670,21 @@ const modelText = {
         const setter = vnode.props._setModelValue;
         el._modelValue = value;
         // 设置input初始值
-        let initalValue = isRef(value) ? value.value : value;
-        el.value = isUndefined(initalValue) ? '' : initalValue;
+        if (isRef(value)) {
+            // 如果没设置初始值，会显示 undefined
+            el.value = isUndefined(value.value) ? '' : value.value;
+        }
+        else {
+            el.value = isUndefined(value) ? '' : value;
+        }
         let inputHandler = () => {
             let inputValue = el.value;
             // number 和 trim 不能同时使用 , 空字符串转数字会变为0
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue;
             // 标记输入框刚刚输入完毕
             el._inputing = true;
-            if (isRef(el.modelValue)) {
-                el.modelValue.value = inputValue;
+            if (isRef(el._modelValue)) {
+                el._modelValue.value = inputValue;
             }
             else {
                 setter(inputValue);
@@ -5662,22 +5731,22 @@ const modelRadio = {
         }
     }
 };
-// modelcheckbox dont need setter
 const modelCheckbox = {
-    created(el, { value: checked }, vnode) {
-        if (!isArray(checked)) {
+    created(el, { value }, vnode) {
+        debugger;
+        if (!isArray(value)) {
             return;
         }
         // 设置初始化值
-        if (checked.includes(el.value)) {
+        if (value.includes(el.value)) {
             el.checked = true;
         }
         addListener(el, 'change', () => {
             if (el.checked) {
-                checked.push(el.value);
+                value.push(el.value);
             }
             else {
-                removeFromArray(checked, el.value);
+                removeFromArray(value, el.value);
             }
         });
     },
@@ -5772,6 +5841,10 @@ const modelRange = {
     },
     beforeUpdate(el, { value }) {
         el.value = isRef(value) ? value.value : value;
+    }
+};
+const modelComponent = {
+    created(scope, bindings, vnode) {
     }
 };
 
@@ -7062,6 +7135,7 @@ const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
+    modelComponent: modelComponent
 };
 
 // app.config.responsive
@@ -7268,7 +7342,7 @@ const scopeProperties = {
         return this._currentPropertyAccessInstance.props;
     },
     get $attrs() {
-        return this._currentPropertyAccessInstance.attrs;
+        return this._currentPropertyAccessInstance.attrs ||= {};
     },
     get $slots() {
         return this._currentPropertyAccessInstance.slots;
@@ -7323,6 +7397,11 @@ const defineScopeProperty = (key, property) => scopeProperties[key] = property;
 const protoMethods = {
     debounce,
     throttle,
+    lighten,
+    darken,
+    saturate,
+    desaturate,
+    opacity,
     ...cssMethods,
 };
 // inject scope property
@@ -7416,7 +7495,9 @@ function createApp(rootComponent) {
         customScreens: responsiveLayoutMedia,
         // scope property
         globalProperties: scopeProperties,
-        compilerOptions: null
+        compilerOptions: null,
+        // 文本修饰符
+        textModifiers,
     };
     currentApp = app;
     // 安装动画
@@ -7725,10 +7806,11 @@ function injectDirectives(target, directives) {
 /*
     参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
 */
-function setOwnKey(arr) {
+function processModifiers(arr) {
     for (let key of arr) {
         arr[key] = true;
     }
+    arr._self = arr;
     return arr;
 }
 function processHook(type, vnode, pVnode = null) {
@@ -7764,9 +7846,9 @@ function processComponentHook(type, vnode, pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir).value;
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray;
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray;
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray;
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
                 hook(scope, bindings, vnode, pVnode);
             }
         }
@@ -7792,9 +7874,9 @@ function processElementHook(type, vnode, pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir)?.value;
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray;
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray;
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray;
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
                 hook(el, bindings, vnode, pVnode);
             }
         }
@@ -7819,9 +7901,9 @@ function processRenderComponentHook(type, vnode, pVnode) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir).value;
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray;
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray;
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray;
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
                 // 这里不能省略第一个参数，是为了和其他两种参数保持一致
                 hook(null, bindings, vnode, pVnode);
             }
@@ -8006,4 +8088,4 @@ function exposeCurrentScopeToWindow(name = 'scope') {
     window[name] = getCurrentScope();
 }
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createColor, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractArrayFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, eventModifiers, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, parseAttribute, parseEventName, parseHexToBaseColor, parseHslColor, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgbToBaseColor, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };

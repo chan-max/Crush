@@ -1,9 +1,10 @@
 import { ComputedRef } from "./computed";
-import { getRefDeps, Ref } from "./ref";
 
+import { Ref } from "./ref";
+import { getDeps } from "./effect";
 
 export function watchComputed(computed: ComputedRef, callback: Function) {
-    const deps = getRefDeps(computed)
+    const deps = getDeps(computed)
     const watchEffect = () => callback.call(null, computed.value, computed.oldValue)
     deps.add(watchEffect)
 

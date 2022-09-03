@@ -47,10 +47,11 @@ export function injectDirectives(target: any, directives: any[]) {
 /*
     参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
 */
-function setOwnKey(arr: any[]) {
+function processModifiers(arr: any) {
     for (let key of arr) {
         arr[key] = true
     }
+    arr._self = arr
     return arr
 }
 
@@ -91,9 +92,9 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir).value
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
                 hook(scope, bindings, vnode, pVnode)
             }
         }
@@ -122,9 +123,9 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir)?.value
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
                 hook(el, bindings, vnode, pVnode)
             }
         }
@@ -151,9 +152,9 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
                     // 如果更新的话两个节点的指令应该完全相同
                     bindings.oldValue = pVnode.directives.get(dir).value
                 }
-                bindings._arguments ? setOwnKey(bindings._arguments) : bindings._arguments = emptyArray
-                bindings.filters ? setOwnKey(bindings.filters) : bindings.filters = emptyArray
-                bindings.modifiers ? setOwnKey(bindings.modifiers) : bindings.modifiers = emptyArray
+                bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
+                bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
+                bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
                 // 这里不能省略第一个参数，是为了和其他两种参数保持一致
                 hook(null, bindings, vnode, pVnode)
             }

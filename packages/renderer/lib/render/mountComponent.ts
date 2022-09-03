@@ -91,7 +91,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     instance.slots = vnode.children
     instance.props = reactive(vnode.props)
     // 处理mixins中的create钩子 ，rootCreate后处理 ，优先级更高 , 在处理props后处理，保证钩子中能访问到props等数据
-    
+
     const createResults = callHook(LifecycleHooks.CREATE, instance, { binding: scope }, scope)
 
     // 注入 mixins 状态
@@ -115,7 +115,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
     // component update fn
     function update() {
-        const { isMounted, vnode: pVnode, beforePatch, componentVnode, updatingComponentVnode, render } = instance
+        const { isMounted, vnode: pVnode, componentVnode, updatingComponentVnode, render } = instance
         // 每次 更新生成新树
         setCurrentInstance(instance)
         let nVnode = render(scope)
@@ -141,7 +141,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
 
         processHook(isMounted ? LifecycleHooks.BEFORE_UPDATE : LifecycleHooks.BEFORE_MOUNT, nComponentVnode, pComponentVnode)
 
-        beforePatch && beforePatch(pVnode, nVnode)
+        callHook(LifecycleHooks.BEFORE_PATCH, instance, null, nVnode, pVnode,)
 
         patch(pVnode, nVnode, container, anchor, instance)
 

@@ -1,13 +1,15 @@
 import { doKeyframesAnimation } from "@crush/animate";
 import { hasOwn, isPromise, uid, warn } from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
-import { addInstanceListener, clearCurrentInstance, createInstanceEventEmitter, getCurrentInstance, getEdgeElements, getInstanceEvents, getInstancetEventListeners, onceInstanceListener, removeInstanceListener, setCurrentInstance } from "@crush/renderer";
+import { getEdgeElements } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'
 import { querySelector, querySelectorAll } from "@crush/renderer/lib/common/querySelector";
 import { nextTick } from "@crush/scheduler";
 
 import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common";
 import { getCurrentApp } from "../app/app";
+
+import { lighten, darken, saturate, desaturate, opacity } from "@crush/reactivity";
 
 export const scopeProperties: any = {
     _currentPropertyAccessInstance: null, // 保存当前属性访问的组件实例，在那个组件实例中访问的属性
@@ -49,7 +51,7 @@ export const scopeProperties: any = {
         return this._currentPropertyAccessInstance.props
     }, // props包括 props， attrs 和 events
     get $attrs() {
-        return this._currentPropertyAccessInstance.attrs
+        return this._currentPropertyAccessInstance.attrs ||= {}
     },
     get $slots() {
         return this._currentPropertyAccessInstance.slots
@@ -107,6 +109,11 @@ export const defineScopeProperty = (key: string, property: any) => scopeProperti
 const protoMethods: any = {
     debounce,
     throttle,
+    lighten,
+    darken,
+    saturate,
+    desaturate,
+    opacity,
     ...cssMethods,
 }
 

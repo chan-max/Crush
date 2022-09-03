@@ -37,13 +37,13 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     attrs[prop] = nValue
                 } else if (isEvent(prop)) {
                     // events
-                    var { event, _arguments, modifiers } = parseEventName(prop)
+                    var { event, _arguments, modifiers, filters } = parseEventName(prop)
                     if (!isComponentLifecycleHook(event)) {
                         updateInstanceListeners(instance, event, pValue, nValue)
                     }
                 } else {
                     // props
-                    const { default: _default, type, validator, required } = propsOptions[prop]
+                    const { default: _default, type, validator, required, rename } = propsOptions[prop]
 
                     if (isUndefined(nValue)) {
                         // nValue 不存在在时应该使用默认值
@@ -63,7 +63,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     }
 
                     // do update props value
-                    scope[prop] = nValue;
+                    scope[rename || prop] = nValue;
                     (instance.props ||= {})[prop] = nValue
                 }
         }

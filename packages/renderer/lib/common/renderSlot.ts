@@ -1,3 +1,4 @@
+import { emptyObject } from "@crush/common";
 import { getCurrentInstance } from "../render/mountComponent";
 
 export function renderSlot(name: string, scope: any, fallback: any, key: any) {
@@ -6,7 +7,7 @@ export function renderSlot(name: string, scope: any, fallback: any, key: any) {
     if (!slot) {
         return null
     } else {
-        slot = slot(scope)
+        slot = slot(scope || emptyObject)
     }
     // 这里返回的一定是单一节点（fragment），不会是数组形式
     slot.key = key // 唯一插槽节点的key

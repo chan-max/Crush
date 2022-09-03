@@ -16,6 +16,11 @@ export function findStringFromArray(str: string, arr: any): boolean {
     return find
 }
 
+let jsKeyWords = [
+    'true',
+    'false'
+]
+
 export class Expression {
 
     // 记录表达式中用到的变量
@@ -40,7 +45,7 @@ export class Expression {
     }
 
     isVariable(variable: string) {
-        return !findStringFromArray(variable, this.scopeStack)
+        return !findStringFromArray(variable, this.scopeStack) && !jsKeyWords.includes(variable)
     }
 
     setScope(variable: any, scope: any = this.scope) {
@@ -135,7 +140,7 @@ export function expressionWithScope(expression: string, expressionContext: Expre
                     lastIsVar = true
                 } else if (restContent.trim().startsWith('=>')) {
                     // 箭头函数
-                    let args = extractArrayFunctionArgs(blockContent) // 箭头函数的形参
+                    let args = extractFunctionArgs(blockContent) // 箭头函数的形参
                     let fnContent = restContent.trim().slice(2).trim()
                     expressionContext.pushScope(args)
                     let withScopedFnContent = expressionWithScope(fnContent, expressionContext)
@@ -197,7 +202,7 @@ export function expressionWithScope(expression: string, expressionContext: Expre
     return withScopedExpression
 }
 
-export function extractArrayFunctionArgs(argsExpression: any): any {
+export function extractFunctionArgs(argsExpression: any): any {
     if (!argsExpression || !argsExpression.trim()) {
         return []
     }

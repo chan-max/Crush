@@ -42,10 +42,12 @@ export function parseAttribute(attr: any) {
     for (let _flag of AttributeEndFlags) {
         if (attribute.endsWith(_flag)) {
             endFlag = _flag
-            attribute = attribute.slice(0, attribute.length - _flag.length - 1)
+            attribute = attribute.slice(0, attribute.length - _flag.length)
             break
         }
     }
+
+
 
     let isDynamicProperty, property, decorators
 

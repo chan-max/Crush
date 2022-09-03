@@ -108,9 +108,7 @@ export function updateElementAttributes(
                 if (propName.startsWith('_')) {
                     // 保留属性
                     continue
-                }
-
-                if (isEvent(propName)) {
+                } else if (isEvent(propName)) {
                     if (pValue === nValue) {
                         continue
                     }
@@ -119,11 +117,15 @@ export function updateElementAttributes(
                         continue
                     }
                     var { event, _arguments, modifiers, filters } = parseEventName(propName)
-   
+
                     // window 修饰符
                     el = modifiers.includes('window') ? window : el
 
-                    let options = { once: _arguments && _arguments.includes('once'), capture: _arguments && _arguments.includes('capture'), passive: _arguments && _arguments.includes('passive') }
+                    let options = {
+                        once: _arguments && _arguments.includes('once'),
+                        capture: _arguments && _arguments.includes('capture'),
+                        passive: _arguments && _arguments.includes('passive')
+                    }
                     let pHandler = normalizeHandler(pValue)
                     let nHandler = normalizeHandler(nValue)
                     // 保留原始事件和
@@ -137,9 +139,9 @@ export function updateElementAttributes(
                     nHandler.forEach((handler: any) => {
                         if (!pHandler.includes(handler)) {
                             // add
-                            let ensureAddHandler = modifiers ? withEventModifiers(handler, modifiers) : handler
-                            handlerMap.set(handler, ensureAddHandler)
-                            addListener(el, event, ensureAddHandler, options)
+                            let modifiedHandler = modifiers ? withEventModifiers(handler, modifiers) : handler
+                            handlerMap.set(handler, modifiedHandler)
+                            addListener(el, event, modifiedHandler, options)
                         }
                     });
                 } else if (propName in el && !isSVG) { // dom props

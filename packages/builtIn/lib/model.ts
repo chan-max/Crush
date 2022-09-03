@@ -6,14 +6,20 @@ import { debounce, isNumber, } from '@crush/common'
 import { hexToHsl, hexToRgb, isRef, normalizeToHexColor } from "@crush/reactivity";
 
 
+
 export const modelText = {
     created(el: any, { value, modifiers }: any, vnode: any) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers
         const setter = vnode.props._setModelValue
         el._modelValue = value
         // 设置input初始值
-        let initalValue = isRef(value) ? value.value : value
-        el.value = isUndefined(initalValue) ? '' : initalValue;
+
+        if (isRef(value)) {
+            // 如果没设置初始值，会显示 undefined
+            el.value = isUndefined(value.value) ? '' : value.value
+        } else {
+            el.value = isUndefined(value) ? '' : value
+        }
 
         let inputHandler = () => {
             let inputValue = el.value
@@ -21,8 +27,8 @@ export const modelText = {
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
             // 标记输入框刚刚输入完毕
             el._inputing = true
-            if (isRef(el.modelValue)) {
-                el.modelValue.value = inputValue
+            if (isRef(el._modelValue)) {
+                el._modelValue.value = inputValue
             } else {
                 setter(inputValue)
             }
@@ -74,21 +80,21 @@ export const modelRadio = {
 
 
 
-// modelcheckbox dont need setter
 export const modelCheckbox = {
-    created(el: any, { value: checked }: any, vnode: any) {
-        if (!isArray(checked)) {
+    created(el: any, { value }: any, vnode: any) {
+        debugger
+        if (!isArray(value)) {
             return
         }
         // 设置初始化值
-        if (checked.includes(el.value)) {
+        if (value.includes(el.value)) {
             el.checked = true
         }
         addListener(el, 'change', () => {
             if (el.checked) {
-                checked.push(el.value)
+                value.push(el.value)
             } else {
-                removeFromArray(checked, el.value)
+                removeFromArray(value, el.value)
             }
         })
     },
@@ -193,5 +199,11 @@ export const modelRange = {
     },
     beforeUpdate(el: HTMLInputElement, { value }: any) {
         el.value = isRef(value) ? value.value : value
+    }
+}
+
+
+export const modelComponent = {
+    created(scope: any, bindings: any, vnode: any) {
     }
 }

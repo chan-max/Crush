@@ -1,4 +1,3 @@
-import { error } from "@crush/common"
 
 const hexColorRE = /^#([0-9a-fA-F]{6})$/
 const shortHexColorRE = /^#([0-9a-fA-F]{3})$/
@@ -13,20 +12,20 @@ export function isShortHexColor(color: string) {
 
 const rgbColorRE = /^rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)$/
 
-const hslColorRE = /^hsl\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%\s*\)$/
+const hslColorRE = /hsl\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%\s*\)/
 
 export function isHslColor(color: string) {
     return hslColorRE.test(color)
 }
 
-export function parseHslColor(color: string) {
+export function parseHsl(color: string) {
     let [_, hue, saturation, lightness] = hslColorRE.exec(color) as any
     return {
         hue, saturation, lightness
     }
 }
 
-export function parseRgbToBaseColor(color: string) {
+export function parseRgb(color: string) {
     let [_, red, green, blue] = rgbColorRE.exec(color) as any
     return {
         red,
@@ -44,13 +43,13 @@ export function isRgbColor(color: string) {
     return rgbColorRE.test(color)
 }
 
-export function parseHexToBaseColor(hexColor: string) {
+export function parseHex(hexColor: string) {
     hexColor = hexColor.trim()
     let isShort = hexColor.length === 4
     return {
         red: toDec(isShort ? hexColor[1] : hexColor.slice(1, 3)),
-        blue: toDec(isShort ? hexColor[2] : hexColor.slice(3, 5)),
-        green: toDec(isShort ? hexColor[3] : hexColor.slice(5, 7)),
+        green: toDec(isShort ? hexColor[2] : hexColor.slice(3, 5)),
+        blue: toDec(isShort ? hexColor[3] : hexColor.slice(5, 7)),
     }
 }
 
@@ -74,7 +73,7 @@ export function normalizeToHexColor(color: string) {
 }
 
 export function rgbToHex(color: string) {
-    let rgb = parseRgbToBaseColor(color)
+    let rgb = parseRgb(color)
     return baseRgbToHex(rgb)
 }
 
@@ -82,19 +81,21 @@ function baseRgbToHex({ red, green, blue }: any) {
     return '#' + toHex(red) + toHex(green) + toHex(blue)
 }
 
+
+
 export function hslToHex(color: string) {
-    let hsl = parseHslColor(color)
+    let hsl = parseHsl(color)
     let rgb = parseHslToRgb(hsl)
     return baseRgbToHex(rgb)
 }
 
 export function hexToRgb(color: string) {
-    let { red, green, blue } = parseHexToBaseColor(color)
+    let { red, green, blue } = parseHex(color)
     return `rgb(${red},${green},${blue})`
 }
 
 export function hexToHsl(color: string) {
-    let rgb = parseHexToBaseColor(color)
+    let rgb = parseHex(color)
     let { hue, saturation, lightness } = parseRgbToHsl(rgb)
     return `hsl(${hue},${saturation}%,${lightness}%)`
 }
@@ -186,59 +187,76 @@ export function parseRgbToHsl(rgbColor: any) {
     }
 }
 
-class ColorRef {
-    
-}
-
-export function createColor(color: any) {
-    return new Color(color)
-}
-
-class Color {
-
-    constructor(color: any) {
-        let hex = normalizeToHexColor(color)
-        let rgb = parseHexToBaseColor(hex)
-        let hsl = parseRgbToHsl(rgb)
-        let { red, green, blue } = rgb
-        let { hue, saturation, lightness } = hsl
-        this.red = red
-        this.green = green
-        this.blue = blue
-        this.hue = hue
-        this.saturation = saturation
-        this.ligntness = lightness
+export function parseColor(color: string): any {
+    let rgb: any, hsl: any
+    if (colors[color]) {
+        rgb = parseHex(colors[color])
+        hsl = parseRgbToHsl(rgb)
+    } else if (isHexColor(color)) {
+        rgb = parseHex(color)
+        hsl = parseRgbToHsl(rgb)
+    } else if (isShortHexColor(color)) {
+        rgb = parseHex(color)
+        hsl = parseRgbToHsl(rgb)
+    } else if (isRgbColor(color)) {
+        rgb = parseRgb(color)
+        hsl = parseRgbToHsl(rgb)
+    } else if (isHslColor(color)) {
+        hsl = parseHsl(color)
+        rgb = parseHslToRgb(hsl)
+    } else {
+        return null
     }
 
-    red: any = null
-    green: any = null
-    blue: any = null
-    hue: any = null
-    saturation: any = null
-    ligntness: any = null
-
-
-    lighten() {
-
+    let { red, blue, green } = rgb
+    let { hue, saturation, lightness } = hsl
+    return {
+        red,
+        blue,
+        green,
+        hue,
+        saturation,
+        lightness
     }
-
-    darken() {
-
-    }
-
-    saturate() {
-
-    }
-
-    desaturate() {
-
-    }
-
-
 }
 
 
 
+// always return hex
+export function lighten(color: string, value: number = 10) {
+
+    let { hue, saturation, lightness } = parseColor(color)
+    lightness += value
+    let rgb = parseHslToRgb({ hue, saturation, lightness })
+    return baseRgbToHex(rgb)
+}
+
+export function darken(color: string, value: number = 10) {
+    let { hue, saturation, lightness } = parseColor(color)
+    lightness -= value
+    let rgb = parseHslToRgb({ hue, saturation, lightness })
+    return baseRgbToHex(rgb)
+}
+
+export function saturate(color: string, value: number = 10) {
+    let { hue, saturation, lightness } = parseColor(color)
+    saturation += value
+    let rgb = parseHslToRgb({ hue, saturation, lightness })
+    return baseRgbToHex(rgb)
+}
+
+export function desaturate(color: string, value: number = 10) {
+    let { hue, saturation, lightness } = parseColor(color)
+    saturation -= value
+    let rgb = parseHslToRgb({ hue, saturation, lightness })
+    return baseRgbToHex(rgb)
+}
+
+export function opacity(color: string, opacity: number) {
+    // always return rgba
+    let { red, green, blue } = parseColor(color)
+    return `rgba(${red},${green},${blue},${opacity})`
+}
 
 // name to hex
 export const colors: any = {

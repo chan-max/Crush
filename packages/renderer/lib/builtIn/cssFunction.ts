@@ -41,22 +41,21 @@ function rgba(...rgba: number[]) {
     return `rgba(${rgba.join(',')})`
 }
 
-const rgb = rgba
+ function rgb(...rgb: number[]) {
+    return `rgb(${rgb.join(',')})`
+}
 
 
 /*
     in normal css , the saturation and lightness need to endwith % , but we support to use number , and auto fill %
 */
 function hsla(h: number, s: number | string, l: number | string, a: number = 1) {
-    return `hsla(
-        ${h},
-        ${addUnit(s, '%')},
-        ${addUnit(l, '%')},
-        ${a}
-        )`
+    return `hsla(${h},${addUnit(s, '%')},${addUnit(l, '%')},${a})`
 }
 
-const hsl = hsla
+function hsl(h: number, s: number | string, l: number | string) {
+    return `hsl(${h},${addUnit(s, '%')},${addUnit(l, '%')})`
+}
 
 /*
     var is a keyword in js , use $var instead

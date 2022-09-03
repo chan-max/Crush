@@ -20,6 +20,8 @@ const enum LifecycleHooks {
 
     CHILDREN_MOUNTED = 'childrenMounted', // el only
 
+    BEFORE_PATCH = 'beforePatch',
+
     BEFORE_ROUTE_ENTER = 'beforeRouteEnter',
     BEFORE_ROUTE_LEAVE = 'beforeRouteLeave',
     BEFORE_ROUTE_UPDATE = 'beforeRouteUpdate',
@@ -117,6 +119,8 @@ const onBeforeUpdate = createHook(LifecycleHooks.BEFORE_UPDATE)
 const onUpdated = createHook(LifecycleHooks.UPDATED)
 const onBeforeUnmount = createHook(LifecycleHooks.BEFORE_UNMOUNT)
 const onUnmounted = createHook(LifecycleHooks.UNMOUNTED)
+export const onBeforePatch = createHook(LifecycleHooks.BEFORE_PATCH)
+
 
 export {
     LifecycleHooks,
