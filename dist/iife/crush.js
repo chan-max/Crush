@@ -7479,7 +7479,7 @@ var Crush = (function (exports) {
             use,
             mount: mountApp,
             unmount: unmountApp,
-            beforeAppMount,
+            beforeAppMount: null,
             errorHandler: null,
             warnHandler: null,
             // 全局颜色 $colors
@@ -7548,11 +7548,15 @@ var Crush = (function (exports) {
             app.container = container;
             app.inlineTemplate = container.innerHTML;
             container.innerHTML = '';
+            // 需要在css中设置display:none
+            if (container.hasAttribute('s-cloak')) {
+                container.style.display = "block";
+            }
             if (!app.rootComponent.template && !app.rootComponent.render) {
                 app.rootComponent.template = app.inlineTemplate;
             }
             // 执行应用挂载前钩子，可以拿到用户定义的配置信息
-            app.beforeAppMount(app);
+            app.beforeAppMount && app.beforeAppMount(app);
             app.rootComponentVnode = createComponent(rootComponent, null, null);
             mount(app.rootComponentVnode, app.container);
             app.isMounted = true;
@@ -7573,8 +7577,6 @@ var Crush = (function (exports) {
     }
     function getCustomScreensMedia(screen) {
         return getCurrentApp().customScreens[screen] || 'screen'; // 默认屏幕 , 所有情况都生效
-    }
-    function beforeAppMount(app) {
     }
 
     function injectHook(type, target, hook) {

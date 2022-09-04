@@ -56,7 +56,7 @@ import {
 } from '../common/event'
 
 import { updateDeclaration } from "./declaration";
-import { ComponentInstance, isElementLifecycleHook, normalizeClass, normalizeStyle } from "@crush/core";
+import { isElementLifecycleHook, normalizeClass, normalizeStyle } from "@crush/core";
 
 
 export function mountAttributes(el: any, props: any, instance: any = null, isSVG: boolean) {
@@ -117,23 +117,23 @@ export function updateElementAttributes(
                         continue
                     }
                     var { event, _arguments, modifiers, filters } = parseEventName(propName)
-
+                    
                     // window 修饰符
                     el = modifiers.includes('window') ? window : el
 
                     let options = {
-                        once: _arguments && _arguments.includes('once'),
-                        capture: _arguments && _arguments.includes('capture'),
-                        passive: _arguments && _arguments.includes('passive')
+                        once: modifiers && modifiers.includes('once'),
+                        capture: modifiers && modifiers.includes('capture'),
+                        passive: modifiers && modifiers.includes('passive')
                     }
                     let pHandler = normalizeHandler(pValue)
                     let nHandler = normalizeHandler(nValue)
                     // 保留原始事件和
-                    let handlerMap = el._handlerMap ||= new Map()
+                    let handlerMap = el._rawHandlerToModifiedHandler ||= new Map()
                     pHandler.forEach((handler: any) => {
                         if (!nHandler.includes(handler)) {
                             // remove
-                            removeListener(el, event, el._handlerMap.get(handler), options)
+                            removeListener(el, event, el._rawHandlerToModifiedHandler.get(handler), options)
                         }
                     });
                     nHandler.forEach((handler: any) => {

@@ -204,6 +204,11 @@ export const modelRange = {
 
 
 export const modelComponent = {
-    created(scope: any, bindings: any, vnode: any) {
+    created(scope: any, { modifiers, value }: any, vnode: any) {
+        let bindModelKey = modifiers[0] || 'modelValue'
+        scope[bindModelKey] = value
+    },
+    beforeUpdate() {
+        debugger
     }
 }

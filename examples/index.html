@@ -1,10 +1,43 @@
 <html>
 
 
-
-
+<style>
+    [s-cloak]{
+        display: none;
+    }
+</style>
+<body>
+    <div id="app" s-cloak>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+        <h1>{{title}}</h1>
+    </div>
+</body>
 
 <script>
 </script>
 <script src="../dist/iife/crush.js"></script>
+
+<script>
+    Crush.createApp({
+        create({$self}){
+            $self.title = 'hello crush !!!'
+        }
+    }).mount('#app')
+</script>
 </html>
