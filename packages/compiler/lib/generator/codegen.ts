@@ -117,34 +117,7 @@ function genChildrenString(children: any, context: any) {
     return stringify(genChildren(children, context))
 }
 
-function genDirs(code: string, node: any, context: any) {
-    if (node.customDirectives) { code = genCustomDirectives(code, node.customDirectives, context) }
-    return code
-}
 
-function genCustomDirectives(code: any, directives: any, context: any) {
-    var dirs = directives.map((directive: any) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive
-        var directive = context.useDirective(property, isDynamicProperty)
-        let bindings: any = {
-            directive
-        }
-        if (value) {
-            bindings.value = value
-        }
-        if (_arguments) {
-            bindings._arguments = _arguments && _arguments.map(toSingleQuotes)
-        }
-        if (modifiers) {
-            bindings.modifiers = modifiers && modifiers.map(toSingleQuotes)
-        }
-        if (filters) {
-            bindings.filters = filters && filters.map(toSingleQuotes)
-        }
-        return bindings
-    });
-    return context.callRenderFn('injectDirectives', code, stringify(dirs))
-}
 
 function genSlotContent(node: any, context: any) {
     var { children } = node
@@ -213,26 +186,22 @@ function genNode(node: any, context: any): any {
             var { is, isDynamicIs } = node
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var code: string = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.DYNAMIC_SVG_ELEMENT:
             var { is, isDynamicIs } = node
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var code: string = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.HTML_ELEMENT:
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var code: string = context.callRenderFn('createElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.SVG_ELEMENT:
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var code: string = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.DYNAMIC_COMPONENT:
@@ -241,7 +210,6 @@ function genNode(node: any, context: any): any {
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var slots = genSlotContent(node, context)
             code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.COMPONENT:
@@ -249,7 +217,6 @@ function genNode(node: any, context: any): any {
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var slots = genSlotContent(node, context)
             code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.TEXT:
@@ -258,7 +225,6 @@ function genNode(node: any, context: any): any {
         case AstTypes.STYLESHEET:
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var code: string = context.callRenderFn('createStyleSheet', propsCode, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId(), dynamicPropsCode)
-            code = genDirs(code, node, context)
             nodeCode = code
             break
         case AstTypes.STYLE_RULE:
@@ -498,8 +464,32 @@ function genProps(node: any, context: any): any {
                 props[key] = isDynamicValue ? value : toBackQuotes(value)
 
                 if (isDynamicProperty || isDynamicValue) {
-                    dynamicProps.push(toSingleQuotes(property))
+                    if (property[0] !== '_') {
+                        // 保留属性不会记录到
+                        dynamicProps.push(toSingleQuotes(property))
+                    }
                 }
+                break
+            case AstTypes.CUSTOM_DIRECTIVE:
+                // _directive_??? : 
+                var { property, value, isDynamicProperty, _arguments, modifiers, filters } = attr
+                var directive = context.useDirective(property, isDynamicProperty)
+                let bindings: any = {
+                    directive
+                }
+                if (value) {
+                    bindings.value = value
+                }
+                if (_arguments) {
+                    bindings._arguments = _arguments && _arguments.map(toSingleQuotes)
+                }
+                if (modifiers) {
+                    bindings.modifiers = modifiers && modifiers.map(toSingleQuotes)
+                }
+                if (filters) {
+                    bindings.filters = filters && filters.map(toSingleQuotes)
+                }
+                props[`_directive_${property}`] = stringify(bindings)
                 break
         }
     });
@@ -515,6 +505,7 @@ function genProps(node: any, context: any): any {
 
     let propsCode, dynamicPropsCode, allPropsStatic = false
 
+
     if (dynamicProps.length) {
         // 存在 dynamicProps
         dynamicPropsCode = stringify(dynamicProps)
@@ -526,7 +517,7 @@ function genProps(node: any, context: any): any {
         } else {
             // 提升
             allPropsStatic = true
-            propsCode = context.hoistExpression(stringify(props))
+            propsCode = stringify(props)
         }
     }
 

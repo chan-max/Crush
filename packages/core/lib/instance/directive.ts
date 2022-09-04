@@ -32,18 +32,6 @@ function normalizeDirective(directive: any) {
 }
 
 
-function injectDirective(target: any, bindings: any) {
-    var directives = target.directives ||= new Map()
-    directives.set(bindings.directive, bindings)
-}
-
-export function injectDirectives(target: any, directives: any[]) {
-    directives.forEach((directive: any) => {
-        injectDirective(target, directive)
-    })
-    return target
-}
-
 /*
     参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
 */
@@ -78,92 +66,80 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     // 组件需要处理实例钩子
     const scope = instance.scope
     callHook(type, instance, { binding: scope }, scope)
-
-    var directives = vnode.directives
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue
-            }
-            var _dir = normalizeDirective(dir)
-            var hook = _dir[type]
+    let hookKey = `on${initialUpperCase(type)}`
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key]
+            let directive = normalizeDirective(bindings.directive)
+            let hook = directive[type]
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir).value
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
+                if (pVnode) {
+                    let pBindings = pVnode.props[key]
+                    let oldValue = pBindings.value
+                    bindings.oldValue = oldValue
+                }
                 hook(scope, bindings, vnode, pVnode)
             }
+        } else if (key.startsWith(hookKey)) {
+            if (key.startsWith(hookKey + '$modelValue')) {
+                let modelKey = key.split('_')[1]
+                // 每次更新需要对比 新旧值，如果变化通过setter传递到父组件
+                let setParentModelValue = vnode.props[key]
+                setParentModelValue(scope[modelKey])
+            } else {
+                vnode.props[key](scope)
+            }
         }
-    }
-
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
-    if (vnodeHook) {
-        vnodeHook(scope)
     }
 }
 
 function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
-    let el = vnode.el
-    var directives = vnode.directives
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue
-            }
-            var _dir = normalizeDirective(dir)
-            var hook = _dir[type]
-
+    let hookKey = `on${initialUpperCase(type)}`
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key]
+            let directive = normalizeDirective(bindings.directive)
+            let hook = directive[type]
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir)?.value
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
-                hook(el, bindings, vnode, pVnode)
+                if (pVnode) {
+                    let pBindings = pVnode.props[key]
+                    let oldValue = pBindings.value
+                    bindings.oldValue = oldValue
+                }
+                hook(vnode.el, bindings, vnode, pVnode)
             }
+        } else if (key.startsWith(hookKey)) {
+            vnode.props[key](vnode.el)
         }
-    }
-
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
-    if (vnodeHook) {
-        vnodeHook(el)
     }
 }
 
 function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
-    var directives = vnode.directives
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue
-            }
-            var _dir = normalizeDirective(dir)
-            var hook = _dir[type]
+    let hookKey = `on${initialUpperCase(type)}`
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key]
+            let directive = normalizeDirective(bindings.directive)
+            let hook = directive[type]
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir).value
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray
-                // 这里不能省略第一个参数，是为了和其他两种参数保持一致
+                if (pVnode) {
+                    let pBindings = pVnode.props[key]
+                    let oldValue = pBindings.value
+                    bindings.oldValue = oldValue
+                }
                 hook(null, bindings, vnode, pVnode)
             }
+        } else if (key.startsWith(hookKey)) {
+            vnode.props[key](vnode.el)
         }
-    }
-
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`]
-    if (vnodeHook) {
-        vnodeHook()
     }
 }

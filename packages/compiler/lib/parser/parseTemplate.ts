@@ -148,9 +148,14 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                 // 单属性的bind, 等同于 $
                                 attr.property = attr._arguments[0]
                                 attr._arguments.shift()
-                            } 
+                            }
                             attr.value = context.setRenderScope(attr.value)
                             attr.isDynamicValue = true
+                            break
+                        case 'ref':
+                            // 转为普通的 ref属性
+                            attr.type = AstTypes.ATTRIBUTE
+                            attr.isDynamicValue = attr?.modifiers?.includes('dynamic')
                             break
                         case 'on':
                             attr.type = AstTypes.EVENT
@@ -202,31 +207,49 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             attr.value = context.setRenderScope(attr.value)
                             break
                         case 'model':
-                            (htmlAst.customDirectives ||= []).push(attr);
-                            let modelType = htmlAst.tag === 'select' ?
-                                (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                    'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component'
-                            // transform 
-                            attr.property = `model${initialUpperCase(modelType)}`
-                            attr.value = context.setRawScope(attr.value)
-                            attributes.push({
-                                type: AstTypes.ATTRIBUTE,
-                                property: '_setModelValue',
-                                value: toArrowFunction(`${attr.value} = _`, '_'),
-                                isDynamicValue: true,
-                                isDynamicProperty: false
-                            })
-                            attributes.push({
-                                type: AstTypes.ATTRIBUTE,
-                                property: '_getModelValue',
-                                value: toArrowFunction(`${attr.value}`),
-                                isDynamicValue: true,
-                                isDynamicProperty: false
-                            })
+                            if (htmlAst.type === AstTypes.COMPONENT) {
+                                // _modelValue_????
+                                let modelValue = context.setRawScope(attr.value)
+                                attributes.push({
+                                    type: AstTypes.ATTRIBUTE,
+                                    property: `_modelValue_is_${attr?._arguments?.[0] || 'defaultModelValue'}`,
+                                    value: modelValue,
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false,
+                                })
+                                attributes.push({
+                                    type: AstTypes.ATTRIBUTE,
+                                    property: `onBeforeUpdate$modelValue_${attr?._arguments?.[0] || 'defaultModelValue'}`,
+                                    value:  toArrowFunction(`${modelValue} = _`, '_'),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false,
+                                })
+                            } else {
+                                attr.type = AstTypes.CUSTOM_DIRECTIVE;
+                                let modelType = htmlAst.tag === 'select' ?
+                                    (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text') 
+                                // transform 
+                                attr.property = `model${initialUpperCase(modelType)}`
+                                attr.value = context.setRawScope(attr.value)
+                                attributes.push({
+                                    type: AstTypes.ATTRIBUTE,
+                                    property: '_setModelValue',
+                                    value: toArrowFunction(`${attr.value} = _`, '_'),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false
+                                })
+                                attributes.push({
+                                    type: AstTypes.ATTRIBUTE,
+                                    property: '_getModelValue',
+                                    value: toArrowFunction(`${attr.value}`),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false
+                                })
+                            }
                             break
                         default:
                             attr.type = AstTypes.CUSTOM_DIRECTIVE;
-                            (htmlAst.customDirectives ||= []).push(attr);
                             attr.value = context.setRenderScope(attr.value)
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property)

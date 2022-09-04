@@ -201,14 +201,3 @@ export const modelRange = {
         el.value = isRef(value) ? value.value : value
     }
 }
-
-
-export const modelComponent = {
-    created(scope: any, { modifiers, value }: any, vnode: any) {
-        let bindModelKey = modifiers[0] || 'modelValue'
-        scope[bindModelKey] = value
-    },
-    beforeUpdate() {
-        debugger
-    }
-}

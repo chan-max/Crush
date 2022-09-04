@@ -14,7 +14,6 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
     for (let prop of unionkeys(pProps, nProps, propsOptions, emitsOptions)) {
         let pValue = pProps[prop]
         let nValue = nProps[prop]
-
         switch (prop) {
             case 'ref':
                 // ref component
@@ -30,17 +29,28 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                 break
             default:
                 if (prop.startsWith('_')) {
-                    // 组件保留属性 skip
-                } else if (!propsOptions[prop] && !emitsOptions[prop]) {
+                    if (prop.startsWith('_modelValue')) {
+                        if (pValue !== nValue) {
+                            // modelValue绑定的值变了，更新到作用域
+                            let modelKey = prop.split('_is_')[1]
+                            scope[modelKey] = nValue
+                        }
+                    }
+                } else if (isEvent(prop)) {
+                    var { event, _arguments, modifiers, filters } = parseEventName(prop)
+                    if (emitsOptions[prop]) {
+                        updateInstanceListeners(instance, event, pValue, nValue)
+                    } else if (isComponentLifecycleHook(event)) {
+                        continue
+                    } else {
+                        // attrs
+                        let attrs = instance.attrs ||= {}
+                        attrs[prop] = nValue
+                    }
+                } else if (!propsOptions[prop]) {
                     // attrs
                     let attrs = instance.attrs ||= {}
                     attrs[prop] = nValue
-                } else if (isEvent(prop)) {
-                    // events
-                    var { event, _arguments, modifiers, filters } = parseEventName(prop)
-                    if (!isComponentLifecycleHook(event)) {
-                        updateInstanceListeners(instance, event, pValue, nValue)
-                    }
                 } else {
                     // props
                     const { default: _default, type, validator, required, rename } = propsOptions[prop]

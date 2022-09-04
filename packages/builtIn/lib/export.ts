@@ -3,7 +3,6 @@ import { showDirective } from "./show"
 import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
 import { Teleport } from "./teleport"
 import {RouterLink,RouterView} from '@crush/router'
-import { modelComponent } from "./model"
 
 export const builtInComponents: any = {
     transition: transitionComponent,
@@ -25,5 +24,4 @@ export const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
-    modelComponent:modelComponent
 }
