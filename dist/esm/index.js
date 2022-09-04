@@ -1033,18 +1033,18 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     // window 修饰符
                     el = modifiers.includes('window') ? window : el;
                     let options = {
-                        once: _arguments && _arguments.includes('once'),
-                        capture: _arguments && _arguments.includes('capture'),
-                        passive: _arguments && _arguments.includes('passive')
+                        once: modifiers && modifiers.includes('once'),
+                        capture: modifiers && modifiers.includes('capture'),
+                        passive: modifiers && modifiers.includes('passive')
                     };
                     let pHandler = normalizeHandler(pValue);
                     let nHandler = normalizeHandler(nValue);
                     // 保留原始事件和
-                    let handlerMap = el._handlerMap ||= new Map();
+                    let handlerMap = el._rawHandlerToModifiedHandler ||= new Map();
                     pHandler.forEach((handler) => {
                         if (!nHandler.includes(handler)) {
                             // remove
-                            removeListener(el, event, el._handlerMap.get(handler), options);
+                            removeListener(el, event, el._rawHandlerToModifiedHandler.get(handler), options);
                         }
                     });
                     nHandler.forEach((handler) => {
@@ -1341,18 +1341,34 @@ function updateComponentProps(instance, pProps, nProps) {
             case 'style':
                 break;
             default:
-                if (prop.startsWith('_')) ;
-                else if (!propsOptions[prop] && !emitsOptions[prop]) {
+                if (prop.startsWith('_')) {
+                    if (prop.startsWith('_modelValue')) {
+                        if (pValue !== nValue) {
+                            // modelValue绑定的值变了，更新到作用域
+                            let modelKey = prop.split('_is_')[1];
+                            scope[modelKey] = nValue;
+                        }
+                    }
+                }
+                else if (isEvent(prop)) {
+                    var { event, _arguments, modifiers, filters } = parseEventName(prop);
+                    debugger;
+                    if (emitsOptions[event]) {
+                        updateInstanceListeners(instance, event, pValue, nValue);
+                    }
+                    else if (isComponentLifecycleHook(event)) {
+                        continue;
+                    }
+                    else {
+                        // attrs
+                        let attrs = instance.attrs ||= {};
+                        attrs[prop] = nValue;
+                    }
+                }
+                else if (!propsOptions[prop]) {
                     // attrs
                     let attrs = instance.attrs ||= {};
                     attrs[prop] = nValue;
-                }
-                else if (isEvent(prop)) {
-                    // events
-                    var { event, _arguments, modifiers, filters } = parseEventName(prop);
-                    if (!isComponentLifecycleHook(event)) {
-                        updateInstanceListeners(instance, event, pValue, nValue);
-                    }
                 }
                 else {
                     // props
@@ -1381,13 +1397,10 @@ function updateComponentProps(instance, pProps, nProps) {
 }
 
 const updateComponent = (p, n, container, anchor, parent) => {
-    // 进入update 则patchkey一定相同
-    const { instance, props: pProps } = p;
-    n.instance = instance;
-    updateComponentProps(instance, pProps, n.props);
-    // update slots ... 不需要更新slot
+    n.instance = p.instance;
+    updateComponentProps(n.instance, p.props, n.props);
     // 把新节点存到更新方法上，有该节点代表为外部更新，而非自更新
-    instance.updatingComponentVnode = n;
+    n.instance.updatingComponentVnode = n;
 };
 
 /*
@@ -4082,35 +4095,6 @@ function genChildrenString(children, context) {
         return NULL;
     return stringify(genChildren(children, context));
 }
-function genDirs(code, node, context) {
-    if (node.customDirectives) {
-        code = genCustomDirectives(code, node.customDirectives, context);
-    }
-    return code;
-}
-function genCustomDirectives(code, directives, context) {
-    var dirs = directives.map((directive) => {
-        var { property, value, isDynamicProperty, _arguments, modifiers, filters } = directive;
-        var directive = context.useDirective(property, isDynamicProperty);
-        let bindings = {
-            directive
-        };
-        if (value) {
-            bindings.value = value;
-        }
-        if (_arguments) {
-            bindings._arguments = _arguments && _arguments.map(toSingleQuotes);
-        }
-        if (modifiers) {
-            bindings.modifiers = modifiers && modifiers.map(toSingleQuotes);
-        }
-        if (filters) {
-            bindings.filters = filters && filters.map(toSingleQuotes);
-        }
-        return bindings;
-    });
-    return context.callRenderFn('injectDirectives', code, stringify(dirs));
-}
 function genSlotContent(node, context) {
     var { children } = node;
     /*
@@ -4176,26 +4160,22 @@ function genNode(node, context) {
             var { is, isDynamicIs } = node;
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var code = context.callRenderFn('createElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 21 /* DYNAMIC_SVG_ELEMENT */:
             var { is, isDynamicIs } = node;
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var code = context.callRenderFn('createSVGElement', isDynamicIs ? is : toSingleQuotes(is), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 1 /* HTML_ELEMENT */:
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var code = context.callRenderFn('createElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 3 /* SVG_ELEMENT */:
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var code = context.callRenderFn('createSVGElement', toBackQuotes(node.tagName), propsCode, genChildrenString(node.children, context), uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 22 /* DYNAMIC_COMPONENT */:
@@ -4204,7 +4184,6 @@ function genNode(node, context) {
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var slots = genSlotContent(node, context);
             code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 4 /* COMPONENT */:
@@ -4212,7 +4191,6 @@ function genNode(node, context) {
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var slots = genSlotContent(node, context);
             code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 5 /* TEXT */:
@@ -4221,7 +4199,6 @@ function genNode(node, context) {
         case 6 /* STYLESHEET */:
             var { propsCode, dynamicPropsCode } = genProps(node, context);
             var code = context.callRenderFn('createStyleSheet', propsCode, stringify(genChildren(node.children, context)), hasOwn(node, 'scoped'), uStringId(), dynamicPropsCode);
-            code = genDirs(code, node, context);
             nodeCode = code;
             break;
         case 24 /* STYLE_RULE */:
@@ -4422,8 +4399,32 @@ function genProps(node, context) {
                 let key = isDynamicProperty ? dynamicMapKey(property) : property;
                 props[key] = isDynamicValue ? value : toBackQuotes(value);
                 if (isDynamicProperty || isDynamicValue) {
-                    dynamicProps.push(toSingleQuotes(property));
+                    if (property[0] !== '_') {
+                        // 保留属性不会记录到
+                        dynamicProps.push(toSingleQuotes(property));
+                    }
                 }
+                break;
+            case 19 /* CUSTOM_DIRECTIVE */:
+                // _directive_??? : 
+                var { property, value, isDynamicProperty, _arguments, modifiers, filters } = attr;
+                var directive = context.useDirective(property, isDynamicProperty);
+                let bindings = {
+                    directive
+                };
+                if (value) {
+                    bindings.value = value;
+                }
+                if (_arguments) {
+                    bindings._arguments = _arguments && _arguments.map(toSingleQuotes);
+                }
+                if (modifiers) {
+                    bindings.modifiers = modifiers && modifiers.map(toSingleQuotes);
+                }
+                if (filters) {
+                    bindings.filters = filters && filters.map(toSingleQuotes);
+                }
+                props[`_directive_${property}`] = stringify(bindings);
                 break;
         }
     });
@@ -4448,7 +4449,7 @@ function genProps(node, context) {
         else {
             // 提升
             allPropsStatic = true;
-            propsCode = context.hoistExpression(stringify(props));
+            propsCode = stringify(props);
         }
     }
     return {
@@ -4978,6 +4979,11 @@ function processTemplateAst(htmlAst, context) {
                             attr.value = context.setRenderScope(attr.value);
                             attr.isDynamicValue = true;
                             break;
+                        case 'ref':
+                            // 转为普通的 ref属性
+                            attr.type = 15 /* ATTRIBUTE */;
+                            attr.isDynamicValue = attr?.modifiers?.includes('dynamic');
+                            break;
                         case 'on':
                             attr.type = 16 /* EVENT */;
                             attr.property = attr._arguments[0];
@@ -5028,31 +5034,50 @@ function processTemplateAst(htmlAst, context) {
                             attr.value = context.setRenderScope(attr.value);
                             break;
                         case 'model':
-                            (htmlAst.customDirectives ||= []).push(attr);
-                            let modelType = htmlAst.tag === 'select' ?
-                                (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                    'selectMultiple' : 'selectOne') : htmlAst.tag === 'input' ? (htmlAst.rawAttributeMap.type || 'text') : 'component';
-                            // transform 
-                            attr.property = `model${initialUpperCase(modelType)}`;
-                            attr.value = context.setRawScope(attr.value);
-                            attributes.push({
-                                type: 15 /* ATTRIBUTE */,
-                                property: '_setModelValue',
-                                value: toArrowFunction(`${attr.value} = _`, '_'),
-                                isDynamicValue: true,
-                                isDynamicProperty: false
-                            });
-                            attributes.push({
-                                type: 15 /* ATTRIBUTE */,
-                                property: '_getModelValue',
-                                value: toArrowFunction(`${attr.value}`),
-                                isDynamicValue: true,
-                                isDynamicProperty: false
-                            });
+                            if (htmlAst.type === 4 /* COMPONENT */) {
+                                // _modelValue_????
+                                let modelValue = context.setRawScope(attr.value);
+                                attributes.push({
+                                    type: 15 /* ATTRIBUTE */,
+                                    property: `_modelValue_is_${attr?._arguments?.[0] || 'defaultModelValue'}`,
+                                    value: modelValue,
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false,
+                                });
+                                attributes.push({
+                                    type: 15 /* ATTRIBUTE */,
+                                    property: `onBeforeUpdate$modelValue_${attr?._arguments?.[0] || 'defaultModelValue'}`,
+                                    value: toArrowFunction(`${modelValue} = _`, '_'),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false,
+                                });
+                            }
+                            else {
+                                attr.type = 19 /* CUSTOM_DIRECTIVE */;
+                                let modelType = htmlAst.tag === 'select' ?
+                                    (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
+                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');
+                                // transform 
+                                attr.property = `model${initialUpperCase(modelType)}`;
+                                attr.value = context.setRawScope(attr.value);
+                                attributes.push({
+                                    type: 15 /* ATTRIBUTE */,
+                                    property: '_setModelValue',
+                                    value: toArrowFunction(`${attr.value} = _`, '_'),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false
+                                });
+                                attributes.push({
+                                    type: 15 /* ATTRIBUTE */,
+                                    property: '_getModelValue',
+                                    value: toArrowFunction(`${attr.value}`),
+                                    isDynamicValue: true,
+                                    isDynamicProperty: false
+                                });
+                            }
                             break;
                         default:
                             attr.type = 19 /* CUSTOM_DIRECTIVE */;
-                            (htmlAst.customDirectives ||= []).push(attr);
                             attr.value = context.setRenderScope(attr.value);
                             if (attr.isDynamicProperty) {
                                 attr.property = context.setRenderScope(attr.property);
@@ -5450,7 +5475,6 @@ var renderMethods = {
     getCurrentRenderScope,
     createComment,
     createSVGElement,
-    injectDirectives,
     important,
     getCurrentScope,
     createElement,
@@ -5836,10 +5860,6 @@ const modelRange = {
     },
     beforeUpdate(el, { value }) {
         el.value = isRef(value) ? value.value : value;
-    }
-};
-const modelComponent = {
-    created(scope, bindings, vnode) {
     }
 };
 
@@ -7130,7 +7150,6 @@ const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
-    modelComponent: modelComponent
 };
 
 // app.config.responsive
@@ -7791,16 +7810,6 @@ function normalizeDirective(directive) {
         updated: directive
     } : directive;
 }
-function injectDirective(target, bindings) {
-    var directives = target.directives ||= new Map();
-    directives.set(bindings.directive, bindings);
-}
-function injectDirectives(target, directives) {
-    directives.forEach((directive) => {
-        injectDirective(target, directive);
-    });
-    return target;
-}
 /*
     参数和修饰符是一个数组结构但自身挂载了所有的key，可以灵活运用
 */
@@ -7831,86 +7840,83 @@ function processComponentHook(type, vnode, pVnode) {
     // 组件需要处理实例钩子
     const scope = instance.scope;
     callHook(type, instance, { binding: scope }, scope);
-    var directives = vnode.directives;
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue;
-            }
-            var _dir = normalizeDirective(dir);
-            var hook = _dir[type];
+    let hookKey = `on${initialUpperCase(type)}`;
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key];
+            let directive = normalizeDirective(bindings.directive);
+            let hook = directive[type];
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir).value;
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
+                if (pVnode) {
+                    let pBindings = pVnode.props[key];
+                    let oldValue = pBindings.value;
+                    bindings.oldValue = oldValue;
+                }
                 hook(scope, bindings, vnode, pVnode);
             }
         }
-    }
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
-    if (vnodeHook) {
-        vnodeHook(scope);
+        else if (key.startsWith(hookKey)) {
+            if (key.startsWith(hookKey + '$modelValue')) {
+                let modelKey = key.split('_')[1];
+                // 每次更新需要对比 新旧值，如果变化通过setter传递到父组件
+                let setParentModelValue = vnode.props[key];
+                setParentModelValue(scope[modelKey]);
+            }
+            else {
+                vnode.props[key](scope);
+            }
+        }
     }
 }
 function processElementHook(type, vnode, pVnode) {
-    let el = vnode.el;
-    var directives = vnode.directives;
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue;
-            }
-            var _dir = normalizeDirective(dir);
-            var hook = _dir[type];
+    let hookKey = `on${initialUpperCase(type)}`;
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key];
+            let directive = normalizeDirective(bindings.directive);
+            let hook = directive[type];
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir)?.value;
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
-                hook(el, bindings, vnode, pVnode);
+                if (pVnode) {
+                    let pBindings = pVnode.props[key];
+                    let oldValue = pBindings.value;
+                    bindings.oldValue = oldValue;
+                }
+                hook(vnode.el, bindings, vnode, pVnode);
             }
         }
-    }
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
-    if (vnodeHook) {
-        vnodeHook(el);
+        else if (key.startsWith(hookKey)) {
+            vnode.props[key](vnode.el);
+        }
     }
 }
 function processRenderComponentHook(type, vnode, pVnode) {
-    var directives = vnode.directives;
-    if (directives) {
-        for (let [dir, bindings] of directives) {
-            if (!dir) {
-                continue;
-            }
-            var _dir = normalizeDirective(dir);
-            var hook = _dir[type];
+    let hookKey = `on${initialUpperCase(type)}`;
+    for (let key in (vnode.props || emptyObject)) {
+        if (key.startsWith('_directive')) {
+            let bindings = vnode.props[key];
+            let directive = normalizeDirective(bindings.directive);
+            let hook = directive[type];
             if (hook) {
-                if (pVnode) {
-                    // 如果更新的话两个节点的指令应该完全相同
-                    bindings.oldValue = pVnode.directives.get(dir).value;
-                }
                 bindings._arguments ? processModifiers(bindings._arguments) : bindings._arguments = emptyArray;
                 bindings.filters ? processModifiers(bindings.filters) : bindings.filters = emptyArray;
                 bindings.modifiers ? processModifiers(bindings.modifiers) : bindings.modifiers = emptyArray;
-                // 这里不能省略第一个参数，是为了和其他两种参数保持一致
+                if (pVnode) {
+                    let pBindings = pVnode.props[key];
+                    let oldValue = pBindings.value;
+                    bindings.oldValue = oldValue;
+                }
                 hook(null, bindings, vnode, pVnode);
             }
         }
-    }
-    // 节点钩子
-    const vnodeHook = vnode?.props?.[`on${initialUpperCase(type)}`];
-    if (vnodeHook) {
-        vnodeHook();
+        else if (key.startsWith(hookKey)) {
+            vnode.props[key](vnode.el);
+        }
     }
 }
 
@@ -7934,7 +7940,7 @@ function normalizePropsOptions(options) {
 }
 function normalizeEmitsOptions(options) {
     if (isArray(options)) {
-        return arrayToMap(options.map((eventName) => `on${initialUpperCase(eventName)}`), emptyObject);
+        return arrayToMap(options, emptyObject);
     }
     else {
         return options;
@@ -8086,4 +8092,4 @@ function exposeCurrentScopeToWindow(name = 'scope') {
     window[name] = getCurrentScope();
 }
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectDirectives, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforePatch, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforePatch, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };

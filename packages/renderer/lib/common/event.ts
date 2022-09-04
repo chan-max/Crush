@@ -32,9 +32,9 @@ export function parseEventName(name: string): any {
     const [_, event, _argumentsStr, modifiersStr, filterStr]: any = extrctEventNameRE.exec(name)
     return {
         event: initialLowerCase(event),
-        _arguments: _argumentsStr && _argumentsStr.split('$').filter(Boolean),
-        modifiers: modifiersStr && modifiersStr.split('_').filter(Boolean),
-        filters: filterStr && filterStr.split('_').filter(Boolean),
+        _arguments: (_argumentsStr && _argumentsStr.split('$').filter(Boolean)) || null,
+        modifiers: (modifiersStr && modifiersStr.split('_').filter(Boolean)) || null,
+        filters: (filterStr && filterStr.split('$_').filter(Boolean)) || null,
     }
 }
 
@@ -84,7 +84,7 @@ export function withEventModifiers(fn: any, modifiers: any) {
     }
 
     reverseKeyCodes ||= createReverseKeyCodes()
-    
+
     // key 按键守卫
     let guardKeyCodes = modifiers && modifiers.reduce((res: string[], modifier: string) => {
         if (reverseKeyCodes[modifier]) {

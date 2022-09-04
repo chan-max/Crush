@@ -117,9 +117,9 @@ export function updateElementAttributes(
                         continue
                     }
                     var { event, _arguments, modifiers, filters } = parseEventName(propName)
-                    
+
                     // window 修饰符
-                    el = modifiers.includes('window') ? window : el
+                    el = modifiers && modifiers.includes('window') ? window : el
 
                     let options = {
                         once: modifiers && modifiers.includes('once'),

@@ -22,7 +22,7 @@ export function normalizePropsOptions(options: any) {
 
 export function normalizeEmitsOptions(options: any[] | Record<string, any>) {
     if (isArray(options)) {
-        return arrayToMap(options.map((eventName: any) => `on${initialUpperCase(eventName)}`), emptyObject)
+        return arrayToMap(options, emptyObject)
     } else {
         return options
     }

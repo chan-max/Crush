@@ -9,27 +9,21 @@ console.time('crush')
 let app = createApp({
     components: {
         tom: {
+            emits: ['click'],
             template:/*html*/`
-                <h1>child : {{defaultModelValue}} </h1>
-                <input s-model="defaultModelValue">
+                <button @click="$emit('click')">6666</button>
             `,
             create() {
                 exposeCurrentScopeToWindow('childScope')
             },
-            beforeUpdate() {
-            }
         }
     },
     template:/*html*/`
-        <input s-model="i">
-        <input s-model="j">
-        <input s-model="k">
-        <tom s-model:x="i"></tom>
+        <h1> {{i}} </h1>
+        <tom @click.once="i++"></tom>
     `,
     create({ $self }: any) {
-        $self.i = '111'
-        $self.j = '222'
-        $self.k = '333'
+        $self.i = 0
         exposeCurrentScopeToWindow()
     }
 })
