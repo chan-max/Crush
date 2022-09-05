@@ -138,11 +138,11 @@ function genSlotContent(node: any, context: any) {
     var _default: any
     var slots: Record<string, string> = {}
 
-
     children.forEach((child: any) => {
         // 作用域插槽只能在具名插槽上
         if (child.defineSlotName) {
-            slots[child.defineSlotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope)
+            let slotName = child.isDynamicDefineSlotName ? dynamicMapKey(child.defineSlotName) : child.defineSlotName
+            slots[slotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope)
         } else {
             (_default ||= []).push(child)
         }
@@ -416,9 +416,9 @@ function genProps(node: any, context: any): any {
     attributes.forEach((attr: any) => {
         switch (attr.type) {
             case AstTypes.EVENT:
-                var { property, isDynamicProperty, value, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
+                var { property, isDynamicProperty, value,isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
                 let handler = value
-                if(!isHandler(handler)){
+                if(!isHandler){
                     handler = toArrowFunction(handler || '$' /* 为空字符时默认的handler*/, '$') 
                     handler = context.handlerWithCache(handler)
                 }

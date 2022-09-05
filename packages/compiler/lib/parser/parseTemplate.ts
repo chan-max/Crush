@@ -9,7 +9,7 @@ import { parseText } from "./parseText";
 import { processRules } from "./processRules";
 
 
-
+import { isHandler } from "../stringify";
 
 export const enum AstTypes {
     UNKNOWN,
@@ -151,6 +151,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             attr.property = attr._arguments[0]
                             attr._arguments.shift()
                             attr.isDynamicValue = true
+                            attr.isHandler = isHandler(attr.value)
                             attr.value = context.setRenderScope(attr.value)
                             break
                         case 'native':
@@ -177,12 +178,12 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             break
                         case 'slot':
                             // 第一个修饰符dynamic代表定义动态插槽
-                            htmlAst.isDynamicDefineSlotName = attr?._arguments?.includes('dynamic')
+                            htmlAst.isDynamicDefineSlotName = attr?.modifiers?.includes('dynamic')
                             htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value
                             break
                         case 'slot-name':
                             // 使用插槽时的名称
-                            htmlAst.isDynamicSlot = attr?._arguments?.includes('dynamic')
+                            htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic')
                             htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default')
                             break
                         case 'style':
@@ -248,6 +249,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     break
                 case '@':
                     attr.type = AstTypes.EVENT
+                    attr.isHandler = isHandler(attr.value)
                     attr.value = context.setRenderScope(attr.value || attr.property)
                     if (attr.isDynamicProperty) {
                         attr.property = context.setRenderScope(attr.property)
@@ -258,7 +260,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         // 模板上的# 会转换为插槽的定义
                         if (attr.isDynamicProperty) {
                             htmlAst.isDynamicDefineSlotName = true
-                            htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName)
+                            htmlAst.defineSlotName = context.setRenderScope(attr.property)
                         } else {
                             htmlAst.isDynamicDefineSlotName = false
                             htmlAst.defineSlotName = attr.property

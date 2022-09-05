@@ -4,26 +4,44 @@ import {
 
 console.time('crush')
 
+let son = {
+    emits: ['click'],
+    template:/*html*/`
+        <button @click="$emit('click')">son</button>
+    `,
+    create(scope: any) {
+        scope.i = 0
+    }
+}
 
+let parent = {
+    components: {
+        son
+    },
+    emits: ['click'],
+    template:/*html*/`
+        parent
+        <slot s-slot-name="header">
+        <son @click="$emit('click')"></son>
+    `,
+    create(scope) {
+        scope.log = () => {
+            console.log('son emit');
+        }
+    }
+}
 
 let app = createApp({
     components: {
-        tom: {
-            emits: ['click'],
-            template:/*html*/`
-                <button @click.once="$emit('click')" >6666</button>
-                <button @click="j++"> 其他更新 {{j}}</button>
-            `,
-            create() {
-                let scope = useScope()
-                scope.j = 0
-                exposeCurrentScopeToWindow('childScope')
-            },
-        }
+        parent
     },
     template:/*html*/`
-        <h1> {{i}} </h1>
-        <tom @click.once="i++"></tom>
+        <h1>root :{{i}}</h1>
+        <parent @click="i++">
+            <template s-slot="header">
+                我是插槽内容
+            </template>
+        </parent>
     `,
     create({ $self }: any) {
         $self.i = 0

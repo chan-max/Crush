@@ -124,6 +124,7 @@ export function updateElementAttributes(
                     // builtIn events
                     switch(event){
                         case 'emit':
+                            debugger
                             break
                         default:
                     }
