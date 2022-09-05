@@ -1,7 +1,7 @@
 import { resolveOptions } from "./option";
 import { ComponentType } from "./component";
 import { getCurrentApp } from "../app/app";
-import { emptyArray, emptyObject, isFunction, shallowCloneArray, shallowCloneObject, uid } from "@crush/common";
+import { emptyArray, emptyObject, getEmptyObject, isFunction, shallowCloneArray, shallowCloneObject, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
@@ -10,12 +10,17 @@ import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener
 import { createInstanceWatch } from "./watch";
 import { getCurrentInstance } from "@crush/renderer";
 
+export function useCurrentInstanceCache() {
+    return getCurrentInstance().cache
+}
+
 export const createComponentInstance = (options: any, parent: any) => {
     let app = getCurrentApp()
     let instance: ComponentInstance = {
         app,
         parent,
         options, // 保存自身的配置来源
+        cache: getEmptyObject(), // 缓存点啥
         uid: uid(),
         update: null,
         isMounted: false,
@@ -81,6 +86,7 @@ export const createComponentInstance = (options: any, parent: any) => {
 
 
 export interface ComponentInstance {
+    cache: any
     update: any
     isMounted: any,
     options: any

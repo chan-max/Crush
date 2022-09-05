@@ -109,14 +109,24 @@ export function updateElementAttributes(
                     // 保留属性
                     continue
                 } else if (isEvent(propName)) {
+ 
                     if (pValue === nValue) {
                         continue
                     }
+
+                    const { event, _arguments, modifiers, filters } = parseEventName(propName)
+
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue
                     }
-                    var { event, _arguments, modifiers, filters } = parseEventName(propName)
+                    
+                    // builtIn events
+                    switch(event){
+                        case 'emit':
+                            break
+                        default:
+                    }
 
                     // window 修饰符
                     el = modifiers && modifiers.includes('window') ? window : el
@@ -130,6 +140,7 @@ export function updateElementAttributes(
                     let nHandler = normalizeHandler(nValue)
                     // 保留原始事件和
                     let handlerMap = el._rawHandlerToModifiedHandler ||= new Map()
+                    
                     pHandler.forEach((handler: any) => {
                         if (!nHandler.includes(handler)) {
                             // remove

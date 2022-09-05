@@ -71,6 +71,19 @@ var declare = (name: string, value: string) => `const ${name} = ${value} ;`
 
 const toReservedProp = (prop: string) => `_${prop}`
 
+// legal variable name
+var varRE = /^\w+$/
+// arrow function
+var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/
+// normal function
+var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/
+// array
+var arrayRE = /\[.*\]/
+
+export function isHandler(exp: string) {
+    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp)
+}
+
 export {
     ternaryExp,
     ternaryChains,

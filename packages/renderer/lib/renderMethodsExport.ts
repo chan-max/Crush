@@ -51,9 +51,10 @@ import { renderSlot } from './common/renderSlot'
 import { createSVGElement } from '@crush/core'
 
 import { withEventModifiers } from '@crush/core'
+import { useCurrentInstanceCache } from '@crush/core'
 
 export default {
-
+    useCurrentInstanceCache,
     getCurrentRenderScope,
     createComment,
     createSVGElement,
@@ -81,5 +82,5 @@ export default {
     mergeSelectors,
     withEventModifiers,
     getCustomScreensMedia,
-    toEventName, 
+    toEventName,
 }

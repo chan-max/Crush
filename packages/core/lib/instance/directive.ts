@@ -20,6 +20,7 @@ import {
 
 import { isFunction, emptyArray, emptyObject, initialUpperCase } from '@crush/common'
 import { callHook } from './lifecycle'
+import { normalizeHandler } from '@crush/renderer'
 /* 
     pervious 节点存在一定是更新 ， 但可能存在key不相同，此时需要进入节点的卸载和新节点的挂载
 */
@@ -90,7 +91,7 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
                 let setParentModelValue = vnode.props[key]
                 setParentModelValue(scope[modelKey])
             } else {
-                vnode.props[key](scope)
+                normalizeHandler(vnode.props[key]).forEach((handler: any) => handler(scope))
             }
         }
     }
@@ -115,7 +116,7 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
                 hook(vnode.el, bindings, vnode, pVnode)
             }
         } else if (key.startsWith(hookKey)) {
-            vnode.props[key](vnode.el)
+            normalizeHandler(vnode.props[key]).forEach((handler: any) => handler(vnode.el))
         }
     }
 }
@@ -139,7 +140,7 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
                 hook(null, bindings, vnode, pVnode)
             }
         } else if (key.startsWith(hookKey)) {
-            vnode.props[key](vnode.el)
+            normalizeHandler(vnode.props[key]).forEach((handler: any) => handler())
         }
     }
 }

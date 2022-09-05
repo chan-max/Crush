@@ -35,6 +35,13 @@ export class CodeGenerator {
     renderScope: any
     scope: any
 
+    cache: any
+
+    handlerWithCache(handlerExpression: string) {
+        let cacheId = uVar()
+        return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`
+    }
+
     // 记录模板中是否使用了scoped css
     useScopedStyleSheet = false
 
@@ -162,7 +169,7 @@ export function compile(template: string, compilerOptions: any = compilerDefault
     // 初始化渲染作用域
     context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
     context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'))
-
+    context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'))
     var htmlAst = baseParseHTML(template)
 
     processTemplateAst(htmlAst, context)
@@ -183,7 +190,7 @@ export function compile(template: string, compilerOptions: any = compilerDefault
 
     eval(`render.createRender = function createRender(renderMethods){${code}}`)
     console.log(render.createRender);
-    
+
     return render
 }
 

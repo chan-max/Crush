@@ -7,18 +7,7 @@ import { parseCSS } from "./parseCSS";
 import { parseIterator } from "./parseIterator";
 import { parseText } from "./parseText";
 import { processRules } from "./processRules";
-// legal variable name
-var varRE = /^\w+$/
-// arrow function
-var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/
-// normal function
-var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/
-// array
-var arrayRE = /\[.*\]/
 
-function isHandler(exp: string) {
-    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp)
-}
 
 
 
@@ -259,7 +248,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     break
                 case '@':
                     attr.type = AstTypes.EVENT
-                    attr.isHandler = isHandler(attr.value)
                     attr.value = context.setRenderScope(attr.value || attr.property)
                     if (attr.isDynamicProperty) {
                         attr.property = context.setRenderScope(attr.property)

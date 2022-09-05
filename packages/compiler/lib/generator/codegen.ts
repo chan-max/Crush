@@ -13,7 +13,8 @@ import {
     declare,
     NULL,
     toSingleQuotes,
-    toReservedProp
+    toReservedProp,
+    isHandler
 } from '../stringify'
 
 
@@ -415,9 +416,13 @@ function genProps(node: any, context: any): any {
     attributes.forEach((attr: any) => {
         switch (attr.type) {
             case AstTypes.EVENT:
-                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
-                var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$') // 包裹函数都需要传入一个 $ 参数
-
+                var { property, isDynamicProperty, value, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
+                let handler = value
+                if(!isHandler(handler)){
+                    handler = toArrowFunction(handler || '$' /* 为空字符时默认的handler*/, '$') 
+                    handler = context.handlerWithCache(handler)
+                }
+                
                 // 处理按键修饰符
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup'
@@ -425,11 +430,11 @@ function genProps(node: any, context: any): any {
 
                 if (isDynamicProperty) {
                     let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL)
-                    props[dynamicMapKey(key)] = callback
+                    props[dynamicMapKey(key)] = handler
                     dynamicProps.push(key)
                 } else {
                     let key = toEventName(property, _arguments, modifiers, filters)
-                    props[key] = callback
+                    props[key] = handler
                     dynamicProps.push(toSingleQuotes(key))
                 }
                 break
