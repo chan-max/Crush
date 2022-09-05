@@ -13,6 +13,8 @@ export function bindEnterClass(el: Element, name: string) {
     })
 }
 
+
+
 export function removeEnterClass(el: Element, name: string) {
     removeClass(el, `${name}-enter-to`)
     removeClass(el, `${name}-enter`)
@@ -38,11 +40,7 @@ let enteringElements: any = {}
 
 export const createTransition = (options: any) => new TransitionDesc(options)
 
-function hasAppeared(el: any) {
-    let { patchKey, instance } = el._vnode
-    let appearRecord = instance.appearRecord ||= {}
-    return appearRecord[patchKey]
-}
+
 
 // 整个transtion描述不参与节点的真实挂载卸载，显示或隐藏
 class TransitionDesc {
@@ -123,7 +121,6 @@ class TransitionDesc {
         let { patchKey, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
         let appeared = appearRecord[patchKey]
-
         if (!this.appear && !appeared) {
             // appear
             insertFn()
@@ -147,7 +144,6 @@ class TransitionDesc {
         newEl._entering = true
 
         if (this.type === 'animate') {
-      
             newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
                 name: this.enterKeyframes,
                 duration: this.duration,
@@ -164,14 +160,12 @@ class TransitionDesc {
                 newEl._entering = false
             })
         } else {
-            // 其他类型 ， 开发中
             insertFn()
         }
     }
 
     public processUnmount(el: any) {
         let { patchKey } = el._vnode
-
         // 正在进入 ，取消进入动画, 进入卸载东动画
         if (el._entering) {
             if (this.type === 'css') {

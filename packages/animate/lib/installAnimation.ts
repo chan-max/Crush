@@ -63,7 +63,7 @@ const animationFrames = {
 
 
 // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
-const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))
+export const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))
 
 // 关于 animate的class
 let animationClassStyleSheet, animationClassRecord: any = {}

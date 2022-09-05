@@ -4,47 +4,52 @@ import {
 
 console.time('crush')
 
-let son = {
-    emits: ['click'],
-    template:/*html*/`
-        <button @click="$emit('click')">son</button>
-    `,
-    create(scope: any) {
-        scope.i = 0
-    }
-}
-
-let parent = {
-    components: {
-        son
-    },
-    emits: ['click'],
-    template:/*html*/`
-        parent
-        <slot s-slot-name="header">
-        <son @click="$emit('click')"></son>
-    `,
-    create(scope) {
-        scope.log = () => {
-            console.log('son emit');
-        }
-    }
-}
-
 let app = createApp({
-    components: {
-        parent
-    },
     template:/*html*/`
-        <h1>root :{{i}}</h1>
-        <parent @click="i++">
-            <template s-slot="header">
-                我是插槽内容
-            </template>
-        </parent>
+        <style>
+            .box{
+                width:500px;
+                height:500px;
+                background-color:black;
+            }
+            .transition{
+                &-enter{
+                    transition:all 2s;
+                    &-from{
+                        width:100px;
+                        background-color:red;
+                    }
+                    &-to{
+                        width:1000px;
+                        background-color:pink;
+                    }
+                }
+                &-leave{
+                    transition:all 2s;
+                    &-from{
+                        width:1000px;
+                        background-color:#00c1de;
+                    }
+                    &-to{
+                        width:100px;
+                        background-color:blue;
+                    }   
+                }
+            }
+        </style>
+        <button @click="show = !show"> {{show ? 'show' : 'hide'}} </button>
+        <div .box cr-if="show" cr-transition="boxTransition">
+            
+        </div>
     `,
     create({ $self }: any) {
-        $self.i = 0
+        $self.show = true
+        $self.boxTransition = {
+            type: 'animate',
+            enterKeyframes: 'rollIn',
+            leaveKeyframes: 'rollOut',
+            duration: 2000
+        }
         exposeCurrentScopeToWindow()
     }
 })

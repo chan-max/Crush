@@ -531,9 +531,9 @@ function parseEventName(name) {
     const [_, event, _argumentsStr, modifiersStr, filterStr] = extrctEventNameRE.exec(name);
     return {
         event: initialLowerCase(event),
-        _arguments: _argumentsStr && _argumentsStr.split('$').filter(Boolean),
-        modifiers: modifiersStr && modifiersStr.split('_').filter(Boolean),
-        filters: filterStr && filterStr.split('_').filter(Boolean),
+        _arguments: (_argumentsStr && _argumentsStr.split('$').filter(Boolean)) || null,
+        modifiers: (modifiersStr && modifiersStr.split('_').filter(Boolean)) || null,
+        filters: (filterStr && filterStr.split('$_').filter(Boolean)) || null,
     };
 }
 const eventModifiers = {
@@ -893,26 +893,31 @@ function getElementComputedStyle(el, keys) {
 
 const globalInstanceEventListeners = new WeakMap();
 function getInstanceEvents(instance) {
-    let listenersMap = globalInstanceEventListeners.get(instance);
-    if (!listenersMap) {
-        listenersMap = new Map();
-        globalInstanceEventListeners.set(instance, listenersMap);
+    let events = globalInstanceEventListeners.get(instance);
+    if (!events) {
+        events = {};
+        globalInstanceEventListeners.set(instance, events);
     }
-    return listenersMap;
+    return events;
+}
+function getInstanceEvent(instance, event, _arguments, modifiers, filters) {
+    let events = getInstanceEvents(instance);
+    let _event = events[event];
+    if (!_event) {
+        _event = {
+            listeners: new Set(),
+            _arguments, modifiers, filters
+        };
+        events[event] = _event;
+    }
+    return _event;
 }
 function getInstancetEventListeners(instance, event) {
-    let events = getInstanceEvents(instance);
-    let listeners = events.get(event);
-    if (!listeners) {
-        listeners = new Set();
-        events.set(event, listeners);
-    }
-    return listeners;
+    let _event = getInstanceEvent(instance, event);
+    return _event.listeners;
 }
 function createInstanceEventEmitter(instance) {
-    return (event, ...args) => {
-        emitInstancetEvent(instance, event, ...args);
-    };
+    return (event, ...args) => emitInstancetEvent(instance, event, ...args);
 }
 function emitInstancetEvent(instance, event, ...args) {
     const listeners = getInstancetEventListeners(instance, event);
@@ -924,10 +929,25 @@ function emitInstancetEvent(instance, event, ...args) {
 function normalizeHandler(handler) {
     return (isArray(handler) ? handler : [handler]).filter(isFunction);
 }
-function updateInstanceListeners(instance, event, pHandler, nHandler) {
+function updateInstanceListeners(instance, event, pHandler, nHandler, _arguments, modifiers, filters) {
+    if (pHandler === nHandler) {
+        return;
+    }
     // 不影响组件自身注册的事件
-    removeInstanceListener(instance, event, pHandler);
-    addInstanceListener(instance, event, nHandler);
+    let _event = getInstanceEvent(instance, event, _arguments, modifiers, filters);
+    let listeners = _event.listeners;
+    pHandler = normalizeHandler(pHandler);
+    nHandler = normalizeHandler(nHandler);
+    pHandler.forEach((handler) => {
+        if (!nHandler.includes(handler)) {
+            listeners.delete(handler);
+        }
+    });
+    nHandler.forEach((handler) => {
+        if (!pHandler.includes(handler)) {
+            listeners.add(handler);
+        }
+    });
 }
 function addInstanceListener(instance, event, rawHandler) {
     const listeners = getInstancetEventListeners(instance, event);
@@ -1029,13 +1049,19 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     if (pValue === nValue) {
                         continue;
                     }
+                    const { event, _arguments, modifiers, filters } = parseEventName(propName);
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue;
                     }
-                    var { event, _arguments, modifiers, filters } = parseEventName(propName);
+                    // builtIn events
+                    switch (event) {
+                        case 'emit':
+                            debugger;
+                            break;
+                    }
                     // window 修饰符
-                    el = modifiers.includes('window') ? window : el;
+                    el = modifiers && modifiers.includes('window') ? window : el;
                     let options = {
                         once: modifiers && modifiers.includes('once'),
                         capture: modifiers && modifiers.includes('capture'),
@@ -1356,9 +1382,8 @@ function updateComponentProps(instance, pProps, nProps) {
                 }
                 else if (isEvent(prop)) {
                     var { event, _arguments, modifiers, filters } = parseEventName(prop);
-                    debugger;
                     if (emitsOptions[event]) {
-                        updateInstanceListeners(instance, event, pValue, nValue);
+                        updateInstanceListeners(instance, event, pValue, nValue, _arguments, modifiers, filters);
                     }
                     else if (isComponentLifecycleHook(event)) {
                         continue;
@@ -3899,6 +3924,17 @@ function ternaryChains(conditions, returns, falseDefault = 'undefined', index = 
 const destructur = (target) => `...${target}`;
 var declare = (name, value) => `const ${name} = ${value} ;`;
 const toReservedProp = (prop) => `_${prop}`;
+// legal variable name
+var varRE = /^\w+$/;
+// arrow function
+var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
+// normal function
+var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
+// array
+var arrayRE = /\[.*\]/;
+function isHandler(exp) {
+    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
+}
 
 const createScanner = (source) => new Scanner(source);
 // operate the string template
@@ -4109,7 +4145,7 @@ function genSlotContent(node, context) {
         
          下面这种情况是不被允许的
         <com>
-            <div slot-scope="x">  </div>
+            <div s-slot-scope="x">  </div>
             <div><div>
         </com>
     */
@@ -4120,7 +4156,8 @@ function genSlotContent(node, context) {
     children.forEach((child) => {
         // 作用域插槽只能在具名插槽上
         if (child.defineSlotName) {
-            slots[child.defineSlotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope);
+            let slotName = child.isDynamicDefineSlotName ? dynamicMapKey(child.defineSlotName) : child.defineSlotName;
+            slots[slotName] = toArrowFunction(genNode(child, context), child.slotScope || node.slotScope);
         }
         else {
             (_default ||= []).push(child);
@@ -4361,19 +4398,23 @@ function genProps(node, context) {
         switch (attr.type) {
             case 16 /* EVENT */:
                 var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */ _arguments, filters, modifiers } = attr;
-                var callback = isHandler ? value : toArrowFunction(value || '$' /* 为空字符时默认的handler*/, '$'); // 包裹函数都需要传入一个 $ 参数
+                let handler = value;
+                if (!isHandler) {
+                    handler = toArrowFunction(handler || '$' /* 为空字符时默认的handler*/, '$');
+                    handler = context.handlerWithCache(handler);
+                }
                 // 处理按键修饰符
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup';
                 }
                 if (isDynamicProperty) {
                     let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL);
-                    props[dynamicMapKey(key)] = callback;
+                    props[dynamicMapKey(key)] = handler;
                     dynamicProps.push(key);
                 }
                 else {
                     let key = toEventName(property, _arguments, modifiers, filters);
-                    props[key] = callback;
+                    props[key] = handler;
                     dynamicProps.push(toSingleQuotes(key));
                 }
                 break;
@@ -4889,17 +4930,6 @@ const processRules = (rules, context, isKeyframe = false) => {
     });
 };
 
-// legal variable name
-var varRE = /^\w+$/;
-// arrow function
-var arrowFnRE = /\(?[\w,\s]*\)?\s*=>\s*.*/;
-// normal function
-var fnRE = /function[\w\s]*\([\w,\s]*\)\s*{.*}/;
-// array
-var arrayRE = /\[.*\]/;
-function isHandler(exp) {
-    return varRE.test(exp) || arrowFnRE.test(exp) || fnRE.test(exp) || arrayRE.test(exp);
-}
 function processTemplateAst(htmlAst, context) {
     if (isArray(htmlAst)) {
         return htmlAst.forEach((ast) => processTemplateAst(ast, context));
@@ -4993,6 +5023,7 @@ function processTemplateAst(htmlAst, context) {
                             attr.property = attr._arguments[0];
                             attr._arguments.shift();
                             attr.isDynamicValue = true;
+                            attr.isHandler = isHandler(attr.value);
                             attr.value = context.setRenderScope(attr.value);
                             break;
                         case 'native':
@@ -5019,12 +5050,12 @@ function processTemplateAst(htmlAst, context) {
                             break;
                         case 'slot':
                             // 第一个修饰符dynamic代表定义动态插槽
-                            htmlAst.isDynamicDefineSlotName = attr?._arguments?.includes('dynamic');
+                            htmlAst.isDynamicDefineSlotName = attr?.modifiers?.includes('dynamic');
                             htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value;
                             break;
                         case 'slot-name':
                             // 使用插槽时的名称
-                            htmlAst.isDynamicSlot = attr?._arguments?.includes('dynamic');
+                            htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic');
                             htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default');
                             break;
                         case 'style':
@@ -5102,7 +5133,7 @@ function processTemplateAst(htmlAst, context) {
                         // 模板上的# 会转换为插槽的定义
                         if (attr.isDynamicProperty) {
                             htmlAst.isDynamicDefineSlotName = true;
-                            htmlAst.defineSlotName = context.setRenderScope(htmlAst.defineSlotName);
+                            htmlAst.defineSlotName = context.setRenderScope(attr.property);
                         }
                         else {
                             htmlAst.isDynamicDefineSlotName = false;
@@ -5277,6 +5308,11 @@ class CodeGenerator {
     directives = {};
     renderScope;
     scope;
+    cache;
+    handlerWithCache(handlerExpression) {
+        let cacheId = uVar();
+        return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`;
+    }
     // 记录模板中是否使用了scoped css
     useScopedStyleSheet = false;
     constructor() {
@@ -5383,6 +5419,7 @@ function compile(template, compilerOptions = compilerDefaultOptions) {
     // 初始化渲染作用域
     context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
     context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'));
+    context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'));
     var htmlAst = baseParseHTML(template);
     processTemplateAst(htmlAst, context);
     let renderCode = genNodes(htmlAst, context);
@@ -5476,6 +5513,7 @@ function renderSlot(name, scope, fallback, key) {
 }
 
 var renderMethods = {
+    useCurrentInstanceCache,
     getCurrentRenderScope,
     createComment,
     createSVGElement,
@@ -7738,12 +7776,16 @@ function onPropChange(prop, cb) {
     return watchTargetKey(getCurrentInstance().props, prop, cb);
 }
 
+function useCurrentInstanceCache() {
+    return getCurrentInstance().cache;
+}
 const createComponentInstance = (options, parent) => {
     let app = getCurrentApp();
     let instance = {
         app,
         parent,
         options,
+        cache: getEmptyObject(),
         uid: uid(),
         update: null,
         isMounted: false,
@@ -7870,7 +7912,7 @@ function processComponentHook(type, vnode, pVnode) {
                 setParentModelValue(scope[modelKey]);
             }
             else {
-                vnode.props[key](scope);
+                normalizeHandler(vnode.props[key]).forEach((handler) => handler(scope));
             }
         }
     }
@@ -7895,7 +7937,7 @@ function processElementHook(type, vnode, pVnode) {
             }
         }
         else if (key.startsWith(hookKey)) {
-            vnode.props[key](vnode.el);
+            normalizeHandler(vnode.props[key]).forEach((handler) => handler(vnode.el));
         }
     }
 }
@@ -7919,7 +7961,7 @@ function processRenderComponentHook(type, vnode, pVnode) {
             }
         }
         else if (key.startsWith(hookKey)) {
-            vnode.props[key](vnode.el);
+            normalizeHandler(vnode.props[key]).forEach((handler) => handler());
         }
     }
 }
@@ -8222,6 +8264,7 @@ exports.getElementStyle = getElementStyle;
 exports.getElementStyleValue = getElementStyleValue;
 exports.getEmptyObject = getEmptyObject;
 exports.getEventName = getEventName;
+exports.getInstanceEvent = getInstanceEvent;
 exports.getInstanceEvents = getInstanceEvents;
 exports.getInstancetEventListeners = getInstancetEventListeners;
 exports.getLastSetKey = getLastSetKey;
@@ -8267,6 +8310,7 @@ exports.isEmptyObject = isEmptyObject;
 exports.isEvent = isEvent;
 exports.isFunction = isFunction;
 exports.isHTMLTag = isHTMLTag;
+exports.isHandler = isHandler;
 exports.isHexColor = isHexColor;
 exports.isHslColor = isHslColor;
 exports.isNumber = isNumber;
@@ -8459,6 +8503,7 @@ exports.updateStyleSheet = updateStyleSheet;
 exports.useApp = useApp;
 exports.useAttrs = useAttrs;
 exports.useBoolean = useBoolean;
+exports.useCurrentInstanceCache = useCurrentInstanceCache;
 exports.useDate = useDate;
 exports.useEmit = useEmit;
 exports.useInstance = useInstance;

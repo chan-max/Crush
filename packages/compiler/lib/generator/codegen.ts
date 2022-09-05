@@ -130,7 +130,7 @@ function genSlotContent(node: any, context: any) {
         
          下面这种情况是不被允许的
         <com>
-            <div slot-scope="x">  </div>
+            <div s-slot-scope="x">  </div>
             <div><div>
         </com>
     */

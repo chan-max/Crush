@@ -5,6 +5,8 @@ import { camelize, isUndefined } from "@crush/common"
 const AttributeFlags = [
     '$--', // dynamic css variable
     's-', // crush flag
+    'cr-',
+    '*',
     '...', // attribute bind shorthand
     '$', // dynamic property
     '@', // event

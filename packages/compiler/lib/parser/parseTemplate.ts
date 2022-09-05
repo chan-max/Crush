@@ -80,6 +80,8 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             let { attribute, value } = attr
             switch (attr.flag) {
                 case 's-':
+                case 'cr-':
+                case '*':
                     switch (attr.property) {
                         case 'if':
                             if (htmlAst.directives) {
@@ -210,7 +212,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                 attributes.push({
                                     type: AstTypes.ATTRIBUTE,
                                     property: `onBeforeUpdate$modelValue_${attr?._arguments?.[0] || 'defaultModelValue'}`,
-                                    value:  toArrowFunction(`${modelValue} = _`, '_'),
+                                    value: toArrowFunction(`${modelValue} = _`, '_'),
                                     isDynamicValue: true,
                                     isDynamicProperty: false,
                                 })
@@ -218,7 +220,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                 attr.type = AstTypes.CUSTOM_DIRECTIVE;
                                 let modelType = htmlAst.tag === 'select' ?
                                     (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text') 
+                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text')
                                 // transform 
                                 attr.property = `model${initialUpperCase(modelType)}`
                                 attr.value = context.setRawScope(attr.value)

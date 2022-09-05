@@ -43,15 +43,29 @@ export const transitionComponent = {
 }
 
 
+const transitionBaseOptions = {
+    fast: 500,
+    normal: 800,
+    slow: 1500
+}
+
+// normalize transiton options
+// type : css | animate
+// 
+export function directiveBindingsToTransitionOptions(bindings: any) {
+    const { _arguments, modifiers, filters, value } = bindings
+    
+}
+
+export function defineTransitionOptions() {
+
+}
+
 export const transitionDirective = {
     beforeCreate(_: any, { value }: any, vnode: any) {
         vnode.transition = createTransition(value)
     },
     beforeUpdate(_: any, { value }: any, nVnode: any, pVnode: any) {
-        if (!pVnode) {
-            // 此时为组件自更新
-            return
-        }
         const transition = pVnode.transition
         transition.update(value)
         nVnode.transition = transition // extend
