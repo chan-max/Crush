@@ -78,9 +78,9 @@ function initAnimationClass(className: any) {
     mountStyleRule(targetSheet, createStyle('.' + className, { animation: declaration }))
 }
 
-export const installAnimation = () => {
+export const installAnimation = (app:any) => {
     // 挂载所有动画帧
+    app.animations = animations
     mount(createStyleSheet(null, animations), document.head)
- 
     onBeforeClassMount(initAnimationClass)
 }

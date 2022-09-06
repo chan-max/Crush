@@ -127,14 +127,14 @@ export function createApp(rootComponent: any) {
         container.innerHTML = ''
 
         // 需要在css中设置display:none
-        if(container.hasAttribute('s-cloak')){
+        if(container.hasAttribute('cr-cloak')){
             container.style.display = "block"
         }
 
         if (!app.rootComponent.template && !app.rootComponent.render) {
             app.rootComponent.template = app.inlineTemplate
         }
-
+        
         // 执行应用挂载前钩子，可以拿到用户定义的配置信息
         app.beforeAppMount && app.beforeAppMount(app)
 
@@ -143,7 +143,7 @@ export function createApp(rootComponent: any) {
         app.isMounted = true
     }
 
-
+    
     function unmountApp() {
 
         // 卸载已安装的插件

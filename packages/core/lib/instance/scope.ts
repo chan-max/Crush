@@ -10,6 +10,7 @@ import { cacheDebounce, cacheThrottle, debounce, throttle } from "@crush/common"
 import { getCurrentApp } from "../app/app";
 
 import { lighten, darken, saturate, desaturate, opacity } from "@crush/reactivity";
+import { inject, provide } from "../..";
 
 export const scopeProperties: any = {
     _currentPropertyAccessInstance: null, // 保存当前属性访问的组件实例，在那个组件实例中访问的属性
@@ -101,6 +102,13 @@ export const scopeProperties: any = {
             return querySelectorAll(type, this._currentPropertyAccessInstance.vnode)
         }
     },
+    get $provide() {
+        return provide
+    },
+
+    get $inject() {
+        return inject
+    }
 }
 
 

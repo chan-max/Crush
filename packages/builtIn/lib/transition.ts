@@ -50,16 +50,22 @@ const transitionBaseOptions = {
 }
 
 // normalize transiton options
-// type : css | animate
+
+// type : animate
+// duration : 过渡时间 enter-duration , leave-duration
+// timing-function : enter-timing-function , leave-timing-function
+// delay : enter-delay , leave-delay
+
+// type : css
+// name :
 // 
+
 export function directiveBindingsToTransitionOptions(bindings: any) {
     const { _arguments, modifiers, filters, value } = bindings
     
 }
 
-export function defineTransitionOptions() {
-
-}
+export function defineTransitionOptions() { }
 
 export const transitionDirective = {
     beforeCreate(_: any, { value }: any, vnode: any) {

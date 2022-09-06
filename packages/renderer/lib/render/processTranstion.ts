@@ -3,11 +3,13 @@ import { setDisplay } from "@crush/builtin/lib/show"
 import { emptyObject, initialUpperCase } from "@crush/common"
 import { addClass, onceListener, remountElement, removeClass, removeElement } from "../dom"
 
+let _requestAnimationFrame: any = (cb: any) => requestAnimationFrame(() => requestAnimationFrame(cb))
+
 //! class
 export function bindEnterClass(el: Element, name: string) {
     addClass(el, `${name}-enter`)
     addClass(el, `${name}-enter-from`)
-    requestAnimationFrame(() => {
+    _requestAnimationFrame(() => {
         addClass(el, `${name}-enter-to`)
         removeClass(el, `${name}-enter-from`)
     })
@@ -24,7 +26,7 @@ export function bindLeaveClass(el: Element, name: string) {
     addClass(el, `${name}-leave-from`)
     document.body.offsetHeight
     addClass(el, `${name}-leave`)
-    requestAnimationFrame(() => {
+    _requestAnimationFrame(() => {
         addClass(el, `${name}-leave-to`)
         removeClass(el, `${name}-leave-from`)
     })
@@ -70,14 +72,29 @@ class TransitionDesc {
     onAfterAppear: any
     onAppearCancelled: any
 
+    // 指定class名称 ，高优先级
+    enterClass: any
+    enterToClass: any
+    enterFromClass: any
+    leaveClass: any
+    leaveFromClass: any
+    leaveToClass: any
+
+
     constructor(options: any) {
         this.update(options)
     }
 
     update(options: any) {
         options ||= emptyObject
-        this.name = options.name || 'transition'
         this.type = options.type || 'css' // 默认采用 css
+        this.name = options.name || 'transition' // css 过渡的class名称
+        this.enterClass = options.enterClass
+        this.enterFromClass = options.enterFromClass
+        this.enterToClass = options.enterToClass
+        this.leaveClass = options.leaveClass
+        this.leaveFromClass = options.leaveFromClass
+        this.leaveToClass = options.leaveToClass
         // 该元素在组件中是否为第一次渲染
         this.appear = options.appear || false
         this.duration = options.duration
@@ -112,8 +129,8 @@ class TransitionDesc {
 
     beforeEnter() { }
     beforeLeave() { }
-    cancelEnter() {}
-    canceleave() {}
+    cancelEnter() { }
+    canceleave() { }
 
     // 关于 transition group
 
@@ -127,6 +144,7 @@ class TransitionDesc {
             appearRecord[patchKey] = true
             return
         }
+
 
         let leavingEl = leavingElements[patchKey]
 
@@ -154,6 +172,7 @@ class TransitionDesc {
             })
         } else if (this.type === 'css') {
             this.bindeEnterClass(newEl)
+
             onceListener(newEl, 'transitionend', () => {
                 // after enter
                 this.removeEnterClass(newEl)

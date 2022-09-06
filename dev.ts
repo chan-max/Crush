@@ -5,6 +5,8 @@ import {
 
 console.time('crush')
 
+
+
 let app = createApp({
     template:/*html*/`
         <style>
@@ -15,7 +17,7 @@ let app = createApp({
             }
             .transition{
                 &-enter{
-                    transition:all 2s;
+                    transition:all 2s 1s;
                     &-from{
                         width:100px;
                         background-color:red;
@@ -26,7 +28,7 @@ let app = createApp({
                     }
                 }
                 &-leave{
-                    transition:all 2s;
+                    transition:all 2s 1s;
                     &-from{
                         width:1000px;
                         background-color:#00c1de;
@@ -39,13 +41,12 @@ let app = createApp({
             }
         </style>
         <button @click="show = !show"> {{show ? 'show' : 'hide'}} </button>
-            <div .box *if="show" *transition="boxTransition"></div>
-        <tom>
+        <div .box *if="show" *transition="boxTransition"></div>
     `,
     create({ $self }: any) {
         $self.show = true
-        $self.boxTransition = {
-            type: 'animate',
+          $self.boxTransition = {
+            type: 'css',
             enterKeyframes: 'rollIn',
             leaveKeyframes: 'rollOut',
             duration: 2000
