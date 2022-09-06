@@ -1,7 +1,7 @@
 import { resolveOptions } from "./option";
 import { ComponentType } from "./component";
 import { getCurrentApp } from "../app/app";
-import { emptyArray, emptyObject, getEmptyObject, isFunction, shallowCloneArray, shallowCloneObject, uid } from "@crush/common";
+import { emptyArray, emptyObject, createPureObject, isFunction, shallowCloneArray, shallowCloneObject, uid } from "@crush/common";
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
@@ -20,7 +20,7 @@ export const createComponentInstance = (options: any, parent: any) => {
         app,
         parent,
         options, // 保存自身的配置来源
-        cache: getEmptyObject(), // 缓存点啥
+        cache: createPureObject(), // 缓存点啥
         uid: uid(),
         update: null,
         isMounted: false,
@@ -42,6 +42,7 @@ export const createComponentInstance = (options: any, parent: any) => {
         off: null,
         once: null,
         watch: null,
+        provides:null,
         useScopedStyleSheet: options.useScopedStyleSheet,
         renderEffect: null,
         render: options.render,
@@ -107,6 +108,7 @@ export interface ComponentInstance {
     createRender: any
     components: any
     directives: any
+    provides:any
     // hooks will always be an array
     create: any
     beforeCreate: any

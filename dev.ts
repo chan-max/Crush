@@ -1,5 +1,6 @@
+import { provide } from "@crush/core/lib/instance/provideInject";
 import {
-    createExpression, createApp, ref, useRefState, onMounted, useScope, onPropChange, onUnmounted, computed, exposeCurrentScopeToWindow, parseColor, lighten, opacity, cache
+    createExpression, createApp, ref, useRefState, onMounted, useScope, onPropChange, onUnmounted, computed, exposeCurrentScopeToWindow, parseColor, lighten, opacity, cache, inject
 } from "./packages/core";
 
 console.time('crush')
@@ -38,9 +39,8 @@ let app = createApp({
             }
         </style>
         <button @click="show = !show"> {{show ? 'show' : 'hide'}} </button>
-        <div .box cr-if="show" cr-transition="boxTransition">
-            
-        </div>
+            <div .box *if="show" *transition="boxTransition"></div>
+        <tom>
     `,
     create({ $self }: any) {
         $self.show = true
@@ -50,6 +50,7 @@ let app = createApp({
             leaveKeyframes: 'rollOut',
             duration: 2000
         }
+        provide('name', 666666)
         exposeCurrentScopeToWindow()
     }
 })
@@ -57,8 +58,6 @@ let app = createApp({
 
 
 console.log(app);
-
-
 
 app.mount()
 

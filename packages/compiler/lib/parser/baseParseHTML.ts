@@ -1,4 +1,4 @@
-import { getEmptyObject } from "@crush/common";
+import { createPureObject } from "@crush/common";
 import { parseAttribute } from "./parseAttribute";
 import { createScanner } from "./scanner";
 

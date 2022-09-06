@@ -26,7 +26,7 @@
         throw new Error(...msg);
     };
 
-    function getEmptyObject() {
+    function createPureObject() {
         return Object.create(null);
     }
     var id = 0;
@@ -42,7 +42,7 @@
     const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
         res[item] = mapValue;
         return res;
-    }, getEmptyObject());
+    }, createPureObject());
     const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
     // from vue
     const makeMap = (str, delimiter = ',') => {
@@ -1055,12 +1055,6 @@
                         if (isElementLifecycleHook(event)) {
                             // 生命周期钩子跳过
                             continue;
-                        }
-                        // builtIn events
-                        switch (event) {
-                            case 'emit':
-                                debugger;
-                                break;
                         }
                         // window 修饰符
                         el = modifiers && modifiers.includes('window') ? window : el;
@@ -4531,6 +4525,8 @@
     const AttributeFlags = [
         '$--',
         's-',
+        'cr-',
+        '*',
         '...',
         '$',
         '@',
@@ -4953,6 +4949,8 @@
                 let { attribute, value } = attr;
                 switch (attr.flag) {
                     case 's-':
+                    case 'cr-':
+                    case '*':
                         switch (attr.property) {
                             case 'if':
                                 if (htmlAst.directives) {
@@ -5059,6 +5057,16 @@
                                 // 使用插槽时的名称
                                 htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic');
                                 htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default');
+                                break;
+                            case 'is':
+                                let isDynamicIs = attr?.modifiers?.includes('dynamic');
+                                htmlAst.isDynamicIs = isDynamicIs;
+                                if (isDynamicIs) {
+                                    htmlAst.is = context.setRenderScope(attr.value);
+                                }
+                                else {
+                                    htmlAst.is = attr.value;
+                                }
                                 break;
                             case 'style':
                                 attr.type = 18 /* ATTRIBUTE_STYLE */;
@@ -5242,42 +5250,12 @@
                 break;
             case 'element':
                 htmlAst.type = 20 /* DYNAMIC_HTML_ELEMENT */;
-                var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-                isAttribute.type = 12 /* SKIP */;
-                if (isAttribute.isDynamicValue) {
-                    htmlAst.is = context.setRenderScope(isAttribute.value);
-                    htmlAst.isDynamicIs = true;
-                }
-                else {
-                    htmlAst.is = isAttribute.value;
-                    htmlAst.isDynamicIs = false;
-                }
                 break;
             case 'component':
                 htmlAst.type = 22 /* DYNAMIC_COMPONENT */;
-                var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-                isAttribute.type = 12 /* SKIP */;
-                if (isAttribute.isDynamicValue) {
-                    htmlAst.is = context.setRenderScope(isAttribute.value);
-                    htmlAst.isDynamicIs = true;
-                }
-                else {
-                    htmlAst.is = isAttribute.value;
-                    htmlAst.isDynamicIs = false;
-                }
                 break;
             case 'svgElement':
                 htmlAst.type = 21 /* DYNAMIC_SVG_ELEMENT */;
-                var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-                isAttribute.type = 12 /* SKIP */;
-                if (isAttribute.isDynamicValue) {
-                    htmlAst.is = context.setRenderScope(isAttribute.value);
-                    htmlAst.isDynamicIs = true;
-                }
-                else {
-                    htmlAst.is = isAttribute.value;
-                    htmlAst.isDynamicIs = false;
-                }
                 break;
             case 'style':
                 htmlAst.type = 6 /* STYLESHEET */;
@@ -6772,6 +6750,7 @@
         keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
     ];
 
+    const fuck = 6 /* FOR */;
     const animationFrames = {
         // slide 滑动
         slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
@@ -6960,7 +6939,6 @@
                 });
             }
             else {
-                // 其他类型 ， 开发中
                 insertFn();
             }
         }
@@ -7073,10 +7051,6 @@
             vnode.transition = createTransition(value);
         },
         beforeUpdate(_, { value }, nVnode, pVnode) {
-            if (!pVnode) {
-                // 此时为组件自更新
-                return;
-            }
             const transition = pVnode.transition;
             transition.update(value);
             nVnode.transition = transition; // extend
@@ -7787,7 +7761,7 @@
             app,
             parent,
             options,
-            cache: getEmptyObject(),
+            cache: createPureObject(),
             uid: uid(),
             update: null,
             isMounted: false,
@@ -7809,6 +7783,7 @@
             off: null,
             once: null,
             watch: null,
+            provides: null,
             useScopedStyleSheet: options.useScopedStyleSheet,
             renderEffect: null,
             render: options.render,
@@ -7968,9 +7943,6 @@
         }
     }
 
-    /*
-        当传入不合理的props时
-    */
     function normalizePropsOptions(options) {
         if (isArray(options)) {
             options = arrayToMap(options, emptyObject);
@@ -8140,6 +8112,25 @@
         window[name] = getCurrentScope();
     }
 
+    function provide(key, value) {
+        let provides = getCurrentInstance().provides ||= createPureObject();
+        provides[key] = value;
+    }
+    function inject(key) {
+        let currentInstace = getCurrentInstance();
+        let result = null;
+        let parent = currentInstace.parent;
+        // inject 不会从自身获取
+        while (parent && !result) {
+            let provides = parent.provides;
+            if (provides && (provides[key] !== undefined)) {
+                result = provides[key];
+            }
+            parent = parent.parent;
+        }
+        return result;
+    }
+
     exports.$var = $var;
     exports.CodeGenerator = CodeGenerator;
     exports.Comment = Comment;
@@ -8157,6 +8148,7 @@
     exports.addClass = addClass;
     exports.addInstanceListener = addInstanceListener;
     exports.addListener = addListener;
+    exports.animations = animations;
     exports.appendMedium = appendMedium;
     exports.arrayExpressionWithScope = arrayExpressionWithScope;
     exports.arrayToMap = arrayToMap;
@@ -8192,6 +8184,7 @@
     exports.createMap = createMap;
     exports.createMapEntries = createMapEntries;
     exports.createMedia = createMedia;
+    exports.createPureObject = createPureObject;
     exports.createReactiveCollection = createReactiveCollection;
     exports.createReactiveEffect = createReactiveEffect;
     exports.createReactiveObject = createReactiveObject;
@@ -8249,6 +8242,7 @@
     exports.findStringFromArray = findStringFromArray;
     exports.findTemplateStringEnd = findTemplateStringEnd;
     exports.flatRules = flatRules;
+    exports.fuck = fuck;
     exports.getActiveEffect = getActiveEffect;
     exports.getComponent = getComponent;
     exports.getCurrentApp = getCurrentApp;
@@ -8264,7 +8258,6 @@
     exports.getElementComputedStyleValue = getElementComputedStyleValue;
     exports.getElementStyle = getElementStyle;
     exports.getElementStyleValue = getElementStyleValue;
-    exports.getEmptyObject = getEmptyObject;
     exports.getEventName = getEventName;
     exports.getInstanceEvent = getInstanceEvent;
     exports.getInstanceEvents = getInstanceEvents;
@@ -8289,6 +8282,7 @@
     exports.important = important;
     exports.initialLowerCase = initialLowerCase;
     exports.initialUpperCase = initialUpperCase;
+    exports.inject = inject;
     exports.injectHook = injectHook;
     exports.injectMapHooks = injectMapHooks;
     exports.injectMixin = injectMixin;
@@ -8394,6 +8388,7 @@
     exports.perspective = perspective;
     exports.processHook = processHook;
     exports.processVnodePrerender = processVnodePrerender;
+    exports.provide = provide;
     exports.queueJob = queueJob;
     exports.radialGradient = radialGradient;
     exports.reactive = reactive;

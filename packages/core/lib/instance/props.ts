@@ -1,9 +1,5 @@
-
 import { arrayToMap, emptyObject, initialUpperCase, isArray, isObject } from "@crush/common";
 
-/*
-    当传入不合理的props时
-*/
 
 export function normalizePropsOptions(options: any) {
     if (isArray(options)) {

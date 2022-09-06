@@ -188,6 +188,15 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic')
                             htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default')
                             break
+                        case 'is':
+                            let isDynamicIs = attr?.modifiers?.includes('dynamic')
+                            htmlAst.isDynamicIs = isDynamicIs
+                            if (isDynamicIs) {
+                                htmlAst.is = context.setRenderScope(attr.value)
+                            } else {
+                                htmlAst.is = attr.value
+                            }
+                            break
                         case 'style':
                             attr.type = AstTypes.ATTRIBUTE_STYLE
                             attr.isDynamicValue = true
@@ -369,39 +378,12 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
             break
         case 'element':
             htmlAst.type = AstTypes.DYNAMIC_HTML_ELEMENT
-            var isAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'is')
-            isAttribute.type = AstTypes.SKIP
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value)
-                htmlAst.isDynamicIs = true
-            } else {
-                htmlAst.is = isAttribute.value
-                htmlAst.isDynamicIs = false
-            }
             break
         case 'component':
             htmlAst.type = AstTypes.DYNAMIC_COMPONENT
-            var isAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'is')
-            isAttribute.type = AstTypes.SKIP
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value)
-                htmlAst.isDynamicIs = true
-            } else {
-                htmlAst.is = isAttribute.value
-                htmlAst.isDynamicIs = false
-            }
             break
         case 'svgElement':
             htmlAst.type = AstTypes.DYNAMIC_SVG_ELEMENT
-            var isAttribute = htmlAst.attributes.find((attr: any) => attr.property === 'is')
-            isAttribute.type = AstTypes.SKIP
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value)
-                htmlAst.isDynamicIs = true
-            } else {
-                htmlAst.is = isAttribute.value
-                htmlAst.isDynamicIs = false
-            }
             break
         case 'style':
             htmlAst.type = AstTypes.STYLESHEET

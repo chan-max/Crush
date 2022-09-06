@@ -3,6 +3,8 @@ import { createStyleSheet } from '@crush/renderer'
 import { Nodes } from '@crush/const'
 import { onBeforeClassMount, mountStyleRule, createStyle } from '@crush/renderer'
 
+export const fuck = Nodes.FOR
+
 import { slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp } from './animations/slide'
 import { zoomIn, zoomInDown, zoomInLeft, zoomInRight, zoomInUp, zoomOut, zoomOutDown, zoomOutLeft, zoomOutRight, zoomOutUp } from './animations/zoom'
 import { hinge, jackInTheBox, rollIn, rollOut } from './animations/specials'

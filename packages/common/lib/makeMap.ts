@@ -1,9 +1,9 @@
-import { getEmptyObject } from "./value"
+import { createPureObject } from "./value"
 
 export const arrayToMap = (arr: string[], mapValue: any = true) => arr.reduce((res, item) => {
     res[item] = mapValue
     return res
-}, getEmptyObject() as Record<string, any>)
+}, createPureObject() as Record<string, any>)
 
 export const stringToMap = (str: string, delimiter: string | RegExp) => arrayToMap(str.split(delimiter))
 

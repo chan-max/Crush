@@ -20,7 +20,7 @@ const throwError = (...msg) => {
     throw new Error(...msg);
 };
 
-function getEmptyObject() {
+function createPureObject() {
     return Object.create(null);
 }
 var id = 0;
@@ -36,7 +36,7 @@ const extend = Object.assign;
 const arrayToMap = (arr, mapValue = true) => arr.reduce((res, item) => {
     res[item] = mapValue;
     return res;
-}, getEmptyObject());
+}, createPureObject());
 const stringToMap = (str, delimiter) => arrayToMap(str.split(delimiter));
 // from vue
 const makeMap = (str, delimiter = ',') => {
@@ -1049,12 +1049,6 @@ function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = fa
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue;
-                    }
-                    // builtIn events
-                    switch (event) {
-                        case 'emit':
-                            debugger;
-                            break;
                     }
                     // window 修饰符
                     el = modifiers && modifiers.includes('window') ? window : el;
@@ -4525,6 +4519,8 @@ const isSVGTag = makeMap(SVG_TAGS);
 const AttributeFlags = [
     '$--',
     's-',
+    'cr-',
+    '*',
     '...',
     '$',
     '@',
@@ -4947,6 +4943,8 @@ function processTemplateAst(htmlAst, context) {
             let { attribute, value } = attr;
             switch (attr.flag) {
                 case 's-':
+                case 'cr-':
+                case '*':
                     switch (attr.property) {
                         case 'if':
                             if (htmlAst.directives) {
@@ -5053,6 +5051,16 @@ function processTemplateAst(htmlAst, context) {
                             // 使用插槽时的名称
                             htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic');
                             htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default');
+                            break;
+                        case 'is':
+                            let isDynamicIs = attr?.modifiers?.includes('dynamic');
+                            htmlAst.isDynamicIs = isDynamicIs;
+                            if (isDynamicIs) {
+                                htmlAst.is = context.setRenderScope(attr.value);
+                            }
+                            else {
+                                htmlAst.is = attr.value;
+                            }
                             break;
                         case 'style':
                             attr.type = 18 /* ATTRIBUTE_STYLE */;
@@ -5236,42 +5244,12 @@ function processTemplateAst(htmlAst, context) {
             break;
         case 'element':
             htmlAst.type = 20 /* DYNAMIC_HTML_ELEMENT */;
-            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-            isAttribute.type = 12 /* SKIP */;
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value);
-                htmlAst.isDynamicIs = true;
-            }
-            else {
-                htmlAst.is = isAttribute.value;
-                htmlAst.isDynamicIs = false;
-            }
             break;
         case 'component':
             htmlAst.type = 22 /* DYNAMIC_COMPONENT */;
-            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-            isAttribute.type = 12 /* SKIP */;
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value);
-                htmlAst.isDynamicIs = true;
-            }
-            else {
-                htmlAst.is = isAttribute.value;
-                htmlAst.isDynamicIs = false;
-            }
             break;
         case 'svgElement':
             htmlAst.type = 21 /* DYNAMIC_SVG_ELEMENT */;
-            var isAttribute = htmlAst.attributes.find((attr) => attr.property === 'is');
-            isAttribute.type = 12 /* SKIP */;
-            if (isAttribute.isDynamicValue) {
-                htmlAst.is = context.setRenderScope(isAttribute.value);
-                htmlAst.isDynamicIs = true;
-            }
-            else {
-                htmlAst.is = isAttribute.value;
-                htmlAst.isDynamicIs = false;
-            }
             break;
         case 'style':
             htmlAst.type = 6 /* STYLESHEET */;
@@ -6766,6 +6744,7 @@ const fadeOutBottomLeft = [
     keyframe(100, { opacity: 0, transform: translate3d('-100%', '100%', 0) })
 ];
 
+const fuck = 6 /* FOR */;
 const animationFrames = {
     // slide 滑动
     slideInDown, slideInLeft, slideInRight, slideInUp, slideOutDown, slideOutLeft, slideOutRight, slideOutUp,
@@ -6954,7 +6933,6 @@ class TransitionDesc {
             });
         }
         else {
-            // 其他类型 ， 开发中
             insertFn();
         }
     }
@@ -7067,10 +7045,6 @@ const transitionDirective = {
         vnode.transition = createTransition(value);
     },
     beforeUpdate(_, { value }, nVnode, pVnode) {
-        if (!pVnode) {
-            // 此时为组件自更新
-            return;
-        }
         const transition = pVnode.transition;
         transition.update(value);
         nVnode.transition = transition; // extend
@@ -7781,7 +7755,7 @@ const createComponentInstance = (options, parent) => {
         app,
         parent,
         options,
-        cache: getEmptyObject(),
+        cache: createPureObject(),
         uid: uid(),
         update: null,
         isMounted: false,
@@ -7803,6 +7777,7 @@ const createComponentInstance = (options, parent) => {
         off: null,
         once: null,
         watch: null,
+        provides: null,
         useScopedStyleSheet: options.useScopedStyleSheet,
         renderEffect: null,
         render: options.render,
@@ -7962,9 +7937,6 @@ function processRenderComponentHook(type, vnode, pVnode) {
     }
 }
 
-/*
-    当传入不合理的props时
-*/
 function normalizePropsOptions(options) {
     if (isArray(options)) {
         options = arrayToMap(options, emptyObject);
@@ -8134,4 +8106,23 @@ function exposeCurrentScopeToWindow(name = 'scope') {
     window[name] = getCurrentScope();
 }
 
-export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEmptyObject, getEventName, getInstanceEvent, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHandler, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforePatch, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useCurrentInstanceCache, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };
+function provide(key, value) {
+    let provides = getCurrentInstance().provides ||= createPureObject();
+    provides[key] = value;
+}
+function inject(key) {
+    let currentInstace = getCurrentInstance();
+    let result = null;
+    let parent = currentInstace.parent;
+    // inject 不会从自身获取
+    while (parent && !result) {
+        let provides = parent.provides;
+        if (provides && (provides[key] !== undefined)) {
+            result = provides[key];
+        }
+        parent = parent.parent;
+    }
+    return result;
+}
+
+export { $var, CodeGenerator, Comment, ComputedRef, Expression, IMPORTANT, IMPORTANT_KEY, IMPORTANT_SYMBOL, NULL, ReactiveEffect, ReactiveTypeSymbol, ReactiveTypes, Ref, TARGET_MAP, Text, addClass, addInstanceListener, addListener, animations, appendMedium, arrayExpressionWithScope, arrayToMap, attr, builtInComponents, builtInDirectives, cache, cacheDebounce, cacheThrottle, calc, callFn, callHook, camelize, cleaarRefDeps, clearCurrentInstance, colors, compile, computed, conicGradient, createApp, createComment, createComponent, createComponentInstance, createDeclaration, createElement, createExpression, createFragment, createFunction, createInstanceEventEmitter, createInstanceWatch, createKeyframe, createKeyframes, createMap, createMapEntries, createMedia, createPureObject, createReactiveCollection, createReactiveEffect, createReactiveObject, createReadonlyCollection, createReadonlyObject, createRefValueSetter, createRenderScope, createReverseKeyCodes, createSVGElement, createScope, createSetter, createShallowReactiveCollection, createShallowReactiveObject, createShallowReadonlyCollection, createShallowReadonlyObject, createStyle, createStyleSheet, createSupports, createText, cubicBezier, currentInstance, darken, dateFormatRE, debounce, declare, defineScopeProperty, defineSelfName, defineTextModifier, deleteActiveEffect, deleteKeyframe, deleteMedium, deleteRule, desaturate, destructur, display, doFlat, doKeyframesAnimation, docCreateComment, docCreateElement, docCreateText, dynamicMapKey, effect, emitInstancetEvent, emptyArray, emptyFunction, emptyObject, error, eventModifiers, exec, execCaptureGroups, exposeCurrentScopeToWindow, expressionWithScope, extend, extractFunctionArgs, findNextCodeBlockClosingPosition, findStringFromArray, findTemplateStringEnd, flatRules, fuck, getActiveEffect, getComponent, getCurrentApp, getCurrentInstance, getCurrentRenderScope, getCurrentScope, getCustomScreensMedia, getDeps, getDepsMap, getDirective, getEdgeElements, getElementComputedStyle, getElementComputedStyleValue, getElementStyle, getElementStyleValue, getEventName, getInstanceEvent, getInstanceEvents, getInstancetEventListeners, getLastSetKey, getLastSetNewValue, getLastSetOldValue, getLastSetTarget, getLastVisitKey, getLastVisitTarget, getLeftEdgeElement, getStyle, getStyleValue, h, hasOwn, hexToHsl, hexToRgb, hsl, hslToHex, hsla, hyphenate, important, initialLowerCase, initialUpperCase, inject, injectHook, injectMapHooks, injectMixin, injectMixins, insertElement, insertKeyframe, insertKeyframes, insertMedia, insertNull, insertRule, insertStyle, insertSupports, installAnimation, isArray, isComponentLifecycleHook, isComputed, isDate, isEffect, isElementLifecycleHook, isEmptyObject, isEvent, isFunction, isHTMLTag, isHandler, isHexColor, isHslColor, isNumber, isNumberString, isObject, isPromise, isProxy, isProxyType, isReactive, isRef, isRgbColor, isSVGTag, isShallow, isShortHexColor, isString, isUndefined, joinSelector, keyCodes, keyframe, keyframes, lighten, linearGradient, log, makeMap, mark, markRaw, max, mergeSelectors, mergeSplitedSelector, mergeSplitedSelectorsAndJoin, min, mixin, mount, mountAttributes, mountChildren, mountClass, mountComponent, mountDeclaration, mountKeyframeRule, mountRule, mountStyleRule, mountStyleSheet, nextTick, normalizeClass, normalizeHandler, normalizeKeyText, normalizeStyle, normalizeToHexColor, objectExpressionWithScope, objectStringify, onBeforeClassMount, onBeforeMount, onBeforePatch, onBeforeUnmount, onBeforeUpdate, onCreated, onMounted, onPropChange, onPropsChange, onSet, onSetCallbacks, onUnmounted, onUpdated, onceInstanceListener, onceListener, opacity, parseAttribute, parseColor, parseEventName, parseHex, parseHsl, parseHslToRgb, parseInlineClass, parseInlineStyle, parseRgb, parseRgbToHsl, parseStyleValue, patch, perspective, processHook, processVnodePrerender, provide, queueJob, radialGradient, reactive, reactiveCollectionHandler, reactiveHandler, readonly, readonlyCollectionHandler, readonlyHandler, ref, remountElement, removeAttribute, removeClass, removeElement, removeFromArray, removeInstanceListener, removeListener, renderList, renderSlot, resolveOptions, responsiveLayoutMedia, rgb, rgbToHex, rgba, rotate, rotate3d, rotateY, saturate, scale, scale3d, scaleX, scaleY, scopeProperties, setActiveEffect, setAttribute, setCurrentInstance, setElementStyleDeclaration, setElementTranstion, setKeyText, setKeyframesName, setSelector, setSelectorAttribute, setStyleProperty, setText, shallowCloneArray, shallowCloneObject, shallowReactive, shallowReactiveCollectionHandler, shallowReactiveHandler, shallowReadonly, shallowReadonlyCollectionHandler, shallowReadonlyHandler, shallowWatchReactive, shortHexToHex, skew, skewX, skewY, sortChildren, sortRules, splitSelector, stringToMap, stringify, targetObserverSymbol, ternaryChains, ternaryExp, textModifiers, throttle, throwError, toAbsoluteValue, toArray, toArrowFunction, toBackQuotes, toDec, toEventName, toHex, toNegativeValue, toNumber, toPositiveValue, toRaw, toReservedProp, toSingleQuotes, toTernaryExp, track, trackTargetObserver, translate3d, translateX, translateY, trigger, triggerAllDepsMap, triggerTargetKey, triggerTargetObserver, typeOf, uStringId, uVar, uid, unionkeys, unmount, unmountChildren, unmountClass, unmountComponent, unmountDeclaration, update, updateChildren, updateClass, updateComponent, updateDeclaration, updateElementAttributes, updateInstanceListeners, updateStyleSheet, useApp, useAttrs, useBoolean, useCurrentInstanceCache, useDate, useEmit, useInstance, useNumber, useOff, useOn, useOnce, useOptions, useParent, usePromise, useProps, useRef, useRefState, useRefs, useRoot, useScope, useSlot, useSlots, useString, useUid, useWatch, warn, watch, watchReactive, watchRef, watchTargetKey, withEventModifiers };
