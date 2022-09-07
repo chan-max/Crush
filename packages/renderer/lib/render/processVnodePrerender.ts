@@ -38,7 +38,7 @@ export function processVnodePrerender(node: any, parentKey?: any): null | any[] 
             flattedNodes = flattedNodes.concat(processVnodePrerender(child, parentKey))
         }
 
-        if (child.patchKey) {
+        if (child._key) {
             flattedNodes.push(child)
             return
         }
@@ -50,9 +50,9 @@ export function processVnodePrerender(node: any, parentKey?: any): null | any[] 
             flattedNodes = flattedNodes.concat(processVnodePrerender(child.children, child.key))
         } else {
             if (parentKey) {
-                child.patchKey = parentKey + '_' + child.key
+                child._key = parentKey + '_' + child.key
             } else {
-                child.patchKey = child.key
+                child._key = child.key
             }
 
             if (child.nodeType === Nodes.HTML_ELEMENT || child.nodeType === Nodes.SVG_ELEMENT) {
@@ -61,7 +61,7 @@ export function processVnodePrerender(node: any, parentKey?: any): null | any[] 
             }
 
             if (child.nodeType === Nodes.STYLE) {
-                child.children = flatRules(child.children, null, child.patchKey)
+                child.children = flatRules(child.children, null, child._key)
             }
 
             flattedNodes.push(child)

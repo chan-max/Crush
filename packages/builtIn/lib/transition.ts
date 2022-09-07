@@ -14,9 +14,9 @@ export const transitionGroupComponent = {
     beforeUpdate({ $instance: { vnode, renderingVnode }, $props }: any) {
         const transition = createTransition($props)
         // always true
-        transition.appear = true
-        const mountList = renderingVnode.filter((patchKey: any) => !vnode.map((_: any) => _.patchKey).includes(patchKey))
-        const unmountList = vnode.filter((patchKey: any) => !renderingVnode.map((_: any) => _.patchKey).includes(patchKey))
+        transition.options.appear = true
+        const mountList = renderingVnode.filter((_key: any) => !vnode.map((_: any) => _._key).includes(_key))
+        const unmountList = vnode.filter((_key: any) => !renderingVnode.map((_: any) => _._key).includes(_key))
         const transitionList = mountList.concat(unmountList)
         transitionList.forEach((_: any) => {
             _.transition = transition
@@ -43,37 +43,50 @@ export const transitionComponent = {
 }
 
 
-const transitionBaseOptions = {
-    fast: 500,
-    normal: 800,
-    slow: 1500
+const transitionTimes: any = {
+    fast: 200,
+    normal: 400,
+    slow: 600
 }
 
-// normalize transiton options
-
-// type : animate
-// duration : 过渡时间 enter-duration , leave-duration
-// timing-function : enter-timing-function , leave-timing-function
-// delay : enter-delay , leave-delay
-
-// type : css
-// name :
-// 
+import { transitionKeyframes } from "@crush/animate"
 
 export function directiveBindingsToTransitionOptions(bindings: any) {
-    const { _arguments, modifiers, filters, value } = bindings
+    let { _arguments, modifiers, filters, value } = bindings
+    let transitionOptions = value || {} // value 的优先级大于其他修饰符
     
+    // 第一个参数指定动画类型
+    transitionOptions.type || _arguments[0] || 'animate'
+
+    if (transitionOptions.type === 'animate') {
+        // *transition:animate.slow.fast.normal
+        // 修饰符指定速度 , 第一个代表duration ， 第二个代表delay
+        // duration : 过渡时间 enter-duration , leave-duration
+        // timing-function : enter-timing-function , leave-timing-function
+        // delay : enter-delay , leave-delay
+        // keyframes : enter-keyframes , leave-keyframes
+
+    } else if (transitionOptions.type === 'css') {
+
+    }
+
+    return transitionOptions
+}
+
+
+export function transitionComponentPropsToTransitionOptions(props: any) {
+
 }
 
 export function defineTransitionOptions() { }
 
 export const transitionDirective = {
-    beforeCreate(_: any, { value }: any, vnode: any) {
-        vnode.transition = createTransition(value)
+    beforeCreate(_: any, bindings: any, vnode: any) {
+        vnode.transition = createTransition(directiveBindingsToTransitionOptions(bindings))
     },
-    beforeUpdate(_: any, { value }: any, nVnode: any, pVnode: any) {
+    beforeUpdate(_: any, bindings: any, nVnode: any, pVnode: any) {
         const transition = pVnode.transition
-        transition.update(value)
+        transition.update(directiveBindingsToTransitionOptions(bindings))
         nVnode.transition = transition // extend
     }
 }

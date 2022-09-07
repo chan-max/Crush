@@ -304,8 +304,8 @@
                 continue;
             }
             // 使用传来的key生成唯一的key
-            var patchKey = key ? key + '_' + rule.key : rule.key;
-            rule.patchKey = patchKey;
+            var _key = key ? key + '_' + rule.key : rule.key;
+            rule._key = _key;
             rule.parent = parent;
             switch (rule.nodeType) {
                 case 26 /* STYLE_RULE */:
@@ -313,7 +313,7 @@
                     var _children = rule.children;
                     rule.children = null; // children 会用存储declaration
                     if (_children) {
-                        doFlat(_children, flattedRules, rule, patchKey);
+                        doFlat(_children, flattedRules, rule, _key);
                     }
                     break;
                 case 29 /* DECLARATION */:
@@ -347,7 +347,7 @@
                             else {
                                 // reset the declaration to styleRule
                                 var newRule = createStyle(selector, rule.children, key);
-                                newRule.patchKey = patchKey;
+                                newRule._key = _key;
                                 flattedRules.push(newRule);
                             }
                         }
@@ -383,7 +383,7 @@
                     break;
                 case 1 /* FRAGMENT */:
                     // fragment wont be a parent
-                    doFlat(rule.children, flattedRules, rule.parent, rule.patchKey);
+                    doFlat(rule.children, flattedRules, rule.parent, rule._key);
                     break;
             }
         }
@@ -445,7 +445,7 @@
                 // 只会出现手写render的情况 [[v1,v2,v3]]
                 flattedNodes = flattedNodes.concat(processVnodePrerender(child, parentKey));
             }
-            if (child.patchKey) {
+            if (child._key) {
                 flattedNodes.push(child);
                 return;
             }
@@ -457,17 +457,17 @@
             }
             else {
                 if (parentKey) {
-                    child.patchKey = parentKey + '_' + child.key;
+                    child._key = parentKey + '_' + child.key;
                 }
                 else {
-                    child.patchKey = child.key;
+                    child._key = child.key;
                 }
                 if (child.nodeType === 13 /* HTML_ELEMENT */ || child.nodeType === 9 /* SVG_ELEMENT */) {
                     // 子节点递归处理
                     child.children = processVnodePrerender(child.children);
                 }
                 if (child.nodeType === 17 /* STYLE */) {
-                    child.children = flatRules(child.children, null, child.patchKey);
+                    child.children = flatRules(child.children, null, child._key);
                 }
                 flattedNodes.push(child);
             }
@@ -1431,7 +1431,7 @@
     /*
         diff the dom children and rules children
 
-        the dom vnodes will be reused with the same patchKey and the same type ,
+        the dom vnodes will be reused with the same _key and the same type ,
         so , we can make the reused vnodes stay in the same index , this is the first step
         and then , the unsame keyed vnodes , we can reuse them if they have the same type , its the second step,
         apon the process , we get the same length children ,
@@ -1447,13 +1447,13 @@
     function createMapAndList(children) {
         var map = {};
         var list = children.map((child, index) => {
-            var patchKey = child.patchKey;
+            var _key = child._key;
             var token = {
                 node: child,
-                patchKey,
+                _key,
                 index
             };
-            map[patchKey] = token;
+            map[_key] = token;
             return token;
         });
         return {
@@ -1472,12 +1472,12 @@
                 此次循环用于将两组规则的相同key对应到相同的索引下
             */
             var node = n[i];
-            var patchKey = node.patchKey;
-            var sameNode = pMap[patchKey];
+            var _key = node._key;
+            var sameNode = pMap[_key];
             if (sameNode && sameNode.node.type === node.type) {
                 /*
-                    the condition of reuse a vnode for dom is same patchkey and same type
-                    for rules is just the same patchkey
+                    the condition of reuse a vnode for dom is same _key and same type
+                    for rules is just the same _key
                 */
                 var sameNodeIndex = sameNode.index + pMoved;
                 var diff = i - sameNodeIndex;
@@ -1510,12 +1510,12 @@
                 此次循环用于将两组规则的相同key对应到相同的索引下
             */
             var node = n[i];
-            var patchKey = node.patchKey;
-            var sameNode = pMap[patchKey];
+            var _key = node._key;
+            var sameNode = pMap[_key];
             if (sameNode) {
                 /*
-                    the condition of reuse a vnode for dom is same patchkey and same type
-                    for rules is just the same patchkey
+                    the condition of reuse a vnode for dom is same _key and same type
+                    for rules is just the same _key
                 */
                 var sameNodeIndex = sameNode.index + pMoved;
                 var diff = i - sameNodeIndex;
@@ -1547,9 +1547,9 @@
     };
     function updateSheet(pRules, nRules, sheet, vnode) {
         /*
-            与更新dom元素不同，规则中只要patchKey相同就一定会复用,
-            更新过程依赖patchkey
-            patchkey 作为第一优先级
+            与更新dom元素不同，规则中只要_key相同就一定会复用,
+            更新过程依赖_key
+            _key 作为第一优先级
             其次为nodetype,
             !还是假设key相同的节点顺序一定不会变，
         */
@@ -1808,10 +1808,10 @@
                         updateChildren([prev], next, container, anchor, parent);
                     }
                     else {
-                        let { type: prevType, patchKey: prevPatchKey } = prev;
-                        let { type: nextType, patchKey: nextPatchKey, nodeType } = next;
+                        let { type: prevType, _key: prev_key } = prev;
+                        let { type: nextType, _key: next_key, nodeType } = next;
                         // 文本节点和注释节点直接更新即可
-                        if (prevType === nextType && (prevPatchKey === nextPatchKey || nodeType === 12 /* TEXT */ || nodeType === 10 /* HTML_COMMENT */)) {
+                        if (prevType === nextType && (prev_key === next_key || nodeType === 12 /* TEXT */ || nodeType === 10 /* HTML_COMMENT */)) {
                             // type相同，nodeType一定相同
                             update(prev, next, container, anchor, parent);
                         }
@@ -6901,24 +6901,24 @@
         canceleave() { }
         // 关于 transition group
         processMount(newEl, insertFn) {
-            let { patchKey, instance } = newEl._vnode;
+            let { _key, instance } = newEl._vnode;
             let appearRecord = instance.appearRecord ||= {};
-            let appeared = appearRecord[patchKey];
+            let appeared = appearRecord[_key];
             if (!this.appear && !appeared) {
                 // appear
                 insertFn();
-                appearRecord[patchKey] = true;
+                appearRecord[_key] = true;
                 return;
             }
-            let leavingEl = leavingElements[patchKey];
+            let leavingEl = leavingElements[_key];
             if (leavingEl) {
                 // 上个元素还没卸载完成（过渡中） 直接卸载 , 不管是css过渡还是动画过度，直接卸载即可
                 removeElement(leavingEl);
-                leavingElements[patchKey] = null;
+                leavingElements[_key] = null;
             }
             // 进入动画挂载
             insertFn();
-            appearRecord[patchKey] = true;
+            appearRecord[_key] = true;
             newEl._entering = true;
             if (this.type === 'animate') {
                 newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
@@ -6943,7 +6943,7 @@
             }
         }
         processUnmount(el) {
-            let { patchKey } = el._vnode;
+            let { _key } = el._vnode;
             // 正在进入 ，取消进入动画, 进入卸载东动画
             if (el._entering) {
                 if (this.type === 'css') {
@@ -6953,13 +6953,13 @@
                     el.cancelKeyframes();
                 }
             }
-            leavingElements[patchKey] = el;
+            leavingElements[_key] = el;
             if (this.type === 'css') {
                 this.bindeLeaveClass(el);
                 onceListener(el, 'transitionend', () => {
                     // 元素直接卸载就不需要卸载class了
                     removeElement(el);
-                    leavingElements[patchKey] = null;
+                    leavingElements[_key] = null;
                 });
             }
             else if (this.type === 'animate') {
@@ -6970,7 +6970,7 @@
                 onceListener(el, 'animationend', () => {
                     // 元素直接卸载就不需要卸载class了
                     removeElement(el);
-                    leavingElements[patchKey] = null;
+                    leavingElements[_key] = null;
                 });
             }
             else {
@@ -7023,8 +7023,8 @@
             const transition = createTransition($props);
             // always true
             transition.appear = true;
-            const mountList = renderingVnode.filter((patchKey) => !vnode.map((_) => _.patchKey).includes(patchKey));
-            const unmountList = vnode.filter((patchKey) => !renderingVnode.map((_) => _.patchKey).includes(patchKey));
+            const mountList = renderingVnode.filter((_key) => !vnode.map((_) => _._key).includes(_key));
+            const unmountList = vnode.filter((_key) => !renderingVnode.map((_) => _._key).includes(_key));
             const transitionList = mountList.concat(unmountList);
             transitionList.forEach((_) => {
                 _.transition = transition;

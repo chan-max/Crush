@@ -5,54 +5,25 @@ import {
 
 console.time('crush')
 
-
+let tom = {
+    template:/*html*/`
+        <h1 @click="count++"> 计数器： {{count}} </h1>
+    `,
+    create(scope: any) {
+        scope.count = 0
+    }
+}
 
 let app = createApp({
+    components: {
+        tom
+    },
     template:/*html*/`
-        <style>
-            .box{
-                width:500px;
-                height:500px;
-                background-color:black;
-            }
-            .transition{
-                &-enter{
-                    transition:all 2s 1s;
-                    &-from{
-                        width:100px;
-                        background-color:red;
-                    }
-                    &-to{
-                        width:1000px;
-                        background-color:pink;
-                    }
-                }
-                &-leave{
-                    transition:all 2s 1s;
-                    &-from{
-                        width:1000px;
-                        background-color:#00c1de;
-                    }
-                    &-to{
-                        width:100px;
-                        background-color:blue;
-                    }   
-                }
-            }
-        </style>
-        <button @click="show = !show"> {{show ? 'show' : 'hide'}} </button>
-        <div .box *if="show" *transition="boxTransition"></div>
+        <button @click="show = !show"> toggle </button>
+        <tom *if="show" *keep-alive>
     `,
     create({ $self }: any) {
         $self.show = true
-          $self.boxTransition = {
-            type: 'css',
-            enterKeyframes: 'rollIn',
-            leaveKeyframes: 'rollOut',
-            duration: 2000
-        }
-        provide('name', 666666)
-        exposeCurrentScopeToWindow()
     }
 })
 

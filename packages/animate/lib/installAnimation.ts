@@ -63,6 +63,34 @@ const animationFrames = {
     fadeOutRight, fadeOutRightBig, fadeOutTopLeft, fadeOutTopRight, fadeOutUp, fadeOutUpBig,
 }
 
+// transition 简写形式 , 用于transtion指令的动画帧
+export const transitionKeyframes = {
+    roll: ['rollIn', 'rollOut'],
+    slideUp: ['slideInUp', 'slideOutUp'],
+    slideDown: ['slideInDown', 'slideOutDown'],
+    slideLeft: ['slideInLeft', 'slideOutLeft'],
+    slideRight: ['slideInRight', 'slideOutRight'],
+    zoom: ['zoomIn', 'zoomOut'],
+    zoomUp: ['zoomInUp', 'zoomOutUp'],
+    zoomDown: ['zoomInDown', 'zoomOutDown'],
+    zoomLeft: ['zoomInLeft', 'zoomOutLeft'],
+    zoomRight: ['zoomInRight', 'zoomOutRight'],
+    bounce: ['bounceIn', 'bounceOut'],
+    bounceUp: ['bounceInUp', 'bounceOutUp'],
+    bounceDown: ['bounceInDown', 'bounceOutDown'],
+    bounceLeft: ['bounceInLeft', 'bounceOutLeft'],
+    bounceRight: ['bounceInRight', 'bounceOutRight'],
+    backUp: ['backInUp', 'backOutUp'],
+    backDown: ['backInDown', 'backOutDown'],
+    backLeft: ['backInLeft', 'backOutLeft'],
+    backRight: ['backInRight', 'backOutRight'],
+    flip: ['flip', 'flip'],
+    flipX: ['flipInX', 'flipOutX'],
+    flipY: ['flipInY', 'flipOutY'],
+    lightSpeedLeft: ['lightSpeedInLeft', 'lightSpeedOutLeft'],
+    lightSpeedRight: ['lightSpeedInRight', 'lightSpeedOutRight'],
+    fade: ['fadeIn', 'fadeOut']
+}
 
 // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
 export const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames))
@@ -78,9 +106,13 @@ function initAnimationClass(className: any) {
     mountStyleRule(targetSheet, createStyle('.' + className, { animation: declaration }))
 }
 
-export const installAnimation = (app:any) => {
-    // 挂载所有动画帧
-    app.animations = animations
+
+
+export const installAnimation = (app: any) => {
+    // 内置
+    app.builtInAnimationKeyframes = Object.keys(animationFrames)
+    app.transitionKeyframes = transitionKeyframes
+
     mount(createStyleSheet(null, animations), document.head)
     onBeforeClassMount(initAnimationClass)
 }

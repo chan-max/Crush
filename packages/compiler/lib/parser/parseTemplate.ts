@@ -1,4 +1,4 @@
-import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray } from "@crush/common";
+import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray, uid } from "@crush/common";
 import { CodeGenerator } from "../generator/compiler";
 import { toArrowFunction } from "../stringify";
 import { extractFunctionArgs } from "../withScope";
@@ -248,6 +248,14 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     isDynamicProperty: false
                                 })
                             }
+                            break
+                        case 'keep-alive':
+                            attr.type = AstTypes.ATTRIBUTE
+                            attr.property = '_keepAlive'
+                            attr.isDynamicValue = false
+                            // 为每一个
+                            let keepAliveId = uid()
+
                             break
                         default:
                             attr.type = AstTypes.CUSTOM_DIRECTIVE;

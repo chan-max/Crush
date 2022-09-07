@@ -40,7 +40,6 @@ function processModifiers(arr: any) {
     for (let key of arr) {
         arr[key] = true
     }
-    arr._self = arr
     return arr
 }
 

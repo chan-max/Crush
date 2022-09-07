@@ -27,9 +27,9 @@ export function doFlat(
         }
 
         // 使用传来的key生成唯一的key
-        var patchKey = key ? key + '_' + rule.key : rule.key
+        var _key = key ? key + '_' + rule.key : rule.key
 
-        rule.patchKey = patchKey
+        rule._key = _key
         rule.parent = parent
 
         switch (rule.nodeType) {
@@ -38,7 +38,7 @@ export function doFlat(
                 var _children = rule.children
                 rule.children = null // children 会用存储declaration
                 if (_children) {
-                    doFlat(_children, flattedRules, rule, patchKey)
+                    doFlat(_children, flattedRules, rule, _key)
                 }
                 break
             case Nodes.DECLARATION:
@@ -68,7 +68,7 @@ export function doFlat(
                         } else {
                             // reset the declaration to styleRule
                             var newRule: any = createStyle(selector, rule.children, key)
-                            newRule.patchKey = patchKey
+                            newRule._key = _key
                             flattedRules.push(newRule)
                         }
                     }
@@ -104,7 +104,7 @@ export function doFlat(
                 break
             case Nodes.FRAGMENT:
                 // fragment wont be a parent
-                doFlat(rule.children, flattedRules, rule.parent, rule.patchKey)
+                doFlat(rule.children, flattedRules, rule.parent, rule._key)
                 break
         }
     }

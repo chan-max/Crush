@@ -7,7 +7,7 @@ import { getElementComputedStyle, getElementComputedStyleValue, getElementStyle,
 
 // 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
 
-function normalizeMs(value: any) {
+function normalizeAnimationTime(value: any) {
     return isNumber(Number(value)) ? value + 'ms' : value
 }
 
@@ -34,8 +34,8 @@ export function doKeyframesAnimation(el: HTMLElement, options: any, endCb?: any,
 
     const animationDeclaration = {
         animationName: name,
-        animationDuration: normalizeMs(duration), // 默认为毫秒
-        animationDelay: normalizeMs(delay), // 默认为毫秒
+        animationDuration: normalizeAnimationTime(duration), // 默认为毫秒
+        animationDelay: normalizeAnimationTime(delay), // 默认为毫秒
         animationTimingFunction: timingFunction,
         animationPlayState: playState,
         animationFillMode: fillMode,

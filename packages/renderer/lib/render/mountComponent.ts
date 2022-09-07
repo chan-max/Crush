@@ -81,7 +81,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     const { scope, renderScope } = instance
 
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
-
+    
     // create
     setCurrentInstance(instance)
 

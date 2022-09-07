@@ -30,10 +30,10 @@ export const patch = (prev: any, next: any, container: any, anchor: any, parent:
                 if (isArray(next)) {
                     updateChildren([prev], next, container, anchor, parent)
                 } else {
-                    let { type: prevType, patchKey: prevPatchKey } = prev
-                    let { type: nextType, patchKey: nextPatchKey, nodeType } = next
+                    let { type: prevType, _key: prev_key } = prev
+                    let { type: nextType, _key: next_key, nodeType } = next
                     // 文本节点和注释节点直接更新即可
-                    if (prevType === nextType && (prevPatchKey === nextPatchKey || nodeType === Nodes.TEXT || nodeType === Nodes.HTML_COMMENT)) {
+                    if (prevType === nextType && (prev_key === next_key || nodeType === Nodes.TEXT || nodeType === Nodes.HTML_COMMENT)) {
                         // type相同，nodeType一定相同
                         update(prev, next, container, anchor, parent)
                     } else {

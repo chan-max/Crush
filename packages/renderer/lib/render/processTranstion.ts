@@ -46,78 +46,19 @@ export const createTransition = (options: any) => new TransitionDesc(options)
 
 // 整个transtion描述不参与节点的真实挂载卸载，显示或隐藏
 class TransitionDesc {
-
-    type: any // css / animation
-
-    name: any
-
-    duration: any // css一般不需要
-
-    enterKeyframes: any
-    leaveKeyframes: any
-
-    appear: any
-
-    // hooks
-    onBeforeEnter: any
-    onEnter: any
-    onAfterEnter: any
-    onEnterCancelled: any
-    onBeforeLeave: any
-    onLeave: any
-    onAfterLeave: any
-    onLeaveCancelled: any
-    onBeforeAppear: any
-    onAppear: any
-    onAfterAppear: any
-    onAppearCancelled: any
-
-    // 指定class名称 ，高优先级
-    enterClass: any
-    enterToClass: any
-    enterFromClass: any
-    leaveClass: any
-    leaveFromClass: any
-    leaveToClass: any
-
-
+    options: any
     constructor(options: any) {
         this.update(options)
     }
 
     update(options: any) {
-        options ||= emptyObject
-        this.type = options.type || 'css' // 默认采用 css
-        this.name = options.name || 'transition' // css 过渡的class名称
-        this.enterClass = options.enterClass
-        this.enterFromClass = options.enterFromClass
-        this.enterToClass = options.enterToClass
-        this.leaveClass = options.leaveClass
-        this.leaveFromClass = options.leaveFromClass
-        this.leaveToClass = options.leaveToClass
-        // 该元素在组件中是否为第一次渲染
-        this.appear = options.appear || false
-        this.duration = options.duration
-        this.onBeforeEnter = options.onBeforeEnter
-        this.onEnter = options.onEnter
-        this.onAfterEnter = options.onAfterEnter
-        this.onEnterCancelled = options.onEnterCancelled
-        this.onBeforeLeave = options.onBeforeLeave
-        this.onLeave = options.onLeave
-        this.onAfterLeave = options.onAfterLeave
-        this.onLeaveCancelled = options.onLeaveCancelled
-        this.onBeforeAppear = options.onBeforeAppear
-        this.onAppear = options.onAppear
-        this.onAfterAppear = options.onAfterAppear
-        this.onAppearCancelled = options.onAppearCancelled
-        this.enterKeyframes = options.enterKeyframes
-        this.leaveKeyframes = options.leaveKeyframes
+        this.options = options
     }
 
-    bindeEnterClass = (el: any) => bindEnterClass(el, this.name)
-    bindeLeaveClass = (el: any) => bindLeaveClass(el, this.name)
-    removeEnterClass = (el: any) => removeEnterClass(el, this.name)
-    removeLeaveClass = (el: any) => removeLeaveClass(el, this.name)
+    bindeEnterClass = (el: any) => bindEnterClass(el, this.options.name)
+    bindeLeaveClass = (el: any) => bindLeaveClass(el, this.options.name)
+    removeEnterClass = (el: any) => removeEnterClass(el, this.options.name)
+    removeLeaveClass = (el: any) => removeLeaveClass(el, this.options.name)
 
     callHook = (hookName: string, ...args: any) => {
         let _this: any = this
@@ -135,42 +76,44 @@ class TransitionDesc {
     // 关于 transition group
 
     public processMount(newEl: any, insertFn: any) {
-        let { patchKey, instance } = newEl._vnode
+        let { _key, instance } = newEl._vnode
         let appearRecord = instance.appearRecord ||= {}
-        let appeared = appearRecord[patchKey]
-        if (!this.appear && !appeared) {
+        let appeared = appearRecord[_key]
+        if (!this.options.appear && !appeared) {
             // appear
             insertFn()
-            appearRecord[patchKey] = true
+            appearRecord[_key] = true
             return
         }
 
 
-        let leavingEl = leavingElements[patchKey]
+        let leavingEl = leavingElements[_key]
 
         if (leavingEl) {
             // 上个元素还没卸载完成（过渡中） 直接卸载 , 不管是css过渡还是动画过度，直接卸载即可
             removeElement(leavingEl)
-            leavingElements[patchKey] = null
+            leavingElements[_key] = null
         }
 
 
         // 进入动画挂载
         insertFn()
-        appearRecord[patchKey] = true
+        appearRecord[_key] = true
 
         newEl._entering = true
 
-        if (this.type === 'animate') {
+        if (this.options.type === 'animate') {
             newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
-                name: this.enterKeyframes,
-                duration: this.duration,
+                name: this.options.enterKeyframes,
+                duration: this.options.enterDuration,
+                delay: this.options.enterDelay,
+                timingFunction: this.options.enterTimingFunction
             })
             onceListener(newEl, 'animationend', () => {
                 // after enter
                 newEl._entering = false
             })
-        } else if (this.type === 'css') {
+        } else if (this.options.type === 'css') {
             this.bindeEnterClass(newEl)
 
             onceListener(newEl, 'transitionend', () => {
@@ -184,34 +127,36 @@ class TransitionDesc {
     }
 
     public processUnmount(el: any) {
-        let { patchKey } = el._vnode
+        let { _key } = el._vnode
         // 正在进入 ，取消进入动画, 进入卸载东动画
         if (el._entering) {
-            if (this.type === 'css') {
+            if (this.options.type === 'css') {
                 this.removeEnterClass(el)
-            } else if (this.type === 'animate') {
+            } else if (this.options.type === 'animate') {
                 el.cancelKeyframes()
             }
         }
 
-        leavingElements[patchKey] = el
+        leavingElements[_key] = el
 
-        if (this.type === 'css') {
+        if (this.options.type === 'css') {
             this.bindeLeaveClass(el)
             onceListener(el, 'transitionend', () => {
                 // 元素直接卸载就不需要卸载class了
                 removeElement(el)
-                leavingElements[patchKey] = null
+                leavingElements[_key] = null
             })
-        } else if (this.type === 'animate') {
+        } else if (this.options.type === 'animate') {
             doKeyframesAnimation(el, {
-                name: this.leaveKeyframes,
-                duration: this.duration
+                name: this.options.leaveKeyframes,
+                duration: this.options.leaveDuration,
+                delay: this.options.leaveDelay, // delay 指的是动画的执行延时时间
+                timingFunction: this.options.leaveTimingFunction
             })
             onceListener(el, 'animationend', () => {
                 // 元素直接卸载就不需要卸载class了
                 removeElement(el)
-                leavingElements[patchKey] = null
+                leavingElements[_key] = null
             })
         } else {
             // 其他类型 ， 开发中

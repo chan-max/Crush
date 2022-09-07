@@ -2,7 +2,7 @@
 /*
     diff the dom children and rules children
 
-    the dom vnodes will be reused with the same patchKey and the same type , 
+    the dom vnodes will be reused with the same _key and the same type , 
     so , we can make the reused vnodes stay in the same index , this is the first step
     and then , the unsame keyed vnodes , we can reuse them if they have the same type , its the second step,
     apon the process , we get the same length children , 
@@ -23,13 +23,13 @@ import {
 function createMapAndList(children: any[]) {
     var map: any = {}
     var list = children.map((child: any, index: number) => {
-        var patchKey = child.patchKey
+        var _key = child._key
         var token = {
             node: child,
-            patchKey,
+            _key,
             index
         }
-        map[patchKey] = token
+        map[_key] = token
         return token
     })
     return {
@@ -54,12 +54,12 @@ export function sortChildren(p: any, n: any) {
         */
 
         var node = n[i]
-        var patchKey = node.patchKey
-        var sameNode = pMap[patchKey]
+        var _key = node._key
+        var sameNode = pMap[_key]
         if (sameNode && sameNode.node.type === node.type) {
             /*
-                the condition of reuse a vnode for dom is same patchkey and same type
-                for rules is just the same patchkey
+                the condition of reuse a vnode for dom is same _key and same type
+                for rules is just the same _key
             */
             var sameNodeIndex = sameNode.index + pMoved
             var diff = i - sameNodeIndex
@@ -100,12 +100,12 @@ export function sortRules(p: any, n: any) {
         */
 
         var node = n[i]
-        var patchKey = node.patchKey
-        var sameNode = pMap[patchKey]
+        var _key = node._key
+        var sameNode = pMap[_key]
         if (sameNode) {
             /*
-                the condition of reuse a vnode for dom is same patchkey and same type
-                for rules is just the same patchkey
+                the condition of reuse a vnode for dom is same _key and same type
+                for rules is just the same _key
             */
             var sameNodeIndex = sameNode.index + pMoved
             var diff = i - sameNodeIndex

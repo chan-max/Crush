@@ -263,9 +263,6 @@ function genNode(node: any, context: any): any {
 
 const genFragment = (code: string, context: any) => context.callRenderFn('createFragment', code, uStringId())
 
-const genTextContent = (texts: any, context: any) => {
-    return
-}
 
 const genText = (texts: Text[], context: any) => {
     let isDynamicText = false
@@ -416,20 +413,23 @@ function genProps(node: any, context: any): any {
     attributes.forEach((attr: any) => {
         switch (attr.type) {
             case AstTypes.EVENT:
-                var { property, isDynamicProperty, value,isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
+                var { property, isDynamicProperty, value, isHandler, /* if true , just use it , or wrap an arrow function */    _arguments, filters, modifiers } = attr
                 let handler = value
-                if(!isHandler){
-                    handler = toArrowFunction(handler || '$' /* 为空字符时默认的handler*/, '$') 
+                if (!isHandler) {
+                    handler = toArrowFunction(handler || '$' /* 为空字符时默认的handler*/, '$')
                     handler = context.handlerWithCache(handler)
                 }
-                
+
                 // 处理按键修饰符
                 if (modifiers && (modifiers.includes('left') || modifiers.includes('middle') || modifiers.includes('right'))) {
                     property = 'mouseup'
                 }
 
                 if (isDynamicProperty) {
-                    let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL)
+                    let key = context.callRenderFn('toEventName', property, _arguments ?
+                        stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ?
+                        stringify(modifiers.map(toBackQuotes)) : NULL, filters ?
+                        stringify(filters.map(toBackQuotes)) : NULL)
                     props[dynamicMapKey(key)] = handler
                     dynamicProps.push(key)
                 } else {
@@ -478,6 +478,7 @@ function genProps(node: any, context: any): any {
             case AstTypes.CUSTOM_DIRECTIVE:
                 // _directive_??? : 
                 var { property, value, isDynamicProperty, _arguments, modifiers, filters } = attr
+                property = camelize(property)
                 var directive = context.useDirective(property, isDynamicProperty)
                 let bindings: any = {
                     directive
