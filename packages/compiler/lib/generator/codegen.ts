@@ -210,7 +210,7 @@ function genNode(node: any, context: any): any {
             var component = context.useComponent(is, isDynamicIs)
             var { propsCode, dynamicPropsCode } = genProps(node, context)
             var slots = genSlotContent(node, context)
-            code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode)
+            code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode, true)
             nodeCode = code
             break
         case AstTypes.COMPONENT:
@@ -431,11 +431,15 @@ function genProps(node: any, context: any): any {
                         stringify(modifiers.map(toBackQuotes)) : NULL, filters ?
                         stringify(filters.map(toBackQuotes)) : NULL)
                     props[dynamicMapKey(key)] = handler
+                    // 动态属性名称一定会记录到动态属性
                     dynamicProps.push(key)
                 } else {
                     let key = toEventName(property, _arguments, modifiers, filters)
                     props[key] = handler
-                    dynamicProps.push(toSingleQuotes(key))
+                    if (isHandler) {
+                        // 内联样式不会加入到动态属性中
+                        dynamicProps.push(toSingleQuotes(key))
+                    }
                 }
                 break
             case AstTypes.ATTRIBUTE_CLASS:
@@ -510,7 +514,6 @@ function genProps(node: any, context: any): any {
     }
 
     let propsCode, dynamicPropsCode, allPropsStatic = false
-
 
     if (dynamicProps.length) {
         // 存在 dynamicProps

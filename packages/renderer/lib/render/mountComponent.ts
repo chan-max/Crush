@@ -71,7 +71,22 @@ function setScopeData(scope: any, data: any) {
 }
 
 
+const keepAliveCache: any = {}
+
 export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
+
+    let keepAliveOptions = vnode._keepAlive || vnode?.props?._keepAlive
+
+    if (keepAliveOptions) {
+        if (vnode.isDynamicComponent) {
+            let keepAliveKey = vnode.key
+            let cached = keepAliveCache[keepAliveKey]
+            if (cached) {
+                // 处理缓存
+                return
+            }
+        }
+    }
 
     const instance = createComponentInstance(vnode.type, parent)
 
@@ -81,7 +96,7 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     const { scope, renderScope } = instance
 
     processHook(LifecycleHooks.BEFORE_CREATE, vnode)
-    
+
     // create
     setCurrentInstance(instance)
 

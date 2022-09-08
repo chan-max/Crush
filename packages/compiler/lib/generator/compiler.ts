@@ -77,6 +77,7 @@ export class CodeGenerator {
     }
 
     useComponent(name: string, isDynamic: boolean) {
+        // return _id or getComponent(name)
         if (isDynamic) {
             return this.callRenderFn('getComponent', name)
         } else {

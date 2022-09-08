@@ -5,7 +5,7 @@ import {
 
 console.time('crush')
 
-let tom = {
+let counter = {
     template:/*html*/`
         <h1 @click="count++"> 计数器： {{count}} </h1>
     `,
@@ -14,16 +14,39 @@ let tom = {
     }
 }
 
+
+function createComponent(){
+    return {
+        template:`
+            <h1><h1>
+        `
+    }
+}
+
+let tom = {
+    template: `
+        <h1> 我是汤姆猫 </h1>
+    `
+}
+
+let jerry = {
+    template: `
+    <h1> 我是杰瑞鼠 </h1>
+`
+}
+
 let app = createApp({
     components: {
-        tom
+        counter,
+        tom,
+        jerry
     },
     template:/*html*/`
-        <button @click="show = !show"> toggle </button>
-        <tom *if="show" *keep-alive>
+        <component *is.dynamic="component" *keep-alive="">
     `,
     create({ $self }: any) {
-        $self.show = true
+        exposeCurrentScopeToWindow()
+        $self.component = 'tom'
     }
 })
 

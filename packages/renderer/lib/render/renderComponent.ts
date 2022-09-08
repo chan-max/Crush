@@ -1,4 +1,4 @@
-import { effect, extend, LifecycleHooks, processHook, processVnodePrerender } from "@crush/core"
+import { LifecycleHooks, processHook, processVnodePrerender } from "@crush/core"
 import { patch } from "./patch"
 
 

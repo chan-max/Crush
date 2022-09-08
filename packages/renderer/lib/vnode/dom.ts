@@ -5,7 +5,13 @@ import { normalizeProps } from "../render/normalizeProps"
 
 const COMPONENT_TYPE = Symbol('ComponentType')
 
-function createComponent(type: any, props: any, children: any, key: any = uid(), dynamicProps: any = null) {
+function createComponent(
+    type: any,
+    props: any, children: any,
+    key: any = uid(),
+    dynamicProps: any = null,
+    isDynamicComponent: any = false // 是否是动态组件生成的组件vnode
+) {
     let componentFlag = type[COMPONENT_TYPE]
     if (!componentFlag) {
         // stateful component
@@ -31,6 +37,7 @@ function createComponent(type: any, props: any, children: any, key: any = uid(),
         nodeType: componentFlag,
         type,
         props: normalizeProps(props),
+        isDynamicComponent,
         children,
         key,
         dynamicProps

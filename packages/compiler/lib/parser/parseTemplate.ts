@@ -1,6 +1,6 @@
 import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray, uid } from "@crush/common";
 import { CodeGenerator } from "../generator/compiler";
-import { toArrowFunction } from "../stringify";
+import { toArrowFunction, toBackQuotes } from "../stringify";
 import { extractFunctionArgs } from "../withScope";
 import { parseAttribute } from "./parseAttribute";
 import { parseCSS } from "./parseCSS";
@@ -252,10 +252,14 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         case 'keep-alive':
                             attr.type = AstTypes.ATTRIBUTE
                             attr.property = '_keepAlive'
-                            attr.isDynamicValue = false
-                            // 为每一个
-                            let keepAliveId = uid()
-
+                            attr.isDynamicValue = true
+                            let keepAliveOptions: any = {
+                                // includes 和 excludes 只能包括一个 , 默认为includes
+                                [attr?.modifiers?.includes('excludes') ? 'excludes' : 'includes']: attr?.modifiers?.includes('dynamic') ? attr.value : toBackQuotes(attr.value),
+                                // 第一个过滤器代表最多缓存数
+                                max: attr?.filters?.[0] || Infinity
+                            }
+                            attr.value = keepAliveOptions
                             break
                         default:
                             attr.type = AstTypes.CUSTOM_DIRECTIVE;
