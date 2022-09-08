@@ -255,9 +255,10 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             attr.isDynamicValue = true
                             let keepAliveOptions: any = {
                                 // includes 和 excludes 只能包括一个 , 默认为includes
-                                [attr?.modifiers?.includes('excludes') ? 'excludes' : 'includes']: attr?.modifiers?.includes('dynamic') ? attr.value : toBackQuotes(attr.value),
+                                [attr?.modifiers?.includes('excludes') ? 'excludes' : 'includes']:
+                                    attr.value ? attr?.modifiers?.includes('dynamic') ? attr.value : toBackQuotes(attr.value) : null,
                                 // 第一个过滤器代表最多缓存数
-                                max: attr?.filters?.[0] || Infinity
+                                max: attr?.filters?.[0] || null
                             }
                             attr.value = keepAliveOptions
                             break

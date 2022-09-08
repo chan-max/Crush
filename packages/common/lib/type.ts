@@ -29,6 +29,11 @@ const isDate = (value: any) => value instanceof Date
 
 const isArray = Array.isArray
 
+export const isRegExp = (value: any) => {
+    return value && typeOf(value) === 'RegExp'
+}
+
+
 // 将一个值转换成数字，失败的话，返回本身
 function toNumber(value: any) {
     let numberValue = Number(value)

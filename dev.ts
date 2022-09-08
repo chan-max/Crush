@@ -5,48 +5,37 @@ import {
 
 console.time('crush')
 
-let counter = {
-    template:/*html*/`
-        <h1 @click="count++"> 计数器： {{count}} </h1>
-    `,
-    create(scope: any) {
-        scope.count = 0
-    }
-}
 
 
-function createComponent(){
+function createComponent(name: any) {
     return {
-        template:`
-            <h1><h1>
-        `
+        template:/*html*/`
+            <h1 @click="count++" v-x> ${name}计数器： {{count}} </h1>
+            <h1> ..... </h1>
+        `,
+        create(scope: any) {
+            scope.count = 0
+        }
     }
 }
 
-let tom = {
-    template: `
-        <h1> 我是汤姆猫 </h1>
-    `
-}
-
-let jerry = {
-    template: `
-    <h1> 我是杰瑞鼠 </h1>
-`
-}
 
 let app = createApp({
     components: {
-        counter,
-        tom,
-        jerry
+        a: createComponent('a'),
+        b: createComponent('b'),
+        c: createComponent('c'),
+        d: createComponent('d'),
+        e: createComponent('e'),
+        f: createComponent('f'),
     },
     template:/*html*/`
-        <component *is.dynamic="component" *keep-alive="">
+        当前组件: <input *model="component">
+        <component *is.dynamic="component || 'a'" *keep-alive="">
     `,
     create({ $self }: any) {
         exposeCurrentScopeToWindow()
-        $self.component = 'tom'
+        $self.component = 'a'
     }
 })
 

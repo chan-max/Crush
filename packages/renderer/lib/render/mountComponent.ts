@@ -20,6 +20,7 @@ import {
 import { mountComponentProps } from "./componentProps"
 
 import { isPromise } from '@crush/common'
+import { useCachedKeepAliveComponent } from "./renderKeepAlive"
 
 
 // rendering instance and creating instance
@@ -74,18 +75,12 @@ function setScopeData(scope: any, data: any) {
 const keepAliveCache: any = {}
 
 export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
+    // 返回组件实例
 
-    let keepAliveOptions = vnode._keepAlive || vnode?.props?._keepAlive
+    let cachedInstance = useCachedKeepAliveComponent(vnode)
 
-    if (keepAliveOptions) {
-        if (vnode.isDynamicComponent) {
-            let keepAliveKey = vnode.key
-            let cached = keepAliveCache[keepAliveKey]
-            if (cached) {
-                // 处理缓存
-                return
-            }
-        }
+    if (cachedInstance) {
+        return cachedInstance
     }
 
     const instance = createComponentInstance(vnode.type, parent)

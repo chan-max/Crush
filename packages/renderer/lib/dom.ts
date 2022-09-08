@@ -44,7 +44,7 @@ export function onceListener(target: Element, event: string, handler: Function, 
         removeListener(target, event, onceHandler, options)
     }
     addListener(target, event, onceHandler, options)
-
+    
     // 注销事件
     return () => removeListener(target, event, onceHandler, options)
 }
