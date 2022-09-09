@@ -7,35 +7,14 @@ console.time('crush')
 
 
 
-function createComponent(name: any) {
-    return {
-        template:/*html*/`
-            <h1 @click="count++"> ${name}计数器： {{count}} </h1>
-            <h1> ..... </h1>
-        `,
-        create(scope: any) {
-            scope.count = 0
-        }
-    }
-}
-
-
 let app = createApp({
-    components: {
-        a: createComponent('a'),
-        b: createComponent('b'),
-        c: createComponent('c'),
-        d: createComponent('d'),
-        e: createComponent('e'),
-        f: createComponent('f'),
-    },
     template:/*html*/`
-        当前组件: <input *model="component">
-        <component *is.dynamic="component || 'a'" *keep-alive="">
+    <h3>{{date}}</h3>
+    <input *model="date" type="date">
     `,
     create({ $self }: any) {
         exposeCurrentScopeToWindow()
-        $self.component = 'a'
+        $self.date = ''
     }
 })
 

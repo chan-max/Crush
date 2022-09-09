@@ -1,7 +1,9 @@
 import { emptyObject, isArray, isRegExp, isString } from "@crush/common"
+import { unmountComponent } from "@crush/core"
 import { docCreateElementFragment, insertElement, removeElement } from "../dom"
 
 const keepAliveCache: any = {}
+
 
 /*
     cache => id => [{
@@ -30,13 +32,15 @@ export function getKeepAliveOptions(vnode: any) {
 
 // return true mean use cache
 export function useCachedKeepAliveComponent(vnode: any, container: any, anchor: any): any {
-    if (!vnode.isDynamicComponent) {
-        return
-    }
-
     let keepAliveOptions = getKeepAliveOptions(vnode)
 
     if (!keepAliveOptions) {
+        return
+    }
+
+
+
+    if (!vnode.isDynamicComponent) {
         return
     }
 
@@ -50,24 +54,23 @@ export function useCachedKeepAliveComponent(vnode: any, container: any, anchor: 
 
     if (cache) {
         // 使用缓存的组件
-        let { els, instance } = cache
+        let { instance } = cache
 
         // 挂载元素
 
-        let elsFragment = docCreateElementFragment(els)
+        let elsFragment = docCreateElementFragment(instance.scope.$el)
 
         insertElement(elsFragment, container, anchor)
-        vnode.instance = instance
-        instance.componentVnode = vnode
+
         return instance
     } else {
         return
     }
 }
 
-// return true mean cache
-export function cacheWillUnmountKeepAliveComponent(vnode: any): any {
 
+export function cacheMountedKeepAliveComponent(vnode: any) {
+    // 缓存当前组件
     if (!vnode.isDynamicComponent) {
         return
     }
@@ -105,29 +108,56 @@ export function cacheWillUnmountKeepAliveComponent(vnode: any): any {
         }
     }
 
-    // 执行缓存
-
-    // 缓存组件实例和元素
 
     let keepAliveId = vnode.key
 
     let cachedComponents = keepAliveCache[keepAliveId] ||= []
 
     if (cachedComponents.length >= max) {
-        // 达到最大缓存数，清除最开始的缓存
-        // 需要卸载组件
-        cachedComponents.shift()
+        // 达到最大缓存数，不会继续缓存 , 或者是清除之前的缓存
+
+        return
+
     }
 
     let instance = vnode.instance
 
-    let els = instance.scope.$el
-
-    let componentCache = {
-        els, instance, name
+    let cache = {
+        instance,
+        name
     }
 
-    // 卸载元素
+    cachedComponents.push(cache)
+
+}
+
+// return true
+export function unmountComponentIfKeepAlive(vnode: any) {
+
+    if (!vnode.isDynamicComponent) {
+        return
+    }
+
+    let keepAliveOptions = getKeepAliveOptions(vnode)
+
+    if (!keepAliveOptions) {
+        return
+    }
+
+    let name = getVnodeComponentName(vnode)
+
+    let keepAliveId = vnode.key
+    let cachedComponents = keepAliveCache[keepAliveId] ||= []
+    // 此时应该一定有缓存
+    let cache = cachedComponents.find((cache: any) => cache.name === name)
+
+    if (!cache) {
+        return
+    }
+
+    let instance = cache.instance
+
+    let els = instance.scope.$el
 
     if (els) {
         if (isArray(els)) {
@@ -136,8 +166,6 @@ export function cacheWillUnmountKeepAliveComponent(vnode: any): any {
             removeElement(els)
         }
     }
-
-    cachedComponents.push(componentCache)
 
     return true
 }

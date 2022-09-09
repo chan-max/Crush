@@ -1,21 +1,20 @@
 import { emptyObject, isArray, LifecycleHooks, processHook, removeElement } from '@crush/core'
 import { patch } from './patch'
-import { getKeepAliveOptions, cacheWillUnmountKeepAliveComponent } from './renderKeepAlive'
-
-const keepAliveCache = {}
+import { getKeepAliveOptions, unmountComponentIfKeepAlive } from './renderKeepAlive'
 
 
 
-export const unmountComponent = (vnode: any, container: any, anchor: any = null) => {
 
-    if (cacheWillUnmountKeepAliveComponent(vnode)) {
+export const unmountComponent = (vnode: any, container: any = null, anchor: any = null) => {
+
+    if (unmountComponentIfKeepAlive(vnode)) {
         return
     }
 
     // 卸载流程
 
     const { instance, props } = vnode
- 
+    
     processHook(LifecycleHooks.BEFORE_UNMOUNT, vnode)
 
     // 卸载组件ref

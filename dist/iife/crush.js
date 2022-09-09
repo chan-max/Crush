@@ -99,6 +99,9 @@ var Crush = (function (exports) {
     };
     const isDate = (value) => value instanceof Date;
     const isArray = Array.isArray;
+    const isRegExp = (value) => {
+        return value && typeOf(value) === 'RegExp';
+    };
     // 将一个值转换成数字，失败的话，返回本身
     function toNumber(value) {
         let numberValue = Number(value);
@@ -178,6 +181,18 @@ var Crush = (function (exports) {
     const docCreateComment = (text) => document.createComment(text);
     const docCreateText = (text) => document.createTextNode(text);
     const setText = (textEl, text) => textEl.nodeValue = text;
+    function docCreateElementFragment(children) {
+        let fragment = document.createDocumentFragment();
+        if (isArray(children)) {
+            children.forEach((child) => {
+                fragment.appendChild(child);
+            });
+        }
+        else {
+            fragment.appendChild(children);
+        }
+        return fragment;
+    }
     const insertElement = (child, parent, anchor = null) => {
         /* 可能传入不合理的anchor */
         if (anchor && anchor.parentElement !== parent) {
@@ -1279,16 +1294,142 @@ var Crush = (function (exports) {
         return el;
     }
 
-    const unmountComponent = (component, container, anchor = null) => {
-        const { instance, props } = component;
-        const { vnode } = instance;
-        processHook("beforeUnmount" /* BEFORE_UNMOUNT */, component);
-        // 卸载组件ref
-        if (props.ref) {
-            instance.parent.refs[props.ref] = null;
+    const keepAliveCache = {};
+    /*
+        cache => id => [{
+            name,
+            instance,
+            els
+        }]
+    */
+    // 获取当前组件在父组件中定义的组件名称
+    function getVnodeComponentName(vnode) {
+        let components = vnode.parent.components;
+        for (let name in vnode.parent.components || emptyObject) {
+            if (components[name] === vnode.type) {
+                return name;
+            }
         }
-        patch(vnode, null, container, anchor, parent);
-        processHook("unmounted" /* UNMOUNTED */, component);
+        return null;
+    }
+    function getKeepAliveOptions(vnode) {
+        // 暂时只有动态组件支持keepalive
+        return vnode.isDynamicComponent ? vnode?.props?._keepAlive : null;
+    }
+    // return true mean use cache
+    function useCachedKeepAliveComponent(vnode, container, anchor) {
+        let keepAliveOptions = getKeepAliveOptions(vnode);
+        if (!keepAliveOptions) {
+            return;
+        }
+        if (!vnode.isDynamicComponent) {
+            return;
+        }
+        let name = getVnodeComponentName(vnode);
+        let keepAliveId = vnode.key;
+        let cachedComponents = keepAliveCache[keepAliveId] ||= [];
+        let cache = cachedComponents.find((cachedComponent) => cachedComponent.name === name);
+        if (cache) {
+            // 使用缓存的组件
+            let { instance } = cache;
+            // 挂载元素
+            let elsFragment = docCreateElementFragment(instance.scope.$el);
+            insertElement(elsFragment, container, anchor);
+            return instance;
+        }
+        else {
+            return;
+        }
+    }
+    function cacheMountedKeepAliveComponent(vnode) {
+        // 缓存当前组件
+        if (!vnode.isDynamicComponent) {
+            return;
+        }
+        let keepAliveOptions = getKeepAliveOptions(vnode);
+        if (!keepAliveOptions) {
+            return;
+        }
+        let { includes, excludes, max } = keepAliveOptions;
+        max ||= Infinity;
+        let name = getVnodeComponentName(vnode);
+        // 验证方式支持 逗号分割的字符串，数组，和正则表达式
+        if (includes) {
+            if (isString(includes) && !includes.split(',').includes(name)) {
+                return;
+            }
+            else if (isArray(includes) && !includes.includes(name)) {
+                return;
+            }
+            else if (isRegExp(includes) && !includes.test(name)) {
+                return;
+            }
+        }
+        if (excludes) {
+            if (isString(excludes) && excludes.split(',').includes(name)) {
+                return;
+            }
+            else if (isArray(excludes) && excludes.includes(name)) {
+                return;
+            }
+            else if (isRegExp(excludes) && excludes.test(name)) {
+                return;
+            }
+        }
+        let keepAliveId = vnode.key;
+        let cachedComponents = keepAliveCache[keepAliveId] ||= [];
+        if (cachedComponents.length >= max) {
+            // 达到最大缓存数，不会继续缓存 , 或者是清除之前的缓存
+            return;
+        }
+        let instance = vnode.instance;
+        let cache = {
+            instance,
+            name
+        };
+        cachedComponents.push(cache);
+    }
+    // return true
+    function unmountComponentIfKeepAlive(vnode) {
+        if (!vnode.isDynamicComponent) {
+            return;
+        }
+        let keepAliveOptions = getKeepAliveOptions(vnode);
+        if (!keepAliveOptions) {
+            return;
+        }
+        let name = getVnodeComponentName(vnode);
+        let keepAliveId = vnode.key;
+        let cachedComponents = keepAliveCache[keepAliveId] ||= [];
+        // 此时应该一定有缓存
+        let cache = cachedComponents.find((cache) => cache.name === name);
+        if (!cache) {
+            return;
+        }
+        let instance = cache.instance;
+        let els = instance.scope.$el;
+        if (els) {
+            if (isArray(els)) {
+                els.forEach(removeElement);
+            }
+            else {
+                removeElement(els);
+            }
+        }
+        return true;
+    }
+
+    const unmountComponent = (vnode, container = null, anchor = null) => {
+        if (unmountComponentIfKeepAlive(vnode)) {
+            return;
+        }
+        // 卸载流程
+        const { instance, props } = vnode;
+        processHook("beforeUnmount" /* BEFORE_UNMOUNT */, vnode);
+        // 卸载组件ref
+        props?.ref && (instance.parent.refs[props.ref] = null);
+        patch(instance.vnode, null, container, anchor, parent);
+        processHook("unmounted" /* UNMOUNTED */, vnode);
     };
 
     function unmount(vnode, container, anchor, parent) {
@@ -1420,6 +1561,7 @@ var Crush = (function (exports) {
 
     const updateComponent = (p, n, container, anchor, parent) => {
         n.instance = p.instance;
+        n.parent = p.parent;
         updateComponentProps(n.instance, p.props, n.props);
         // 把新节点存到更新方法上，有该节点代表为外部更新，而非自更新
         n.instance.updatingComponentVnode = n;
@@ -3268,6 +3410,14 @@ var Crush = (function (exports) {
         }
     }
     function mountComponent(vnode, container, anchor, parent) {
+        // 返回组件实例
+        vnode.parent = parent;
+        let cachedInstance = useCachedKeepAliveComponent(vnode, container, anchor);
+        if (cachedInstance) {
+            vnode.instance = cachedInstance;
+            cachedInstance.componentVnode = vnode;
+            return cachedInstance;
+        }
         const instance = createComponentInstance(vnode.type, parent);
         vnode.instance = instance;
         instance.componentVnode = vnode;
@@ -3329,11 +3479,14 @@ var Crush = (function (exports) {
         // 手动渲染
         instance.renderEffect = rednerEffect;
         rednerEffect.run();
+        // 处理 keep-alive
+        cacheMountedKeepAliveComponent(vnode);
         return instance;
     }
 
     const COMPONENT_TYPE = Symbol('ComponentType');
-    function createComponent(type, props, children, key = uid(), dynamicProps = null) {
+    function createComponent(type, props, children, key = uid(), dynamicProps = null, isDynamicComponent = false // 是否是动态组件生成的组件vnode
+    ) {
         let componentFlag = type[COMPONENT_TYPE];
         if (!componentFlag) {
             // stateful component
@@ -3359,6 +3512,7 @@ var Crush = (function (exports) {
             nodeType: componentFlag,
             type,
             props: normalizeProps(props),
+            isDynamicComponent,
             children,
             key,
             dynamicProps
@@ -4217,7 +4371,7 @@ var Crush = (function (exports) {
                 var component = context.useComponent(is, isDynamicIs);
                 var { propsCode, dynamicPropsCode } = genProps(node, context);
                 var slots = genSlotContent(node, context);
-                code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode);
+                code = context.callRenderFn('createComponent', component, propsCode, slots, uStringId(), dynamicPropsCode, true);
                 nodeCode = code;
                 break;
             case 4 /* COMPONENT */:
@@ -4401,14 +4555,21 @@ var Crush = (function (exports) {
                         property = 'mouseup';
                     }
                     if (isDynamicProperty) {
-                        let key = context.callRenderFn('toEventName', property, _arguments ? stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ? stringify(modifiers.map(toBackQuotes)) : NULL, filters ? stringify(filters.map(toBackQuotes)) : NULL);
+                        let key = context.callRenderFn('toEventName', property, _arguments ?
+                            stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ?
+                            stringify(modifiers.map(toBackQuotes)) : NULL, filters ?
+                            stringify(filters.map(toBackQuotes)) : NULL);
                         props[dynamicMapKey(key)] = handler;
+                        // 动态属性名称一定会记录到动态属性
                         dynamicProps.push(key);
                     }
                     else {
                         let key = toEventName(property, _arguments, modifiers, filters);
                         props[key] = handler;
-                        dynamicProps.push(toSingleQuotes(key));
+                        if (isHandler) {
+                            // 内联样式不会加入到动态属性中
+                            dynamicProps.push(toSingleQuotes(key));
+                        }
                     }
                     break;
                 case 17 /* ATTRIBUTE_CLASS */:
@@ -4446,6 +4607,7 @@ var Crush = (function (exports) {
                 case 19 /* CUSTOM_DIRECTIVE */:
                     // _directive_??? : 
                     var { property, value, isDynamicProperty, _arguments, modifiers, filters } = attr;
+                    property = camelize(property);
                     var directive = context.useDirective(property, isDynamicProperty);
                     let bindings = {
                         directive
@@ -5118,6 +5280,18 @@ var Crush = (function (exports) {
                                     });
                                 }
                                 break;
+                            case 'keep-alive':
+                                attr.type = 15 /* ATTRIBUTE */;
+                                attr.property = '_keepAlive';
+                                attr.isDynamicValue = true;
+                                let keepAliveOptions = {
+                                    // includes 和 excludes 只能包括一个 , 默认为includes
+                                    [attr?.modifiers?.includes('excludes') ? 'excludes' : 'includes']: attr.value ? attr?.modifiers?.includes('dynamic') ? attr.value : toBackQuotes(attr.value) : null,
+                                    // 第一个过滤器代表最多缓存数
+                                    max: attr?.filters?.[0] || null
+                                };
+                                attr.value = keepAliveOptions;
+                                break;
                             default:
                                 attr.type = 19 /* CUSTOM_DIRECTIVE */;
                                 attr.value = context.setRenderScope(attr.value);
@@ -5133,6 +5307,9 @@ var Crush = (function (exports) {
                         attr.value = context.setRenderScope(attr.value || attr.property);
                         if (attr.isDynamicProperty) {
                             attr.property = context.setRenderScope(attr.property);
+                        }
+                        else {
+                            attr.property = camelize(attr.property);
                         }
                         break;
                     case '#':
@@ -5179,6 +5356,9 @@ var Crush = (function (exports) {
                         attr.type = 15 /* ATTRIBUTE */;
                         if (attr.isDynamicProperty) {
                             attr.property = context.setRenderScope(attr.property);
+                        }
+                        else {
+                            attr.property = camelize(attr.property);
                         }
                         if (!attr.value) {
                             attr.value = attr.property;
@@ -5318,6 +5498,7 @@ var Crush = (function (exports) {
             return callFn(fn, ...args);
         }
         useComponent(name, isDynamic) {
+            // return _id or getComponent(name)
             if (isDynamic) {
                 return this.callRenderFn('getComponent', name);
             }
@@ -5909,7 +6090,7 @@ var Crush = (function (exports) {
     };
 
     // 指定一个动画keyframes，在执行后自动移除，不影响元素本身属性 
-    function normalizeMs(value) {
+    function normalizeAnimationTime(value) {
         return isNumber(Number(value)) ? value + 'ms' : value;
     }
     function doKeyframesAnimation(el, options, endCb, cancelCb) {
@@ -5922,8 +6103,8 @@ var Crush = (function (exports) {
         direction } = options;
         const animationDeclaration = {
             animationName: name,
-            animationDuration: normalizeMs(duration),
-            animationDelay: normalizeMs(delay),
+            animationDuration: normalizeAnimationTime(duration),
+            animationDelay: normalizeAnimationTime(delay),
             animationTimingFunction: timingFunction,
             animationPlayState: playState,
             animationFillMode: fillMode,
@@ -6786,6 +6967,34 @@ var Crush = (function (exports) {
         fadeInTopRight, fadeInUp, fadeInUpBig, fadeOut, fadeOutBottomLeft, fadeOutBottomRight, fadeOutDown, fadeOutDownBig, fadeOutLeft, fadeOutLeftBig,
         fadeOutRight, fadeOutRightBig, fadeOutTopLeft, fadeOutTopRight, fadeOutUp, fadeOutUpBig,
     };
+    // transition 简写形式 , 用于transtion指令的动画帧
+    const transitionKeyframes = {
+        roll: ['rollIn', 'rollOut'],
+        slideUp: ['slideInUp', 'slideOutUp'],
+        slideDown: ['slideInDown', 'slideOutDown'],
+        slideLeft: ['slideInLeft', 'slideOutLeft'],
+        slideRight: ['slideInRight', 'slideOutRight'],
+        zoom: ['zoomIn', 'zoomOut'],
+        zoomUp: ['zoomInUp', 'zoomOutUp'],
+        zoomDown: ['zoomInDown', 'zoomOutDown'],
+        zoomLeft: ['zoomInLeft', 'zoomOutLeft'],
+        zoomRight: ['zoomInRight', 'zoomOutRight'],
+        bounce: ['bounceIn', 'bounceOut'],
+        bounceUp: ['bounceInUp', 'bounceOutUp'],
+        bounceDown: ['bounceInDown', 'bounceOutDown'],
+        bounceLeft: ['bounceInLeft', 'bounceOutLeft'],
+        bounceRight: ['bounceInRight', 'bounceOutRight'],
+        backUp: ['backInUp', 'backOutUp'],
+        backDown: ['backInDown', 'backOutDown'],
+        backLeft: ['backInLeft', 'backOutLeft'],
+        backRight: ['backInRight', 'backOutRight'],
+        flip: ['flip', 'flip'],
+        flipX: ['flipInX', 'flipOutX'],
+        flipY: ['flipInY', 'flipOutY'],
+        lightSpeedLeft: ['lightSpeedInLeft', 'lightSpeedOutLeft'],
+        lightSpeedRight: ['lightSpeedInRight', 'lightSpeedOutRight'],
+        fade: ['fadeIn', 'fadeOut']
+    };
     // 这里可以控制 keyframes 的名称 ， 并没有直接生成完整的keyframes
     const animations = Object.entries(animationFrames).map(([name, frames]) => keyframes(name, frames));
     // 关于 animate的class
@@ -6798,8 +7007,10 @@ var Crush = (function (exports) {
         let declaration = className.split('animate_')[1].split('_');
         mountStyleRule(targetSheet, createStyle('.' + className, { animation: declaration }));
     }
-    const installAnimation = () => {
-        // 挂载所有动画帧
+    const installAnimation = (app) => {
+        // 内置
+        app.builtInAnimationKeyframes = Object.keys(animationFrames);
+        app.transitionKeyframes = transitionKeyframes;
         mount(createStyleSheet(null, animations), document.head);
         onBeforeClassMount(initAnimationClass);
     };
@@ -6807,11 +7018,12 @@ var Crush = (function (exports) {
     function setElementTranstion(el) {
     }
 
+    let _requestAnimationFrame = (cb) => requestAnimationFrame(() => requestAnimationFrame(cb));
     //! class
     function bindEnterClass(el, name) {
         addClass(el, `${name}-enter`);
         addClass(el, `${name}-enter-from`);
-        requestAnimationFrame(() => {
+        _requestAnimationFrame(() => {
             addClass(el, `${name}-enter-to`);
             removeClass(el, `${name}-enter-from`);
         });
@@ -6824,7 +7036,7 @@ var Crush = (function (exports) {
         addClass(el, `${name}-leave-from`);
         document.body.offsetHeight;
         addClass(el, `${name}-leave`);
-        requestAnimationFrame(() => {
+        _requestAnimationFrame(() => {
             addClass(el, `${name}-leave-to`);
             removeClass(el, `${name}-leave-from`);
         });
@@ -6837,54 +7049,17 @@ var Crush = (function (exports) {
     const createTransition = (options) => new TransitionDesc(options);
     // 整个transtion描述不参与节点的真实挂载卸载，显示或隐藏
     class TransitionDesc {
-        type; // css / animation
-        name;
-        duration; // css一般不需要
-        enterKeyframes;
-        leaveKeyframes;
-        appear;
-        // hooks
-        onBeforeEnter;
-        onEnter;
-        onAfterEnter;
-        onEnterCancelled;
-        onBeforeLeave;
-        onLeave;
-        onAfterLeave;
-        onLeaveCancelled;
-        onBeforeAppear;
-        onAppear;
-        onAfterAppear;
-        onAppearCancelled;
+        options;
         constructor(options) {
             this.update(options);
         }
         update(options) {
-            options ||= emptyObject;
-            this.name = options.name || 'transition';
-            this.type = options.type || 'css'; // 默认采用 css
-            // 该元素在组件中是否为第一次渲染
-            this.appear = options.appear || false;
-            this.duration = options.duration;
-            this.onBeforeEnter = options.onBeforeEnter;
-            this.onEnter = options.onEnter;
-            this.onAfterEnter = options.onAfterEnter;
-            this.onEnterCancelled = options.onEnterCancelled;
-            this.onBeforeLeave = options.onBeforeLeave;
-            this.onLeave = options.onLeave;
-            this.onAfterLeave = options.onAfterLeave;
-            this.onLeaveCancelled = options.onLeaveCancelled;
-            this.onBeforeAppear = options.onBeforeAppear;
-            this.onAppear = options.onAppear;
-            this.onAfterAppear = options.onAfterAppear;
-            this.onAppearCancelled = options.onAppearCancelled;
-            this.enterKeyframes = options.enterKeyframes;
-            this.leaveKeyframes = options.leaveKeyframes;
+            this.options = options;
         }
-        bindeEnterClass = (el) => bindEnterClass(el, this.name);
-        bindeLeaveClass = (el) => bindLeaveClass(el, this.name);
-        removeEnterClass = (el) => removeEnterClass(el, this.name);
-        removeLeaveClass = (el) => removeLeaveClass(el, this.name);
+        bindeEnterClass = (el) => bindEnterClass(el, this.options.name);
+        bindeLeaveClass = (el) => bindLeaveClass(el, this.options.name);
+        removeEnterClass = (el) => removeEnterClass(el, this.options.name);
+        removeLeaveClass = (el) => removeLeaveClass(el, this.options.name);
         callHook = (hookName, ...args) => {
             let _this = this;
             let hook = _this[`on${initialUpperCase(hookName)}`];
@@ -6901,7 +7076,7 @@ var Crush = (function (exports) {
             let { _key, instance } = newEl._vnode;
             let appearRecord = instance.appearRecord ||= {};
             let appeared = appearRecord[_key];
-            if (!this.appear && !appeared) {
+            if (!this.options.appear && !appeared) {
                 // appear
                 insertFn();
                 appearRecord[_key] = true;
@@ -6917,17 +7092,19 @@ var Crush = (function (exports) {
             insertFn();
             appearRecord[_key] = true;
             newEl._entering = true;
-            if (this.type === 'animate') {
+            if (this.options.type === 'animate') {
                 newEl.cancelKeyframes = doKeyframesAnimation(newEl, {
-                    name: this.enterKeyframes,
-                    duration: this.duration,
+                    name: this.options.enterKeyframes,
+                    duration: this.options.enterDuration,
+                    delay: this.options.enterDelay,
+                    timingFunction: this.options.enterTimingFunction
                 });
                 onceListener(newEl, 'animationend', () => {
                     // after enter
                     newEl._entering = false;
                 });
             }
-            else if (this.type === 'css') {
+            else if (this.options.type === 'css') {
                 this.bindeEnterClass(newEl);
                 onceListener(newEl, 'transitionend', () => {
                     // after enter
@@ -6943,15 +7120,15 @@ var Crush = (function (exports) {
             let { _key } = el._vnode;
             // 正在进入 ，取消进入动画, 进入卸载东动画
             if (el._entering) {
-                if (this.type === 'css') {
+                if (this.options.type === 'css') {
                     this.removeEnterClass(el);
                 }
-                else if (this.type === 'animate') {
+                else if (this.options.type === 'animate') {
                     el.cancelKeyframes();
                 }
             }
             leavingElements[_key] = el;
-            if (this.type === 'css') {
+            if (this.options.type === 'css') {
                 this.bindeLeaveClass(el);
                 onceListener(el, 'transitionend', () => {
                     // 元素直接卸载就不需要卸载class了
@@ -6959,10 +7136,12 @@ var Crush = (function (exports) {
                     leavingElements[_key] = null;
                 });
             }
-            else if (this.type === 'animate') {
+            else if (this.options.type === 'animate') {
                 doKeyframesAnimation(el, {
-                    name: this.leaveKeyframes,
-                    duration: this.duration
+                    name: this.options.leaveKeyframes,
+                    duration: this.options.leaveDuration,
+                    delay: this.options.leaveDelay,
+                    timingFunction: this.options.leaveTimingFunction
                 });
                 onceListener(el, 'animationend', () => {
                     // 元素直接卸载就不需要卸载class了
@@ -7019,7 +7198,7 @@ var Crush = (function (exports) {
         beforeUpdate({ $instance: { vnode, renderingVnode }, $props }) {
             const transition = createTransition($props);
             // always true
-            transition.appear = true;
+            transition.options.appear = true;
             const mountList = renderingVnode.filter((_key) => !vnode.map((_) => _._key).includes(_key));
             const unmountList = vnode.filter((_key) => !renderingVnode.map((_) => _._key).includes(_key));
             const transitionList = mountList.concat(unmountList);
@@ -7043,13 +7222,22 @@ var Crush = (function (exports) {
             });
         }
     };
+    function directiveBindingsToTransitionOptions(bindings) {
+        let { _arguments, modifiers, filters, value } = bindings;
+        let transitionOptions = value || {}; // value 的优先级大于其他修饰符
+        // 第一个参数指定动画类型
+        transitionOptions.type || _arguments[0] || 'animate';
+        if (transitionOptions.type === 'animate') ;
+        else if (transitionOptions.type === 'css') ;
+        return transitionOptions;
+    }
     const transitionDirective = {
-        beforeCreate(_, { value }, vnode) {
-            vnode.transition = createTransition(value);
+        beforeCreate(_, bindings, vnode) {
+            vnode.transition = createTransition(directiveBindingsToTransitionOptions(bindings));
         },
-        beforeUpdate(_, { value }, nVnode, pVnode) {
+        beforeUpdate(_, bindings, nVnode, pVnode) {
             const transition = pVnode.transition;
-            transition.update(value);
+            transition.update(directiveBindingsToTransitionOptions(bindings));
             nVnode.transition = transition; // extend
         }
     };
@@ -7146,9 +7334,17 @@ var Crush = (function (exports) {
     function RouterLink({ to, replace, activeClass }) {
     }
 
+    // 在子组件节点身上增加keepAlive标记
+    const keepAliveComponent = (props, slots, vnode) => {
+        let slotContent = slots.default();
+        slotContent[0]._keepAlive = props;
+        return slotContent;
+    };
+
     const builtInComponents = {
         transition: transitionComponent,
         transitionGroup: transitionGroupComponent,
+        keepAlive: keepAliveComponent,
         Teleport,
         RouterLink,
         RouterView
@@ -7421,6 +7617,12 @@ var Crush = (function (exports) {
                 return querySelectorAll(type, this._currentPropertyAccessInstance.vnode);
             };
         },
+        get $provide() {
+            return provide;
+        },
+        get $inject() {
+            return inject;
+        }
     };
     const defineScopeProperty = (key, property) => scopeProperties[key] = property;
     const protoMethods = {
@@ -7580,7 +7782,7 @@ var Crush = (function (exports) {
             app.inlineTemplate = container.innerHTML;
             container.innerHTML = '';
             // 需要在css中设置display:none
-            if (container.hasAttribute('s-cloak')) {
+            if (container.hasAttribute('cr-cloak')) {
                 container.style.display = "block";
             }
             if (!app.rootComponent.template && !app.rootComponent.render) {
@@ -7837,7 +8039,6 @@ var Crush = (function (exports) {
         for (let key of arr) {
             arr[key] = true;
         }
-        arr._self = arr;
         return arr;
     }
     function processHook(type, vnode, pVnode = null) {
@@ -8220,6 +8421,7 @@ var Crush = (function (exports) {
     exports.doKeyframesAnimation = doKeyframesAnimation;
     exports.docCreateComment = docCreateComment;
     exports.docCreateElement = docCreateElement;
+    exports.docCreateElementFragment = docCreateElementFragment;
     exports.docCreateText = docCreateText;
     exports.dynamicMapKey = dynamicMapKey;
     exports.effect = effect;
@@ -8314,6 +8516,7 @@ var Crush = (function (exports) {
     exports.isProxyType = isProxyType;
     exports.isReactive = isReactive;
     exports.isRef = isRef;
+    exports.isRegExp = isRegExp;
     exports.isRgbColor = isRgbColor;
     exports.isSVGTag = isSVGTag;
     exports.isShallow = isShallow;
@@ -8469,6 +8672,7 @@ var Crush = (function (exports) {
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
     exports.trackTargetObserver = trackTargetObserver;
+    exports.transitionKeyframes = transitionKeyframes;
     exports.translate3d = translate3d;
     exports.translateX = translateX;
     exports.translateY = translateY;

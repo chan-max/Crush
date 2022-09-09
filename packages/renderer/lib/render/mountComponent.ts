@@ -20,7 +20,7 @@ import {
 import { mountComponentProps } from "./componentProps"
 
 import { isPromise } from '@crush/common'
-import { useCachedKeepAliveComponent } from "./renderKeepAlive"
+import { cacheMountedKeepAliveComponent, useCachedKeepAliveComponent } from "./renderKeepAlive"
 
 
 // rendering instance and creating instance
@@ -74,12 +74,15 @@ function setScopeData(scope: any, data: any) {
 
 
 export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
+
     // 返回组件实例
     vnode.parent = parent
 
     let cachedInstance = useCachedKeepAliveComponent(vnode, container, anchor)
 
     if (cachedInstance) {
+        vnode.instance = cachedInstance
+        cachedInstance.componentVnode = vnode
         return cachedInstance
     }
 
@@ -167,6 +170,11 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     // 手动渲染
     instance.renderEffect = rednerEffect
     rednerEffect.run()
+
+    // 处理 keep-alive
+
+    cacheMountedKeepAliveComponent(vnode)
+
     return instance
 }
 

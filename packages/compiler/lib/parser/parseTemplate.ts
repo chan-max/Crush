@@ -226,27 +226,31 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     isDynamicProperty: false,
                                 })
                             } else {
-                                attr.type = AstTypes.CUSTOM_DIRECTIVE;
+                                let supportModelTypes = ['text', 'raido', 'checkbox', 'selectMultiple', 'selectOne', 'color', 'range']
                                 let modelType = htmlAst.tag === 'select' ?
                                     (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
-                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text')
-                                // transform 
-                                attr.property = `model${initialUpperCase(modelType)}`
-                                attr.value = context.setRawScope(attr.value)
-                                attributes.push({
-                                    type: AstTypes.ATTRIBUTE,
-                                    property: '_setModelValue',
-                                    value: toArrowFunction(`${attr.value} = _`, '_'),
-                                    isDynamicValue: true,
-                                    isDynamicProperty: false
-                                })
-                                attributes.push({
-                                    type: AstTypes.ATTRIBUTE,
-                                    property: '_getModelValue',
-                                    value: toArrowFunction(`${attr.value}`),
-                                    isDynamicValue: true,
-                                    isDynamicProperty: false
-                                })
+                                        'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');
+                                if (supportModelTypes.includes(modelType)) {
+                                    attr.type = AstTypes.CUSTOM_DIRECTIVE;
+
+                                    // transform 
+                                    attr.property = `model${initialUpperCase(modelType)}`
+                                    attr.value = context.setRawScope(attr.value)
+                                    attributes.push({
+                                        type: AstTypes.ATTRIBUTE,
+                                        property: '_setModelValue',
+                                        value: toArrowFunction(`${attr.value} = _`, '_'),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    })
+                                    attributes.push({
+                                        type: AstTypes.ATTRIBUTE,
+                                        property: '_getModelValue',
+                                        value: toArrowFunction(`${attr.value}`),
+                                        isDynamicValue: true,
+                                        isDynamicProperty: false
+                                    })
+                                }
                             }
                             break
                         case 'keep-alive':
