@@ -277,6 +277,8 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     attr.value = context.setRenderScope(attr.value || attr.property)
                     if (attr.isDynamicProperty) {
                         attr.property = context.setRenderScope(attr.property)
+                    } else {
+                        attr.property = camelize(attr.property)
                     }
                     break
                 case '#':
@@ -321,6 +323,8 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     attr.type = AstTypes.ATTRIBUTE
                     if (attr.isDynamicProperty) {
                         attr.property = context.setRenderScope(attr.property)
+                    } else {
+                        attr.property = camelize(attr.property)
                     }
                     if (!attr.value) {
                         attr.value = attr.property

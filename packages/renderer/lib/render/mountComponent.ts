@@ -72,12 +72,12 @@ function setScopeData(scope: any, data: any) {
 }
 
 
-const keepAliveCache: any = {}
 
 export function mountComponent(vnode: any, container: Element, anchor: any, parent: any) {
     // 返回组件实例
+    vnode.parent = parent
 
-    let cachedInstance = useCachedKeepAliveComponent(vnode)
+    let cachedInstance = useCachedKeepAliveComponent(vnode, container, anchor)
 
     if (cachedInstance) {
         return cachedInstance

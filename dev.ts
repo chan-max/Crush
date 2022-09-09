@@ -10,7 +10,7 @@ console.time('crush')
 function createComponent(name: any) {
     return {
         template:/*html*/`
-            <h1 @click="count++" v-x> ${name}计数器： {{count}} </h1>
+            <h1 @click="count++"> ${name}计数器： {{count}} </h1>
             <h1> ..... </h1>
         `,
         create(scope: any) {

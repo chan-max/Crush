@@ -1,3 +1,4 @@
+import { isArray } from "@crush/common";
 
 const svgNS = 'http://www.w3.org/2000/svg';
 
@@ -9,7 +10,19 @@ export const docCreateComment = (text: string) => document.createComment(text)
 export const docCreateText = (text: string) => document.createTextNode(text)
 export const setText = (textEl: Element, text: any) => textEl.nodeValue = text
 
-export const insertElement = (child: Element | Text | Comment, parent: Element, anchor: Element | null = null) => {
+export function docCreateElementFragment(children: any) {
+    let fragment = document.createDocumentFragment()
+    if (isArray(children)) {
+        children.forEach((child: any) => {
+            fragment.appendChild(child)
+        })
+    } else {
+        fragment.appendChild(children)
+    }
+    return fragment
+}
+
+export const insertElement = (child: Element | Text | Comment | DocumentFragment, parent: Element, anchor: Element | null = null) => {
     /* 可能传入不合理的anchor */
     if (anchor && anchor.parentElement !== parent) {
         anchor = null
@@ -44,7 +57,7 @@ export function onceListener(target: Element, event: string, handler: Function, 
         removeListener(target, event, onceHandler, options)
     }
     addListener(target, event, onceHandler, options)
-    
+
     // 注销事件
     return () => removeListener(target, event, onceHandler, options)
 }
