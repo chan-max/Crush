@@ -1,0 +1,22 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <div id="app">
+        <button @click="show = !show"> {{show ? 'show' : 'hide'}} </button>
+        <h1 cr-if="show"> hello crush </h1>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.show = true
+        }
+    }).mount('#app')
+</script>
+
+</html>

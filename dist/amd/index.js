@@ -3650,25 +3650,31 @@ define(['exports'], (function (exports) { 'use strict';
         return directive;
     }
 
-    function findStringFromArray(str, arr) {
-        let find = false;
-        for (let item of arr) {
-            if (isArray(item)) {
-                return findStringFromArray(str, item);
-            }
-            else if (isString(item)) {
-                if (str === item) {
-                    find = true;
-                    break;
-                }
-            }
+    function findStringFromArray(key, target) {
+        if (isArray(target)) {
+            return target.some((item) => findStringFromArray(key, item));
         }
-        return find;
+        else if (isString(target)) {
+            return key === target;
+        }
+        else {
+            return false;
+        }
     }
     let jsKeyWords = [
         'true',
         'false'
     ];
+    const reservedCharacters = {
+        ['&amp;']: '&',
+        ['&lt;']: '<',
+        ['&gt;']: '>',
+        ['&quot;']: '"'
+    };
+    let reservedCharactersRE = new RegExp(`${Object.keys(reservedCharacters).join('|')}`, 'g');
+    function replaceAllReservedCharacters(expression) {
+        return expression.replace(reservedCharactersRE, (char) => reservedCharacters[char]);
+    }
     class Expression {
         // 记录表达式中用到的变量
         variables = [];
@@ -5256,27 +5262,30 @@ define(['exports'], (function (exports) { 'use strict';
                                     });
                                 }
                                 else {
-                                    attr.type = 19 /* CUSTOM_DIRECTIVE */;
+                                    let supportModelTypes = ['text', 'radio', 'checkbox', 'selectMultiple', 'selectOne', 'color', 'range'];
                                     let modelType = htmlAst.tag === 'select' ?
                                         (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
                                             'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');
-                                    // transform 
-                                    attr.property = `model${initialUpperCase(modelType)}`;
-                                    attr.value = context.setRawScope(attr.value);
-                                    attributes.push({
-                                        type: 15 /* ATTRIBUTE */,
-                                        property: '_setModelValue',
-                                        value: toArrowFunction(`${attr.value} = _`, '_'),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    });
-                                    attributes.push({
-                                        type: 15 /* ATTRIBUTE */,
-                                        property: '_getModelValue',
-                                        value: toArrowFunction(`${attr.value}`),
-                                        isDynamicValue: true,
-                                        isDynamicProperty: false
-                                    });
+                                    if (supportModelTypes.includes(modelType)) {
+                                        attr.type = 19 /* CUSTOM_DIRECTIVE */;
+                                        // transform 
+                                        attr.property = `model${initialUpperCase(modelType)}`;
+                                        attr.value = context.setRawScope(attr.value);
+                                        attributes.push({
+                                            type: 15 /* ATTRIBUTE */,
+                                            property: '_setModelValue',
+                                            value: toArrowFunction(`${attr.value} = _`, '_'),
+                                            isDynamicValue: true,
+                                            isDynamicProperty: false
+                                        });
+                                        attributes.push({
+                                            type: 15 /* ATTRIBUTE */,
+                                            property: '_getModelValue',
+                                            value: toArrowFunction(`${attr.value}`),
+                                            isDynamicValue: true,
+                                            isDynamicProperty: false
+                                        });
+                                    }
                                 }
                                 break;
                             case 'keep-alive':
@@ -7785,7 +7794,8 @@ define(['exports'], (function (exports) { 'use strict';
                 container.style.display = "block";
             }
             if (!app.rootComponent.template && !app.rootComponent.render) {
-                app.rootComponent.template = app.inlineTemplate;
+                // 替换模板中的所有转义字符
+                app.rootComponent.template = replaceAllReservedCharacters(app.inlineTemplate);
             }
             // 执行应用挂载前钩子，可以拿到用户定义的配置信息
             app.beforeAppMount && app.beforeAppMount(app);
@@ -8606,6 +8616,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.removeListener = removeListener;
     exports.renderList = renderList;
     exports.renderSlot = renderSlot;
+    exports.replaceAllReservedCharacters = replaceAllReservedCharacters;
     exports.resolveOptions = resolveOptions;
     exports.responsiveLayoutMedia = responsiveLayoutMedia;
     exports.rgb = rgb;

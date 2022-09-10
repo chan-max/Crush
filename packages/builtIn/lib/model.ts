@@ -82,7 +82,6 @@ export const modelRadio = {
 
 export const modelCheckbox = {
     created(el: any, { value }: any, vnode: any) {
-        debugger
         if (!isArray(value)) {
             return
         }

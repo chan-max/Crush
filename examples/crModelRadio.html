@@ -1,0 +1,25 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <div id="app">
+        <h3>picked : {{picked}} </h3>
+        <input type="radio" value="One" *model="picked" />
+        <label for="one">One</label>
+        <input type="radio"  value="Two" *model="picked" />
+        <label for="two">Two</label>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.picked = ''
+        }
+    }).mount('#app')
+</script>
+
+</html>

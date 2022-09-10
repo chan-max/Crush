@@ -1,0 +1,23 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <div id="app">
+        <button @click="isLogin = !isLogin"> click </button>
+        <h1 cr-if="isLogin"> welcome </h1>
+        <h1 cr-else-if="!isLogin"> please login </h1>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.isLogin = false
+        }
+    }).mount('#app')
+</script>
+
+</html>

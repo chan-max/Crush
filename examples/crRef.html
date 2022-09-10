@@ -5,13 +5,16 @@
 </head>
 
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <h1 *ref="title"> title </h1>
+    </div>
 </body>
 <script src="../dist/iife/crush.js"></script>
 <script>
     let app = Crush.createApp({
-        create() {
-            
+        create() {},
+        mounted(scope) {
+            let title = scope.$refs.title
         }
     }).mount('#app')
 </script>

@@ -1,0 +1,24 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <div id="app">
+        <h1  cr-bind="bind"> hello </h1>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.bind = {
+                id: 'title',
+                class: ['class1', 'class2']
+            }
+        }
+    }).mount('#app')
+</script>
+
+</html>

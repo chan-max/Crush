@@ -1,25 +1,34 @@
 import { isArray, isString } from "@crush/common"
 
 
-export function findStringFromArray(str: string, arr: any): boolean {
-    let find = false
-    for (let item of arr) {
-        if (isArray(item)) {
-            return findStringFromArray(str, item)
-        } else if (isString(item)) {
-            if (str === item) {
-                find = true
-                break
-            }
-        }
+export function findStringFromArray(key: any, target: any): any {
+    if (isArray(target)) {
+        return target.some((item: any) => findStringFromArray(key, item))
+    } else if (isString(target)) {
+        return key === target
+    } else {
+        return false
     }
-    return find
 }
 
 let jsKeyWords = [
     'true',
     'false'
 ]
+
+
+const reservedCharacters: any = {
+    ['&amp;']: '&',
+    ['&lt;']: '<',
+    ['&gt;']: '>',
+    ['&quot;']: '"'
+}
+
+let reservedCharactersRE = new RegExp(`${Object.keys(reservedCharacters).join('|')}`, 'g')
+
+export function replaceAllReservedCharacters(expression: string) {
+    return expression.replace(reservedCharactersRE, (char: string) => reservedCharacters[char])
+}
 
 export class Expression {
 

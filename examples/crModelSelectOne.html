@@ -1,0 +1,27 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <div id="app">
+        <h3> selected :{{selected}} </h3>
+        <select *model="selected">
+            <option> 1 </option>
+            <option> 2 </option>
+            <option> 3 </option>
+            <option> 4 </option>
+        </select>
+    </div>
+</body>
+<script src="../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.selected = ''
+        }
+    }).mount('#app')
+</script>
+
+</html>
