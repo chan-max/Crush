@@ -7,3 +7,4 @@
 * [内置](builtIn)
 * [API](api)
 * [细节](detail)
+* [内置指令](builtInDirectives.md)

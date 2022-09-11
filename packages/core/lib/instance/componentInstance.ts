@@ -23,6 +23,8 @@ export const createComponentInstance = (options: any, parent: any) => {
         cache: createPureObject(), // 缓存点啥
         uid: uid(),
         update: null,
+        name: options.name, // name options
+        componentName: null,
         isMounted: false,
         scope: null,
         renderScope: null,
@@ -42,7 +44,7 @@ export const createComponentInstance = (options: any, parent: any) => {
         off: null,
         once: null,
         watch: null,
-        provides:null,
+        provides: null,
         useScopedStyleSheet: options.useScopedStyleSheet,
         renderEffect: null,
         render: options.render,
@@ -72,8 +74,6 @@ export const createComponentInstance = (options: any, parent: any) => {
 
     injectMixins(instance, options.mixins)
     injectMixins(instance, app.mixins)
-
-    instance.root = parent ? parent.root : instance
     instance.scope = createScope(instance)
     instance.renderScope = createRenderScope(instance.scope)
     instance.emit = createInstanceEventEmitter(instance)
@@ -82,6 +82,22 @@ export const createComponentInstance = (options: any, parent: any) => {
     instance.once = (event: string, handler: any) => onceInstanceListener(instance, event, handler)
     instance.events = getInstanceEvents(instance)
     instance.watch = createInstanceWatch(instance)
+
+    instance.root = parent ? parent.root : instance
+
+    if (parent) {
+        instance.root = parent.root
+        let parentComponents = parent.components || emptyObject
+        for (let name in parentComponents) {
+            if (parentComponents[name] === options) {
+                instance.componentName = name
+            }
+        }
+    } else {
+        instance.root = instance // 根组件
+    }
+
+
     return instance
 }
 
@@ -108,7 +124,7 @@ export interface ComponentInstance {
     createRender: any
     components: any
     directives: any
-    provides:any
+    provides: any
     // hooks will always be an array
     create: any
     beforeCreate: any
@@ -137,6 +153,8 @@ export interface ComponentInstance {
     beforeRouteLeave: any
     beforeRouteUpdate: any
     scopedId: any,
-    useScopedStyleSheet: any
+    useScopedStyleSheet: any,
+    name: any,
+    componentName: any // 组件在父组件中定义的名称
 }
 

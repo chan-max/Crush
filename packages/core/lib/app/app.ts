@@ -25,7 +25,7 @@ export function getCurrentApp(): any {
     return currentApp
 }
 
-export function createApp(rootComponent: any) {
+export function createApp(rootComponent?: any) {
 
     if (currentApp) {
         // 只能有一个应用
@@ -140,7 +140,7 @@ export function createApp(rootComponent: any) {
         // 执行应用挂载前钩子，可以拿到用户定义的配置信息
         app.beforeAppMount && app.beforeAppMount(app)
 
-        app.rootComponentVnode = createComponent(rootComponent, null, null)
+        app.rootComponentVnode = createComponent(app.rootComponent, null, null)
         mount(app.rootComponentVnode, app.container)
         app.isMounted = true
     }

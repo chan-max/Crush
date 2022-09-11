@@ -183,7 +183,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             htmlAst.isDynamicDefineSlotName = attr?.modifiers?.includes('dynamic')
                             htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value
                             break
-                        case 'slot-name':
+                        case 'name':
                             // 使用插槽时的名称
                             htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic')
                             htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default')

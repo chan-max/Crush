@@ -42,7 +42,7 @@ export function createRouter(options: any) {
 
 
     function go() {
-
+        
     }
 
     return {

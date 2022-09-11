@@ -6,14 +6,22 @@
 
 <body>
     <div id="app">
-        <element *is.dynamic="el"> {{el}} </element>
+        <component *is="tom">
     </div>
 </body>
 <script src="../dist/iife/crush.js"></script>
 <script>
     let app = Crush.createApp({
+        components: {
+            tom: {
+                template: `I am tom`
+            },
+            jerry: {
+                template: `I am jerry`
+            }
+        },
         create(scope) {
-            scope.el = 'h1'
+
         }
     }).mount('#app')
 </script>

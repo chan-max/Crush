@@ -10,7 +10,12 @@
 
 ## crElseIf
 
+配合 crIf 使用
+
+
 ## crElse
+
+配合 crIf 和 crElseIf 使用
 
 ## crFor
 
@@ -36,7 +41,7 @@
 
 ## crSlotScope
 
-## crSlotName
+## crName
 
 ## crIs
 
