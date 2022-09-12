@@ -145,6 +145,7 @@ export function createApp(rootComponent?: any) {
         app.isMounted = true
     }
 
+    
 
     function unmountApp() {
 

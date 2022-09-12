@@ -227,7 +227,26 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     isDynamicProperty: false,
                                 })
                             } else {
-                                let supportModelTypes = ['text', 'radio', 'checkbox', 'selectMultiple', 'selectOne', 'color', 'range']
+                                let supportModelTypes = [
+                                    'text',
+                                    'radio',
+                                    'checkbox',
+                                    'selectMultiple',
+                                    'selectOne',
+                                    'color',
+                                    'range',
+                                    'date',
+                                    'datetime-local',
+                                    'email',
+                                    'month',
+                                    'number',
+                                    'password',
+                                    'search',
+                                    'tel',
+                                    'text',
+                                    'url',
+                                    'week'
+                                ]
                                 let modelType = htmlAst.tag === 'select' ?
                                     (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
                                         'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');

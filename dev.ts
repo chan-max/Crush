@@ -1,33 +1,23 @@
 import {
-    createApp, exposeCurrentScopeToWindow, reactive
+    createApp
 } from "./packages/core";
 
 console.time('crush')
 
-
-
 let app = createApp()
 
+
 app.rootComponent = {
-    components: {
-        child: {
-            template: /*html*/`
-                <button @click="defaultModelValue++"> 子组件按钮{{count}} </button>
-                {{defaultModelValue}}
-            `,
-            create(scope: any) {
-                scope.count = 0
-            }
-        }
-    },
     template:/*html*/`
-        <button @click="count++">add {{count}} </button>
-        <child *model="count">
+        <h1> {{date}} </h1>
+        <input *model="date" type="datetime-local">
     `,
     create({ $self }: any) {
-        $self.count = 0
+        $self.date = '2018-06-01T08:30'
     }
 }
+
+
 
 console.log(app);
 

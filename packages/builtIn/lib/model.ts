@@ -201,3 +201,18 @@ export const modelRange = {
     }
 }
 
+
+export const modelDatetimeLocal = {
+    created(el: any, { value, modifiers: { lazy } }: any, vnode: any) {
+        el.value = value
+        let setModelValue = vnode.props._setModelValue
+        addListener(el, lazy ? 'change' : 'input', () => {
+            setModelValue(el.value)
+        })
+    },
+    beforeUpdate(el: any, { value }: any, vnode: any) {
+        if (el.value !== value) {
+            el.value = value
+        }
+    }
+}

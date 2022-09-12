@@ -1,4 +1,4 @@
-import { modelText, modelColor, modelRadio, modelCheckbox, modelSelectOne, modelSelectMultiple, modelRange } from "./model"
+import { modelText, modelColor, modelRadio, modelCheckbox, modelSelectOne, modelSelectMultiple, modelRange, modelDatetimeLocal } from "./model"
 import { showDirective } from "./show"
 import { transitionComponent, transitionGroupComponent, transitionDirective, transitionGroupDirective } from "./transition"
 import { Teleport } from "./teleport"
@@ -26,5 +26,5 @@ export const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
-
+    modelDatetimeLocal
 }
