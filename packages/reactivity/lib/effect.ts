@@ -14,9 +14,8 @@ export function getDepsMap(target: any) {
     return depsMap
 }
 
-export function getDeps(target: any, key?: any) {
+export function getDeps(target: any, key: any) {
     // ref 和 set类型 没有depsMap ，只有 deps
-    if (!isUndefined(key)) { // 没传 key
         let depsMap = getDepsMap(target)
         let deps = depsMap.get(key);
         if (!deps) {
@@ -24,18 +23,10 @@ export function getDeps(target: any, key?: any) {
             depsMap.set(key, deps);
         }
         return deps
-    } else {
-        let deps = TARGET_MAP.get(target)
-        if (!deps) {
-            deps = new Set()
-            TARGET_MAP.set(target, deps)
-        }
-        return deps
-    }
 }
 
 
-export function track(target: any, key?: any) {
+export function track(target: any, key: any) {
     let activeEffect = getActiveEffect()
     if (!activeEffect) return
     let deps = getDeps(target, key)
@@ -58,18 +49,11 @@ export function triggerTargetObserver(target: any) {
 }
 
 export function trigger(target: any, key?: any) {
-    // trigger 中会触发target中的依赖
-    if (isUndefined(key)) {
-        let deps = getDeps(target)
-        // 无depsmap
-        runDeps(deps)
-    } else {
         // 任一key内容改变都会触发这一依赖
         if (key !== targetObserverSymbol) { // 防止递归死循环
             triggerTargetObserver(target)
         }
         triggerTargetKey(target, key)
-    }
 }
 
 
@@ -88,7 +72,7 @@ export function triggerTargetKey(target: any, key: any) {
 }
 
 
-function runDeps(deps: any) {
+export function runDeps(deps: any) {
     [...deps].forEach((dep: any) => {
         if (isEffect(dep)) {
             if (dep == getActiveEffect()) {

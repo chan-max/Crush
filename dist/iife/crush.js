@@ -2150,13 +2150,20 @@ var Crush = (function (exports) {
         return effect;
     };
 
-    // global state
-    let _isReadonly = false;
-    let _isShallow = false;
-    let _target;
-    let _key;
-    const getLastVisitTarget = () => _target;
-    const getLastVisitKey = () => _key;
+    //  保留则最近一次访问的信息
+    let lastVisitedTargetIsReadonly = false;
+    let lastVisitedTargetIsShallow = false;
+    let lastVisitedTarget;
+    let lastVisitedKey;
+    const getLastvisitedTarget = () => lastVisitedTarget;
+    const getLastvisitedKey = () => lastVisitedKey;
+    function pushGetterState(isReadonly, isShallow, target, key) {
+        lastVisitedKey = key;
+        lastVisitedTarget = target;
+        lastVisitedTargetIsReadonly = isReadonly;
+        lastVisitedTargetIsShallow = isShallow;
+    }
+    // set state
     let _lastSetTarget;
     let _lastSetKey;
     let _lastSetOldValue;
@@ -2169,124 +2176,120 @@ var Crush = (function (exports) {
         get size() {
             //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
             //todo bug 任一元素变化后 都会触发该依赖
-            trackTargetObserver(_target);
-            return _target.size;
+            trackTargetObserver(lastVisitedTarget);
+            return lastVisitedTarget.size;
         },
         // set weakset
         add(value) {
-            if (_isReadonly) {
+            if (lastVisitedTargetIsReadonly) {
                 return;
             }
-            var result = _target.add(value);
-            trigger(_target, value);
+            var result = lastVisitedTarget.add(value);
+            trigger(lastVisitedTarget, value);
             // 返回set对象本身
             return result;
         },
         // map set
         clear() {
-            if (_isReadonly) {
+            if (lastVisitedTargetIsReadonly) {
                 return;
             }
             // 触发所有依赖
-            _target.clear();
-            triggerAllDepsMap(_target);
+            lastVisitedTarget.clear();
+            triggerAllDepsMap(lastVisitedTarget);
         },
         // map weakmap set weakset
         delete(key) {
-            if (_isReadonly) {
+            if (lastVisitedTargetIsReadonly) {
                 return;
             }
-            const result = _target.delete(key);
+            const result = lastVisitedTarget.delete(key);
             if (result) { // 返回为 true 为删除成功
-                trigger(_target, key);
+                trigger(lastVisitedTarget, key);
             }
             return result;
         },
         // map set
         entries() {
-            trackTargetObserver(_target);
-            return _target.entries();
+            trackTargetObserver(lastVisitedTarget);
+            return lastVisitedTarget.entries();
         },
         // map set
         forEach(fn) {
-            trackTargetObserver(_target);
-            return _target.forEach(fn);
+            trackTargetObserver(lastVisitedTarget);
+            return lastVisitedTarget.forEach(fn);
         },
         // set map weakset weakmap
         has(key) {
-            track(_target, key);
-            return _target.has(key);
+            track(lastVisitedTarget, key);
+            return lastVisitedTarget.has(key);
         },
         // map set
         keys() {
-            trackTargetObserver(_target);
-            return _target.keys();
+            trackTargetObserver(lastVisitedTarget);
+            return lastVisitedTarget.keys();
         },
         // map set
         values() {
-            trackTargetObserver(_target);
-            return _target.values();
+            trackTargetObserver(lastVisitedTarget);
+            return lastVisitedTarget.values();
         },
         // map weakmap
         set(key, value) {
-            if (_isReadonly) {
+            if (lastVisitedTargetIsReadonly) {
                 return;
             }
-            var result = _target.set(key, value);
-            trigger(_target, key);
+            var result = lastVisitedTarget.set(key, value);
+            trigger(lastVisitedTarget, key);
             return result;
         },
         // map weakmap
         get(key) {
-            if (!_isReadonly) {
-                track(_target, key);
+            if (!lastVisitedTargetIsReadonly) {
+                track(lastVisitedTarget, key);
             }
-            var value = _target.get(key);
-            return _isShallow ? value : reactive(value);
+            var value = lastVisitedTarget.get(key);
+            return lastVisitedTargetIsShallow ? value : reactive(value);
         }
     };
-    function normalizeHandlerWithTrack(...args) {
-        let result = _target[_key](...args);
-        return result;
+    function createArrayHandlerWithTrack(method) {
+        return function (...args) {
+            let array = this["raw" /* RAW */];
+            let result = array[method](...args);
+            return result;
+        };
     }
-    function normalizeHandlerWithTrigger(...args) {
-        if (_isReadonly) {
-            // 只读不能修改
-            return;
-        }
-        // 用数组修改前的key作为触发依赖
-        let oldKeys = Object.keys(_target);
-        let result = _target[_key](...args);
-        [...oldKeys, 'length'].forEach((key) => trigger(_target, key));
-        return result;
+    function createArrayHandlerWithTrigger(method) {
+        return function (...args) {
+            let array = this["raw" /* RAW */];
+            let oldKeys = Object.keys(array);
+            let result = array[method](...args);
+            [...oldKeys, 'length'].forEach((key) => trigger(array, key));
+            return result;
+        };
     }
     const normalizeHandlers = {
         // should track
-        includes: normalizeHandlerWithTrack,
-        indexOf: normalizeHandlerWithTrack,
-        lastIndexOf: normalizeHandlerWithTrack,
+        includes: createArrayHandlerWithTrack('includes'),
+        indexOf: createArrayHandlerWithTrack('indexOf'),
+        lastIndexOf: createArrayHandlerWithTrack('lastIndexOf'),
         // should trigger
-        push: normalizeHandlerWithTrigger,
-        pop: normalizeHandlerWithTrigger,
-        shift: normalizeHandlerWithTrigger,
-        unshift: normalizeHandlerWithTrigger,
-        splice: normalizeHandlerWithTrigger
+        push: createArrayHandlerWithTrigger('push'),
+        pop: createArrayHandlerWithTrigger('pop'),
+        shift: createArrayHandlerWithTrigger('shift'),
+        unshift: createArrayHandlerWithTrigger('unshift'),
+        splice: createArrayHandlerWithTrigger('splice')
     };
     const specialKeyHandler = {
         [Symbol.iterator]: (value) => {
             // should track ?
-            return value.bind(_target);
+            return value.bind(lastVisitedTarget);
         }
     };
     // 可用于收集依赖的key
     const isProxyKey = (target, key) => !(key in target) || hasOwn(target, key);
     function createGetter(isReadonly, isShallow, isCollection) {
-        return (target, key, receiver) => {
-            // cache global state
-            _isReadonly = isReadonly;
-            _isShallow = isShallow;
-            _target = target;
-            _key = key;
+        function baseGetter(target, key, receiver) {
             // reserved keys
             switch (key) {
                 case "raw" /* RAW */:
@@ -2301,6 +2304,8 @@ var Crush = (function (exports) {
                     // 所欲响应式数据都会有此标记
                     return true;
             }
+            // 保留的key值不会存入访问信息
+            pushGetterState(isReadonly, isShallow, target, key);
             if (isCollection) {
                 // collection methods reset
                 if (hasOwn(collectionHandlers, key) && key in target) {
@@ -2329,7 +2334,8 @@ var Crush = (function (exports) {
                 value = specialKeyHandler[key](value);
             }
             return value;
-        };
+        }
+        return baseGetter;
     }
     const onSetCallbacks = new Set();
     // 注册一个回调函数，当响应式的值改变后触发回掉 => 参数 ： target，key ， newValue ， oldValue
@@ -5218,7 +5224,7 @@ var Crush = (function (exports) {
                                 htmlAst.isDynamicDefineSlotName = attr?.modifiers?.includes('dynamic');
                                 htmlAst.defineSlotName = htmlAst.isDynamicDefineSlotName ? context.setRenderScope(attr?.value) : attr?.value;
                                 break;
-                            case 'slot-name':
+                            case 'name':
                                 // 使用插槽时的名称
                                 htmlAst.isDynamicSlot = attr?.modifiers?.includes('dynamic');
                                 htmlAst.slotName = htmlAst.isDynamicSlot ? context.setRenderScope(attr?.value) : (attr?.value || 'default');
@@ -5961,7 +5967,6 @@ var Crush = (function (exports) {
     };
     const modelCheckbox = {
         created(el, { value }, vnode) {
-            debugger;
             if (!isArray(value)) {
                 return;
             }
@@ -7800,7 +7805,7 @@ var Crush = (function (exports) {
             }
             // 执行应用挂载前钩子，可以拿到用户定义的配置信息
             app.beforeAppMount && app.beforeAppMount(app);
-            app.rootComponentVnode = createComponent(rootComponent, null, null);
+            app.rootComponentVnode = createComponent(app.rootComponent, null, null);
             mount(app.rootComponentVnode, app.container);
             app.isMounted = true;
         }
@@ -7973,6 +7978,8 @@ var Crush = (function (exports) {
             cache: createPureObject(),
             uid: uid(),
             update: null,
+            name: options.name,
+            componentName: null,
             isMounted: false,
             scope: null,
             renderScope: null,
@@ -8021,7 +8028,6 @@ var Crush = (function (exports) {
         };
         injectMixins(instance, options.mixins);
         injectMixins(instance, app.mixins);
-        instance.root = parent ? parent.root : instance;
         instance.scope = createScope(instance);
         instance.renderScope = createRenderScope(instance.scope);
         instance.emit = createInstanceEventEmitter(instance);
@@ -8030,6 +8036,19 @@ var Crush = (function (exports) {
         instance.once = (event, handler) => onceInstanceListener(instance, event, handler);
         instance.events = getInstanceEvents(instance);
         instance.watch = createInstanceWatch(instance);
+        instance.root = parent ? parent.root : instance;
+        if (parent) {
+            instance.root = parent.root;
+            let parentComponents = parent.components || emptyObject;
+            for (let name in parentComponents) {
+                if (parentComponents[name] === options) {
+                    instance.componentName = name;
+                }
+            }
+        }
+        else {
+            instance.root = instance; // 根组件
+        }
         return instance;
     };
 
@@ -8475,8 +8494,8 @@ var Crush = (function (exports) {
     exports.getLastSetNewValue = getLastSetNewValue;
     exports.getLastSetOldValue = getLastSetOldValue;
     exports.getLastSetTarget = getLastSetTarget;
-    exports.getLastVisitKey = getLastVisitKey;
-    exports.getLastVisitTarget = getLastVisitTarget;
+    exports.getLastvisitedKey = getLastvisitedKey;
+    exports.getLastvisitedTarget = getLastvisitedTarget;
     exports.getLeftEdgeElement = getLeftEdgeElement;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;

@@ -1,6 +1,6 @@
 import { emptyObject } from "@crush/common";
 import { isProxyType, ReactiveFlags, ReactiveTypeSymbol } from "./common"
-import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect, getDeps } from "./effect"
+import { getActiveEffect, TARGET_MAP, track, trigger, ReactiveEffect, isEffect, getDeps, runDeps } from "./effect"
 import { reactive } from "./reactive";
 
 export const ref = (value: any = null, options?: any) => new Ref(value, options)
@@ -43,7 +43,7 @@ export class Ref {
             this.onGet()
         }
 
-        track(this)
+        trackRef(this)
         let value = this._value
 
         return (!this.shallow && isProxyType(value)) ? reactive(value) : value
@@ -61,16 +61,34 @@ export class Ref {
             this.onSet()
         }
         // trigger
-        trigger(this)
+        triggerRef(this)
     }
 }
 
 
+const refDepsMap = new WeakMap()
 
+export function triggerRef(ref: any) {
+    let deps = refDepsMap.get(ref)
+    if (deps) {
+        runDeps(deps)
+    }
+}
 
-// 清除所有与当前ref相关的依赖
-export const cleaarRefDeps = (ref: Ref) => {
-    getDeps(ref).clear()
+export function trackRef(ref: any) {
+    let activeEffect = getActiveEffect()
+    if (!activeEffect) return
+
+    let deps = refDepsMap.get(ref)
+
+    if (!deps) {
+        deps = new Set()
+        refDepsMap.set(ref, deps)
+    }
+
+    deps.add(activeEffect)
+    // 用于清除依赖
+    activeEffect.deps.push(deps)
 }
 
 

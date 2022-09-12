@@ -1,13 +1,12 @@
 import {
-    createApp, exposeCurrentScopeToWindow
+    createApp, exposeCurrentScopeToWindow, reactive
 } from "./packages/core";
 
 console.time('crush')
 
-window.onpopstate = () => {
-    console.log(65);
 
-}
+
+
 
 let app = createApp()
 
@@ -15,19 +14,19 @@ app.rootComponent = {
     components: {
     },
     template:/*html*/`
-        <router-view></router-view>
+        <button @click="add">add</button>
+        <h1 *for=" i in arr"> hello{{i}} </h1>
     `,
     create({ $self }: any) {
-        exposeCurrentScopeToWindow()
+        $self.arr = []
+        $self.add = () => {
+            $self.arr.push('111')
+        }
     }
 }
 
 console.log(app);
 
 app.mount()
-
-app.routes = [
-
-]
 
 console.timeEnd('crush')

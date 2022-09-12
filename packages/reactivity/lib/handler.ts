@@ -2,16 +2,27 @@ import { isArray, isFunction, hasOwn, warn } from "@crush/common"
 import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
-import { track, trackTargetObserver, trigger, triggerAllDepsMap, triggerTargetObserver, } from './effect'
+import { track, trackTargetObserver, trigger, triggerAllDepsMap, } from './effect'
 
-// global state
-let _isReadonly = false
-let _isShallow = false
-let _target: any
-let _key: any
+//  保留则最近一次访问的信息
+let lastVisitedTargetIsReadonly = false
+let lastVisitedTargetIsShallow = false
+let lastVisitedTarget: any
+let lastVisitedKey: any
 
-export const getLastVisitTarget = () => _target
-export const getLastVisitKey = () => _key
+export const getLastvisitedTarget = () => lastVisitedTarget
+export const getLastvisitedKey = () => lastVisitedKey
+
+function pushGetterState(isReadonly: any, isShallow: any, target: any, key: any) {
+    lastVisitedKey = key
+    lastVisitedTarget = target
+    lastVisitedTargetIsReadonly = isReadonly
+    lastVisitedTargetIsShallow = isShallow
+}
+
+
+
+// set state
 
 let _lastSetTarget: any
 let _lastSetKey: any
@@ -29,124 +40,121 @@ const collectionHandlers: Record<string, any> = {
     get size() {
         //  set , map  size 收集后 ， 只有目标的size变化后才会触发依赖
         //todo bug 任一元素变化后 都会触发该依赖
-        trackTargetObserver(_target)
-        return _target.size
+        trackTargetObserver(lastVisitedTarget)
+        return lastVisitedTarget.size
     },
     // set weakset
     add(value: any) {
-        if (_isReadonly) {
+        if (lastVisitedTargetIsReadonly) {
             return
         }
-        var result = _target.add(value)
-        trigger(_target, value)
+        var result = lastVisitedTarget.add(value)
+        trigger(lastVisitedTarget, value)
         // 返回set对象本身
         return result
     },
     // map set
     clear() {
-        if (_isReadonly) {
+        if (lastVisitedTargetIsReadonly) {
             return
         }
         // 触发所有依赖
-        _target.clear()
-        triggerAllDepsMap(_target)
+        lastVisitedTarget.clear()
+        triggerAllDepsMap(lastVisitedTarget)
     },
     // map weakmap set weakset
     delete(key: any) {
-        if (_isReadonly) {
+        if (lastVisitedTargetIsReadonly) {
             return
         }
-        const result = _target.delete(key)
+        const result = lastVisitedTarget.delete(key)
         if (result) { // 返回为 true 为删除成功
-            trigger(_target, key)
+            trigger(lastVisitedTarget, key)
         }
         return result
     },
     // map set
     entries() {
-        trackTargetObserver(_target)
-        return _target.entries()
+        trackTargetObserver(lastVisitedTarget)
+        return lastVisitedTarget.entries()
     },
     // map set
     forEach(fn: any) {
-        trackTargetObserver(_target)
-        return _target.forEach(fn)
+        trackTargetObserver(lastVisitedTarget)
+        return lastVisitedTarget.forEach(fn)
     },
     // set map weakset weakmap
     has(key: any) {
-        track(_target, key)
-        return _target.has(key)
+        track(lastVisitedTarget, key)
+        return lastVisitedTarget.has(key)
     },
     // map set
     keys() {
-        trackTargetObserver(_target)
-        return _target.keys()
+        trackTargetObserver(lastVisitedTarget)
+        return lastVisitedTarget.keys()
     },
     // map set
     values() {
-        trackTargetObserver(_target)
-        return _target.values()
+        trackTargetObserver(lastVisitedTarget)
+        return lastVisitedTarget.values()
     },
     // map weakmap
     set(key: any, value: any) {
-        if (_isReadonly) {
+        if (lastVisitedTargetIsReadonly) {
             return
         }
-        var result = _target.set(key, value)
-        trigger(_target, key)
+        var result = lastVisitedTarget.set(key, value)
+        trigger(lastVisitedTarget, key)
         return result
     },
     // map weakmap
     get(key: any) {
-        if (!_isReadonly) {
-            track(_target, key)
+        if (!lastVisitedTargetIsReadonly) {
+            track(lastVisitedTarget, key)
         }
-        var value = _target.get(key)
-        return _isShallow ? value : reactive(value)
+        var value = lastVisitedTarget.get(key)
+        return lastVisitedTargetIsShallow ? value : reactive(value)
     }
 }
 
 
-function normalizeHandlerWithTrack(...args: any[]) {
-    if (!_isReadonly) { // 非只读才会收集
-
+function createArrayHandlerWithTrack(method: any) {
+    return function (this: any, ...args: any) {
+        let array = this[ReactiveFlags.RAW]
+        let result = array[method](...args)
+        return result
     }
-
-    let result = _target[_key](...args)
-    return result
 }
 
-function normalizeHandlerWithTrigger(...args: any[]) {
-    if (_isReadonly) {
-        // 只读不能修改
-        return
+function createArrayHandlerWithTrigger(method: any) {
+    return function (this: any, ...args: any) {
+        let array = this[ReactiveFlags.RAW]
+        let oldKeys = Object.keys(array)
+        let result = array[method](...args);
+        [...oldKeys, 'length'].forEach((key: any) => trigger(array, key))
+        return result
     }
-    // 用数组修改前的key作为触发依赖
-    let oldKeys = Object.keys(_target)
-    let result = _target[_key](...args);
-    [...oldKeys, 'length'].forEach((key: any) => trigger(_target, key))
-    return result
 }
 
 const normalizeHandlers: Record<string, any> = {
     // should track
-    includes: normalizeHandlerWithTrack,
-    indexOf: normalizeHandlerWithTrack,
-    lastIndexOf: normalizeHandlerWithTrack,
+    includes: createArrayHandlerWithTrack('includes'),
+    indexOf: createArrayHandlerWithTrack('indexOf'),
+    lastIndexOf: createArrayHandlerWithTrack('lastIndexOf'),
     // should trigger
-    push: normalizeHandlerWithTrigger,
-    pop: normalizeHandlerWithTrigger,
-    shift: normalizeHandlerWithTrigger,
-    unshift: normalizeHandlerWithTrigger,
-    splice: normalizeHandlerWithTrigger
+    push: createArrayHandlerWithTrigger('push'),
+    pop: createArrayHandlerWithTrigger('pop'),
+    shift: createArrayHandlerWithTrigger('shift'),
+    unshift: createArrayHandlerWithTrigger('unshift'),
+    splice: createArrayHandlerWithTrigger('splice')
 };
 
 
 const specialKeyHandler: Record<string, any> = {
     [Symbol.iterator]: (value: Function) => {
-        // should track ?
-
-        return value.bind(_target)
+        // should track
+        trackTargetObserver(lastVisitedTarget)
+        return value.bind(lastVisitedTarget)
     }
 }
 
@@ -155,12 +163,8 @@ const specialKeyHandler: Record<string, any> = {
 const isProxyKey = (target: any, key: any) => !(key in target) || hasOwn(target, key)
 
 function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boolean) {
-    return (target: any, key: any, receiver: any) => {
-        // cache global state
-        _isReadonly = isReadonly
-        _isShallow = isShallow
-        _target = target
-        _key = key
+
+    function baseGetter(target: any, key: any, receiver: any) {
         // reserved keys
         switch (key) {
             case ReactiveFlags.RAW:
@@ -175,6 +179,8 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
                 // 所欲响应式数据都会有此标记
                 return true
         }
+        // 保留的key值不会存入访问信息
+        pushGetterState(isReadonly, isShallow, target, key)
 
         if (isCollection) {
             // collection methods reset
@@ -209,6 +215,8 @@ function createGetter(isReadonly: boolean, isShallow: boolean, isCollection: boo
 
         return value
     }
+
+    return baseGetter
 }
 
 

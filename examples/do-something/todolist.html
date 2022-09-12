@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <style>
+        [cr-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" cr-cloak>
+        <h1> TodoList </h1>
+        <hr>
+        <h3> I need to </h3>
+        <input *model="todo" id="todo">
+        <button @click="addTodo"> add </button>
+        <li *for="todo in todos">{{todo}}</li>
+    </div>
+</body>
+<script src="../../dist/iife/crush.js"></script>
+<script>
+    let app = Crush.createApp({
+        create(scope) {
+            scope.todo = ''
+            scope.todos = []
+            scope.addTodo = () => {
+                if (scope.todo) {
+                    let todo = scope.todo
+                    scope.todos.push(todo)
+                } else {
+                    alert('you need to input something')
+                }
+            }
+        }
+    })
+
+    app.mount('#app')
+</script>
+
+</html>
