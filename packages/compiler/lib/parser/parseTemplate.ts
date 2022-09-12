@@ -233,7 +233,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                         'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');
                                 if (supportModelTypes.includes(modelType)) {
                                     attr.type = AstTypes.CUSTOM_DIRECTIVE;
-
                                     // transform 
                                     attr.property = `model${initialUpperCase(modelType)}`
                                     attr.value = context.setRawScope(attr.value)

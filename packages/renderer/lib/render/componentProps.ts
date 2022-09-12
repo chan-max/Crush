@@ -39,7 +39,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                 } else if (isEvent(prop)) {
                     var { event, _arguments, modifiers, filters } = parseEventName(prop)
                     if (emitsOptions[event]) {
-                        updateInstanceListeners(instance, event, pValue, nValue, _arguments, modifiers, filters )
+                        updateInstanceListeners(instance, event, pValue, nValue, _arguments, modifiers, filters)
                     } else if (isComponentLifecycleHook(event)) {
                         continue
                     } else {

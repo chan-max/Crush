@@ -8,7 +8,7 @@ import { keepAliveComponent } from "./keepAlive"
 export const builtInComponents: any = {
     transition: transitionComponent,
     transitionGroup: transitionGroupComponent,
-    keepAlive:keepAliveComponent,
+    keepAlive: keepAliveComponent,
     Teleport,
     RouterLink,
     RouterView
@@ -26,4 +26,5 @@ export const builtInDirectives = {
     show: showDirective,
     transition: transitionDirective,
     transitionGroup: transitionGroupDirective,
+
 }

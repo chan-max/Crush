@@ -68,6 +68,15 @@ export class Ref {
 
 const refDepsMap = new WeakMap()
 
+export function getRefDeps(ref:any) {
+    let deps = refDepsMap.get(ref)
+    if (!deps) {
+        deps = new Set()
+        refDepsMap.set(ref, deps)
+    }
+    return deps
+}
+
 export function triggerRef(ref: any) {
     let deps = refDepsMap.get(ref)
     if (deps) {
@@ -79,12 +88,9 @@ export function trackRef(ref: any) {
     let activeEffect = getActiveEffect()
     if (!activeEffect) return
 
-    let deps = refDepsMap.get(ref)
+    let deps = getRefDeps(ref)
 
-    if (!deps) {
-        deps = new Set()
-        refDepsMap.set(ref, deps)
-    }
+
 
     deps.add(activeEffect)
     // 用于清除依赖

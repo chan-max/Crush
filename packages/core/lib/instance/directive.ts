@@ -85,11 +85,13 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
             }
         } else if (key.startsWith(hookKey)) {
             if (key.startsWith(hookKey + '$modelValue')) {
+                // 组件的 model
                 let modelKey = key.split('_')[1]
                 // 每次更新需要对比 新旧值，如果变化通过setter传递到父组件
                 let setParentModelValue = vnode.props[key]
                 setParentModelValue(scope[modelKey])
             } else {
+                // 普通的 属性钩子
                 normalizeHandler(vnode.props[key]).forEach((handler: any) => handler(scope))
             }
         }

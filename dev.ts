@@ -6,28 +6,28 @@ console.time('crush')
 
 
 
-
-
-
 let app = createApp()
 
 app.rootComponent = {
     components: {
+        child: {
+            template: /*html*/`
+                <button @click="defaultModelValue++"> 子组件按钮{{count}} </button>
+                {{defaultModelValue}}
+            `,
+            create(scope: any) {
+                scope.count = 0
+            }
+        }
     },
     template:/*html*/`
-        <button @click="add">add</button>
-        <h1 *for=" i in arr"> hello{{i}} </h1>
+        <button @click="count++">add {{count}} </button>
+        <child *model="count">
     `,
     create({ $self }: any) {
-        $self.arr = []
-        $self.add = () => {
-            $self.arr.push('111')
-        }
+        $self.count = 0
     }
 }
-
-
-
 
 console.log(app);
 

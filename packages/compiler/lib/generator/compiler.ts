@@ -38,8 +38,9 @@ export class CodeGenerator {
     cache: any
 
     handlerWithCache(handlerExpression: string) {
-        let cacheId = uVar()
-        return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`
+        // let cacheId = uVar()
+        // return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`
+        return handlerExpression
     }
 
     // 记录模板中是否使用了scoped css
@@ -138,7 +139,7 @@ export class CodeGenerator {
         expInstance.pushScope(this.scopes)
         return expInstance.scopedExpression(this.scope)
     }
-    
+
     scopes: any = []
 
     pushScope(scope: any) {

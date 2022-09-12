@@ -2516,6 +2516,14 @@ class Ref {
     }
 }
 const refDepsMap = new WeakMap();
+function getRefDeps(ref) {
+    let deps = refDepsMap.get(ref);
+    if (!deps) {
+        deps = new Set();
+        refDepsMap.set(ref, deps);
+    }
+    return deps;
+}
 function triggerRef(ref) {
     let deps = refDepsMap.get(ref);
     if (deps) {
@@ -2526,11 +2534,7 @@ function trackRef(ref) {
     let activeEffect = getActiveEffect();
     if (!activeEffect)
         return;
-    let deps = refDepsMap.get(ref);
-    if (!deps) {
-        deps = new Set();
-        refDepsMap.set(ref, deps);
-    }
+    let deps = getRefDeps(ref);
     deps.add(activeEffect);
     // 用于清除依赖
     activeEffect.deps.push(deps);
@@ -2551,7 +2555,7 @@ class ComputedRef {
             // 依赖的值变化后，触发调度器 , 一个computed依赖的副作用就是它所依赖的值的副作用
             if (!this.shouldCompute) { // 缓存值
                 this.shouldCompute = true;
-                trigger(this);
+                triggerRef(this);
             }
         });
     }
@@ -2561,7 +2565,7 @@ class ComputedRef {
         return this.cacheValue = this.computedEffect.run();
     }
     get value() {
-        track(this);
+        trackRef(this);
         return this.shouldCompute ? this.computedValue : this.cacheValue;
     }
 }
@@ -2709,7 +2713,7 @@ function watchTargetKey(reactiveTarget, key, callback) {
 }
 
 function watchRef(ref, callback) {
-    const deps = getDeps(ref);
+    const deps = getRefDeps(ref);
     const watchEffect = () => callback.call(null, ref.value, ref.oldValue);
     deps.add(watchEffect);
     // unwatch
@@ -5125,6 +5129,7 @@ function processTemplateAst(htmlAst, context) {
                     switch (attr.property) {
                         case 'if':
                             if (htmlAst.directives) {
+                                // 与for指令一起使用，并且是顺序在for后面
                                 htmlAst.directives.push({
                                     type: 7 /* CONDITION_RENDER_IF */,
                                     condition: context.setRenderScope(value)
@@ -5482,8 +5487,9 @@ class CodeGenerator {
     scope;
     cache;
     handlerWithCache(handlerExpression) {
-        let cacheId = uVar();
-        return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`;
+        // let cacheId = uVar()
+        // return `(${this.cache}.${cacheId} || (${this.cache}.${cacheId} = ${handlerExpression}))`
+        return handlerExpression;
     }
     // 记录模板中是否使用了scoped css
     useScopedStyleSheet = false;
@@ -8496,6 +8502,7 @@ exports.getLastSetTarget = getLastSetTarget;
 exports.getLastvisitedKey = getLastvisitedKey;
 exports.getLastvisitedTarget = getLastvisitedTarget;
 exports.getLeftEdgeElement = getLeftEdgeElement;
+exports.getRefDeps = getRefDeps;
 exports.getStyle = getStyle;
 exports.getStyleValue = getStyleValue;
 exports.h = h;
