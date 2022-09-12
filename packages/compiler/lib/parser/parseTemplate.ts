@@ -7,9 +7,9 @@ import { parseCSS } from "./parseCSS";
 import { parseIterator } from "./parseIterator";
 import { parseText } from "./parseText";
 import { processRules } from "./processRules";
-
-
 import { isHandler } from "../stringify";
+
+
 
 export const enum AstTypes {
     UNKNOWN,
@@ -85,6 +85,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     switch (attr.property) {
                         case 'if':
                             if (htmlAst.directives) {
+                                // 与for指令一起使用，并且是顺序在for后面
                                 htmlAst.directives.push({
                                     type: AstTypes.CONDITION_RENDER_IF,
                                     condition: context.setRenderScope(value)

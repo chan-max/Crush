@@ -138,7 +138,7 @@ export class CodeGenerator {
         expInstance.pushScope(this.scopes)
         return expInstance.scopedExpression(this.scope)
     }
-
+    
     scopes: any = []
 
     pushScope(scope: any) {

@@ -2026,23 +2026,13 @@
     }
     function getDeps(target, key) {
         // ref 和 set类型 没有depsMap ，只有 deps
-        if (!isUndefined(key)) { // 没传 key
-            let depsMap = getDepsMap(target);
-            let deps = depsMap.get(key);
-            if (!deps) {
-                deps = new Set();
-                depsMap.set(key, deps);
-            }
-            return deps;
+        let depsMap = getDepsMap(target);
+        let deps = depsMap.get(key);
+        if (!deps) {
+            deps = new Set();
+            depsMap.set(key, deps);
         }
-        else {
-            let deps = TARGET_MAP.get(target);
-            if (!deps) {
-                deps = new Set();
-                TARGET_MAP.set(target, deps);
-            }
-            return deps;
-        }
+        return deps;
     }
     function track(target, key) {
         let activeEffect = getActiveEffect();
@@ -2062,19 +2052,11 @@
         trigger(target, targetObserverSymbol);
     }
     function trigger(target, key) {
-        // trigger 中会触发target中的依赖
-        if (isUndefined(key)) {
-            let deps = getDeps(target);
-            // 无depsmap
-            runDeps(deps);
+        // 任一key内容改变都会触发这一依赖
+        if (key !== targetObserverSymbol) { // 防止递归死循环
+            triggerTargetObserver(target);
         }
-        else {
-            // 任一key内容改变都会触发这一依赖
-            if (key !== targetObserverSymbol) { // 防止递归死循环
-                triggerTargetObserver(target);
-            }
-            triggerTargetKey(target, key);
-        }
+        triggerTargetKey(target, key);
     }
     function triggerAllDepsMap(target) {
         let depsMap = getDepsMap(target);
@@ -2285,7 +2267,8 @@
     };
     const specialKeyHandler = {
         [Symbol.iterator]: (value) => {
-            // should track ?
+            // should track
+            trackTargetObserver(lastVisitedTarget);
             return value.bind(lastVisitedTarget);
         }
     };
@@ -2516,7 +2499,7 @@
             if (this.onGet) {
                 this.onGet();
             }
-            track(this);
+            trackRef(this);
             let value = this._value;
             return (!this.shallow && isProxyType(value)) ? reactive(value) : value;
         }
@@ -2531,13 +2514,29 @@
                 this.onSet();
             }
             // trigger
-            trigger(this);
+            triggerRef(this);
         }
     }
-    // 清除所有与当前ref相关的依赖
-    const cleaarRefDeps = (ref) => {
-        getDeps(ref).clear();
-    };
+    const refDepsMap = new WeakMap();
+    function triggerRef(ref) {
+        let deps = refDepsMap.get(ref);
+        if (deps) {
+            runDeps(deps);
+        }
+    }
+    function trackRef(ref) {
+        let activeEffect = getActiveEffect();
+        if (!activeEffect)
+            return;
+        let deps = refDepsMap.get(ref);
+        if (!deps) {
+            deps = new Set();
+            refDepsMap.set(ref, deps);
+        }
+        deps.add(activeEffect);
+        // 用于清除依赖
+        activeEffect.deps.push(deps);
+    }
 
     const computed = (getter) => new ComputedRef(getter);
     const isComputed = (value) => value && value["isComputed" /* IS_COMPUTED */];
@@ -8392,7 +8391,6 @@
     exports.callFn = callFn;
     exports.callHook = callHook;
     exports.camelize = camelize;
-    exports.cleaarRefDeps = cleaarRefDeps;
     exports.clearCurrentInstance = clearCurrentInstance;
     exports.colors = colors;
     exports.compile = compile;
@@ -8648,6 +8646,7 @@
     exports.rotate = rotate;
     exports.rotate3d = rotate3d;
     exports.rotateY = rotateY;
+    exports.runDeps = runDeps;
     exports.saturate = saturate;
     exports.scale = scale;
     exports.scale3d = scale3d;
@@ -8704,6 +8703,7 @@
     exports.toSingleQuotes = toSingleQuotes;
     exports.toTernaryExp = toTernaryExp;
     exports.track = track;
+    exports.trackRef = trackRef;
     exports.trackTargetObserver = trackTargetObserver;
     exports.transitionKeyframes = transitionKeyframes;
     exports.translate3d = translate3d;
@@ -8711,6 +8711,7 @@
     exports.translateY = translateY;
     exports.trigger = trigger;
     exports.triggerAllDepsMap = triggerAllDepsMap;
+    exports.triggerRef = triggerRef;
     exports.triggerTargetKey = triggerTargetKey;
     exports.triggerTargetObserver = triggerTargetObserver;
     exports.typeOf = typeOf;

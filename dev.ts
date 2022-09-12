@@ -8,6 +8,7 @@ console.time('crush')
 
 
 
+
 let app = createApp()
 
 app.rootComponent = {
@@ -24,6 +25,9 @@ app.rootComponent = {
         }
     }
 }
+
+
+
 
 console.log(app);
 

@@ -15,7 +15,8 @@
         <h3> I need to </h3>
         <input *model="todo" id="todo">
         <button @click="addTodo"> add </button>
-        <li *for="todo in todos">{{todo}}</li>
+        <br>
+        <li *for="todo,index in todos" title="click me to remove" style="cursor:pointer" @click="remove(index)">{{todo}}</li>
     </div>
 </body>
 <script src="../../dist/iife/crush.js"></script>
@@ -32,8 +33,13 @@
                     alert('you need to input something')
                 }
             }
+            scope.remove = (index) => {
+                debugger
+                scope.todos.splice(index, 1)
+            }
         }
     })
+
 
     app.mount('#app')
 </script>

@@ -36,7 +36,7 @@ export function renderList(data: Iterator, callee: Function, key: number){
             res.key = key + '_' + i
             // i++
         }
-        i++ 
+        i++
         /*
             需要在循环外部 i++ ，这样保证即使有空元素被排出后，索引位置也是正确的
         */
