@@ -3,7 +3,7 @@ import { isArray, isUndefined, removeFromArray, toNumber } from "@crush/common";
 import { addListener } from "@crush/renderer"
 
 import { debounce, isNumber, } from '@crush/common'
-import { hexToHsl, hexToRgb, isRef, normalizeToHexColor } from "@crush/reactivity";
+import { hexToHsl, hexToRgb, normalizeToHexColor } from "@crush/reactivity";
 
 
 
@@ -11,15 +11,10 @@ export const modelText = {
     created(el: any, { value, modifiers }: any, vnode: any) {
         const { lazy, number, trim, debounce: useDebounce } = modifiers
         const setter = vnode.props._setModelValue
-        el._modelValue = value
+
         // 设置input初始值
 
-        if (isRef(value)) {
-            // 如果没设置初始值，会显示 undefined
-            el.value = isUndefined(value.value) ? '' : value.value
-        } else {
-            el.value = isUndefined(value) ? '' : value
-        }
+        el.value = isUndefined(value) ? '' : value
 
         let inputHandler = () => {
             let inputValue = el.value
@@ -27,11 +22,7 @@ export const modelText = {
             inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue
             // 标记输入框刚刚输入完毕
             el._inputing = true
-            if (isRef(el._modelValue)) {
-                el._modelValue.value = inputValue
-            } else {
-                setter(inputValue)
-            }
+            setter(inputValue)
         }
 
         if (useDebounce) {
@@ -49,9 +40,7 @@ export const modelText = {
         if (el._inputing) {
             el._inputing = false
         } else {
-            el._modelValue = el.value
-            let newValue = isRef(value) ? value.value : value
-            el.value = isUndefined(newValue) ? '' : newValue;
+            el.value = isUndefined(value) ? '' : value;
         }
     }
 }
@@ -163,22 +152,20 @@ export const modelSelectMultiple = {
 // 目前只支持 16 进制
 export const modelColor = {
     created(el: any, { value, modifiers: { lazy, rgb, hsl, } }: any, vnode: any) {
-        el._mdelValue = value
         const setter = vnode.props._setModelValue
         // 设置初始值
-        el.value = normalizeToHexColor(isRef(value) ? value.value : value);
+        el.value = normalizeToHexColor(value);
         addListener(el, lazy ? 'change' : 'input', () => {
             el._inputing = true
             let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value
-            isRef(el._mdelValue) ? el._mdelValue.value = colorValue : setter(colorValue)
+            setter(colorValue)
         })
     },
     beforeUpdate(el: any, { value }: any,) {
         if (el._inputing) {
             el._inputing = false
         } else {
-            el._mdelValue = value
-            el.value = normalizeToHexColor(isRef(value) ? value.value : value)
+            el.value = normalizeToHexColor(value)
         }
     }
 }
@@ -187,17 +174,13 @@ export const modelColor = {
 
 export const modelRange = {
     created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setModelValue } }: any) {
-        el.value = isRef(value) ? value.value : value
+        el.value = value
         addListener(el, lazy ? 'change' : 'input', () => {
-            if (isRef(value)) {
-                value.value = el.value
-            } else {
-                _setModelValue(el.value)
-            }
+            _setModelValue(el.value)
         })
     },
     beforeUpdate(el: HTMLInputElement, { value }: any) {
-        el.value = isRef(value) ? value.value : value
+        el.value = value
     }
 }
 
@@ -216,3 +199,24 @@ export const modelDatetimeLocal = {
         }
     }
 }
+
+
+export const modelNumber = {
+    created(el: any, { modifiers: { lazy } }: any) {
+        addListener(el, lazy ? 'change' : 'input', () => {
+            console.log(666);
+        })
+    }
+}
+
+
+
+
+export const modelDate = {}
+export const modelEmail = {}
+export const modelMonth = {}
+export const modelWeek = {}
+export const modelPassword = {}
+export const modelSearch = {}
+export const modelTel = {}
+export const modelUrl = {}

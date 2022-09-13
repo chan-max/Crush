@@ -1,5 +1,5 @@
 import {
-    createApp
+    createApp, ref
 } from "./packages/core";
 
 console.time('crush')
@@ -9,11 +9,12 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <h1> {{date}} </h1>
-        <input *model="date" type="datetime-local">
+        <h1> {{text}} </h1>
+        <input *model="text">
     `,
     create({ $self }: any) {
-        $self.date = '2018-06-01T08:30'
+        window.scope = this
+        $self.text = ref('hello')
     }
 }
 

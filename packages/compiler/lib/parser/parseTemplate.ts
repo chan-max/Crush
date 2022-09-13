@@ -211,7 +211,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                         case 'model':
                             if (htmlAst.type === AstTypes.COMPONENT) {
                                 // _modelValue_????
-                                let modelValue = context.setRawScope(attr.value)
+                                let modelValue = context.setRenderScope(attr.value)
                                 attributes.push({
                                     type: AstTypes.ATTRIBUTE,
                                     property: `_modelValue_is_${attr?._arguments?.[0] || 'defaultModelValue'}`,
@@ -254,7 +254,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                                     attr.type = AstTypes.CUSTOM_DIRECTIVE;
                                     // transform 
                                     attr.property = `model${initialUpperCase(modelType)}`
-                                    attr.value = context.setRawScope(attr.value)
+                                    attr.value = context.setRenderScope(attr.value)
                                     attributes.push({
                                         type: AstTypes.ATTRIBUTE,
                                         property: '_setModelValue',

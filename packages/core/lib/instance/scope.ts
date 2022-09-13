@@ -182,6 +182,17 @@ export function createRenderScope(instanceScope: any) {
             // todo magic variables
             var result = Reflect.get(target, key, receiver)
             return isRef(result) ? result.value : result
+        },
+        set(target: any, key: any, newValue: any, receiver: any) {
+
+            let oldValue = Reflect.get(target, key, receiver)
+
+            if (isRef(oldValue)) {
+                oldValue.value = newValue
+            } else {
+                Reflect.set(target, key, newValue, receiver)
+            }
+            return true
         }
     })
 }

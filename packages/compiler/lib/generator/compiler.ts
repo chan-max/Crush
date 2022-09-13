@@ -33,8 +33,7 @@ export class CodeGenerator {
 
 
     renderScope: any
-    scope: any
-
+    
     cache: any
 
     handlerWithCache(handlerExpression: string) {
@@ -117,27 +116,11 @@ export class CodeGenerator {
         }
     }
 
-    parseExpressionWithRawScope(exp: string) {
-        let expInstance = createExpression(exp)
-        expInstance.pushScope(this.scopes)
-        let setScopedExpression = expInstance.scopedExpression(this.renderScope)
-        let variables = expInstance.variables
-        return {
-            expression: setScopedExpression,
-            variables
-        }
-    }
 
     setRenderScope(exp: string) {
         let expInstance = createExpression(exp)
         expInstance.pushScope(this.scopes)
         return expInstance.scopedExpression(this.renderScope)
-    }
-
-    setRawScope(exp: string) {
-        let expInstance = createExpression(exp)
-        expInstance.pushScope(this.scopes)
-        return expInstance.scopedExpression(this.scope)
     }
 
     scopes: any = []
@@ -170,7 +153,7 @@ export function compile(template: string, compilerOptions: any = compilerDefault
 
     // 初始化渲染作用域
     context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
-    context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'))
+
     context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'))
     var htmlAst = baseParseHTML(template)
 
