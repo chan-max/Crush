@@ -184,39 +184,123 @@ export const modelRange = {
     }
 }
 
-
-export const modelDatetimeLocal = {
-    created(el: any, { value, modifiers: { lazy } }: any, vnode: any) {
-        el.value = value
+export const modelNumber = {
+    created(el: any, { modifiers: { lazy }, value }: any, vnode: any) {
         let setModelValue = vnode.props._setModelValue
+        el.value = value
         addListener(el, lazy ? 'change' : 'input', () => {
             setModelValue(el.value)
         })
     },
-    beforeUpdate(el: any, { value }: any, vnode: any) {
-        if (el.value !== value) {
+    beforeUpdate(el: any, { value }: any) {
+        el.value = value
+    }
+}
+
+
+// yyyy-MM-ddThh:mm
+function normalizeToDatetimeLocalInputFormat() {
+
+}
+
+export const modelDatetimeLocal = {
+    created(el: any, { value, modifiers: { lazy } }: any, vnode: any) {
+        // 设置初始值
+        el.value = value
+        el._modelValue = value
+        let setModelValue = vnode.props._setModelValue
+        addListener(el, lazy ? 'change' : 'input', () => {
+            setModelValue(el._modelValue = el.value)
+        })
+    },
+    beforeUpdate(el: any, { value }: any) {
+        if (el._modelValue !== value) {
             el.value = value
         }
     }
 }
 
 
-export const modelNumber = {
-    created(el: any, { modifiers: { lazy } }: any) {
-        addListener(el, lazy ? 'change' : 'input', () => {
-            console.log(666);
+
+
+// format : yyyy-MM-dd
+function normalizeToDateInputFormat(value: any) {
+
+}
+
+export const modelDate = {
+    created(el: any, { value, modifiers }: any, vnode: any) {
+        // 设置初始值
+        el.value = value
+        el._modelValue = value
+        let setModelValue = vnode.props._setModelValue
+        addListener(el, 'input', () => {
+            setModelValue(el._modelValue = el.value)
         })
+    },
+    beforeUpdate(el: any, { value }: any) {
+        if (el._modelValue !== value) {
+            el.value = value
+        }
     }
 }
 
 
 
-
-export const modelDate = {}
 export const modelEmail = {}
-export const modelMonth = {}
-export const modelWeek = {}
+
+
+// format : yyyy-MM
+
+function normalizeToMonthInputFormat() {
+
+}
+
+export const modelMonth = {
+    created(el: any, { value, modifiers }: any, vnode: any) {
+        // 设置初始值
+        el.value = value
+        el._modelValue = value
+        let setModelValue = vnode.props._setModelValue
+        addListener(el, 'input', () => {
+            setModelValue(el._modelValue = el.value)
+        })
+    },
+    beforeUpdate(el: any, { value }: any) {
+        if (el._modelValue !== value) {
+            el.value = value
+        }
+    }
+}
+
+
+// yyyy-Www
+
+function normalizeToWeekInputFormat() {
+
+}
+
+export const modelWeek = {
+    created(el: any, { value, modifiers }: any, vnode: any) {
+        // 设置初始值
+        el.value = value
+        el._modelValue = value
+        let setModelValue = vnode.props._setModelValue
+        addListener(el, 'input', () => {
+            setModelValue(el._modelValue = el.value)
+        })
+    },
+    beforeUpdate(el: any, { value }: any) {
+        if (el._modelValue !== value) {
+            el.value = value
+        }
+    }
+}
+
 export const modelPassword = {}
+
 export const modelSearch = {}
+
 export const modelTel = {}
+
 export const modelUrl = {}

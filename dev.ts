@@ -9,16 +9,13 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <h1> {{text}} </h1>
-        <input *model="text">
+        <h1> {{date}} </h1>
+        <input *model="date" type="week">
     `,
     create({ $self }: any) {
-        window.scope = this
-        $self.text = ref('hello')
+        $self.date = ''
     }
 }
-
-
 
 console.log(app);
 

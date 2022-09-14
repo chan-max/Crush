@@ -86,6 +86,8 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
         return cachedInstance
     }
 
+    // 首次挂载
+
     const instance = createComponentInstance(vnode.type, parent)
 
     vnode.instance = instance

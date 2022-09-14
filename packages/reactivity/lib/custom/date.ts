@@ -2,6 +2,8 @@ import { emptyObject, isUndefined } from "@crush/common"
 import { Ref } from "../ref"
 
 
+
+
 export function useDate(value?: number | string): any
 export function useDate(year: number, month: number, date?: number, hours?: number, minutes?: number, seconds?: number, ms?: number): any
 export function useDate(...dateArgs: []) {
@@ -131,7 +133,7 @@ class DateRef extends Ref {
         }
     }
 
-    format(template: string  = 'YYYY-MM-DD', customKeywords: any = emptyObject) {
+    format(template: string = 'YYYY-MM-DD', customKeywords: any = emptyObject) {
         let w = customKeywords.weekdays || weekdays
         let m = customKeywords.months || months
         return template.replace(dateFormatRE, (capture: string) => {
