@@ -525,8 +525,8 @@
     }
 
     // for renderer
-    const onRE = /^on[A-Z]/;
-    const isEvent = (key) => onRE.test(key);
+    const eventRE = /^on[A-Z]/;
+    const isEvent = (key) => eventRE.test(key);
     function toEventName(event, _arguments, modifiers, filters) {
         /*
             argument $
@@ -990,11 +990,11 @@
     }
     // native events
 
-    const beoforeClassMountHooks = new Set();
+    const beforeClassMountHooks = new Set();
     function onBeforeClassMount(hook) {
-        beoforeClassMountHooks.add(hook);
+        beforeClassMountHooks.add(hook);
         return () => {
-            beoforeClassMountHooks.delete(hook);
+            beforeClassMountHooks.delete(hook);
         };
     }
     function updateClass(el, pClass, nClass) {
@@ -1010,7 +1010,7 @@
                 removeClass(el, className);
             }
             if (n) {
-                for (let beoforeClassMountHook of beoforeClassMountHooks) {
+                for (let beoforeClassMountHook of beforeClassMountHooks) {
                     beoforeClassMountHook(className, el);
                 }
                 addClass(el, className);

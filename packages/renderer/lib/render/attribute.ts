@@ -7,12 +7,12 @@ import { unionkeys } from "./common";
 
 
 
-const beoforeClassMountHooks: any = new Set()
+const beforeClassMountHooks: any = new Set()
 
 export function onBeforeClassMount(hook: any) {
-    beoforeClassMountHooks.add(hook)
+    beforeClassMountHooks.add(hook)
     return () => {
-        beoforeClassMountHooks.delete(hook)
+        beforeClassMountHooks.delete(hook)
     }
 }
 
@@ -32,7 +32,7 @@ export function updateClass(el: Element, pClass: any, nClass: any,) {
         }
 
         if (n) {
-            for (let beoforeClassMountHook of beoforeClassMountHooks) {
+            for (let beoforeClassMountHook of beforeClassMountHooks) {
                 beoforeClassMountHook(className, el)
             }
             addClass(el, className)
@@ -52,7 +52,8 @@ export function unmountClass(el: Element) {
 
 import {
     parseEventName,
-    isEvent
+    isEvent,
+    isInlineEvent
 } from '../common/event'
 
 import { updateDeclaration } from "./declaration";
@@ -64,6 +65,21 @@ export function mountAttributes(el: any, props: any, instance: any = null, isSVG
 }
 
 import { withEventModifiers } from "../common/event";
+
+
+// 这些属性会强制设置为元素的 attributes
+const attributes = [
+    'list' // input 
+]
+
+
+
+function isElementAttribute(el: any, prop: any) {
+    return !(prop in el)  // 元素身上不包含该属性
+        || attributes.includes(prop) // 特殊属性指定
+        || isInlineEvent(prop) // 原生的内联事件也会作为 attribute处理
+}
+
 
 
 export function updateElementAttributes(
@@ -109,7 +125,6 @@ export function updateElementAttributes(
                     // 保留属性
                     continue
                 } else if (isEvent(propName)) {
- 
                     if (pValue === nValue) {
                         continue
                     }
@@ -120,9 +135,9 @@ export function updateElementAttributes(
                         // 生命周期钩子跳过
                         continue
                     }
-                    
+
                     // builtIn events
-                    switch(event){
+                    switch (event) {
                         default:
                     }
 
@@ -138,7 +153,7 @@ export function updateElementAttributes(
                     let nHandler = normalizeHandler(nValue)
                     // 保留原始事件和
                     let handlerMap = el._rawHandlerToModifiedHandler ||= new Map()
-                    
+
                     pHandler.forEach((handler: any) => {
                         if (!nHandler.includes(handler)) {
                             // remove
@@ -153,12 +168,21 @@ export function updateElementAttributes(
                             addListener(el, event, modifiedHandler, options)
                         }
                     });
-                } else if (propName in el && !isSVG) { // dom props
-                    (pValue !== nValue) && (el[propName] = nValue)
-                } else {
+                } else if (isElementAttribute(el, propName)) { // dom props
                     // attribute
+                    
                     propName = hyphenate(propName); // 连字符属性
-                    (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName))
+                    if (pValue !== nValue) {
+                        if (nValue) {
+                            setAttribute(el, propName, nValue)
+                        } else if (pValue) {
+                            removeAttribute(el, propName)
+                        }
+                    }
+                } else {
+                    if (pValue !== nValue) {
+                        el[propName] = nValue
+                    }
                 }
         }
     }

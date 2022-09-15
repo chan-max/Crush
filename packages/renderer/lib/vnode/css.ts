@@ -10,7 +10,7 @@ var createStyleSheet = (props: any, children: any, scoped: any = false, key: any
         type: 'style',
         children,
         scoped,
-        props: normalizeProps(props),
+        props,
         key,
     }
 }

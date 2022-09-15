@@ -9,13 +9,19 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <h1> {{date}} </h1>
-        <input *model="date" type="week">
+            
     `,
     create({ $self }: any) {
-        $self.date = ''
+        $self.input = () => {
+            debugger
+        }
+    },
+    mounted() {
+
     }
 }
+
+
 
 console.log(app);
 

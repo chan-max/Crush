@@ -5,8 +5,10 @@ import { getCurrentApp } from '@crush/core';
 
 // for renderer
 
-const onRE = /^on[A-Z]/;
-export const isEvent = (key: string) => onRE.test(key);
+const eventRE = /^on[A-Z]/;
+export const isEvent = (key: string) => eventRE.test(key);
+const inlineEventNameRE = /^on[a-z]/;
+export const isInlineEvent =  (key: string) => inlineEventNameRE.test(key);
 
 export function toEventName(event: string, _arguments?: string[], modifiers?: string[], filters?: string[]) {
     /*
