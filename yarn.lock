@@ -409,7 +409,7 @@
   "resolved" "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   "version" "0.2.3"
 
-"@crush/animate@^0.0.0", "@crush/animate@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\animate":
+"@crush/animate@^0.0.0", "@crush/animate@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\animate":
   "resolved" "file:packages/animate"
   "version" "0.0.0"
   dependencies:
@@ -418,11 +418,13 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/builtin@^0.0.0", "@crush/builtin@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\builtIn":
+"@crush/builtin@^0.0.0", "@crush/builtin@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\builtIn":
   "resolved" "file:packages/builtIn"
   "version" "0.0.0"
   dependencies:
@@ -431,11 +433,13 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/common@^0.0.0", "@crush/common@1.0.0", "@crush/common@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\common":
+"@crush/common@^0.0.0", "@crush/common@1.0.0", "@crush/common@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\common":
   "resolved" "file:packages/common"
   "version" "0.0.0"
   dependencies:
@@ -444,11 +448,13 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/compiler@^0.0.0", "@crush/compiler@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\compiler":
+"@crush/compiler@^0.0.0", "@crush/compiler@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\compiler":
   "resolved" "file:packages/compiler"
   "version" "0.0.0"
   dependencies:
@@ -457,11 +463,13 @@
     "@crush/common" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/const@^0.0.0", "@crush/const@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\const":
+"@crush/const@^0.0.0", "@crush/const@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\const":
   "resolved" "file:packages/const"
   "version" "0.0.0"
   dependencies:
@@ -470,11 +478,13 @@
     "@crush/common" "^0.0.0"
     "@crush/compiler" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/core@^0.0.0", "@crush/core@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\core":
+"@crush/core@^0.0.0", "@crush/core@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\core":
   "resolved" "file:packages/core"
   "version" "0.0.0"
   dependencies:
@@ -483,17 +493,19 @@
     "@crush/common" "^0.0.0"
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/css@^0.0.0", "@crush/css@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\css":
+"@crush/css@^0.0.0", "@crush/css@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\css":
   "resolved" "file:packages/css"
   "version" "0.0.0"
   dependencies:
     "@crush/compiler" "^0.0.0"
 
-"@crush/reactivity@^0.0.0", "@crush/reactivity@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\reactivity":
+"@crush/reactivity@^0.0.0", "@crush/reactivity@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\reactivity":
   "resolved" "file:packages/reactivity"
   "version" "0.0.0"
   dependencies:
@@ -503,10 +515,12 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/renderer@^0.0.0", "@crush/renderer@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\renderer":
+"@crush/renderer@^0.0.0", "@crush/renderer@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\renderer":
   "resolved" "file:packages/renderer"
   "version" "0.0.0"
   dependencies:
@@ -516,10 +530,12 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/router@^0.0.0", "@crush/router@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\router":
+"@crush/router@^0.0.0", "@crush/router@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\router":
   "resolved" "file:packages/router"
   "version" "0.0.0"
   dependencies:
@@ -529,11 +545,12 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
-"@crush/scheduler@^0.0.0", "@crush/scheduler@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\scheduler":
+"@crush/scheduler@^0.0.0", "@crush/scheduler@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\scheduler":
   "resolved" "file:packages/scheduler"
   "version" "0.0.0"
   dependencies:
@@ -543,10 +560,12 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
 
-"@crush/store@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\store":
+"@crush/store@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\store":
   "resolved" "file:packages/store"
   "version" "0.0.0"
   dependencies:
@@ -556,8 +575,10 @@
     "@crush/compiler" "^0.0.0"
     "@crush/const" "^0.0.0"
     "@crush/core" "^0.0.0"
+    "@crush/css" "^0.0.0"
     "@crush/reactivity" "^0.0.0"
     "@crush/renderer" "^0.0.0"
+    "@crush/router" "^0.0.0"
     "@crush/scheduler" "^0.0.0"
 
 "@docsearch/css@^3.0.0", "@docsearch/css@3.1.0":
@@ -2668,10 +2689,6 @@
   dependencies:
     "array-ify" "^1.0.0"
     "dot-prop" "^5.1.0"
-
-"components@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\components":
-  "resolved" "file:packages/components"
-  "version" "0.0.0"
 
 "concat-map@0.0.1":
   "integrity" "sha1-2Klr13/Wjfd5OnMDajug1UBdR3s="
@@ -7332,9 +7349,13 @@
   "resolved" "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz"
   "version" "0.0.6"
 
-"types@file:E:\\phpstudy_pro\\WWW\\Crush\\packages\\types":
+"types@file:C:\\Users\\Administrator\\Desktop\\workspace\\Crush\\packages\\types":
   "resolved" "file:packages/types"
   "version" "0.0.0"
+  dependencies:
+    "@crush/compiler" "^0.0.0"
+    "@crush/css" "^0.0.0"
+    "@crush/router" "^0.0.0"
 
 "typescript@^4.5.4", "typescript@>=2.4.0", "typescript@>=3.8 <5.0":
   "integrity" "sha512-HM/hFigTBHZhLXshn9sN37H085+hQGeJHJ/X7LpBWLID/fbc2acUMfU+lGD98X81sKP+pFa9f0DZmCwB9GnbAg=="

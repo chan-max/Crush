@@ -1,6 +1,5 @@
 
 export * from './lib/cache'
-export * from './lib/console'
 export * from './lib/makeMap'
 export * from './lib/operate'
 export * from './lib/regexp'

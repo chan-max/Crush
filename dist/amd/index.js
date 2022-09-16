@@ -1,4 +1,4 @@
-// crush.js 1.1.9 created by chan 
+// crush.js 1.1.11 created by chan 
 define(['exports'], (function (exports) { 'use strict';
 
     const cache = (fn) => {
@@ -7,19 +7,6 @@ define(['exports'], (function (exports) { 'use strict';
             const cached = cache[key];
             return cached === undefined ? (cache[key] = fn(key)) : cached;
         });
-    };
-
-    const warn = (...msg) => {
-        console.warn(...msg);
-    };
-    const error = (...msg) => {
-        console.error(...msg);
-    };
-    const log = (...msg) => {
-        console.log(...msg);
-    };
-    const throwError = (...msg) => {
-        throw new Error(...msg);
     };
 
     function createPureObject() {
@@ -226,32 +213,13 @@ define(['exports'], (function (exports) { 'use strict';
         return () => removeListener(target, event, onceHandler, options);
     }
 
-    // normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
-    function normalizeProps(props) {
-        if (!props) {
-            return;
-        }
-        if (props.bind) { // use bind
-            extend(props, props.bind);
-            delete props.bind;
-        }
-        // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
-        if (props.class) {
-            props.class = normalizeClass(props.class);
-        }
-        if (props.style) {
-            props.style = normalizeStyle(props.style);
-        }
-        return props;
-    }
-
     var createStyleSheet = (props, children, scoped = false, key = uid()) => {
         return {
             nodeType: 17 /* STYLE */,
             type: 'style',
             children,
             scoped,
-            props: normalizeProps(props),
+            props,
             key,
         };
     };
@@ -523,6 +491,8 @@ define(['exports'], (function (exports) { 'use strict';
     // for renderer
     const eventRE = /^on[A-Z]/;
     const isEvent = (key) => eventRE.test(key);
+    const inlineEventNameRE = /^on[a-z]/;
+    const isInlineEvent = (key) => inlineEventNameRE.test(key);
     function toEventName(event, _arguments, modifiers, filters) {
         /*
             argument $
@@ -1022,6 +992,15 @@ define(['exports'], (function (exports) { 'use strict';
     function mountAttributes(el, props, instance = null, isSVG) {
         updateElementAttributes(el, null, props, instance, isSVG);
     }
+    // 这些属性会强制设置为元素的 attributes
+    const attributes = [
+        'list' // input 
+    ];
+    function isElementAttribute(el, prop) {
+        return !(prop in el) // 元素身上不包含该属性
+            || attributes.includes(prop) // 特殊属性指定
+            || isInlineEvent(prop); // 原生的内联事件也会作为 attribute处理
+    }
     function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = false, dynamicProps = null) {
         // 如果传了dynamicProps更新即可，没传的话就需要全部更新
         if (!pProps && !nProps) {
@@ -1093,13 +1072,22 @@ define(['exports'], (function (exports) { 'use strict';
                             }
                         });
                     }
-                    else if (propName in el && !isSVG) { // dom props
-                        (pValue !== nValue) && (el[propName] = nValue);
-                    }
-                    else {
+                    else if (isElementAttribute(el, propName)) { // dom props
                         // attribute
                         propName = hyphenate(propName); // 连字符属性
-                        (pValue !== nValue) && (nValue ? setAttribute(el, propName, nValue) : removeAttribute(el, propName));
+                        if (pValue !== nValue) {
+                            if (nValue) {
+                                setAttribute(el, propName, nValue);
+                            }
+                            else if (pValue) {
+                                removeAttribute(el, propName);
+                            }
+                        }
+                    }
+                    else {
+                        if (pValue !== nValue) {
+                            el[propName] = nValue;
+                        }
                     }
             }
         }
@@ -1537,19 +1525,13 @@ define(['exports'], (function (exports) { 'use strict';
                         const { default: _default, type, validator, required, rename } = propsOptions[prop];
                         if (isUndefined(nValue)) {
                             // nValue 不存在在时应该使用默认值
-                            if (required) {
-                                error(`props ${prop} is required`);
-                            }
+                            if (required) ;
                             else {
                                 nValue = _default;
                             }
                         }
-                        if (type && nValue.constructor !== type) {
-                            error(`prop ${nValue} is not the typeOf ${type.name}`);
-                        }
-                        if (validator && !validator(nValue)) {
-                            error(`prop ${nValue} is not legal for custom validator`);
-                        }
+                        if (type && nValue.constructor !== type) ;
+                        if (validator && !validator(nValue)) ;
                         // do update props value
                         scope[rename || prop] = nValue;
                         (instance.props ||= {})[prop] = nValue;
@@ -2329,7 +2311,6 @@ define(['exports'], (function (exports) { 'use strict';
         return (target, key, newValue, receiver) => {
             // 返回 false 时会报错
             if (isReadonly) {
-                warn(`${target} is readonly`);
                 return true;
             }
             if (isProxyKey(target, key)) {
@@ -2376,7 +2357,6 @@ define(['exports'], (function (exports) { 'use strict';
         return result;
     }
     function readonlyDeleteProperty(target, key) {
-        warn(`${key} in `, target, ` can't delete`);
         return true;
     }
     // object handlers
@@ -2588,10 +2568,7 @@ define(['exports'], (function (exports) { 'use strict';
         };
         let unSet = onSet((target, key, newValue, oldValue) => {
             if (target === rawData) {
-                if (watchCallbackIsCalling) {
-                    // callback 中重新设置值会触发死递归
-                    error('cant set reactive data value in the watch callback');
-                }
+                if (watchCallbackIsCalling) ;
                 else {
                     // 设置的值是watchdata中的值，并且不是在回调函数中
                     changeKey = key;
@@ -2637,10 +2614,7 @@ define(['exports'], (function (exports) { 'use strict';
         });
         const unSet = onSet((target, key, newValue, oldValue) => {
             if (targets.has(target)) {
-                if (watchCallbackIsCalling) {
-                    // callback 中重新设置值会触发死递归
-                    error('cant set reactive data value in the watch callback');
-                }
+                if (watchCallbackIsCalling) ;
                 else {
                     // 设置的值是watchdata中的值，并且不是在回调函数中
                     changeTarget = target;
@@ -2691,10 +2665,7 @@ define(['exports'], (function (exports) { 'use strict';
         };
         const unSet = onSet((_target, _key, newValue, oldValue) => {
             if (_target === target && _key === key) { // 侦听目标的对应key触发了
-                if (watchCallbackIsCalling) {
-                    // callback 中重新设置值会触发死递归
-                    error('cant set reactive data value in the watch callback');
-                }
+                if (watchCallbackIsCalling) ;
                 else {
                     // 设置的值是watchdata中的值，并且不是在回调函数中
                     changeNewValue = newValue;
@@ -3426,6 +3397,7 @@ define(['exports'], (function (exports) { 'use strict';
             cachedInstance.componentVnode = vnode;
             return cachedInstance;
         }
+        // 首次挂载
         const instance = createComponentInstance(vnode.type, parent);
         vnode.instance = instance;
         instance.componentVnode = vnode;
@@ -3490,6 +3462,25 @@ define(['exports'], (function (exports) { 'use strict';
         // 处理 keep-alive
         cacheMountedKeepAliveComponent(vnode);
         return instance;
+    }
+
+    // normalize props 会在创建vnode时执行，确保得到的节点props已经处理完毕，不会在
+    function normalizeProps(props) {
+        if (!props) {
+            return;
+        }
+        if (props.bind) { // use bind
+            extend(props, props.bind);
+            delete props.bind;
+        }
+        // 不在渲染时在进行处理，为了可以直接通过vnode获取到相应的class
+        if (props.class) {
+            props.class = normalizeClass(props.class);
+        }
+        if (props.style) {
+            props.style = normalizeStyle(props.style);
+        }
+        return props;
     }
 
     const COMPONENT_TYPE = Symbol('ComponentType');
@@ -3642,9 +3633,6 @@ define(['exports'], (function (exports) { 'use strict';
         let globalComponents = getCurrentApp().components;
         // 支持组件首字母大写
         var component = components?.[name] || components?.[initialUpperCase(name)] || globalComponents?.[name] || globalComponents?.[initialUpperCase(name)];
-        if (!component) {
-            error(`cant find component ${name}`);
-        }
         return component;
     }
     function getDirective(name) {
@@ -3653,9 +3641,6 @@ define(['exports'], (function (exports) { 'use strict';
         // 支持组件首字母大写
         name = String(name);
         var directive = instancedirectives?.[name] || instancedirectives?.[initialUpperCase(name)] || appdirectives?.[name] || appdirectives?.[initialUpperCase(name)];
-        if (!directive) {
-            error(`can't find directive ${name}`);
-        }
         return directive;
     }
 
@@ -4801,11 +4786,11 @@ define(['exports'], (function (exports) { 'use strict';
     }
 
     const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
-    const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/;
+    const declarationRE = /([$\w!-\(\).]+)\s*:\s*([^;]+);/;
+    const singleDeclarationRE = /([$\w!-\(\).]+)\s*;/;
     const CSSCommentRE = /\/\*([\s\S]*?)\*\//;
     const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/;
     const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/;
-    const mixinRE = /\.\.\.([^;]+);/;
     const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/;
     /*
         判断是否已保留字开头，来决定是否为指令，不需要再用 '--' 标识
@@ -4873,15 +4858,6 @@ define(['exports'], (function (exports) { 'use strict';
                 scanner.exec(CSSCommentRE);
                 continue;
             }
-            else if (scanner.startsWith('...')) {
-                var [mixin] = scanner.exec(mixinRE);
-                var m = {
-                    type: 30 /* MIXIN */,
-                    mixin
-                };
-                (declarationGroup ||= []).push(m);
-                continue;
-            }
             else if (cssReservedWord.test(scanner.source)) {
                 /*
                     处理指令，指令不再需要通过标识符去判断
@@ -4926,26 +4902,37 @@ define(['exports'], (function (exports) { 'use strict';
                     selector: parseSelector(exResult[0])
                 };
             }
-            else if (exResult = scanner.exec(declarationRE)) {
+            else if ((exResult = scanner.exec(declarationRE)) || (exResult = scanner.exec(singleDeclarationRE))) {
                 /*
                     the last declaration must end with  " ; "
                 */
                 var declaration = parseAttribute({ attribute: exResult[0], value: exResult[1] });
-                var { property, flag, endFlag } = declaration;
-                if (flag === '$') {
-                    declaration.isDynamicValue = true;
+                if (!declaration.value) {
+                    declaration.value = declaration.property; // 简写形式
                 }
-                else if (flag === '$--') {
-                    declaration.isDynamicValue = true;
-                    declaration.property = '--' + property;
-                    declaration.illegalKey = true;
+                if (declaration.flag === '...') {
+                    (declarationGroup ||= []).push({
+                        type: 30 /* MIXIN */,
+                        mixin: declaration.property
+                    });
+                    continue;
                 }
-                else if (flag === '--') {
-                    declaration.property = '--' + property;
-                    declaration.illegalKey = true;
+                switch (declaration.flag) {
+                    case '$':
+                        declaration.isDynamicValue = true;
+                        break;
+                    case '$--':
+                        declaration.isDynamicValue = true;
+                        declaration.property = '--' + declaration.property;
+                        declaration.illegalKey = true;
+                        break;
+                    case '--':
+                        declaration.property = '--' + declaration.property;
+                        declaration.illegalKey = true;
+                        break;
                 }
                 //! important
-                declaration.isImportant = endFlag === '!';
+                declaration.isImportant = declaration.endFlag === '!';
                 (declarationGroup ||= []).push({
                     declaration,
                     type: 28 /* DECLARATION */
@@ -4956,14 +4943,18 @@ define(['exports'], (function (exports) { 'use strict';
                 /* error */
                 debugger;
             }
-            /* process the relation , with cascading struct */
+            // 一下代表层级结束或开启新的层级
             if (declarationGroup) {
-                var asb = { type: 29 /* DECLARATION_GROUP */ };
-                asb.children = declarationGroup;
-                asb.parent = parent;
-                (parent.children ||= []).push(asb);
+                // 当前层级存在样式声明
+                var dg = {
+                    type: 29 /* DECLARATION_GROUP */,
+                    children: declarationGroup,
+                    parent
+                };
+                (parent.children ||= []).push(dg);
                 declarationGroup = null;
             }
+            // closing only
             if (closing) {
                 stack.pop();
                 parent = stack[stack.length - 1];
@@ -4976,9 +4967,9 @@ define(['exports'], (function (exports) { 'use strict';
                 ast.push(current);
             }
             else {
-                var children = parent.children ||= [];
+                var parentChildren = parent.children ||= [];
                 current.parent = parent;
-                children.push(current);
+                parentChildren.push(current);
             }
             stack.push(current);
             parent = current;
@@ -5081,7 +5072,7 @@ define(['exports'], (function (exports) { 'use strict';
                     break;
                 case 28 /* DECLARATION */:
                     let declaration = rule.declaration;
-                    if (declaration.isDynamicPrperty) {
+                    if (declaration.isDynamicProperty) {
                         declaration.property = context.setRenderScope(declaration.property);
                     }
                     if (declaration.isDynamicValue) {
@@ -5141,15 +5132,11 @@ define(['exports'], (function (exports) { 'use strict';
                             case 'else-if':
                                 htmlAst.isBranch = true;
                                 htmlAst.condition = context.setRenderScope(value);
-                                if (htmlAst.directives) {
-                                    error('else-if指令必须第一个出现');
-                                }
+                                if (htmlAst.directives) ;
                                 break;
                             case 'else':
                                 htmlAst.isBranch = true;
-                                if (htmlAst.iterator) {
-                                    error('else指令必须第一个出现');
-                                }
+                                if (htmlAst.iterator) ;
                                 break;
                             case 'for':
                                 // for 指令会最最先进行处理 ， 因为要进行变量提升
@@ -5255,7 +5242,7 @@ define(['exports'], (function (exports) { 'use strict';
                             case 'model':
                                 if (htmlAst.type === 4 /* COMPONENT */) {
                                     // _modelValue_????
-                                    let modelValue = context.setRawScope(attr.value);
+                                    let modelValue = context.setRenderScope(attr.value);
                                     attributes.push({
                                         type: 15 /* ATTRIBUTE */,
                                         property: `_modelValue_is_${attr?._arguments?.[0] || 'defaultModelValue'}`,
@@ -5272,7 +5259,26 @@ define(['exports'], (function (exports) { 'use strict';
                                     });
                                 }
                                 else {
-                                    let supportModelTypes = ['text', 'radio', 'checkbox', 'selectMultiple', 'selectOne', 'color', 'range'];
+                                    let supportModelTypes = [
+                                        'text',
+                                        'radio',
+                                        'checkbox',
+                                        'selectMultiple',
+                                        'selectOne',
+                                        'color',
+                                        'range',
+                                        'date',
+                                        'datetime-local',
+                                        'email',
+                                        'month',
+                                        'number',
+                                        'password',
+                                        'search',
+                                        'tel',
+                                        'text',
+                                        'url',
+                                        'week'
+                                    ];
                                     let modelType = htmlAst.tag === 'select' ?
                                         (hasOwn(htmlAst.rawAttributeMap, 'multiple') ?
                                             'selectMultiple' : 'selectOne') : (htmlAst.rawAttributeMap.type || 'text');
@@ -5280,7 +5286,7 @@ define(['exports'], (function (exports) { 'use strict';
                                         attr.type = 19 /* CUSTOM_DIRECTIVE */;
                                         // transform 
                                         attr.property = `model${initialUpperCase(modelType)}`;
-                                        attr.value = context.setRawScope(attr.value);
+                                        attr.value = context.setRenderScope(attr.value);
                                         attributes.push({
                                             type: 15 /* ATTRIBUTE */,
                                             property: '_setModelValue',
@@ -5351,24 +5357,31 @@ define(['exports'], (function (exports) { 'use strict';
                         else {
                             attr.type = 15 /* ATTRIBUTE */;
                             // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                            attr.value = attr.property;
                             attr.property = 'id';
                             attr.isDynamicValue = attr.isDynamicProperty;
                             attr.isDynamicProperty = false;
-                            attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
+                            if (attr.isDynamicValue) {
+                                attr.value = context.setRenderScope(attr.value);
+                            }
                         }
                         break;
                     case '.':
                         attr.type = 17 /* ATTRIBUTE_CLASS */;
+                        attr.value = attr.property;
+                        attr.property = 'class';
                         attr.isDynamicValue = attr.isDynamicProperty;
                         attr.isDynamicProperty = false;
-                        attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property;
-                        attr.property = 'class';
+                        if (attr.isDynamicValue) {
+                            attr.value = context.setRenderScope(attr.value);
+                        }
                         break;
                     case '...':
                         attr.type = 15 /* ATTRIBUTE */;
+                        attribute.value = attr.property;
                         attribute.property = 'bind';
                         attribute.isDynamicValue = true;
-                        attr.value = context.setRenderScope(attr.property);
+                        attr.value = context.setRenderScope(attr.value);
                         break;
                     default:
                         attr.type = 15 /* ATTRIBUTE */;
@@ -5482,7 +5495,6 @@ define(['exports'], (function (exports) { 'use strict';
         components = {};
         directives = {};
         renderScope;
-        scope;
         cache;
         handlerWithCache(handlerExpression) {
             // let cacheId = uVar()
@@ -5557,25 +5569,10 @@ define(['exports'], (function (exports) { 'use strict';
                 variables
             };
         }
-        parseExpressionWithRawScope(exp) {
-            let expInstance = createExpression(exp);
-            expInstance.pushScope(this.scopes);
-            let setScopedExpression = expInstance.scopedExpression(this.renderScope);
-            let variables = expInstance.variables;
-            return {
-                expression: setScopedExpression,
-                variables
-            };
-        }
         setRenderScope(exp) {
             let expInstance = createExpression(exp);
             expInstance.pushScope(this.scopes);
             return expInstance.scopedExpression(this.renderScope);
-        }
-        setRawScope(exp) {
-            let expInstance = createExpression(exp);
-            expInstance.pushScope(this.scopes);
-            return expInstance.scopedExpression(this.scope);
         }
         scopes = [];
         pushScope(scope) {
@@ -5595,7 +5592,6 @@ define(['exports'], (function (exports) { 'use strict';
         context.compilerOptions = compilerOptions;
         // 初始化渲染作用域
         context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
-        context.scope = context.hoistExpression(context.callRenderFn('getCurrentScope'));
         context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'));
         var htmlAst = baseParseHTML(template);
         processTemplateAst(htmlAst, context);
@@ -5906,27 +5902,15 @@ define(['exports'], (function (exports) { 'use strict';
         created(el, { value, modifiers }, vnode) {
             const { lazy, number, trim, debounce: useDebounce } = modifiers;
             const setter = vnode.props._setModelValue;
-            el._modelValue = value;
             // 设置input初始值
-            if (isRef(value)) {
-                // 如果没设置初始值，会显示 undefined
-                el.value = isUndefined(value.value) ? '' : value.value;
-            }
-            else {
-                el.value = isUndefined(value) ? '' : value;
-            }
+            el.value = isUndefined(value) ? '' : value;
             let inputHandler = () => {
                 let inputValue = el.value;
                 // number 和 trim 不能同时使用 , 空字符串转数字会变为0
                 inputValue = inputValue === '' ? '' : number ? toNumber(inputValue) : trim ? inputValue.trim() : inputValue;
                 // 标记输入框刚刚输入完毕
                 el._inputing = true;
-                if (isRef(el._modelValue)) {
-                    el._modelValue.value = inputValue;
-                }
-                else {
-                    setter(inputValue);
-                }
+                setter(inputValue);
             };
             if (useDebounce) {
                 let debounceNextModifier = modifiers[modifiers.indexOf('debounce') + 1];
@@ -5943,9 +5927,7 @@ define(['exports'], (function (exports) { 'use strict';
                 el._inputing = false;
             }
             else {
-                el._modelValue = el.value;
-                let newValue = isRef(value) ? value.value : value;
-                el.value = isUndefined(newValue) ? '' : newValue;
+                el.value = isUndefined(value) ? '' : value;
             }
         }
     };
@@ -6044,14 +6026,13 @@ define(['exports'], (function (exports) { 'use strict';
     // 目前只支持 16 进制
     const modelColor = {
         created(el, { value, modifiers: { lazy, rgb, hsl, } }, vnode) {
-            el._mdelValue = value;
             const setter = vnode.props._setModelValue;
             // 设置初始值
-            el.value = normalizeToHexColor(isRef(value) ? value.value : value);
+            el.value = normalizeToHexColor(value);
             addListener(el, lazy ? 'change' : 'input', () => {
                 el._inputing = true;
                 let colorValue = rgb ? hexToRgb(el.value) : hsl ? hexToHsl(el.value) : el.value;
-                isRef(el._mdelValue) ? el._mdelValue.value = colorValue : setter(colorValue);
+                setter(colorValue);
             });
         },
         beforeUpdate(el, { value }) {
@@ -6059,27 +6040,102 @@ define(['exports'], (function (exports) { 'use strict';
                 el._inputing = false;
             }
             else {
-                el._mdelValue = value;
-                el.value = normalizeToHexColor(isRef(value) ? value.value : value);
+                el.value = normalizeToHexColor(value);
             }
         }
     };
     const modelRange = {
         created(el, { value, modifiers: { lazy } }, { props: { _setModelValue } }) {
-            el.value = isRef(value) ? value.value : value;
+            el.value = value;
             addListener(el, lazy ? 'change' : 'input', () => {
-                if (isRef(value)) {
-                    value.value = el.value;
-                }
-                else {
-                    _setModelValue(el.value);
-                }
+                _setModelValue(el.value);
             });
         },
         beforeUpdate(el, { value }) {
-            el.value = isRef(value) ? value.value : value;
+            el.value = value;
         }
     };
+    const modelNumber = {
+        created(el, { modifiers: { lazy }, value }, vnode) {
+            let setModelValue = vnode.props._setModelValue;
+            el.value = value;
+            addListener(el, lazy ? 'change' : 'input', () => {
+                setModelValue(el.value);
+            });
+        },
+        beforeUpdate(el, { value }) {
+            el.value = value;
+        }
+    };
+    const modelDatetimeLocal = {
+        created(el, { value, modifiers: { lazy } }, vnode) {
+            // 设置初始值
+            el.value = value;
+            el._modelValue = value;
+            let setModelValue = vnode.props._setModelValue;
+            addListener(el, lazy ? 'change' : 'input', () => {
+                setModelValue(el._modelValue = el.value);
+            });
+        },
+        beforeUpdate(el, { value }) {
+            if (el._modelValue !== value) {
+                el.value = value;
+            }
+        }
+    };
+    const modelDate = {
+        created(el, { value, modifiers }, vnode) {
+            // 设置初始值
+            el.value = value;
+            el._modelValue = value;
+            let setModelValue = vnode.props._setModelValue;
+            addListener(el, 'input', () => {
+                setModelValue(el._modelValue = el.value);
+            });
+        },
+        beforeUpdate(el, { value }) {
+            if (el._modelValue !== value) {
+                el.value = value;
+            }
+        }
+    };
+    const modelEmail = {};
+    const modelMonth = {
+        created(el, { value, modifiers }, vnode) {
+            // 设置初始值
+            el.value = value;
+            el._modelValue = value;
+            let setModelValue = vnode.props._setModelValue;
+            addListener(el, 'input', () => {
+                setModelValue(el._modelValue = el.value);
+            });
+        },
+        beforeUpdate(el, { value }) {
+            if (el._modelValue !== value) {
+                el.value = value;
+            }
+        }
+    };
+    const modelWeek = {
+        created(el, { value, modifiers }, vnode) {
+            // 设置初始值
+            el.value = value;
+            el._modelValue = value;
+            let setModelValue = vnode.props._setModelValue;
+            addListener(el, 'input', () => {
+                setModelValue(el._modelValue = el.value);
+            });
+        },
+        beforeUpdate(el, { value }) {
+            if (el._modelValue !== value) {
+                el.value = value;
+            }
+        }
+    };
+    const modelPassword = {};
+    const modelSearch = {};
+    const modelTel = {};
+    const modelUrl = {};
 
     function setDisplay(el, show) {
         if (show) {
@@ -7379,6 +7435,16 @@ define(['exports'], (function (exports) { 'use strict';
         show: showDirective,
         transition: transitionDirective,
         transitionGroup: transitionGroupDirective,
+        modelDatetimeLocal,
+        modelNumber,
+        modelDate,
+        modelEmail,
+        modelMonth,
+        modelPassword,
+        modelSearch,
+        modelTel,
+        modelUrl,
+        modelWeek,
     };
 
     // app.config.responsive
@@ -7701,21 +7767,47 @@ define(['exports'], (function (exports) { 'use strict';
                 // todo magic variables
                 var result = Reflect.get(target, key, receiver);
                 return isRef(result) ? result.value : result;
+            },
+            set(target, key, newValue, receiver) {
+                let oldValue = Reflect.get(target, key, receiver);
+                if (isRef(oldValue)) {
+                    oldValue.value = newValue;
+                }
+                else {
+                    Reflect.set(target, key, newValue, receiver);
+                }
+                return true;
             }
         });
     }
 
+    const warn = console.warn;
+    const error = console.error;
+    function injectGlobalErrorCapture(fn) {
+        return (...args) => {
+            try {
+                return fn(...args);
+            }
+            catch (e) {
+                debugger;
+            }
+        };
+    }
+    function throwError(...msg) {
+        throw new Error(...msg);
+    }
+
     // forward
-    log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`);
+    console.log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`);
     var currentApp;
     function getCurrentApp() {
         return currentApp;
     }
-    function createApp(rootComponent) {
+    const createApp = injectGlobalErrorCapture(baseCreateApp);
+    function baseCreateApp(rootComponent) {
         if (currentApp) {
             // 只能有一个应用
-            warn('APP', currentApp, 'is runing and there can only be one application in your webpage');
-            return;
+            throwError('APP', currentApp, 'is runing and there can only be one application in your webpage');
         }
         const app = {
             isMounted: false,
@@ -7731,8 +7823,8 @@ define(['exports'], (function (exports) { 'use strict';
             mount: mountApp,
             unmount: unmountApp,
             beforeAppMount: null,
-            errorHandler: null,
-            warnHandler: null,
+            onError: null,
+            onWarn: null,
             // 全局颜色 $colors
             colors,
             // 按键修饰符
@@ -8114,12 +8206,14 @@ define(['exports'], (function (exports) { 'use strict';
             }
             else if (key.startsWith(hookKey)) {
                 if (key.startsWith(hookKey + '$modelValue')) {
+                    // 组件的 model
                     let modelKey = key.split('_')[1];
                     // 每次更新需要对比 新旧值，如果变化通过setter传递到父组件
                     let setParentModelValue = vnode.props[key];
                     setParentModelValue(scope[modelKey]);
                 }
                 else {
+                    // 普通的 属性钩子
                     normalizeHandler(vnode.props[key]).forEach((handler) => handler(scope));
                 }
             }
@@ -8461,7 +8555,6 @@ define(['exports'], (function (exports) { 'use strict';
     exports.emptyArray = emptyArray;
     exports.emptyFunction = emptyFunction;
     exports.emptyObject = emptyObject;
-    exports.error = error;
     exports.eventModifiers = eventModifiers;
     exports.exec = exec;
     exports.execCaptureGroups = execCaptureGroups;
@@ -8541,6 +8634,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.isHandler = isHandler;
     exports.isHexColor = isHexColor;
     exports.isHslColor = isHslColor;
+    exports.isInlineEvent = isInlineEvent;
     exports.isNumber = isNumber;
     exports.isNumberString = isNumberString;
     exports.isObject = isObject;
@@ -8562,7 +8656,6 @@ define(['exports'], (function (exports) { 'use strict';
     exports.keyframes = keyframes;
     exports.lighten = lighten;
     exports.linearGradient = linearGradient;
-    exports.log = log;
     exports.makeMap = makeMap;
     exports.mark = mark;
     exports.markRaw = markRaw;
@@ -8690,7 +8783,6 @@ define(['exports'], (function (exports) { 'use strict';
     exports.ternaryExp = ternaryExp;
     exports.textModifiers = textModifiers;
     exports.throttle = throttle;
-    exports.throwError = throwError;
     exports.toAbsoluteValue = toAbsoluteValue;
     exports.toArray = toArray;
     exports.toArrowFunction = toArrowFunction;
@@ -8760,7 +8852,6 @@ define(['exports'], (function (exports) { 'use strict';
     exports.useString = useString;
     exports.useUid = useUid;
     exports.useWatch = useWatch;
-    exports.warn = warn;
     exports.watch = watch;
     exports.watchReactive = watchReactive;
     exports.watchRef = watchRef;

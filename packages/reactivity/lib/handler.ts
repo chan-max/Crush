@@ -1,4 +1,4 @@
-import { isArray, isFunction, hasOwn, warn } from "@crush/common"
+import { isArray, isFunction, hasOwn } from "@crush/common"
 import { ReactiveFlags, ReactiveTypes, ReactiveTypeSymbol, toRaw } from "./common"
 import { reactive, readonly } from "./reactive"
 
@@ -231,7 +231,6 @@ export function createSetter(isReadonly: boolean = false, isShallow: boolean = f
     return (target: any, key: any, newValue: any, receiver: any) => {
         // 返回 false 时会报错
         if (isReadonly) {
-            warn(`${target} is readonly`)
             return true
         }
         if (isProxyKey(target, key)) {
@@ -289,7 +288,6 @@ function deleteProperty(target: any, key: any) {
 }
 
 function readonlyDeleteProperty(target: any, key: any) {
-    warn(`${key} in `, target, ` can't delete`)
     return true
 }
 

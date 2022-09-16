@@ -1,6 +1,6 @@
 import { createComponentInstance, LifecycleHooks, callHook, } from "@crush/core"
 
-import { emptyFunction, emptyObject, error, isFunction, isObject, mark } from "@crush/common"
+import { emptyFunction, emptyObject, isFunction, isObject, mark } from "@crush/common"
 
 import renderMethods from "../renderMethodsExport"
 import { processVnodePrerender } from "./processVnodePrerender"

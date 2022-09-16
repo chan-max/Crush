@@ -1,4 +1,4 @@
-import { error } from "@crush/common";
+
 import { isProxyType, isReactive, toRaw } from "./common";
 import { getDeps, targetObserverSymbol } from "./effect";
 import { onSet } from "./handler";
@@ -33,7 +33,6 @@ export function shallowWatchReactive(data: any, callback: any) {
         if (target === rawData) {
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
-                error('cant set reactive data value in the watch callback')
             } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeKey = key
@@ -95,7 +94,6 @@ export function watchReactive(reactiveData: any, callback: any) {
         if (targets.has(target)) {
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
-                error('cant set reactive data value in the watch callback')
             } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeTarget = target
@@ -156,7 +154,6 @@ export function watchTargetKey(reactiveTarget: any, key: any, callback: any) {
         if (_target === target && _key === key) { // 侦听目标的对应key触发了
             if (watchCallbackIsCalling) {
                 // callback 中重新设置值会触发死递归
-                error('cant set reactive data value in the watch callback')
             } else {
                 // 设置的值是watchdata中的值，并且不是在回调函数中
                 changeNewValue = newValue

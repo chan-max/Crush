@@ -9,19 +9,20 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-            
+        <style>
+            h1{
+                $color;
+            }
+        </style>
+        <h1> hello </h1>
     `,
     create({ $self }: any) {
-        $self.input = () => {
-            debugger
-        }
+        $self.color = 'red'
     },
     mounted() {
 
     }
 }
-
-
 
 console.log(app);
 

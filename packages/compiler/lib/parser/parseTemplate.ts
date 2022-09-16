@@ -1,4 +1,4 @@
-import { camelize, error, hasOwn, hyphenate, initialUpperCase, isArray, uid } from "@crush/common";
+import { camelize, hasOwn, hyphenate, initialUpperCase, isArray, uid } from "@crush/common";
 import { CodeGenerator } from "../generator/compiler";
 import { toArrowFunction, toBackQuotes } from "../stringify";
 import { extractFunctionArgs } from "../withScope";
@@ -99,13 +99,11 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             htmlAst.isBranch = true
                             htmlAst.condition = context.setRenderScope(value)
                             if (htmlAst.directives) {
-                                error('else-if指令必须第一个出现')
                             }
                             break
                         case 'else':
                             htmlAst.isBranch = true
                             if (htmlAst.iterator) {
-                                error('else指令必须第一个出现')
                             }
                             break
                         case 'for':
@@ -323,24 +321,31 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     } else {
                         attr.type = AstTypes.ATTRIBUTE
                         // id 如果是驼峰形式，则在模版中一定是连字符写法 ， 需要转回连字符形式
+                        attr.value = attr.property
                         attr.property = 'id'
                         attr.isDynamicValue = attr.isDynamicProperty
                         attr.isDynamicProperty = false
-                        attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
+                        if (attr.isDynamicValue) {
+                            attr.value = context.setRenderScope(attr.value)
+                        }
                     }
                     break
                 case '.':
                     attr.type = AstTypes.ATTRIBUTE_CLASS
+                    attr.value = attr.property
+                    attr.property = 'class'
                     attr.isDynamicValue = attr.isDynamicProperty
                     attr.isDynamicProperty = false
-                    attr.value = attr.isDynamicValue ? context.setRenderScope(attr.property) : attr.property
-                    attr.property = 'class'
+                    if (attr.isDynamicValue) {
+                        attr.value = context.setRenderScope(attr.value)
+                    }
                     break
                 case '...':
                     attr.type = AstTypes.ATTRIBUTE
+                    attribute.value = attr.property
                     attribute.property = 'bind'
                     attribute.isDynamicValue = true
-                    attr.value = context.setRenderScope(attr.property)
+                    attr.value = context.setRenderScope(attr.value)
                     break
                 default:
                     attr.type = AstTypes.ATTRIBUTE

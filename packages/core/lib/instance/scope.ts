@@ -1,5 +1,5 @@
 import { doKeyframesAnimation } from "@crush/animate";
-import { hasOwn, isPromise, uid, warn } from "@crush/common";
+import { hasOwn, isPromise, uid,} from "@crush/common";
 import { isRef, reactive } from "@crush/reactivity";
 import { getEdgeElements } from "@crush/renderer";
 import cssMethods from '@crush/renderer/lib/builtIn/cssFunctionExport'

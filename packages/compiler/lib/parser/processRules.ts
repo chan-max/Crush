@@ -52,7 +52,7 @@ export const processRules = (rules: any, context: any, isKeyframe = false) => {
                 break
             case AstTypes.DECLARATION:
                 let declaration = rule.declaration
-                if (declaration.isDynamicPrperty) {
+                if (declaration.isDynamicProperty) {
                     declaration.property = context.setRenderScope(declaration.property)
                 }
                 if (declaration.isDynamicValue) {

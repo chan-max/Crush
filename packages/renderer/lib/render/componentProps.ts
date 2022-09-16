@@ -1,4 +1,4 @@
-import { emptyObject, error, isUndefined } from "@crush/common";
+import { emptyObject, isUndefined } from "@crush/common";
 import { getEventName, isComponentLifecycleHook, isEvent, parseEventName } from "@crush/core";
 import { unionkeys } from "./common";
 import { updateInstanceListeners } from "./componentListener";
@@ -58,18 +58,16 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     if (isUndefined(nValue)) {
                         // nValue 不存在在时应该使用默认值
                         if (required) {
-                            error(`props ${prop} is required`)
                         } else {
                             nValue = _default
                         }
                     }
 
                     if (type && nValue.constructor !== type) {
-                        error(`prop ${nValue} is not the typeOf ${type.name}`)
+
                     }
 
                     if (validator && !validator(nValue)) {
-                        error(`prop ${nValue} is not legal for custom validator`)
                     }
 
                     // do update props value

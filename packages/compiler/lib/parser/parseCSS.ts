@@ -12,14 +12,16 @@ import {
 
 
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
-const declarationRE = /([$\w!-\]\[]+)\s*:\s*([^;]+);/
+
+
+const declarationRE = /([$\w!-\(\).]+)\s*:\s*([^;]+);/
+
+const singleDeclarationRE = /([$\w!-\(\).]+)\s*;/
 
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
 
 const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/
 const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/
-
-const mixinRE = /\.\.\.([^;]+);/
 
 const CSSDir = /^([\w-]+)\s*(?:\(([^{]*)\))?\s*{/
 /*
@@ -43,7 +45,7 @@ export const parseCSS = (source: string, context: any): any => {
         parent = null,
         closing = false,
         declarationGroup: any
-    
+
     while (scanner.source) {
         if (scanner.startsWith('}')) {
             closing = true
@@ -96,14 +98,6 @@ export const parseCSS = (source: string, context: any): any => {
             /* comment */
             scanner.exec(CSSCommentRE)
             continue
-        } else if (scanner.startsWith('...')) {
-            var [mixin]: any = scanner.exec(mixinRE);
-            var m = {
-                type: AstTypes.MIXIN,
-                mixin
-            };
-            (declarationGroup ||= []).push(m)
-            continue
         } else if (cssReservedWord.test(scanner.source)) {
             /*
                 处理指令，指令不再需要通过标识符去判断
@@ -146,30 +140,44 @@ export const parseCSS = (source: string, context: any): any => {
                 type: AstTypes.STYLE_RULE,
                 selector: parseSelector(exResult[0])
             }
-        } else if (exResult = scanner.exec(declarationRE)) {
+        } else if ((exResult = scanner.exec(declarationRE)) || (exResult = scanner.exec(singleDeclarationRE))) {
             /*
                 the last declaration must end with  " ; "
             */
+
             var declaration: any = parseAttribute({ attribute: exResult[0], value: exResult[1] });
 
-            var {
-                property,
-                flag,
-                endFlag
-            } = declaration
 
-            if (flag === '$') {
-                declaration.isDynamicValue = true
-            } else if (flag === '$--') {
-                declaration.isDynamicValue = true
-                declaration.property = '--' + property
-                declaration.illegalKey = true
-            } else if (flag === '--') {
-                declaration.property = '--' + property
-                declaration.illegalKey = true
+            if (!declaration.value) {
+                declaration.value = declaration.property // 简写形式
             }
+
+            if (declaration.flag === '...') {
+                (declarationGroup ||= []).push({
+                    type: AstTypes.MIXIN,
+                    mixin: declaration.property
+                })
+                continue
+            }
+
+            switch (declaration.flag) {
+                case '$':
+                    declaration.isDynamicValue = true;
+
+                    break
+                case '$--':
+                    declaration.isDynamicValue = true
+                    declaration.property = '--' + declaration.property
+                    declaration.illegalKey = true
+                    break
+                case '--':
+                    declaration.property = '--' + declaration.property
+                    declaration.illegalKey = true
+                    break
+            }
+
             //! important
-            declaration.isImportant = endFlag === '!';
+            declaration.isImportant = declaration.endFlag === '!';
 
             (declarationGroup ||= []).push({
                 declaration,
@@ -181,16 +189,20 @@ export const parseCSS = (source: string, context: any): any => {
             debugger
         }
 
-        /* process the relation , with cascading struct */
+        // 一下代表层级结束或开启新的层级
 
         if (declarationGroup) {
-            var asb: any = { type: AstTypes.DECLARATION_GROUP };
-            asb.children = declarationGroup;
-            asb.parent = parent;
-            (parent.children ||= []).push(asb)
+            // 当前层级存在样式声明
+            var dg: any = {
+                type: AstTypes.DECLARATION_GROUP,
+                children: declarationGroup,
+                parent
+            };
+            (parent.children ||= []).push(dg)
             declarationGroup = null
         }
 
+        // closing only
         if (closing) {
             stack.pop()
             parent = stack[stack.length - 1]
@@ -203,10 +215,11 @@ export const parseCSS = (source: string, context: any): any => {
             // while there is no parent , the currentDeclaration is meaningless
             ast.push(current)
         } else {
-            var children = parent.children ||= [];
+            var parentChildren = parent.children ||= [];
             current.parent = parent
-            children.push(current)
+            parentChildren.push(current)
         }
+
         stack.push(current);
         parent = current
     }

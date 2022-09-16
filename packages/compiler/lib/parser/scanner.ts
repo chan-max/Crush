@@ -1,4 +1,4 @@
-import { error, exec } from "@crush/common"
+import { exec } from "@crush/common"
 
 export const createScanner = (source: string) => new Scanner(source)
 

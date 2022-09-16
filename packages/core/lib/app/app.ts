@@ -1,11 +1,11 @@
 import { builtInComponents, builtInDirectives } from "@crush/builtin"
-import { camelize, error, hyphenate, isFunction, isObject, log, warn } from "@crush/common"
+import { camelize, hyphenate, isFunction, isObject, } from "@crush/common"
 import { isString } from "@crush/common"
 import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 
 import { PluginType } from "../instance/plugin"
-import { createElement, createReverseKeyCodes, mount, unmountComponent } from "@crush/renderer"
+import { createElement, mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 import { colors } from "@crush/reactivity"
 import { installAnimation } from '@crush/animate'
@@ -15,9 +15,11 @@ import { keyCodes } from '@crush/renderer'
 import { textModifiers } from "@crush/renderer"
 import { eventModifiers } from '@crush/renderer'
 import { replaceAllReservedCharacters } from "@crush/compiler"
+import { injectGlobalErrorCapture, throwError, warn, error } from "./error"
+
 
 // forward
-log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`)
+console.log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`)
 
 var currentApp: any
 
@@ -25,14 +27,14 @@ export function getCurrentApp(): any {
     return currentApp
 }
 
-export function createApp(rootComponent?: any) {
+export const createApp = injectGlobalErrorCapture(baseCreateApp)
+
+function baseCreateApp(rootComponent?: any) {
 
     if (currentApp) {
         // 只能有一个应用
-        warn('APP', currentApp, 'is runing and there can only be one application in your webpage')
-        return
+        warn(`app is running and there only can exist one app`)
     }
-
 
     const app: any = {
         isMounted: false,
@@ -48,8 +50,8 @@ export function createApp(rootComponent?: any) {
         mount: mountApp,
         unmount: unmountApp,
         beforeAppMount: null,
-        errorHandler: null,
-        warnHandler: null,
+        onError: null,
+        onWarn: null,
 
         // 全局颜色 $colors
         colors,
@@ -72,6 +74,7 @@ export function createApp(rootComponent?: any) {
     }
 
     currentApp = app
+
     // 安装动画
     use(installAnimation)
 
@@ -84,7 +87,7 @@ export function createApp(rootComponent?: any) {
         }
     }
 
-
+    
 
     function mixin(mixin: any) {
         app.mixins.push(mixin)
@@ -145,7 +148,7 @@ export function createApp(rootComponent?: any) {
         app.isMounted = true
     }
 
-    
+
 
     function unmountApp() {
 
