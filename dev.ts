@@ -9,20 +9,17 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <style>
-            h1{
-                $color;
-            }
-        </style>
-        <h1> hello </h1>
+        <h1 @click="count++"> {{count}} </h1>
     `,
     create({ $self }: any) {
-        $self.color = 'red'
+        $self.count = 0
     },
     mounted() {
 
     }
 }
+
+
 
 console.log(app);
 

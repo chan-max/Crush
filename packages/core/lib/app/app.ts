@@ -27,9 +27,8 @@ export function getCurrentApp(): any {
     return currentApp
 }
 
-export const createApp = injectGlobalErrorCapture(baseCreateApp)
 
-function baseCreateApp(rootComponent?: any) {
+export function createApp(rootComponent?: any) {
 
     if (currentApp) {
         // 只能有一个应用
@@ -87,7 +86,6 @@ function baseCreateApp(rootComponent?: any) {
         }
     }
 
-    
 
     function mixin(mixin: any) {
         app.mixins.push(mixin)

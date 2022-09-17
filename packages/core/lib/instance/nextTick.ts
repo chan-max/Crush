@@ -5,6 +5,7 @@ export var nextTick = (fn: Function, args = undefined) => {
     p.then(fn.bind(null))
 }
 
+
 var queueJobs = new Set()
 export function queueJob(job: Function) {
     queueJobs.add(job)

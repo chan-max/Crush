@@ -91,7 +91,7 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
                 let setParentModelValue = vnode.props[key]
                 setParentModelValue(scope[modelKey])
             } else {
-                // 普通的 属性钩子
+                // 普通的 属性钩子, 支持数组
                 normalizeHandler(vnode.props[key]).forEach((handler: any) => handler(scope))
             }
         }

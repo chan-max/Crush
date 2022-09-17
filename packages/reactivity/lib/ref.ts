@@ -34,6 +34,7 @@ export class Ref {
         this.sensitive = options.sensitive
         this.shallow = options.shallow
         this.onSet = options.onSet
+        this.onGet = options.onGet
         this._value = value
     }
 
@@ -68,7 +69,7 @@ export class Ref {
 
 const refDepsMap = new WeakMap()
 
-export function getRefDeps(ref:any) {
+export function getRefDeps(ref: any) {
     let deps = refDepsMap.get(ref)
     if (!deps) {
         deps = new Set()
@@ -89,8 +90,6 @@ export function trackRef(ref: any) {
     if (!activeEffect) return
 
     let deps = getRefDeps(ref)
-
-
 
     deps.add(activeEffect)
     // 用于清除依赖

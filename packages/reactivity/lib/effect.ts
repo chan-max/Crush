@@ -16,13 +16,13 @@ export function getDepsMap(target: any) {
 
 export function getDeps(target: any, key: any) {
     // ref 和 set类型 没有depsMap ，只有 deps
-        let depsMap = getDepsMap(target)
-        let deps = depsMap.get(key);
-        if (!deps) {
-            deps = new Set()
-            depsMap.set(key, deps);
-        }
-        return deps
+    let depsMap = getDepsMap(target)
+    let deps = depsMap.get(key);
+    if (!deps) {
+        deps = new Set()
+        depsMap.set(key, deps);
+    }
+    return deps
 }
 
 
@@ -49,11 +49,11 @@ export function triggerTargetObserver(target: any) {
 }
 
 export function trigger(target: any, key?: any) {
-        // 任一key内容改变都会触发这一依赖
-        if (key !== targetObserverSymbol) { // 防止递归死循环
-            triggerTargetObserver(target)
-        }
-        triggerTargetKey(target, key)
+    // 任一key内容改变都会触发这一依赖
+    if (key !== targetObserverSymbol) { // 防止递归死循环
+        triggerTargetObserver(target)
+    }
+    triggerTargetKey(target, key)
 }
 
 

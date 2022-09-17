@@ -90,9 +90,8 @@ export function isComponentLifecycleHook(name: any) {
 // is renderComponent hook ???
 
 
-/*
-    binding is used for bind the callback context , it is necessary
-*/
+
+
 function callHook(type: LifecycleHooks, target: any, options: any = null, ...args: any[]): undefined | any[] {
     // hooks is always be array
     const hooks = target[type]
@@ -110,6 +109,7 @@ function callHook(type: LifecycleHooks, target: any, options: any = null, ...arg
 
 import { getCurrentInstance } from "@crush/renderer"
 
+
 const createHook = (type: LifecycleHooks) => (hook: any) => injectHook(type, getCurrentInstance(), hook)
 
 const onCreated = createHook(LifecycleHooks.CREATED)
@@ -119,10 +119,12 @@ const onBeforeUpdate = createHook(LifecycleHooks.BEFORE_UPDATE)
 const onUpdated = createHook(LifecycleHooks.UPDATED)
 const onBeforeUnmount = createHook(LifecycleHooks.BEFORE_UNMOUNT)
 const onUnmounted = createHook(LifecycleHooks.UNMOUNTED)
-export const onBeforePatch = createHook(LifecycleHooks.BEFORE_PATCH)
-
+const onBeforePatch = createHook(LifecycleHooks.BEFORE_PATCH)
+const onActivated = createHook(LifecycleHooks.ACTIVATED)
+const onDeactivated = createHook(LifecycleHooks.DEACTIVATED)
 
 export {
+    onBeforePatch,
     LifecycleHooks,
     injectHook,
     callHook,
@@ -133,5 +135,7 @@ export {
     onMounted,
     onUnmounted,
     onUpdated,
-    injectMapHooks
+    injectMapHooks,
+    onActivated,
+    onDeactivated
 }

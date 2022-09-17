@@ -16,7 +16,7 @@ import {
 
 import {
     queueJob
-} from '@crush/scheduler'
+} from '@crush/core'
 import { mountComponentProps } from "./componentProps"
 
 import { isPromise } from '@crush/common'
@@ -169,12 +169,13 @@ export function mountComponent(vnode: any, container: Element, anchor: any, pare
     instance.update = update
 
     const rednerEffect = createReactiveEffect(update, queueJob)
+    
     // 手动渲染
     instance.renderEffect = rednerEffect
+
     rednerEffect.run()
 
     // 处理 keep-alive
-
     cacheMountedKeepAliveComponent(vnode)
 
     return instance
