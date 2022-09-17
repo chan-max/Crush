@@ -8340,7 +8340,7 @@ define(['exports'], (function (exports) { 'use strict';
         }
     }
 
-    function useRefState(value, refOptions) {
+    function createState(value, refOptions) {
         let scope = getCurrentScope();
         var state = ref(value, refOptions);
         var setState = createRefValueSetter(state);
@@ -8843,7 +8843,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.usePromise = usePromise;
     exports.useProps = useProps;
     exports.useRef = useRef;
-    exports.useRefState = useRefState;
+    exports.createState = createState;
     exports.useRefs = useRefs;
     exports.useRoot = useRoot;
     exports.useScope = useScope;

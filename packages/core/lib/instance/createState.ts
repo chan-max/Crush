@@ -5,7 +5,7 @@ import { getCurrentScope } from "@crush/renderer"
 
 
 
-export function useRefState(value: any, refOptions?: any): any {
+export function createState(value: any, refOptions?: any): any {
     let scope = getCurrentScope()
     var state = ref(value, refOptions)
     var setState = createRefValueSetter(state)
@@ -25,7 +25,7 @@ export function useRefState(value: any, refOptions?: any): any {
                     // provide to scope
                     scope[key] = setState
                     i++
-                    return state
+                    return setState
                 case 2:
                     scope[key] = watcher
                     i++

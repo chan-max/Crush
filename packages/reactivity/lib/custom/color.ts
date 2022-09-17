@@ -187,6 +187,8 @@ export function parseRgbToHsl(rgbColor: any) {
     }
 }
 
+
+
 export function parseColor(color: string): any {
     let rgb: any, hsl: any
     if (colors[color]) {

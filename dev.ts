@@ -1,5 +1,5 @@
 import {
-    createApp, ref
+    createApp, createState, ref
 } from "./packages/core";
 
 console.time('crush')
@@ -7,16 +7,22 @@ console.time('crush')
 let app = createApp()
 
 
+import { createColor } from '@crush/reactivity'
+
+
+
 app.rootComponent = {
     template:/*html*/`
-        <h1 @click="count++"> {{count}} </h1>
+        <button @click="setShow(!show)"> {{show}} </button>
+        <h1 *if="show"> now you can see me </h1>
     `,
-    create({ $self }: any) {
-        $self.count = 0
+    create() {
+        let { show, setShow, onShowChange } = createState(true)
+        
+        onShowChange(() => {
+            console.log('toggle');
+        })
     },
-    mounted() {
-
-    }
 }
 
 
