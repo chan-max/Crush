@@ -57,10 +57,12 @@ export class Ref {
         }
 
         this.oldValue = this._value
-        this._value = newValue
+
         if (this.onSet) {
             this.onSet()
         }
+        
+        this._value = newValue
         // trigger
         triggerRef(this)
     }

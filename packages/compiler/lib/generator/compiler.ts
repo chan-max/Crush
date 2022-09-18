@@ -1,5 +1,4 @@
 
-
 import {
     baseParseHTML
 } from '../parser/baseParseHTML'
@@ -33,7 +32,7 @@ export class CodeGenerator {
 
 
     renderScope: any
-    
+
     cache: any
 
     handlerWithCache(handlerExpression: string) {
@@ -142,8 +141,13 @@ const compilerDefaultOptions: any = {
 }
 
 import { processTemplateAst } from '../parser/parseTemplate'
+import { compilerWithErrorCapture } from '../compileError'
 
-export function compile(template: string, compilerOptions: any = compilerDefaultOptions) {
+
+
+export const compile = compilerWithErrorCapture(baseCompiler)
+
+export function baseCompiler(template: string, compilerOptions: any = compilerDefaultOptions) {
 
     let start = Date.now()
 
@@ -153,10 +157,11 @@ export function compile(template: string, compilerOptions: any = compilerDefault
 
     // 初始化渲染作用域
     context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'))
-
+    // 渲染函数使用的缓存
     context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'))
-    var htmlAst = baseParseHTML(template)
 
+    var htmlAst = baseParseHTML(template)
+    
     processTemplateAst(htmlAst, context)
 
     let renderCode: any = genNodes(htmlAst, context)

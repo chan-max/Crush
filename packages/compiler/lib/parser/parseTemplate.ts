@@ -58,7 +58,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
     if (isArray(htmlAst)) {
         return htmlAst.forEach((ast: any) => processTemplateAst(ast, context))
     }
-
+    
     let scopeStack = 0
 
     const tagName = htmlAst.tagName = camelize(htmlAst.tag)

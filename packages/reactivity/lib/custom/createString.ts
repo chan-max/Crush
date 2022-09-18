@@ -3,5 +3,5 @@
 
 
 export function createString(string = '') {
-    
+
 }

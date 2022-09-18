@@ -56,7 +56,7 @@ export function parseAttribute(attr: any) {
         property = attribute.slice(1, lastIndexOfBorder)
         isDynamicProperty = true
         decorators = attribute.slice(lastIndexOfBorder + 1) // 防止内部表达式太复杂解析出错
-
+        
     } else {
         isDynamicProperty = false
         // 非动态属性， 先提取出 属性名称
@@ -64,7 +64,7 @@ export function parseAttribute(attr: any) {
         decorators = attribute.slice(property?.length)
     }
 
-    let _arguments:any, filters:any, modifiers:any
+    let _arguments: any, filters: any, modifiers: any
 
     if (decorators) {
         let tokens: any = decorators.split(/(?=[\.|:])/)
