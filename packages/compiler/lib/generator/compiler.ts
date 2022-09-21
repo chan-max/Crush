@@ -63,6 +63,10 @@ export class CodeGenerator {
         this.push(code)
     }
 
+    pushComment(comment: string) {
+        this.code += `/*#${comment}*/`
+    }
+
     // input an expression and hoist to the context , and return the variable name
     hoistExpression(expression: string): string {
         var varname = uVar()
@@ -141,7 +145,7 @@ const compilerDefaultOptions: any = {
 }
 
 import { processTemplateAst } from '../parser/parseTemplate'
-import { compilerWithErrorCapture } from '../compileError'
+import { compilerWithErrorCapture } from '../common'
 
 
 
@@ -161,7 +165,7 @@ export function baseCompiler(template: string, compilerOptions: any = compilerDe
     context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'))
 
     var htmlAst = baseParseHTML(template)
-    
+
     processTemplateAst(htmlAst, context)
 
     let renderCode: any = genNodes(htmlAst, context)

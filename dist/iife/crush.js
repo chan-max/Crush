@@ -2469,6 +2469,7 @@ var Crush = (function (exports) {
             this.sensitive = options.sensitive;
             this.shallow = options.shallow;
             this.onSet = options.onSet;
+            this.onGet = options.onGet;
             this._value = value;
         }
         get value() {
@@ -2486,10 +2487,10 @@ var Crush = (function (exports) {
                 return;
             }
             this.oldValue = this._value;
-            this._value = newValue;
             if (this.onSet) {
                 this.onSet();
             }
+            this._value = newValue;
             // trigger
             triggerRef(this);
         }
@@ -3329,20 +3330,15 @@ var Crush = (function (exports) {
         }
     }
 
-    var nextTick = (fn, args = undefined) => {
-        var p = Promise.resolve(args);
-        p.then(fn.bind(null));
-    };
-    var queueJobs = new Set();
-    function queueJob(job) {
-        queueJobs.add(job);
-        nextTick(executeQueueJobs);
+    class Color extends Ref {
+        constructor(value) {
+            parseColor(value);
+            debugger;
+            super(value);
+        }
     }
-    function executeQueueJobs() {
-        queueJobs.forEach((job) => {
-            job();
-            queueJobs.delete(job);
-        });
+    function createColor(value) {
+        return new Color(value);
     }
 
     // rendering instance and creating instance
@@ -4787,8 +4783,8 @@ var Crush = (function (exports) {
     }
 
     const selectorRE = /^([^{};]*)(?<!\s)\s*{/;
-    const declarationRE = /([$\w!-\(\).]+)\s*:\s*([^;]+);/;
-    const singleDeclarationRE = /([$\w!-\(\).]+)\s*;/;
+    const declarationRE = /^([\$\w!\-\(\)\.]+)\s*:\s*([^;]+);/;
+    const singleDeclarationRE = /([\$\w!-\(\)\.]+)\s*;/;
     const CSSCommentRE = /\/\*([\s\S]*?)\*\//;
     const AtGroupRuleRE = /^@([\w]+)(\s*[^{]+)?{/;
     const AtLineRuleRE = /^@([\w]+)\s*([\w]+)\s*;/;
@@ -5118,16 +5114,20 @@ var Crush = (function (exports) {
                     case '*':
                         switch (attr.property) {
                             case 'if':
+                                if (!attr.value) {
+                                    throw 'the crIf need to bind an expression value';
+                                }
+                                let { expression, variables } = context.parseExpressionWithRenderScope(attr.value);
                                 if (htmlAst.directives) {
                                     // 与for指令一起使用，并且是顺序在for后面
                                     htmlAst.directives.push({
                                         type: 7 /* CONDITION_RENDER_IF */,
-                                        condition: context.setRenderScope(value)
+                                        condition: expression
                                     });
                                 }
                                 else {
                                     htmlAst.isBranchStart = true;
-                                    htmlAst.condition = context.setRenderScope(value);
+                                    htmlAst.condition = expression;
                                 }
                                 break;
                             case 'else-if':
@@ -5487,6 +5487,18 @@ var Crush = (function (exports) {
         }
     }
 
+    function compilerWithErrorCapture(compiler) {
+        return (...args) => {
+            try {
+                return compiler(...args);
+            }
+            catch (e) {
+                console.error('[compile error]', e);
+                return null;
+            }
+        };
+    }
+
     const createFunction = (content, ...params) => new Function(...params, `${content}`);
     class CodeGenerator {
         compilerOptions;
@@ -5518,6 +5530,9 @@ var Crush = (function (exports) {
         pushNewLine(code) {
             this.newLine();
             this.push(code);
+        }
+        pushComment(comment) {
+            this.code += `/*#${comment}*/`;
         }
         // input an expression and hoist to the context , and return the variable name
         hoistExpression(expression) {
@@ -5587,12 +5602,14 @@ var Crush = (function (exports) {
         isHTMLTag,
         isSVGTag
     };
-    function compile(template, compilerOptions = compilerDefaultOptions) {
+    const compile = compilerWithErrorCapture(baseCompiler);
+    function baseCompiler(template, compilerOptions = compilerDefaultOptions) {
         let start = Date.now();
         var context = new CodeGenerator();
         context.compilerOptions = compilerOptions;
         // 初始化渲染作用域
         context.renderScope = context.hoistExpression(context.callRenderFn('getCurrentRenderScope'));
+        // 渲染函数使用的缓存
         context.cache = context.hoistExpression(context.callRenderFn('useCurrentInstanceCache'));
         var htmlAst = baseParseHTML(template);
         processTemplateAst(htmlAst, context);
@@ -7612,6 +7629,22 @@ var Crush = (function (exports) {
         return results;
     }
 
+    var nextTick = (fn, args = undefined) => {
+        var p = Promise.resolve(args);
+        p.then(fn.bind(null));
+    };
+    var queueJobs = new Set();
+    function queueJob(job) {
+        queueJobs.add(job);
+        nextTick(executeQueueJobs);
+    }
+    function executeQueueJobs() {
+        queueJobs.forEach((job) => {
+            job();
+            queueJobs.delete(job);
+        });
+    }
+
     const scopeProperties = {
         _currentPropertyAccessInstance: null,
         get $app() {
@@ -7782,21 +7815,14 @@ var Crush = (function (exports) {
         });
     }
 
-    const warn = console.warn;
+    const warn = (...msg) => {
+        console.warn(...msg);
+        let app = getCurrentApp();
+        if (app.onWarn) {
+            app.onWarn();
+        }
+    };
     const error = console.error;
-    function injectGlobalErrorCapture(fn) {
-        return (...args) => {
-            try {
-                return fn(...args);
-            }
-            catch (e) {
-                debugger;
-            }
-        };
-    }
-    function throwError(...msg) {
-        throw new Error(...msg);
-    }
 
     // forward
     console.log(`welcome to use crush.js to build your web application! github: https://github.com/chan-max/Crush`);
@@ -7804,11 +7830,10 @@ var Crush = (function (exports) {
     function getCurrentApp() {
         return currentApp;
     }
-    const createApp = injectGlobalErrorCapture(baseCreateApp);
-    function baseCreateApp(rootComponent) {
+    function createApp(rootComponent) {
         if (currentApp) {
             // 只能有一个应用
-            throwError('APP', currentApp, 'is runing and there can only be one application in your webpage');
+            warn(`app is running and there only can exist one app`);
         }
         const app = {
             isMounted: false,
@@ -7974,9 +7999,6 @@ var Crush = (function (exports) {
         ].includes(name);
     }
     // is renderComponent hook ???
-    /*
-        binding is used for bind the callback context , it is necessary
-    */
     function callHook(type, target, options = null, ...args) {
         // hooks is always be array
         const hooks = target[type];
@@ -8000,6 +8022,8 @@ var Crush = (function (exports) {
     const onBeforeUnmount = createHook("beforeUnmount" /* BEFORE_UNMOUNT */);
     const onUnmounted = createHook("unmounted" /* UNMOUNTED */);
     const onBeforePatch = createHook("beforePatch" /* BEFORE_PATCH */);
+    const onActivated = createHook("activated" /* ACTIVATED */);
+    const onDeactivated = createHook("deactivated" /* DEACTIVATED */);
 
     function injectMixin(options, mixin) {
         for (let key in mixin) {
@@ -8214,7 +8238,7 @@ var Crush = (function (exports) {
                     setParentModelValue(scope[modelKey]);
                 }
                 else {
-                    // 普通的 属性钩子
+                    // 普通的 属性钩子, 支持数组
                     normalizeHandler(vnode.props[key]).forEach((handler) => handler(scope));
                 }
             }
@@ -8359,7 +8383,7 @@ var Crush = (function (exports) {
                         // provide to scope
                         scope[key] = setState;
                         i++;
-                        return state;
+                        return setState;
                     case 2:
                         scope[key] = watcher;
                         i++;
@@ -8479,6 +8503,7 @@ var Crush = (function (exports) {
     exports.arrayExpressionWithScope = arrayExpressionWithScope;
     exports.arrayToMap = arrayToMap;
     exports.attr = attr;
+    exports.baseCompiler = baseCompiler;
     exports.builtInComponents = builtInComponents;
     exports.builtInDirectives = builtInDirectives;
     exports.cache = cache;
@@ -8494,6 +8519,7 @@ var Crush = (function (exports) {
     exports.computed = computed;
     exports.conicGradient = conicGradient;
     exports.createApp = createApp;
+    exports.createColor = createColor;
     exports.createComment = createComment;
     exports.createComponent = createComponent;
     exports.createComponentInstance = createComponentInstance;
@@ -8525,6 +8551,7 @@ var Crush = (function (exports) {
     exports.createShallowReactiveObject = createShallowReactiveObject;
     exports.createShallowReadonlyCollection = createShallowReadonlyCollection;
     exports.createShallowReadonlyObject = createShallowReadonlyObject;
+    exports.createState = createState;
     exports.createStyle = createStyle;
     exports.createStyleSheet = createStyleSheet;
     exports.createSupports = createSupports;
@@ -8684,12 +8711,14 @@ var Crush = (function (exports) {
     exports.normalizeToHexColor = normalizeToHexColor;
     exports.objectExpressionWithScope = objectExpressionWithScope;
     exports.objectStringify = objectStringify;
+    exports.onActivated = onActivated;
     exports.onBeforeClassMount = onBeforeClassMount;
     exports.onBeforeMount = onBeforeMount;
     exports.onBeforePatch = onBeforePatch;
     exports.onBeforeUnmount = onBeforeUnmount;
     exports.onBeforeUpdate = onBeforeUpdate;
     exports.onCreated = onCreated;
+    exports.onDeactivated = onDeactivated;
     exports.onMounted = onMounted;
     exports.onPropChange = onPropChange;
     exports.onPropsChange = onPropsChange;
@@ -8844,7 +8873,6 @@ var Crush = (function (exports) {
     exports.usePromise = usePromise;
     exports.useProps = useProps;
     exports.useRef = useRef;
-    exports.createState = createState;
     exports.useRefs = useRefs;
     exports.useRoot = useRoot;
     exports.useScope = useScope;

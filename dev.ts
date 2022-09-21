@@ -9,8 +9,7 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <button @click="setShow(!show)" > {{show}} </button>
-        <h1 *if="show"> now you can see me </h1>
+        <video></video>
     `,
     create() {
         let { show, setShow, onShowChange } = createState(true)

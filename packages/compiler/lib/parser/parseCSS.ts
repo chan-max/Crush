@@ -14,9 +14,9 @@ import {
 const selectorRE = /^([^{};]*)(?<!\s)\s*{/
 
 
-const declarationRE = /([$\w!-\(\).]+)\s*:\s*([^;]+);/
+const declarationRE = /^([\$\w!\-\(\)\.]+)\s*:\s*([^;]+);/
 
-const singleDeclarationRE = /([$\w!-\(\).]+)\s*;/
+const singleDeclarationRE = /([\$\w!-\(\)\.]+)\s*;/
 
 const CSSCommentRE = /\/\*([\s\S]*?)\*\//
 
@@ -141,6 +141,7 @@ export const parseCSS = (source: string, context: any): any => {
                 selector: parseSelector(exResult[0])
             }
         } else if ((exResult = scanner.exec(declarationRE)) || (exResult = scanner.exec(singleDeclarationRE))) {
+
             /*
                 the last declaration must end with  " ; "
             */

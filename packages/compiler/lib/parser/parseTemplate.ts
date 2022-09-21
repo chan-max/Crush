@@ -58,7 +58,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
     if (isArray(htmlAst)) {
         return htmlAst.forEach((ast: any) => processTemplateAst(ast, context))
     }
-    
+
     let scopeStack = 0
 
     const tagName = htmlAst.tagName = camelize(htmlAst.tag)
@@ -84,15 +84,19 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                 case '*':
                     switch (attr.property) {
                         case 'if':
+                            if (!attr.value) {
+                                throw 'the crIf need to bind an expression value'
+                            }
+                            let { expression, variables } = context.parseExpressionWithRenderScope(attr.value)
                             if (htmlAst.directives) {
                                 // 与for指令一起使用，并且是顺序在for后面
                                 htmlAst.directives.push({
                                     type: AstTypes.CONDITION_RENDER_IF,
-                                    condition: context.setRenderScope(value)
+                                    condition: expression
                                 })
                             } else {
                                 htmlAst.isBranchStart = true
-                                htmlAst.condition = context.setRenderScope(value)
+                                htmlAst.condition = expression
                             }
                             break
                         case 'else-if':

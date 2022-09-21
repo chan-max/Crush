@@ -58,6 +58,9 @@ export function resolveOptions(options: any) {
                 break
             case ComponentOptions.TEMPLATE:
                 let render = compile(value as string)
+                if (!render) { // 编译失败
+                    
+                }
                 let { createRender, useScopedStyleSheet } = render
                 options.createRender = createRender
                 options.useScopedStyleSheet = useScopedStyleSheet

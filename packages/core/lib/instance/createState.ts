@@ -6,6 +6,9 @@ import { getCurrentScope } from "@crush/renderer"
 
 
 export function createState(value: any, refOptions?: any): any {
+
+    
+
     let scope = getCurrentScope()
     var state = ref(value, refOptions)
     var setState = createRefValueSetter(state)

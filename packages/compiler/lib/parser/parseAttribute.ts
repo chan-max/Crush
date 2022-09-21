@@ -96,6 +96,5 @@ export function parseAttribute(attr: any) {
     attr.endFlag = endFlag
 
     // 属性简写
-
     return attr
 }

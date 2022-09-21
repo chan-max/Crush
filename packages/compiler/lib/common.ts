@@ -1,4 +1,14 @@
 
+export function compilerWithErrorCapture(compiler: any) {
+    return (...args: any) => {
+        try {
+            return compiler(...args)
+        } catch (e) {
+            console.error('[compile error]', e);
+            return null
+        }
+    }
+}
 
 export function returnStringExpressionBooleanValue(expression: any) {
     // while an expression dont contain any variables , try to get the boolean value
@@ -6,7 +16,7 @@ export function returnStringExpressionBooleanValue(expression: any) {
     try {
         value = eval(expression)
     } catch (e) {
-        debugger
+        console.error(expression, 'is not a legal expression')
     }
     return !!value
 }
