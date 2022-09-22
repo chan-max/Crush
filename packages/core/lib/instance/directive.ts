@@ -70,6 +70,9 @@ function processComponentHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     for (let key in (vnode.props || emptyObject)) {
         if (key.startsWith('_directive')) {
             let bindings = vnode.props[key]
+            if (bindings.directive) {
+                return
+            }
             let directive = normalizeDirective(bindings.directive)
             let hook = directive[type]
             if (hook) {
@@ -103,6 +106,9 @@ function processElementHook(type: LifecycleHooks, vnode: any, pVnode?: any) {
     for (let key in (vnode.props || emptyObject)) {
         if (key.startsWith('_directive')) {
             let bindings = vnode.props[key]
+            if (bindings.directive) {
+                return
+            }
             let directive = normalizeDirective(bindings.directive)
             let hook = directive[type]
             if (hook) {
@@ -127,6 +133,9 @@ function processRenderComponentHook(type: LifecycleHooks, vnode: any, pVnode?: a
     for (let key in (vnode.props || emptyObject)) {
         if (key.startsWith('_directive')) {
             let bindings = vnode.props[key]
+            if (bindings.directive) {
+                return
+            }
             let directive = normalizeDirective(bindings.directive)
             let hook = directive[type]
             if (hook) {
