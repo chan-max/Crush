@@ -1,5 +1,5 @@
 import {
-    arrayToMap, camelize, initialLowerCase, initialUpperCase, isArray, isFunction, isString
+    camelize, initialLowerCase, initialUpperCase, isArray, isFunction, isString
 } from '@crush/common'
 import { getCurrentApp } from '@crush/core';
 
@@ -8,19 +8,45 @@ import { getCurrentApp } from '@crush/core';
 const eventRE = /^on[A-Z]/;
 export const isEvent = (key: string) => eventRE.test(key);
 const inlineEventNameRE = /^on[a-z]/;
-export const isInlineEvent =  (key: string) => inlineEventNameRE.test(key);
+export const isInlineEvent = (key: string) => inlineEventNameRE.test(key);
+
+/*
+    argument $
+    modifier _
+    filter $_
+*/
 
 export function toEventName(event: string, _arguments?: string[], modifiers?: string[], filters?: string[]) {
-    /*
-        argument $
-        modifier _
-        filter $_
-    */
+    if (!event) {
+        return ''
+    }
     event = `on${initialUpperCase(camelize(event))}`
     _arguments && (event += _arguments.map(($) => `$${$}`).join(''))
     modifiers && (event += modifiers.map((_) => `_${_}`).join(''))
     filters && (event += filters.map(($_) => `$_${$_}`).join(''))
     return event
+}
+
+export function toPropertyName(name: string, _arguments?: string[], modifiers?: string[], filters?: string[]): string {
+    if (!name) {
+        return ''
+    }
+    _arguments && (name += _arguments.map(($) => `$${$}`).join(''))
+    modifiers && (name += modifiers.map((_) => `_${_}`).join(''))
+    filters && (name += filters.map(($_) => `$_${$_}`).join(''))
+    return name
+}
+
+const extrctPropertyNameRE = /([a-zA-Z]+)([\$a-zA-Z]*)([_a-zA-Z]*)([\$_a-zA-Z]*)/
+
+export function parsePropertyName(name: any) {
+    const [_, property, _argumentsStr, modifiersStr, filterStr]: any = extrctPropertyNameRE.exec(name)
+    return {
+        property,
+        _arguments: (_argumentsStr && _argumentsStr.split('$').filter(Boolean)) || null,
+        modifiers: (modifiersStr && modifiersStr.split('_').filter(Boolean)) || null,
+        filters: (filterStr && filterStr.split('$_').filter(Boolean)) || null,
+    }
 }
 
 // quickly get the handler key event

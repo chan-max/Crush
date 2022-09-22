@@ -299,7 +299,8 @@ import {
     mergeSplitedSelector,
     joinSelector,
     toEventName,
-    processVnodePrerender
+    processVnodePrerender,
+    toPropertyName
 } from '@crush/renderer'
 
 function genSelector(selectors: Array<any>, context: any) {
@@ -467,16 +468,20 @@ function genProps(node: any, context: any): any {
                     value,
                     isDynamicProperty,
                     isDynamicValue,
+                    _arguments,
+                    modifiers,
+                    filters,
                 } = attr
 
-                let key = isDynamicProperty ? dynamicMapKey(property) : property
-                props[key] = isDynamicValue ? value : toBackQuotes(value)
-
-                if (isDynamicProperty || isDynamicValue) {
-                    if (property[0] !== '_') {
-                        // 保留属性不会记录到
-                        dynamicProps.push(toSingleQuotes(property))
-                    }
+                if (isDynamicProperty) {
+                    let key = context.callRenderFn('toPropertyName', property, _arguments ?
+                        stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ?
+                        stringify(modifiers.map(toBackQuotes)) : NULL, filters ?
+                        stringify(filters.map(toBackQuotes)) : NULL)
+                    props[dynamicMapKey(key)] = isDynamicValue ? value : toBackQuotes(value)
+                } else {
+                    let key = toPropertyName(property, _arguments, modifiers, filters)
+                    props[key] = isDynamicValue ? value : toBackQuotes(value)
                 }
                 break
             case AstTypes.CUSTOM_DIRECTIVE:

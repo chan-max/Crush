@@ -45,15 +45,16 @@ import {
     normalizeStyle
 } from './common/normalizeStyle'
 
-import { toEventName, } from './common/event'
+import { toEventName, } from './common/property'
 
 import { renderSlot } from './common/renderSlot'
 import { createSVGElement } from '@crush/core'
 
-import { withEventModifiers } from '@crush/core'
+import { withEventModifiers, toPropertyName } from '@crush/core'
 import { useCurrentInstanceCache } from '@crush/core'
 
 export default {
+    toPropertyName,
     useCurrentInstanceCache,
     getCurrentRenderScope,
     createComment,

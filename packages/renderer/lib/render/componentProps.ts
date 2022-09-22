@@ -1,5 +1,5 @@
 import { emptyObject, isUndefined } from "@crush/common";
-import { getEventName, isComponentLifecycleHook, isEvent, parseEventName } from "@crush/core";
+import { getEventName, isComponentLifecycleHook, isEvent, parseEventName, parsePropertyName } from "@crush/core";
 import { unionkeys } from "./common";
 import { updateInstanceListeners } from "./componentListener";
 
@@ -47,32 +47,37 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                         let attrs = instance.attrs ||= {}
                         attrs[prop] = nValue
                     }
-                } else if (!propsOptions[prop]) {
-                    // attrs
-                    let attrs = instance.attrs ||= {}
-                    attrs[prop] = nValue
                 } else {
-                    // props
-                    const { default: _default, type, validator, required, rename } = propsOptions[prop]
-
-                    if (isUndefined(nValue)) {
-                        // nValue 不存在在时应该使用默认值
-                        if (required) {
-                        } else {
-                            nValue = _default
+                    // property
+                    let { property, _arguments, modifiers, filters } = parsePropertyName(prop)
+                    if (!propsOptions[property]) {
+                        // attrs
+                        let attrs = instance.attrs ||= {}
+                        attrs[property] = nValue
+                    } else {
+                        // props
+                        const { default: _default, type, validator, required, rename } = propsOptions[property]
+                        
+                        if (isUndefined(nValue)) {
+                            // nValue 不存在在时应该使用默认值
+                            if (required) {
+                            } else {
+                                nValue = _default
+                            }
                         }
+
+                        if (type && nValue.constructor !== type) {
+
+                        }
+
+                        if (validator && !validator(nValue)) {
+
+                        }
+
+                        // do update props value
+                        scope[rename || property] = nValue;
+                        (instance.props ||= {})[property] = nValue
                     }
-
-                    if (type && nValue.constructor !== type) {
-
-                    }
-
-                    if (validator && !validator(nValue)) {
-                    }
-
-                    // do update props value
-                    scope[rename || prop] = nValue;
-                    (instance.props ||= {})[prop] = nValue
                 }
         }
     }

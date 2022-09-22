@@ -53,8 +53,9 @@ export function unmountClass(el: Element) {
 import {
     parseEventName,
     isEvent,
-    isInlineEvent
-} from '../common/event'
+    isInlineEvent,
+    parsePropertyName
+} from '../common/property'
 
 import { updateDeclaration } from "./declaration";
 import { isElementLifecycleHook, normalizeClass, normalizeStyle } from "@crush/core";
@@ -64,7 +65,7 @@ export function mountAttributes(el: any, props: any, instance: any = null, isSVG
     updateElementAttributes(el, null, props, instance, isSVG)
 }
 
-import { withEventModifiers } from "../common/event";
+import { withEventModifiers } from "../common/property";
 
 
 // 这些属性会强制设置为元素的 attributes
@@ -74,8 +75,9 @@ const attributes = [
 
 
 
-function isElementAttribute(el: any, prop: any) {
-    return !(prop in el)  // 元素身上不包含该属性
+function isElementAttribute(el: any, prop: any, isSVG: any) {
+    return isSVG // svg属性始终作为attribute
+        || !(prop in el)  // 元素身上不包含该属性
         || attributes.includes(prop) // 特殊属性指定
         || isInlineEvent(prop) // 原生的内联事件也会作为 attribute处理
 }
@@ -168,20 +170,25 @@ export function updateElementAttributes(
                             addListener(el, event, modifiedHandler, options)
                         }
                     });
-                } else if (isElementAttribute(el, propName)) { // dom props
-                    // attribute
-                    
-                    propName = hyphenate(propName); // 连字符属性
-                    if (pValue !== nValue) {
-                        if (nValue) {
-                            setAttribute(el, propName, nValue)
-                        } else if (pValue) {
-                            removeAttribute(el, propName)
-                        }
-                    }
                 } else {
-                    if (pValue !== nValue) {
-                        el[propName] = nValue
+                    // prop
+                    let { property, _arguments, modifiers, filters } = parsePropertyName(propName)
+
+                    if (isElementAttribute(el, property, isSVG)) { // dom props
+                        // attribute
+
+                        property = hyphenate(property); // 连字符属性
+                        if (pValue !== nValue) {
+                            if (nValue) {
+                                setAttribute(el, property, nValue)
+                            } else if (pValue) {
+                                removeAttribute(el, property)
+                            }
+                        }
+                    } else {
+                        if (pValue !== nValue) {
+                            el[property] = nValue
+                        }
                     }
                 }
         }
