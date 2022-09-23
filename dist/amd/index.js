@@ -899,7 +899,7 @@ define(['exports'], (function (exports) { 'use strict';
         let _event = getInstanceEvent(instance, event);
         return _event.listeners;
     }
-    function createInstanceEventEmitter(instance) {
+    function createInstanceEmit(instance) {
         return (event, ...args) => emitInstancetEvent(instance, event, ...args);
     }
     function emitInstancetEvent(instance, event, ...args) {
@@ -8150,7 +8150,7 @@ define(['exports'], (function (exports) { 'use strict';
         injectMixins(instance, app.mixins);
         instance.scope = createScope(instance);
         instance.renderScope = createRenderScope(instance.scope);
-        instance.emit = createInstanceEventEmitter(instance);
+        instance.emit = createInstanceEmit(instance);
         instance.on = (event, handler) => addInstanceListener(instance, event, handler);
         instance.off = (event, handler) => removeInstanceListener(instance, event, handler);
         instance.once = (event, handler) => onceInstanceListener(instance, event, handler);
@@ -8527,7 +8527,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.createExpression = createExpression;
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
-    exports.createInstanceEventEmitter = createInstanceEventEmitter;
+    exports.createInstanceEmit = createInstanceEmit;
     exports.createInstanceWatch = createInstanceWatch;
     exports.createKeyframe = createKeyframe;
     exports.createKeyframes = createKeyframes;

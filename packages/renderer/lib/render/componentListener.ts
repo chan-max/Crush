@@ -33,8 +33,20 @@ export function getInstancetEventListeners(instance: any, event: string) {
     return _event.listeners
 }
 
-export function createInstanceEventEmitter(instance: any) {
+export function createInstanceEmit(instance: any) {
     return (event: string, ...args: any[]) => emitInstancetEvent(instance, event, ...args)
+}
+
+export function createInstanceOn(instance: any) {
+    return (event: string, handler: any) => addInstanceListener(instance, event, handler)
+}
+
+export function createInstanceOff(instance: any) {
+    return (event: string, handler: any) => removeInstanceListener(instance, event, handler)
+}
+
+export function createInstanceOnce(instance: any) {
+    return (event: string, handler: any) => onceInstanceListener(instance, event, handler)
 }
 
 export function emitInstancetEvent(instance: any, event: any, ...args: any[]) {

@@ -49,6 +49,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     }
                 } else {
                     // property
+
                     let { property, _arguments, modifiers, filters } = parsePropertyName(prop)
                     if (!propsOptions[property]) {
                         // attrs
@@ -57,7 +58,7 @@ export function updateComponentProps(instance: any, pProps: any, nProps: any) {
                     } else {
                         // props
                         const { default: _default, type, validator, required, rename } = propsOptions[property]
-                        
+                  
                         if (isUndefined(nValue)) {
                             // nValue 不存在在时应该使用默认值
                             if (required) {

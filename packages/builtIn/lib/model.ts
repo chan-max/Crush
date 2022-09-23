@@ -174,7 +174,9 @@ export const modelColor = {
 
 export const modelRange = {
     created(el: HTMLInputElement, { value, modifiers: { lazy } }: any, { props: { _setModelValue } }: any) {
-        el.value = value
+        if (value !== undefined) {
+            el.value = value
+        }
         addListener(el, lazy ? 'change' : 'input', () => {
             _setModelValue(el.value)
         })

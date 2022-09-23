@@ -68,21 +68,6 @@ export function mountAttributes(el: any, props: any, instance: any = null, isSVG
 import { withEventModifiers } from "../common/property";
 
 
-// 这些属性会强制设置为元素的 attributes
-const attributes = [
-    'list' // input 
-]
-
-
-
-function isElementAttribute(el: any, prop: any, isSVG: any) {
-    return isSVG // svg属性始终作为attribute
-        || !(prop in el)  // 元素身上不包含该属性
-        || attributes.includes(prop) // 特殊属性指定
-        || isInlineEvent(prop) // 原生的内联事件也会作为 attribute处理
-}
-
-
 
 export function updateElementAttributes(
     el: any,
@@ -98,10 +83,10 @@ export function updateElementAttributes(
     }
     pProps ||= emptyObject
     nProps ||= emptyObject
-    for (let propName of (dynamicProps || unionkeys(pProps, nProps))) {
-        var pValue = pProps[propName]
-        var nValue = nProps[propName]
-        switch (propName) {
+    for (let prop of (dynamicProps || unionkeys(pProps, nProps))) {
+        var pValue = pProps[prop]
+        var nValue = nProps[prop]
+        switch (prop) {
             case 'style':
                 updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
                 break
@@ -123,15 +108,15 @@ export function updateElementAttributes(
                 updateElementAttributes(el, pValue, nValue, instance, isSVG)
                 break
             default:
-                if (propName.startsWith('_')) {
+                if (prop.startsWith('_')) {
                     // 保留属性
                     continue
-                } else if (isEvent(propName)) {
+                } else if (isEvent(prop)) {
                     if (pValue === nValue) {
                         continue
                     }
 
-                    const { event, _arguments, modifiers, filters } = parseEventName(propName)
+                    const { event, _arguments, modifiers, filters } = parseEventName(prop)
 
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
@@ -172,11 +157,8 @@ export function updateElementAttributes(
                     });
                 } else {
                     // prop
-                    let { property, _arguments, modifiers, filters } = parsePropertyName(propName)
-
-                    if (isElementAttribute(el, property, isSVG)) { // dom props
-                        // attribute
-
+                    let { property, _arguments, modifiers, filters } = parsePropertyName(prop)
+                    if (isSVG) {
                         property = hyphenate(property); // 连字符属性
                         if (pValue !== nValue) {
                             if (nValue) {
@@ -186,7 +168,15 @@ export function updateElementAttributes(
                             }
                         }
                     } else {
-                        if (pValue !== nValue) {
+                        if (!(property in el) || isInlineEvent(property)) {
+                            if (pValue !== nValue) {
+                                if (nValue) {
+                                    setAttribute(el, property, nValue)
+                                } else if (pValue) {
+                                    removeAttribute(el, property)
+                                }
+                            }
+                        } else {
                             el[property] = nValue
                         }
                     }

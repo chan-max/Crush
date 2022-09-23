@@ -5,7 +5,7 @@ import { emptyArray, emptyObject, createPureObject, isFunction, shallowCloneArra
 import { injectMixins } from "./mixin";
 import { reactive } from "@crush/reactivity";
 import { createRenderScope, createScope, } from "./scope";
-import { createInstanceEventEmitter, addInstanceListener, removeInstanceListener, onceInstanceListener, getInstanceEvents } from "@crush/renderer/lib/render/componentListener";
+import { createInstanceEmit, addInstanceListener, removeInstanceListener, onceInstanceListener, getInstanceEvents, createInstanceOn, createInstanceOff, createInstanceOnce } from "@crush/renderer/lib/render/componentListener";
 
 import { createInstanceWatch } from "./watch";
 import { getCurrentInstance } from "@crush/renderer";
@@ -76,17 +76,17 @@ export const createComponentInstance = (options: any, parent: any) => {
     injectMixins(instance, app.mixins)
     instance.scope = createScope(instance)
     instance.renderScope = createRenderScope(instance.scope)
-    instance.emit = createInstanceEventEmitter(instance)
-    instance.on = (event: string, handler: any) => addInstanceListener(instance, event, handler)
-    instance.off = (event: string, handler: any) => removeInstanceListener(instance, event, handler)
-    instance.once = (event: string, handler: any) => onceInstanceListener(instance, event, handler)
+    instance.emit = createInstanceEmit(instance)
+    instance.on = createInstanceOn(instance)
+    instance.off = createInstanceOff(instance)
+    instance.once = createInstanceOnce(instance)
     instance.events = getInstanceEvents(instance)
     instance.watch = createInstanceWatch(instance)
-
-    instance.root = parent ? parent.root : instance
-
+    
     if (parent) {
         instance.root = parent.root
+
+        // 保留在父组件中的注册名称
         let parentComponents = parent.components || emptyObject
         for (let name in parentComponents) {
             if (parentComponents[name] === options) {
@@ -96,7 +96,6 @@ export const createComponentInstance = (options: any, parent: any) => {
     } else {
         instance.root = instance // 根组件
     }
-
 
     return instance
 }
