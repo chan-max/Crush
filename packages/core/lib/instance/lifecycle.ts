@@ -58,14 +58,14 @@ function injectMapHooks(target: any, mapHooks: any) {
 export function isElementLifecycleHook(name: any) {
     return [
         LifecycleHooks.BEFORE_CREATE,
+        LifecycleHooks.CREATED,
         LifecycleHooks.BEFORE_MOUNT,
+        LifecycleHooks.MOUNTED,
         LifecycleHooks.BEFORE_UNMOUNT,
         LifecycleHooks.BEFORE_UPDATE,
         LifecycleHooks.UPDATED,
         LifecycleHooks.CHILDREN_MOUNTED,
         LifecycleHooks.UNMOUNTED,
-        LifecycleHooks.MOUNTED,
-        LifecycleHooks.CREATED
     ].includes(name)
 }
 

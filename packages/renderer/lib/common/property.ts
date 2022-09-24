@@ -27,13 +27,13 @@ export function toEventName(event: string, _arguments?: string[], modifiers?: st
     return event
 }
 
-export function toPropertyName(name: string, _arguments?: string[], modifiers?: string[], filters?: string[]): string {
+export function toPropertyName(name: string, _arguments?: any, modifiers?: any, filters?: any): string {
     if (!name) {
         return ''
     }
-    _arguments && (name += _arguments.map(($) => `$${$}`).join(''))
-    modifiers && (name += modifiers.map((_) => `_${_}`).join(''))
-    filters && (name += filters.map(($_) => `$_${$_}`).join(''))
+    _arguments && (name += _arguments.map(($: any) => `$${$}`).join(''))
+    modifiers && (name += modifiers.map((_: any) => `_${_}`).join(''))
+    filters && (name += filters.map(($_: any) => `$_${$_}`).join(''))
     return name
 }
 

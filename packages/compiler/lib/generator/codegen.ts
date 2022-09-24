@@ -433,32 +433,31 @@ function genProps(node: any, context: any): any {
                         stringify(filters.map(toBackQuotes)) : NULL)
                     props[dynamicMapKey(key)] = handler
                     // 动态属性名称一定会记录到动态属性
-                    dynamicProps.push(key)
                 } else {
                     let key = toEventName(property, _arguments, modifiers, filters)
                     props[key] = handler
-                    if (isHandler) {
-                        // 内联样式不会加入到动态属性中
-                        dynamicProps.push(toSingleQuotes(key))
-                    }
                 }
                 break
             case AstTypes.ATTRIBUTE_CLASS:
-                var _class = props.class ||= []
-                if (attr.isDynamicValue) {
-                    _class.push(attr.value)
-                    dynamicProps.push(`'class'`)
+                if (attr._arguments) {
+                    // with responsive layout
+                    props[toPropertyName('class', attr._arguments)] = attr.isDynamicValue ? attr.value : toBackQuotes(attr.value)
                 } else {
-                    _class.push(toBackQuotes(attr.value))
+                    var _class = props.class ||= []
+                    _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 }
                 break
             case AstTypes.ATTRIBUTE_STYLE:
+                // 支持多个 style属性同时存在
                 var style = props.style ||= []
-                if (attr.isDynamicValue) {
-                    style.push(attr.value)
-                    dynamicProps.push(`'style'`)
+                if (attr.modifiers) {
+                    // 支持单个属性
+                    style.push(attr.modifiers.reduce((result: any, key: any) => {
+                        result[key] = attr.isDynamicValue ? attr.value : toBackQuotes(attr.value)
+                        return result
+                    }, {}))
                 } else {
-                    style.push(toBackQuotes(attr.value))
+                    style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value))
                 }
                 break
             case AstTypes.ATTRIBUTE:

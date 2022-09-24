@@ -4,12 +4,17 @@ import {
 
 
 const inlineStyleDelimiter = /\s*[:;]\s*/
-export function parseInlineStyle(styleString: string): Record<string, string> {
-    var chips = styleString.split(inlineStyleDelimiter).filter(Boolean)
-    var l = chips.length
+export function parseInlineStyle(styleString: string): any {
+    var styles = styleString.split(inlineStyleDelimiter).filter(Boolean)
+    var l = styles.length
+
+    if (l % 2 === 1) {
+        return null
+    }
+
     var styleMap: Record<string, any> = {}
     while (l) {
-        styleMap[camelize(chips[l - 2])] = chips[l - 1]
+        styleMap[camelize(styles[l - 2])] = styles[l - 1]
         l -= 2
     }
     return styleMap

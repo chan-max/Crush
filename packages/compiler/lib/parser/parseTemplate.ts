@@ -138,11 +138,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             break
                         case 'bind':
                             attr.type = AstTypes.ATTRIBUTE
-                            if (attr._arguments) {
-                                // 单属性的bind, 等同于 $
-                                attr.property = attr._arguments[0]
-                                attr._arguments.shift()
-                            }
                             attr.value = context.setRenderScope(attr.value)
                             attr.isDynamicValue = true
                             break
@@ -150,14 +145,6 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             // 转为普通的 ref属性
                             attr.type = AstTypes.ATTRIBUTE
                             attr.isDynamicValue = attr?.modifiers?.includes('dynamic')
-                            break
-                        case 'on':
-                            attr.type = AstTypes.EVENT
-                            attr.property = attr._arguments[0]
-                            attr._arguments.shift()
-                            attr.isDynamicValue = true
-                            attr.isHandler = isHandler(attr.value)
-                            attr.value = context.setRenderScope(attr.value)
                             break
                         case 'native':
                             if (htmlAst.tagName == 'style') {
@@ -352,6 +339,7 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                     attr.value = context.setRenderScope(attr.value)
                     break
                 default:
+                    // 普通属性
                     attr.type = AstTypes.ATTRIBUTE
                     if (attr.isDynamicProperty) {
                         attr.property = context.setRenderScope(attr.property)
@@ -372,10 +360,10 @@ export function processTemplateAst(htmlAst: any, context: CodeGenerator): any {
                             attr.type = AstTypes.ATTRIBUTE_STYLE
                             break
                     }
-
             }
         }
     }
+
 
     switch (tagName) {
         case '':

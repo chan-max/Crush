@@ -5,7 +5,8 @@ import { removeClass, addClass, addListener, removeListener, setAttribute, remov
 
 import { unionkeys } from "./common";
 
-
+// unmountAttribute
+import { normalizeHandler } from './componentListener'
 
 const beforeClassMountHooks: any = new Set()
 
@@ -91,21 +92,16 @@ export function updateElementAttributes(
                 updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue))
                 break
             case 'class':
-            case 'className':
                 updateClass(el, pValue, nValue)
                 break
             case 'ref':
-                if (!instance) {
-                    continue
+                if (instance) {
+                    let refs = instance.refs ||= {}
+                    if (nValue !== pValue) {
+                        pValue && (refs[pValue] = null)
+                        nValue && (refs[nValue] = el)
+                    }
                 }
-                let refs = instance.refs ||= {}
-                if (nValue !== pValue) {
-                    pValue && (refs[pValue] = null)
-                    nValue && (refs[nValue] = el)
-                }
-                break
-            case 'bind':
-                updateElementAttributes(el, pValue, nValue, instance, isSVG)
                 break
             default:
                 if (prop.startsWith('_')) {
@@ -121,11 +117,6 @@ export function updateElementAttributes(
                     if (isElementLifecycleHook(event)) {
                         // 生命周期钩子跳过
                         continue
-                    }
-
-                    // builtIn events
-                    switch (event) {
-                        default:
                     }
 
                     // window 修饰符
@@ -155,37 +146,46 @@ export function updateElementAttributes(
                             addListener(el, event, modifiedHandler, options)
                         }
                     });
+                } else if (prop.startsWith('class')) {
+                    debugger
+                    // responsive layout
                 } else {
                     // prop
                     let { property, _arguments, modifiers, filters } = parsePropertyName(prop)
-                    if (isSVG) {
-                        property = hyphenate(property); // 连字符属性
-                        if (pValue !== nValue) {
-                            if (nValue) {
-                                setAttribute(el, property, nValue)
-                            } else if (pValue) {
-                                removeAttribute(el, property)
-                            }
-                        }
+
+                    let { prop: asProp, attr: asAttr } = modifiers
+
+                    if (asProp) {
+                        updateAsProperty(el, property, pValue, nValue)
+                    } else if (asAttr) {
+                        updateAsAttribute(el, property, pValue, nValue)
+                    } else if (isSVG) {
+                        updateAsAttribute(el, property, pValue, nValue)
+                    } else if (prop in el) {
+                        updateAsProperty(el, property, pValue, nValue)
                     } else {
-                        if (!(property in el) || isInlineEvent(property)) {
-                            if (pValue !== nValue) {
-                                if (nValue) {
-                                    setAttribute(el, property, nValue)
-                                } else if (pValue) {
-                                    removeAttribute(el, property)
-                                }
-                            }
-                        } else {
-                            el[property] = nValue
-                        }
+                        updateAsAttribute(el, property, pValue, nValue)
                     }
+
                 }
         }
     }
 }
 
 
-// unmountAttribute
-import { normalizeHandler } from './componentListener'
+function updateAsAttribute(el: any, property: any, pValue: any, nValue: any) {
+    property = hyphenate(property); // 连字符属性
+    if (pValue !== nValue) {
+        if (nValue) {
+            setAttribute(el, property, nValue)
+        } else if (pValue) {
+            removeAttribute(el, property)
+        }
+    }
+}
 
+function updateAsProperty(el: any, property: any, pValue: any, nValue: any) {
+    if (nValue !== pValue) {
+        el[property] = nValue
+    }
+}

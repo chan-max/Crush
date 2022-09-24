@@ -13,9 +13,10 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
+        <h1 class:md="x"> title </h1>
     `,
     create(scope: any) {
-
+        window.scope = scope
     },
 }
 
