@@ -147,7 +147,7 @@ export function updateElementAttributes(
                         }
                     });
                 } else if (prop.startsWith('class')) {
-                    debugger
+                    let {property,_arguments} = parsePropertyName(prop)
                     // responsive layout
                 } else {
                     // prop

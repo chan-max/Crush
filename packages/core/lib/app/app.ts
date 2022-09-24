@@ -9,7 +9,7 @@ import { createElement, mount, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 import { colors } from "@crush/reactivity"
 import { installAnimation } from '@crush/animate'
-import { responsiveLayoutMedia } from "@crush/css"
+import { responsiveLayoutMedia } from "../instance/reponsive"
 import { scopeProperties } from "../instance/scope"
 import { keyCodes } from '@crush/renderer'
 import { textModifiers } from "@crush/renderer"
@@ -169,6 +169,4 @@ export function createApp(rootComponent?: any) {
 
 
 
-export function getCustomScreensMedia(screen: string) {
-    return getCurrentApp().customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
-}
+

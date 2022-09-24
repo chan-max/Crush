@@ -20,7 +20,10 @@ app.rootComponent = {
     },
 }
 
-
+window.onresize = (e) => {
+    e
+    debugger
+}
 
 console.log(app);
 
