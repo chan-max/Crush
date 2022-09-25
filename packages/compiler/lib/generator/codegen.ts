@@ -233,7 +233,7 @@ function genNode(node: any, context: any): any {
             break
         case AstTypes.MEDIA_RULE:
             const rules = stringify(genChildren(node.children, context))
-            nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId())
+            nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMediaString', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId())
             break
         case AstTypes.KEYFRAMES_RULE:
             nodeCode = context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId())

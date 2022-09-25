@@ -85,38 +85,39 @@ export const eventModifiers: any = {
 
 };
 
-// 使用 withEventModifiers 才会初始化
-let reverseKeyCodes: any = null
 
-export function createReverseKeyCodes() {
+
+
+export function normalizeAppKeyCodes() {
     let keyCodes: any = getCurrentApp().keyCodes
-    let reverseKeyCodes: any = {}
+    let normalizedKeyCodes: any = {}
     for (let key in keyCodes) {
         let value = keyCodes[key]
         if (isString(value)) {
-            let reverseValue = reverseKeyCodes[value] ||= []
+            let reverseValue = normalizedKeyCodes[value] ||= []
             reverseValue.push(key)
         } else if (isArray(value)) {
             value.forEach((val: any) => {
-                let reverseValue = reverseKeyCodes[val] ||= []
+                let reverseValue = normalizedKeyCodes[val] ||= []
                 reverseValue.push(key)
             })
         }
     }
-    return reverseKeyCodes
+    return normalizedKeyCodes
 }
+
 
 export function withEventModifiers(fn: any, modifiers: any) {
     if (!isFunction(fn)) {
         return null
     }
 
-    reverseKeyCodes ||= createReverseKeyCodes()
+    let normalizedKeyCodes = getCurrentApp().normalizedKeyCodes
 
     // key 按键守卫
     let guardKeyCodes = modifiers && modifiers.reduce((res: string[], modifier: string) => {
-        if (reverseKeyCodes[modifier]) {
-            res = res.concat(reverseKeyCodes[modifier])
+        if (normalizedKeyCodes[modifier]) {
+            res = res.concat(normalizedKeyCodes[modifier])
         }
         return res
     }, [])

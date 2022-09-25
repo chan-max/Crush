@@ -81,7 +81,7 @@ export const parseCSS = (source: string, context: any): any => {
                             keyframes: content
                         }
                         break
-                    case 'screens':
+                    case 'screen':
                         // 转换为动态 media
                         current = {
                             type: AstTypes.MEDIA_RULE,

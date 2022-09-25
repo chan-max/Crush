@@ -534,7 +534,7 @@ define(['exports'], (function (exports) { 'use strict';
     };
     // 使用 withEventModifiers 才会初始化
     let reverseKeyCodes = null;
-    function createReverseKeyCodes() {
+    function normalizeAppKeyCodes() {
         let keyCodes = getCurrentApp().keyCodes;
         let reverseKeyCodes = {};
         for (let key in keyCodes) {
@@ -556,7 +556,7 @@ define(['exports'], (function (exports) { 'use strict';
         if (!isFunction(fn)) {
             return null;
         }
-        reverseKeyCodes ||= createReverseKeyCodes();
+        reverseKeyCodes ||= normalizeAppKeyCodes();
         // key 按键守卫
         let guardKeyCodes = modifiers && modifiers.reduce((res, modifier) => {
             if (reverseKeyCodes[modifier]) {
@@ -4389,7 +4389,7 @@ define(['exports'], (function (exports) { 'use strict';
                 break;
             case 23 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
-                nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
+                nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMediaString', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
                 break;
             case 25 /* KEYFRAMES_RULE */:
                 nodeCode = context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
@@ -5730,7 +5730,7 @@ define(['exports'], (function (exports) { 'use strict';
         renderSlot,
         mergeSelectors,
         withEventModifiers,
-        getCustomScreensMedia,
+        getCustomScreensMediaString,
         toEventName,
     };
 
@@ -7465,7 +7465,7 @@ define(['exports'], (function (exports) { 'use strict';
     };
 
     // app.config.responsive
-    const responsiveLayoutMedia = {
+    const customScreens = {
         xs: '(max-width:768px)',
         sm: '(min-width:768px) and (max-width:992px)',
         md: '(min-width:992px) and (max-width:1200px)',
@@ -7858,7 +7858,7 @@ define(['exports'], (function (exports) { 'use strict';
             eventModifiers,
             // config
             // @screens
-            customScreens: responsiveLayoutMedia,
+            customScreens: customScreens,
             // scope property
             globalProperties: scopeProperties,
             compilerOptions: null,
@@ -7944,7 +7944,7 @@ define(['exports'], (function (exports) { 'use strict';
         }
         return app;
     }
-    function getCustomScreensMedia(screen) {
+    function getCustomScreensMediaString(screen) {
         return getCurrentApp().customScreens[screen] || 'screen'; // 默认屏幕 , 所有情况都生效
     }
 
@@ -8542,7 +8542,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.createReadonlyObject = createReadonlyObject;
     exports.createRefValueSetter = createRefValueSetter;
     exports.createRenderScope = createRenderScope;
-    exports.createReverseKeyCodes = createReverseKeyCodes;
+    exports.normalizeAppKeyCodes = normalizeAppKeyCodes;
     exports.createSVGElement = createSVGElement;
     exports.createScope = createScope;
     exports.createSetter = createSetter;
@@ -8600,7 +8600,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.getCurrentInstance = getCurrentInstance;
     exports.getCurrentRenderScope = getCurrentRenderScope;
     exports.getCurrentScope = getCurrentScope;
-    exports.getCustomScreensMedia = getCustomScreensMedia;
+    exports.getCustomScreensMediaString = getCustomScreensMediaString;
     exports.getDeps = getDeps;
     exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
@@ -8764,7 +8764,7 @@ define(['exports'], (function (exports) { 'use strict';
     exports.renderSlot = renderSlot;
     exports.replaceAllReservedCharacters = replaceAllReservedCharacters;
     exports.resolveOptions = resolveOptions;
-    exports.responsiveLayoutMedia = responsiveLayoutMedia;
+    exports.customScreens = customScreens;
     exports.rgb = rgb;
     exports.rgbToHex = rgbToHex;
     exports.rgba = rgba;

@@ -5,11 +5,11 @@ import { ComponentType } from "../instance/component"
 import { DirectiveType } from "../instance/directive"
 
 import { PluginType } from "../instance/plugin"
-import { createElement, mount, unmountComponent } from "@crush/renderer"
+import { createElement, mount, normalizeAppKeyCodes, unmountComponent } from "@crush/renderer"
 import { createComponent } from "@crush/renderer"
 import { colors } from "@crush/reactivity"
 import { installAnimation } from '@crush/animate'
-import { responsiveLayoutMedia } from "../instance/reponsive"
+import { createAppOnScreenChange, customScreens } from "../instance/reponsive"
 import { scopeProperties } from "../instance/scope"
 import { keyCodes } from '@crush/renderer'
 import { textModifiers } from "@crush/renderer"
@@ -36,7 +36,8 @@ export function createApp(rootComponent?: any) {
     }
 
     const app: any = {
-        isMounted: false,
+        isMounted: false, // 应用是否挂载
+        isReadyToMount: false, // 应用是否准备挂载 , 此处所有配置应该完成，即将进入挂载阶段
         rootComponent,
         component,
         directive,
@@ -57,12 +58,19 @@ export function createApp(rootComponent?: any) {
 
         // 按键修饰符
         keyCodes,
+        _normalizedKeyCodes: null,
+        get normalizedKeyCodes() {
+            if (!this.isReadyToMount) {
+                return
+            }
+            return this._normalizedKeyCodes ||= normalizeAppKeyCodes()
+        },
 
         // 事件修饰符
         eventModifiers,
         // config
         // @screens
-        customScreens: responsiveLayoutMedia,
+        customScreens: customScreens,
         // scope property
         globalProperties: scopeProperties,
 
@@ -70,6 +78,19 @@ export function createApp(rootComponent?: any) {
 
         // 文本修饰符
         textModifiers,
+
+        // 侦听屏幕尺寸侦听函数
+        _appOnScreenChange: null,
+        get onScreenChange() {
+            if (!this.isReadyToMount) {
+                // 准备挂载时才能拿到所有的配置信息
+                return null
+            }
+
+
+
+            return this._appOnScreenChange ||= createAppOnScreenChange()
+        }
     }
 
     currentApp = app
@@ -140,6 +161,8 @@ export function createApp(rootComponent?: any) {
 
         // 执行应用挂载前钩子，可以拿到用户定义的配置信息
         app.beforeAppMount && app.beforeAppMount(app)
+
+        app.isReadyToMount = true
 
         app.rootComponentVnode = createComponent(app.rootComponent, null, null)
         mount(app.rootComponentVnode, app.container)

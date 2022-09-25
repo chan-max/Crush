@@ -1,39 +1,25 @@
 import {
     computed,
-    createApp, createState, onWindowResize, ref
+    createApp, createState, getCustomScreensMediaString, ref
 } from "./packages/core";
 
 console.time('crush')
 
 let app = createApp()
 
-/*
 
-*/
 
 app.rootComponent = {
     template:/*html*/`
-        <style>
-            body,html{
-                margin:0;
-            }
-            .box{
-                width:100px;
-                height:805px;
-                background-color:red;
-            }
-        </style>
-        <div .box></div>
+    <input @keydown.e="log">
     `,
     create(scope: any) {
-        window.scope = scope
+        scope.log =() => {
+            console.log(666);
+            
+        }
     },
 }
-
-onWindowResize((info: any) => {
-
-    document.body.style.background = 'red'
-})
 
 
 

@@ -535,7 +535,7 @@ var Crush = (function (exports) {
     };
     // 使用 withEventModifiers 才会初始化
     let reverseKeyCodes = null;
-    function createReverseKeyCodes() {
+    function normalizeAppKeyCodes() {
         let keyCodes = getCurrentApp().keyCodes;
         let reverseKeyCodes = {};
         for (let key in keyCodes) {
@@ -557,7 +557,7 @@ var Crush = (function (exports) {
         if (!isFunction(fn)) {
             return null;
         }
-        reverseKeyCodes ||= createReverseKeyCodes();
+        reverseKeyCodes ||= normalizeAppKeyCodes();
         // key 按键守卫
         let guardKeyCodes = modifiers && modifiers.reduce((res, modifier) => {
             if (reverseKeyCodes[modifier]) {
@@ -4390,7 +4390,7 @@ var Crush = (function (exports) {
                 break;
             case 23 /* MEDIA_RULE */:
                 const rules = stringify(genChildren(node.children, context));
-                nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMedia', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
+                nodeCode = context.callRenderFn('createMedia', node.appConfigMedia ? context.callRenderFn('getCustomScreensMediaString', toBackQuotes(node.media)) : toBackQuotes(node.media), rules, uStringId());
                 break;
             case 25 /* KEYFRAMES_RULE */:
                 nodeCode = context.callRenderFn('createKeyframes', toBackQuotes(node.keyframes), stringify(genChildren(node.children, context)), uStringId());
@@ -5731,7 +5731,7 @@ var Crush = (function (exports) {
         renderSlot,
         mergeSelectors,
         withEventModifiers,
-        getCustomScreensMedia,
+        getCustomScreensMediaString,
         toEventName,
     };
 
@@ -7466,7 +7466,7 @@ var Crush = (function (exports) {
     };
 
     // app.config.responsive
-    const responsiveLayoutMedia = {
+    const customScreens = {
         xs: '(max-width:768px)',
         sm: '(min-width:768px) and (max-width:992px)',
         md: '(min-width:992px) and (max-width:1200px)',
@@ -7859,7 +7859,7 @@ var Crush = (function (exports) {
             eventModifiers,
             // config
             // @screens
-            customScreens: responsiveLayoutMedia,
+            customScreens: customScreens,
             // scope property
             globalProperties: scopeProperties,
             compilerOptions: null,
@@ -7945,7 +7945,7 @@ var Crush = (function (exports) {
         }
         return app;
     }
-    function getCustomScreensMedia(screen) {
+    function getCustomScreensMediaString(screen) {
         return getCurrentApp().customScreens[screen] || 'screen'; // 默认屏幕 , 所有情况都生效
     }
 
@@ -8543,7 +8543,7 @@ var Crush = (function (exports) {
     exports.createReadonlyObject = createReadonlyObject;
     exports.createRefValueSetter = createRefValueSetter;
     exports.createRenderScope = createRenderScope;
-    exports.createReverseKeyCodes = createReverseKeyCodes;
+    exports.normalizeAppKeyCodes = normalizeAppKeyCodes;
     exports.createSVGElement = createSVGElement;
     exports.createScope = createScope;
     exports.createSetter = createSetter;
@@ -8601,7 +8601,7 @@ var Crush = (function (exports) {
     exports.getCurrentInstance = getCurrentInstance;
     exports.getCurrentRenderScope = getCurrentRenderScope;
     exports.getCurrentScope = getCurrentScope;
-    exports.getCustomScreensMedia = getCustomScreensMedia;
+    exports.getCustomScreensMediaString = getCustomScreensMediaString;
     exports.getDeps = getDeps;
     exports.getDepsMap = getDepsMap;
     exports.getDirective = getDirective;
@@ -8765,7 +8765,7 @@ var Crush = (function (exports) {
     exports.renderSlot = renderSlot;
     exports.replaceAllReservedCharacters = replaceAllReservedCharacters;
     exports.resolveOptions = resolveOptions;
-    exports.responsiveLayoutMedia = responsiveLayoutMedia;
+    exports.customScreens = customScreens;
     exports.rgb = rgb;
     exports.rgbToHex = rgbToHex;
     exports.rgba = rgba;
