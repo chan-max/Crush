@@ -147,8 +147,12 @@ export function updateElementAttributes(
                         }
                     });
                 } else if (prop.startsWith('class')) {
-                    let {property,_arguments} = parsePropertyName(prop)
                     // responsive layout
+                    let { _arguments: screens } = parsePropertyName(prop)
+
+                    // 注册一个侦听器
+                    
+
                 } else {
                     // prop
                     let { property, _arguments, modifiers, filters } = parsePropertyName(prop)

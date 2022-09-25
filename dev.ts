@@ -1,6 +1,6 @@
 import {
     computed,
-    createApp, createState, ref
+    createApp, createState, onWindowResize, ref
 } from "./packages/core";
 
 console.time('crush')
@@ -13,17 +13,29 @@ let app = createApp()
 
 app.rootComponent = {
     template:/*html*/`
-        <h1 class:md="x"> title </h1>
+        <style>
+            body,html{
+                margin:0;
+            }
+            .box{
+                width:100px;
+                height:805px;
+                background-color:red;
+            }
+        </style>
+        <div .box></div>
     `,
     create(scope: any) {
         window.scope = scope
     },
 }
 
-window.onresize = (e) => {
-    e
-    debugger
-}
+onWindowResize((info: any) => {
+
+    document.body.style.background = 'red'
+})
+
+
 
 console.log(app);
 

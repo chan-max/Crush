@@ -1,3 +1,4 @@
+import { addListener, removeListener } from "@crush/renderer"
 import { getCurrentApp } from "../app/app"
 
 export const responsiveLayoutMedia = {
@@ -9,7 +10,24 @@ export const responsiveLayoutMedia = {
 }
 
 
+// 根据注册的 屏幕尺寸，会生成一个屏幕resize侦听器
+
+
+
 export function getCustomScreensMedia(screen: string) {
     return getCurrentApp().customScreens[screen] || 'screen' // 默认屏幕 , 所有情况都生效
 }
 
+export function onWindowResize(cb: any) {
+    let handler = () => {
+        let info = {
+            height: window.innerHeight,
+            width: window.innerWidth
+        }
+        cb(info)
+    }
+
+    addListener(window, 'resize', handler)
+
+    return () => removeListener(window, 'onresize', handler)
+}
