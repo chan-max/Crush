@@ -86,9 +86,6 @@ export function createApp(rootComponent?: any) {
                 // 准备挂载时才能拿到所有的配置信息
                 return null
             }
-
-
-
             return this._appOnScreenChange ||= createAppOnScreenChange()
         }
     }

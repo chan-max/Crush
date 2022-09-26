@@ -1,4 +1,4 @@
-// crush.js 1.1.11 created by chan 
+// crush.js 1.1.12 created by chan 
 var Crush = (function (exports) {
     'use strict';
 
@@ -489,22 +489,135 @@ var Crush = (function (exports) {
         return res;
     }
 
+    const globalInstanceEventListeners = new WeakMap();
+    function getInstanceEvents(instance) {
+        let events = globalInstanceEventListeners.get(instance);
+        if (!events) {
+            events = {};
+            globalInstanceEventListeners.set(instance, events);
+        }
+        return events;
+    }
+    function getInstanceEvent(instance, event, _arguments, modifiers, filters) {
+        let events = getInstanceEvents(instance);
+        let _event = events[event];
+        if (!_event) {
+            _event = {
+                listeners: new Set(),
+                _arguments, modifiers, filters
+            };
+            events[event] = _event;
+        }
+        return _event;
+    }
+    function getInstancetEventListeners(instance, event) {
+        let _event = getInstanceEvent(instance, event);
+        return _event.listeners;
+    }
+    function createInstanceEmit(instance) {
+        return (event, ...args) => emitInstancetEvent(instance, event, ...args);
+    }
+    function createInstanceOn(instance) {
+        return (event, handler) => addInstanceListener(instance, event, handler);
+    }
+    function createInstanceOff(instance) {
+        return (event, handler) => removeInstanceListener(instance, event, handler);
+    }
+    function createInstanceOnce(instance) {
+        return (event, handler) => onceInstanceListener(instance, event, handler);
+    }
+    function emitInstancetEvent(instance, event, ...args) {
+        const listeners = getInstancetEventListeners(instance, event);
+        listeners.forEach((handler) => {
+            handler(...args);
+        });
+    }
+    /* handler 标准化，转成数组格式 */
+    function normalizeHandler(handler) {
+        return (isArray(handler) ? handler : [handler]).filter(isFunction);
+    }
+    function updateInstanceListeners(instance, event, pHandler, nHandler, _arguments, modifiers, filters) {
+        if (pHandler === nHandler) {
+            return;
+        }
+        // 不影响组件自身注册的事件
+        let _event = getInstanceEvent(instance, event, _arguments, modifiers, filters);
+        let listeners = _event.listeners;
+        pHandler = normalizeHandler(pHandler);
+        nHandler = normalizeHandler(nHandler);
+        pHandler.forEach((handler) => {
+            if (!nHandler.includes(handler)) {
+                listeners.delete(handler);
+            }
+        });
+        nHandler.forEach((handler) => {
+            if (!pHandler.includes(handler)) {
+                listeners.add(handler);
+            }
+        });
+    }
+    function addInstanceListener(instance, event, rawHandler) {
+        const listeners = getInstancetEventListeners(instance, event);
+        normalizeHandler(rawHandler).forEach((handler) => {
+            listeners.add(handler);
+        });
+    }
+    function removeInstanceListener(instance, event, rawHandler) {
+        const listeners = getInstancetEventListeners(instance, event);
+        normalizeHandler(rawHandler).forEach((handler) => {
+            listeners.delete(handler);
+        });
+    }
+    function onceInstanceListener(instance, event, rawHandler) {
+        const listeners = getInstancetEventListeners(instance, event);
+        normalizeHandler(rawHandler).forEach((handler) => {
+            const onceHandler = (...args) => {
+                handler(...args);
+                listeners.delete(onceHandler);
+            };
+            listeners.add(onceHandler);
+        });
+    }
+    // native events
+
     // for renderer
     const eventRE = /^on[A-Z]/;
     const isEvent = (key) => eventRE.test(key);
     const inlineEventNameRE = /^on[a-z]/;
     const isInlineEvent = (key) => inlineEventNameRE.test(key);
+    /*
+        argument $
+        modifier _
+        filter $_
+    */
     function toEventName(event, _arguments, modifiers, filters) {
-        /*
-            argument $
-            modifier _
-            filter $_
-        */
+        if (!event) {
+            return '';
+        }
         event = `on${initialUpperCase(camelize(event))}`;
         _arguments && (event += _arguments.map(($) => `$${$}`).join(''));
         modifiers && (event += modifiers.map((_) => `_${_}`).join(''));
         filters && (event += filters.map(($_) => `$_${$_}`).join(''));
         return event;
+    }
+    function toPropertyName(name, _arguments, modifiers, filters) {
+        if (!name) {
+            return '';
+        }
+        _arguments && (name += _arguments.map(($) => `$${$}`).join(''));
+        modifiers && (name += modifiers.map((_) => `_${_}`).join(''));
+        filters && (name += filters.map(($_) => `$_${$_}`).join(''));
+        return name;
+    }
+    const extrctPropertyNameRE = /([a-zA-Z]+)([\$a-zA-Z]*)([_a-zA-Z]*)([\$_a-zA-Z]*)/;
+    function parsePropertyName(name) {
+        const [_, property, _argumentsStr, modifiersStr, filterStr] = extrctPropertyNameRE.exec(name);
+        return {
+            property,
+            _arguments: (_argumentsStr && _argumentsStr.split('$').filter(Boolean)) || null,
+            modifiers: (modifiersStr && modifiersStr.split('_').filter(Boolean)) || null,
+            filters: (filterStr && filterStr.split('$_').filter(Boolean)) || null,
+        };
     }
     // quickly get the handler key event
     function getEventName(name) {
@@ -533,35 +646,33 @@ var Crush = (function (exports) {
         middle: (e) => 'button' in e && e.button !== 1,
         right: (e) => 'button' in e && e.button !== 2,
     };
-    // 使用 withEventModifiers 才会初始化
-    let reverseKeyCodes = null;
     function normalizeAppKeyCodes() {
         let keyCodes = getCurrentApp().keyCodes;
-        let reverseKeyCodes = {};
+        let normalizedKeyCodes = {};
         for (let key in keyCodes) {
             let value = keyCodes[key];
             if (isString(value)) {
-                let reverseValue = reverseKeyCodes[value] ||= [];
+                let reverseValue = normalizedKeyCodes[value] ||= [];
                 reverseValue.push(key);
             }
             else if (isArray(value)) {
                 value.forEach((val) => {
-                    let reverseValue = reverseKeyCodes[val] ||= [];
+                    let reverseValue = normalizedKeyCodes[val] ||= [];
                     reverseValue.push(key);
                 });
             }
         }
-        return reverseKeyCodes;
+        return normalizedKeyCodes;
     }
     function withEventModifiers(fn, modifiers) {
         if (!isFunction(fn)) {
             return null;
         }
-        reverseKeyCodes ||= normalizeAppKeyCodes();
+        let normalizedKeyCodes = getCurrentApp().normalizedKeyCodes;
         // key 按键守卫
         let guardKeyCodes = modifiers && modifiers.reduce((res, modifier) => {
-            if (reverseKeyCodes[modifier]) {
-                res = res.concat(reverseKeyCodes[modifier]);
+            if (normalizedKeyCodes[modifier]) {
+                res = res.concat(normalizedKeyCodes[modifier]);
             }
             return res;
         }, []);
@@ -875,88 +986,6 @@ var Crush = (function (exports) {
         return getStyle(window.getComputedStyle(el), keys);
     }
 
-    const globalInstanceEventListeners = new WeakMap();
-    function getInstanceEvents(instance) {
-        let events = globalInstanceEventListeners.get(instance);
-        if (!events) {
-            events = {};
-            globalInstanceEventListeners.set(instance, events);
-        }
-        return events;
-    }
-    function getInstanceEvent(instance, event, _arguments, modifiers, filters) {
-        let events = getInstanceEvents(instance);
-        let _event = events[event];
-        if (!_event) {
-            _event = {
-                listeners: new Set(),
-                _arguments, modifiers, filters
-            };
-            events[event] = _event;
-        }
-        return _event;
-    }
-    function getInstancetEventListeners(instance, event) {
-        let _event = getInstanceEvent(instance, event);
-        return _event.listeners;
-    }
-    function createInstanceEmit(instance) {
-        return (event, ...args) => emitInstancetEvent(instance, event, ...args);
-    }
-    function emitInstancetEvent(instance, event, ...args) {
-        const listeners = getInstancetEventListeners(instance, event);
-        listeners.forEach((handler) => {
-            handler(...args);
-        });
-    }
-    /* handler 标准化，转成数组格式 */
-    function normalizeHandler(handler) {
-        return (isArray(handler) ? handler : [handler]).filter(isFunction);
-    }
-    function updateInstanceListeners(instance, event, pHandler, nHandler, _arguments, modifiers, filters) {
-        if (pHandler === nHandler) {
-            return;
-        }
-        // 不影响组件自身注册的事件
-        let _event = getInstanceEvent(instance, event, _arguments, modifiers, filters);
-        let listeners = _event.listeners;
-        pHandler = normalizeHandler(pHandler);
-        nHandler = normalizeHandler(nHandler);
-        pHandler.forEach((handler) => {
-            if (!nHandler.includes(handler)) {
-                listeners.delete(handler);
-            }
-        });
-        nHandler.forEach((handler) => {
-            if (!pHandler.includes(handler)) {
-                listeners.add(handler);
-            }
-        });
-    }
-    function addInstanceListener(instance, event, rawHandler) {
-        const listeners = getInstancetEventListeners(instance, event);
-        normalizeHandler(rawHandler).forEach((handler) => {
-            listeners.add(handler);
-        });
-    }
-    function removeInstanceListener(instance, event, rawHandler) {
-        const listeners = getInstancetEventListeners(instance, event);
-        normalizeHandler(rawHandler).forEach((handler) => {
-            listeners.delete(handler);
-        });
-    }
-    function onceInstanceListener(instance, event, rawHandler) {
-        const listeners = getInstancetEventListeners(instance, event);
-        normalizeHandler(rawHandler).forEach((handler) => {
-            const onceHandler = (...args) => {
-                handler(...args);
-                listeners.delete(onceHandler);
-            };
-            listeners.add(onceHandler);
-        });
-    }
-    // native events
-
     const beforeClassMountHooks = new Set();
     function onBeforeClassMount(hook) {
         beforeClassMountHooks.add(hook);
@@ -993,15 +1022,6 @@ var Crush = (function (exports) {
     function mountAttributes(el, props, instance = null, isSVG) {
         updateElementAttributes(el, null, props, instance, isSVG);
     }
-    // 这些属性会强制设置为元素的 attributes
-    const attributes = [
-        'list' // input 
-    ];
-    function isElementAttribute(el, prop) {
-        return !(prop in el) // 元素身上不包含该属性
-            || attributes.includes(prop) // 特殊属性指定
-            || isInlineEvent(prop); // 原生的内联事件也会作为 attribute处理
-    }
     function updateElementAttributes(el, pProps, nProps, instance = null, isSVG = false, dynamicProps = null) {
         // 如果传了dynamicProps更新即可，没传的话就需要全部更新
         if (!pProps && !nProps) {
@@ -1009,40 +1029,35 @@ var Crush = (function (exports) {
         }
         pProps ||= emptyObject;
         nProps ||= emptyObject;
-        for (let propName of (dynamicProps || unionkeys(pProps, nProps))) {
-            var pValue = pProps[propName];
-            var nValue = nProps[propName];
-            switch (propName) {
+        for (let prop of (dynamicProps || unionkeys(pProps, nProps))) {
+            var pValue = pProps[prop];
+            var nValue = nProps[prop];
+            switch (prop) {
                 case 'style':
                     updateDeclaration(el.style, normalizeStyle(pValue), normalizeStyle(nValue));
                     break;
                 case 'class':
-                case 'className':
                     updateClass(el, pValue, nValue);
                     break;
                 case 'ref':
-                    if (!instance) {
-                        continue;
+                    if (instance) {
+                        let refs = instance.refs ||= {};
+                        if (nValue !== pValue) {
+                            pValue && (refs[pValue] = null);
+                            nValue && (refs[nValue] = el);
+                        }
                     }
-                    let refs = instance.refs ||= {};
-                    if (nValue !== pValue) {
-                        pValue && (refs[pValue] = null);
-                        nValue && (refs[nValue] = el);
-                    }
-                    break;
-                case 'bind':
-                    updateElementAttributes(el, pValue, nValue, instance, isSVG);
                     break;
                 default:
-                    if (propName.startsWith('_')) {
+                    if (prop.startsWith('_')) {
                         // 保留属性
                         continue;
                     }
-                    else if (isEvent(propName)) {
+                    else if (isEvent(prop)) {
                         if (pValue === nValue) {
                             continue;
                         }
-                        const { event, _arguments, modifiers, filters } = parseEventName(propName);
+                        const { event, _arguments, modifiers, filters } = parseEventName(prop);
                         if (isElementLifecycleHook(event)) {
                             // 生命周期钩子跳过
                             continue;
@@ -1073,24 +1088,48 @@ var Crush = (function (exports) {
                             }
                         });
                     }
-                    else if (isElementAttribute(el, propName)) { // dom props
-                        // attribute
-                        propName = hyphenate(propName); // 连字符属性
-                        if (pValue !== nValue) {
-                            if (nValue) {
-                                setAttribute(el, propName, nValue);
-                            }
-                            else if (pValue) {
-                                removeAttribute(el, propName);
-                            }
-                        }
+                    else if (prop.startsWith('class')) {
+                        // responsive layout
+                        parsePropertyName(prop);
+                        // 注册一个侦听器
                     }
                     else {
-                        if (pValue !== nValue) {
-                            el[propName] = nValue;
+                        // prop
+                        let { property, _arguments, modifiers, filters } = parsePropertyName(prop);
+                        let { prop: asProp, attr: asAttr } = modifiers;
+                        if (asProp) {
+                            updateAsProperty(el, property, pValue, nValue);
+                        }
+                        else if (asAttr) {
+                            updateAsAttribute(el, property, pValue, nValue);
+                        }
+                        else if (isSVG) {
+                            updateAsAttribute(el, property, pValue, nValue);
+                        }
+                        else if (prop in el) {
+                            updateAsProperty(el, property, pValue, nValue);
+                        }
+                        else {
+                            updateAsAttribute(el, property, pValue, nValue);
                         }
                     }
             }
+        }
+    }
+    function updateAsAttribute(el, property, pValue, nValue) {
+        property = hyphenate(property); // 连字符属性
+        if (pValue !== nValue) {
+            if (nValue) {
+                setAttribute(el, property, nValue);
+            }
+            else if (pValue) {
+                removeAttribute(el, property);
+            }
+        }
+    }
+    function updateAsProperty(el, property, pValue, nValue) {
+        if (nValue !== pValue) {
+            el[property] = nValue;
         }
     }
 
@@ -1516,26 +1555,30 @@ var Crush = (function (exports) {
                             attrs[prop] = nValue;
                         }
                     }
-                    else if (!propsOptions[prop]) {
-                        // attrs
-                        let attrs = instance.attrs ||= {};
-                        attrs[prop] = nValue;
-                    }
                     else {
-                        // props
-                        const { default: _default, type, validator, required, rename } = propsOptions[prop];
-                        if (isUndefined(nValue)) {
-                            // nValue 不存在在时应该使用默认值
-                            if (required) ;
-                            else {
-                                nValue = _default;
-                            }
+                        // property
+                        let { property, _arguments, modifiers, filters } = parsePropertyName(prop);
+                        if (!propsOptions[property]) {
+                            // attrs
+                            let attrs = instance.attrs ||= {};
+                            attrs[property] = nValue;
                         }
-                        if (type && nValue.constructor !== type) ;
-                        if (validator && !validator(nValue)) ;
-                        // do update props value
-                        scope[rename || prop] = nValue;
-                        (instance.props ||= {})[prop] = nValue;
+                        else {
+                            // props
+                            const { default: _default, type, validator, required, rename } = propsOptions[property];
+                            if (isUndefined(nValue)) {
+                                // nValue 不存在在时应该使用默认值
+                                if (required) ;
+                                else {
+                                    nValue = _default;
+                                }
+                            }
+                            if (type && nValue.constructor !== type) ;
+                            if (validator && !validator(nValue)) ;
+                            // do update props value
+                            scope[rename || property] = nValue;
+                            (instance.props ||= {})[property] = nValue;
+                        }
                     }
             }
         }
@@ -4557,47 +4600,49 @@ var Crush = (function (exports) {
                             stringify(filters.map(toBackQuotes)) : NULL);
                         props[dynamicMapKey(key)] = handler;
                         // 动态属性名称一定会记录到动态属性
-                        dynamicProps.push(key);
                     }
                     else {
                         let key = toEventName(property, _arguments, modifiers, filters);
                         props[key] = handler;
-                        if (isHandler) {
-                            // 内联样式不会加入到动态属性中
-                            dynamicProps.push(toSingleQuotes(key));
-                        }
                     }
                     break;
                 case 17 /* ATTRIBUTE_CLASS */:
-                    var _class = props.class ||= [];
-                    if (attr.isDynamicValue) {
-                        _class.push(attr.value);
-                        dynamicProps.push(`'class'`);
+                    if (attr._arguments) {
+                        // with responsive layout
+                        props[toPropertyName('class', attr._arguments)] = attr.isDynamicValue ? attr.value : toBackQuotes(attr.value);
                     }
                     else {
-                        _class.push(toBackQuotes(attr.value));
+                        var _class = props.class ||= [];
+                        _class.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     }
                     break;
                 case 18 /* ATTRIBUTE_STYLE */:
+                    // 支持多个 style属性同时存在
                     var style = props.style ||= [];
-                    if (attr.isDynamicValue) {
-                        style.push(attr.value);
-                        dynamicProps.push(`'style'`);
+                    if (attr.modifiers) {
+                        // 支持单个属性
+                        style.push(attr.modifiers.reduce((result, key) => {
+                            result[key] = attr.isDynamicValue ? attr.value : toBackQuotes(attr.value);
+                            return result;
+                        }, {}));
                     }
                     else {
-                        style.push(toBackQuotes(attr.value));
+                        style.push(attr.isDynamicValue ? attr.value : toBackQuotes(attr.value));
                     }
                     break;
                 case 15 /* ATTRIBUTE */:
                     // normal attributes
-                    var { property, value, isDynamicProperty, isDynamicValue, } = attr;
-                    let key = isDynamicProperty ? dynamicMapKey(property) : property;
-                    props[key] = isDynamicValue ? value : toBackQuotes(value);
-                    if (isDynamicProperty || isDynamicValue) {
-                        if (property[0] !== '_') {
-                            // 保留属性不会记录到
-                            dynamicProps.push(toSingleQuotes(property));
-                        }
+                    var { property, value, isDynamicProperty, isDynamicValue, _arguments, modifiers, filters, } = attr;
+                    if (isDynamicProperty) {
+                        let key = context.callRenderFn('toPropertyName', property, _arguments ?
+                            stringify(_arguments.map(toBackQuotes)) : NULL, modifiers ?
+                            stringify(modifiers.map(toBackQuotes)) : NULL, filters ?
+                            stringify(filters.map(toBackQuotes)) : NULL);
+                        props[dynamicMapKey(key)] = isDynamicValue ? value : toBackQuotes(value);
+                    }
+                    else {
+                        let key = toPropertyName(property, _arguments, modifiers, filters);
+                        props[key] = isDynamicValue ? value : toBackQuotes(value);
                     }
                     break;
                 case 19 /* CUSTOM_DIRECTIVE */:
@@ -4836,7 +4881,7 @@ var Crush = (function (exports) {
                                 keyframes: content
                             };
                             break;
-                        case 'screens':
+                        case 'screen':
                             // 转换为动态 media
                             current = {
                                 type: 23 /* MEDIA_RULE */,
@@ -5167,11 +5212,6 @@ var Crush = (function (exports) {
                                 break;
                             case 'bind':
                                 attr.type = 15 /* ATTRIBUTE */;
-                                if (attr._arguments) {
-                                    // 单属性的bind, 等同于 $
-                                    attr.property = attr._arguments[0];
-                                    attr._arguments.shift();
-                                }
                                 attr.value = context.setRenderScope(attr.value);
                                 attr.isDynamicValue = true;
                                 break;
@@ -5179,14 +5219,6 @@ var Crush = (function (exports) {
                                 // 转为普通的 ref属性
                                 attr.type = 15 /* ATTRIBUTE */;
                                 attr.isDynamicValue = attr?.modifiers?.includes('dynamic');
-                                break;
-                            case 'on':
-                                attr.type = 16 /* EVENT */;
-                                attr.property = attr._arguments[0];
-                                attr._arguments.shift();
-                                attr.isDynamicValue = true;
-                                attr.isHandler = isHandler(attr.value);
-                                attr.value = context.setRenderScope(attr.value);
                                 break;
                             case 'native':
                                 if (htmlAst.tagName == 'style') {
@@ -5385,6 +5417,7 @@ var Crush = (function (exports) {
                         attr.value = context.setRenderScope(attr.value);
                         break;
                     default:
+                        // 普通属性
                         attr.type = 15 /* ATTRIBUTE */;
                         if (attr.isDynamicProperty) {
                             attr.property = context.setRenderScope(attr.property);
@@ -5630,11 +5663,14 @@ var Crush = (function (exports) {
 
     const inlineStyleDelimiter = /\s*[:;]\s*/;
     function parseInlineStyle(styleString) {
-        var chips = styleString.split(inlineStyleDelimiter).filter(Boolean);
-        var l = chips.length;
+        var styles = styleString.split(inlineStyleDelimiter).filter(Boolean);
+        var l = styles.length;
+        if (l % 2 === 1) {
+            return null;
+        }
         var styleMap = {};
         while (l) {
-            styleMap[camelize(chips[l - 2])] = chips[l - 1];
+            styleMap[camelize(styles[l - 2])] = styles[l - 1];
             l -= 2;
         }
         return styleMap;
@@ -5704,6 +5740,7 @@ var Crush = (function (exports) {
     }
 
     var renderMethods = {
+        toPropertyName,
         useCurrentInstanceCache,
         getCurrentRenderScope,
         createComment,
@@ -6064,7 +6101,9 @@ var Crush = (function (exports) {
     };
     const modelRange = {
         created(el, { value, modifiers: { lazy } }, { props: { _setModelValue } }) {
-            el.value = value;
+            if (value !== undefined) {
+                el.value = value;
+            }
             addListener(el, lazy ? 'change' : 'input', () => {
                 _setModelValue(el.value);
             });
@@ -7465,14 +7504,126 @@ var Crush = (function (exports) {
         modelWeek,
     };
 
-    // app.config.responsive
     const customScreens = {
-        xs: '(max-width:768px)',
-        sm: '(min-width:768px) and (max-width:992px)',
-        md: '(min-width:992px) and (max-width:1200px)',
-        lg: '(min-width:1200px) and (max-width:1920px)',
-        xl: '(min-width:1920px)'
+        default: null,
+        xs: {
+            maxWidth: 768
+        },
+        sm: {
+            maxWidth: 992,
+            minWidth: 768
+        },
+        md: {
+            maxWidth: 1200,
+            minWidth: 992
+        },
+        lg: {
+            maxWidth: 1920,
+            minWidth: 1200
+        },
+        xl: {
+            minWidth: 1920
+        }
     };
+    function getMediaStringKeyValue(mediaString, mediaKey) {
+        let position = mediaString.indexOf(mediaKey);
+        if (position < 0) {
+            return null;
+        }
+        let end = mediaString.indexOf(')', position);
+        let value = mediaString.slice(position + mediaKey.length + 1, end);
+        return value;
+    }
+    // return maxWidth and minWidth
+    function parseMediaString(mediaString) {
+        let minWidth = getMediaStringKeyValue(mediaString, 'min-width');
+        let maxWidth = getMediaStringKeyValue(mediaString, 'max-width');
+        let minHeight = getMediaStringKeyValue(mediaString, 'min-height');
+        let maxHeight = getMediaStringKeyValue(mediaString, 'max-height');
+        return {
+            minWidth,
+            maxWidth,
+            minHeight,
+            maxHeight
+        };
+    }
+    // 默认为 px
+    function toMediaConditionString(key, value) {
+        key = hyphenate(key);
+        return `(${key}:${isNumber(value) ? value + 'px' : value})`;
+    }
+    function getCustomScreensMediaString(screen) {
+        let app = getCurrentApp();
+        let screenConfig = app.customScreens[screen];
+        if (!screenConfig) {
+            return '';
+        }
+        if (isString(screenConfig)) {
+            return screenConfig;
+        }
+        let mediaCondition = Object.entries(screenConfig).map(([key, value]) => {
+            return toMediaConditionString(key, value);
+        }).join(' and ');
+        return mediaCondition;
+    }
+    function onWindowResize(cb) {
+        addListener(window, 'resize', cb);
+        return () => removeListener(window, 'onresize', cb);
+    }
+    // 获取当前屏幕所处的尺寸
+    function getCurrentAppScreen() {
+        let app = getCurrentApp();
+        if (!app) {
+            return;
+        }
+        let customScreens = app.customScreens;
+        let screens = Object.keys(customScreens);
+        let wdith = window.innerWidth;
+        let height = window.innerHeight;
+        // 匹配适当的屏幕 ， 优先匹配优先结束
+        let matchedScreen = screens.find((screen) => {
+            let config = customScreens[screen];
+            if (!config) {
+                return false;
+            }
+            let { maxWidth, maxHeight, minWidth, minHeight } = config;
+            // 四个条件必须同时匹配
+            if (maxWidth && wdith > maxWidth) {
+                return false;
+            }
+            if (maxHeight && height > maxHeight) {
+                return false;
+            }
+            if (minWidth && wdith < minWidth) {
+                return false;
+            }
+            if (minHeight && height < minHeight) {
+                return false;
+            }
+            return true;
+        });
+        return matchedScreen;
+    }
+    // 单例
+    function createAppOnScreenChange() {
+        let screenChangeCallbacks = new Set();
+        // 保存之前的屏幕尺寸
+        let previouscreen = getCurrentAppScreen();
+        onWindowResize(() => {
+            let currentScreen = getCurrentAppScreen();
+            if (currentScreen !== previouscreen) {
+                // 屏幕尺寸改变
+                previouscreen = currentScreen;
+                screenChangeCallbacks.forEach((cb) => {
+                    cb(currentScreen);
+                });
+            }
+        });
+        return (cb) => {
+            screenChangeCallbacks.add(cb);
+            return () => screenChangeCallbacks.delete(cb);
+        };
+    }
 
     var cssMethods = {
         rgba,
@@ -7837,6 +7988,7 @@ var Crush = (function (exports) {
         }
         const app = {
             isMounted: false,
+            isReadyToMount: false,
             rootComponent,
             component,
             directive,
@@ -7855,6 +8007,13 @@ var Crush = (function (exports) {
             colors,
             // 按键修饰符
             keyCodes,
+            _normalizedKeyCodes: null,
+            get normalizedKeyCodes() {
+                if (!this.isReadyToMount) {
+                    return;
+                }
+                return this._normalizedKeyCodes ||= normalizeAppKeyCodes();
+            },
             // 事件修饰符
             eventModifiers,
             // config
@@ -7865,6 +8024,15 @@ var Crush = (function (exports) {
             compilerOptions: null,
             // 文本修饰符
             textModifiers,
+            // 侦听屏幕尺寸侦听函数
+            _appOnScreenChange: null,
+            get onScreenChange() {
+                if (!this.isReadyToMount) {
+                    // 准备挂载时才能拿到所有的配置信息
+                    return null;
+                }
+                return this._appOnScreenChange ||= createAppOnScreenChange();
+            }
         };
         currentApp = app;
         // 安装动画
@@ -7927,6 +8095,7 @@ var Crush = (function (exports) {
             }
             // 执行应用挂载前钩子，可以拿到用户定义的配置信息
             app.beforeAppMount && app.beforeAppMount(app);
+            app.isReadyToMount = true;
             app.rootComponentVnode = createComponent(app.rootComponent, null, null);
             mount(app.rootComponentVnode, app.container);
             app.isMounted = true;
@@ -7944,9 +8113,6 @@ var Crush = (function (exports) {
             currentApp = null;
         }
         return app;
-    }
-    function getCustomScreensMediaString(screen) {
-        return getCurrentApp().customScreens[screen] || 'screen'; // 默认屏幕 , 所有情况都生效
     }
 
     function injectHook(type, target, hook) {
@@ -7971,14 +8137,14 @@ var Crush = (function (exports) {
     function isElementLifecycleHook(name) {
         return [
             "beforeCreate" /* BEFORE_CREATE */,
+            "created" /* CREATED */,
             "beforeMount" /* BEFORE_MOUNT */,
+            "mounted" /* MOUNTED */,
             "beforeUnmount" /* BEFORE_UNMOUNT */,
             "beforeUpdate" /* BEFORE_UPDATE */,
             "updated" /* UPDATED */,
             "childrenMounted" /* CHILDREN_MOUNTED */,
             "unmounted" /* UNMOUNTED */,
-            "mounted" /* MOUNTED */,
-            "created" /* CREATED */
         ].includes(name);
     }
     function isComponentLifecycleHook(name) {
@@ -8152,14 +8318,14 @@ var Crush = (function (exports) {
         instance.scope = createScope(instance);
         instance.renderScope = createRenderScope(instance.scope);
         instance.emit = createInstanceEmit(instance);
-        instance.on = (event, handler) => addInstanceListener(instance, event, handler);
-        instance.off = (event, handler) => removeInstanceListener(instance, event, handler);
-        instance.once = (event, handler) => onceInstanceListener(instance, event, handler);
+        instance.on = createInstanceOn(instance);
+        instance.off = createInstanceOff(instance);
+        instance.once = createInstanceOnce(instance);
         instance.events = getInstanceEvents(instance);
         instance.watch = createInstanceWatch(instance);
-        instance.root = parent ? parent.root : instance;
         if (parent) {
             instance.root = parent.root;
+            // 保留在父组件中的注册名称
             let parentComponents = parent.components || emptyObject;
             for (let name in parentComponents) {
                 if (parentComponents[name] === options) {
@@ -8215,6 +8381,9 @@ var Crush = (function (exports) {
         for (let key in (vnode.props || emptyObject)) {
             if (key.startsWith('_directive')) {
                 let bindings = vnode.props[key];
+                if (!bindings.directive) {
+                    continue;
+                }
                 let directive = normalizeDirective(bindings.directive);
                 let hook = directive[type];
                 if (hook) {
@@ -8249,6 +8418,9 @@ var Crush = (function (exports) {
         for (let key in (vnode.props || emptyObject)) {
             if (key.startsWith('_directive')) {
                 let bindings = vnode.props[key];
+                if (!bindings.directive) {
+                    continue;
+                }
                 let directive = normalizeDirective(bindings.directive);
                 let hook = directive[type];
                 if (hook) {
@@ -8273,6 +8445,9 @@ var Crush = (function (exports) {
         for (let key in (vnode.props || emptyObject)) {
             if (key.startsWith('_directive')) {
                 let bindings = vnode.props[key];
+                if (!bindings.directive) {
+                    continue;
+                }
                 let directive = normalizeDirective(bindings.directive);
                 let hook = directive[type];
                 if (hook) {
@@ -8519,6 +8694,7 @@ var Crush = (function (exports) {
     exports.computed = computed;
     exports.conicGradient = conicGradient;
     exports.createApp = createApp;
+    exports.createAppOnScreenChange = createAppOnScreenChange;
     exports.createColor = createColor;
     exports.createComment = createComment;
     exports.createComponent = createComponent;
@@ -8529,6 +8705,9 @@ var Crush = (function (exports) {
     exports.createFragment = createFragment;
     exports.createFunction = createFunction;
     exports.createInstanceEmit = createInstanceEmit;
+    exports.createInstanceOff = createInstanceOff;
+    exports.createInstanceOn = createInstanceOn;
+    exports.createInstanceOnce = createInstanceOnce;
     exports.createInstanceWatch = createInstanceWatch;
     exports.createKeyframe = createKeyframe;
     exports.createKeyframes = createKeyframes;
@@ -8543,7 +8722,6 @@ var Crush = (function (exports) {
     exports.createReadonlyObject = createReadonlyObject;
     exports.createRefValueSetter = createRefValueSetter;
     exports.createRenderScope = createRenderScope;
-    exports.normalizeAppKeyCodes = normalizeAppKeyCodes;
     exports.createSVGElement = createSVGElement;
     exports.createScope = createScope;
     exports.createSetter = createSetter;
@@ -8557,6 +8735,7 @@ var Crush = (function (exports) {
     exports.createSupports = createSupports;
     exports.createText = createText;
     exports.cubicBezier = cubicBezier;
+    exports.customScreens = customScreens;
     exports.darken = darken;
     exports.dateFormatRE = dateFormatRE;
     exports.debounce = debounce;
@@ -8621,6 +8800,7 @@ var Crush = (function (exports) {
     exports.getLastvisitedKey = getLastvisitedKey;
     exports.getLastvisitedTarget = getLastvisitedTarget;
     exports.getLeftEdgeElement = getLeftEdgeElement;
+    exports.getMediaStringKeyValue = getMediaStringKeyValue;
     exports.getRefDeps = getRefDeps;
     exports.getStyle = getStyle;
     exports.getStyleValue = getStyleValue;
@@ -8704,6 +8884,7 @@ var Crush = (function (exports) {
     exports.mountStyleRule = mountStyleRule;
     exports.mountStyleSheet = mountStyleSheet;
     exports.nextTick = nextTick;
+    exports.normalizeAppKeyCodes = normalizeAppKeyCodes;
     exports.normalizeClass = normalizeClass;
     exports.normalizeHandler = normalizeHandler;
     exports.normalizeKeyText = normalizeKeyText;
@@ -8737,6 +8918,8 @@ var Crush = (function (exports) {
     exports.parseHslToRgb = parseHslToRgb;
     exports.parseInlineClass = parseInlineClass;
     exports.parseInlineStyle = parseInlineStyle;
+    exports.parseMediaString = parseMediaString;
+    exports.parsePropertyName = parsePropertyName;
     exports.parseRgb = parseRgb;
     exports.parseRgbToHsl = parseRgbToHsl;
     exports.parseStyleValue = parseStyleValue;
@@ -8765,7 +8948,6 @@ var Crush = (function (exports) {
     exports.renderSlot = renderSlot;
     exports.replaceAllReservedCharacters = replaceAllReservedCharacters;
     exports.resolveOptions = resolveOptions;
-    exports.customScreens = customScreens;
     exports.rgb = rgb;
     exports.rgbToHex = rgbToHex;
     exports.rgba = rgba;
@@ -8823,6 +9005,7 @@ var Crush = (function (exports) {
     exports.toNegativeValue = toNegativeValue;
     exports.toNumber = toNumber;
     exports.toPositiveValue = toPositiveValue;
+    exports.toPropertyName = toPropertyName;
     exports.toRaw = toRaw;
     exports.toReservedProp = toReservedProp;
     exports.toSingleQuotes = toSingleQuotes;
