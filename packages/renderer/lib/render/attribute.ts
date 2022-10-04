@@ -1,5 +1,5 @@
 
-import { emptyObject, hyphenate, isArray } from "@crush/common";
+import { emptyArray, emptyObject, hyphenate, isArray } from "@crush/common";
 
 import { removeClass, addClass, addListener, removeListener, setAttribute, removeAttribute } from "../dom";
 
@@ -151,13 +151,13 @@ export function updateElementAttributes(
                     let { _arguments: screens } = parsePropertyName(prop)
 
                     // 注册一个侦听器
-                    
+
 
                 } else {
                     // prop
                     let { property, _arguments, modifiers, filters } = parsePropertyName(prop)
 
-                    let { prop: asProp, attr: asAttr } = modifiers
+                    let { prop: asProp, attr: asAttr } = modifiers || emptyArray
 
                     if (asProp) {
                         updateAsProperty(el, property, pValue, nValue)

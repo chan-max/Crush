@@ -1,7 +1,6 @@
-import { hyphenate, isNumber, isString } from "@crush/common"
+import { debounce, hyphenate, isNumber, isString } from "@crush/common"
 import { addListener, max, removeListener } from "@crush/renderer"
 import { getCurrentApp } from "../app/app"
-
 
 export const customScreens = {
     default: null,
@@ -86,8 +85,8 @@ function onWindowResize(cb: any) {
     return () => removeListener(window, 'onresize', cb)
 }
 
-// 获取当前屏幕所处的尺寸
-function getCurrentAppScreen() {
+// 获取当前屏幕所处的尺寸 
+export function getCurrentAppScreen() {
 
     let app = getCurrentApp()
 
@@ -142,8 +141,8 @@ export function createAppOnScreenChange() {
     // 保存之前的屏幕尺寸
     let previouscreen = getCurrentAppScreen()
 
-    onWindowResize(() => {
-        
+    function processCallback() {
+
         let currentScreen = getCurrentAppScreen()
 
         if (currentScreen !== previouscreen) {
@@ -156,8 +155,10 @@ export function createAppOnScreenChange() {
 
         }
 
-    })
+    }
 
+    onWindowResize(debounce(processCallback, 100))
+    
     return (cb: any) => {
         screenChangeCallbacks.add(cb)
         return () => screenChangeCallbacks.delete(cb)
